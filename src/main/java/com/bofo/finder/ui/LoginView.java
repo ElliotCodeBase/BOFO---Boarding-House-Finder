@@ -7,6 +7,10 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
 public final class LoginView extends VBox {
+    private static void devGo(com.bofo.finder.model.Role r, Runnable onSignedIn) {
+        AuthService.get().devLogin(r); com.bofo.finder.app.Main.route();
+    }
+
     public LoginView(Runnable onSignedIn, String notice) {
         super(16); setAlignment(Pos.CENTER); setPadding(new javafx.geometry.Insets(28));
         Mascot mascot = new Mascot(Mascot.Expression.HAPPY, 130).bob();
@@ -26,5 +30,12 @@ public final class LoginView extends VBox {
         Button terms = Ui.btn("Terms", "chip", () -> Nav.toast("Open Terms (host the document, then HostServices.showDocument)"));
         Button priv = Ui.btn("Privacy Policy", "chip", () -> Nav.toast("Open Privacy Policy"));
         getChildren().addAll(mascot, title, tag, google, err, legal, Ui.hbox(8, terms, priv));
+        if (com.bofo.finder.config.AppConfig.devBypass()) {   // DEV ONLY
+            Label dev = Ui.label("DEV: skip login as", "secondary");
+            Button s = Ui.btn("Student", "chip", () -> devGo(com.bofo.finder.model.Role.STUDENT, onSignedIn));
+            Button o = Ui.btn("Owner", "chip", () -> devGo(com.bofo.finder.model.Role.OWNER, onSignedIn));
+            Button a = Ui.btn("Admin", "chip", () -> devGo(com.bofo.finder.model.Role.ADMIN, onSignedIn));
+            getChildren().addAll(dev, Ui.hbox(8, s, o, a));
+        }
     }
 }

@@ -102,6 +102,13 @@ public final class AuthService {
         } catch (Exception e) { pendingLogin.completeExceptionally(e); }
     }
 
+    /* ---------- DEV ONLY: login bypass ---------- */
+    /** Pretends a user is signed in (no Google, no token). Requests go out with the anon key, so RLS-protected writes may fail. */
+    public void devLogin(Role role) {
+        userId = "00000000-0000-0000-0000-0000000de000";
+        profile = new Profile(userId, role, true, "Dev Tester (" + role.db() + ")", "", "", null, "verified");
+    }
+
     /* ---------- profile / role ---------- */
     /** @return true when a users row exists (role already chosen). */
     public boolean loadProfile() throws Exception {

@@ -30,6 +30,13 @@ public class Main extends Application {
         stage.setScene(scene); stage.setTitle("BOFO Finder"); stage.show();
         try { StatusBarService.create().ifPresent(s -> s.setColor(Color.web("#4A2A8F"))); } catch (Throwable ignored) {}
 
+        if (com.bofo.finder.config.AppConfig.devBypass()) {   // DEV ONLY: skip login entirely
+            try { auth.devLogin(Role.valueOf(com.bofo.finder.config.AppConfig.devRole().toUpperCase())); }
+            catch (IllegalArgumentException e) { auth.devLogin(Role.STUDENT); }
+            route();
+            return;
+        }
+
         SplashView splash = new SplashView();
         Nav.show(splash, false);
         long t0 = System.currentTimeMillis();

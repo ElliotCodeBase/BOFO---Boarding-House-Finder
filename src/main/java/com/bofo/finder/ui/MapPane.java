@@ -38,7 +38,7 @@ public final class MapPane extends StackPane {
     public void onPinTap(Consumer<BoardingHouse> c) { this.onPin = c; }
 
     /** Current map center {lat, lng}. Used for the owner's "drop pin" (a fixed crosshair sits over the center). */
-    public double[] center() { MapPoint p = map.getMapPoint(map.getWidth() / 2, map.getHeight() / 2); return new double[]{p.getLatitude(), p.getLongitude()}; }
+    public double[] center() { javafx.geometry.Point2D s = map.localToScene(map.getWidth() / 2, map.getHeight() / 2); MapPoint p = map.getMapPosition(s.getX(), s.getY()); return new double[]{p.getLatitude(), p.getLongitude()}; }
 
     /** Adds a fixed crosshair pin in the middle of the map for pin-dropping. */
     public void enableCenterPin() {
