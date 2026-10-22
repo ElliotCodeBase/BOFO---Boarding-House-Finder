@@ -41,6 +41,8 @@ public final class AuthService {
     public void init(HostServices hs) { this.hostServices = hs; }
     public void onSessionLost(Runnable r) { this.onSessionLost = r; }
     public Profile profile() { return profile; }
+    /** DEV ONLY: skip Google sign-in and open the app as a fake user of the given role. Remove before release. */
+    public void devForce(Role r) { profile = new Profile("dev-user", r, true, "Dev User", "", "", null, "verified"); }
     public String userId() { return userId; }
     public boolean signedIn() { return accessToken != null; }
 
@@ -100,6 +102,13 @@ public final class AuthService {
             });
             srv.start();
         } catch (Exception e) { pendingLogin.completeExceptionally(e); }
+    }
+
+    /* ---------- DEV ONLY: login bypass ---------- */
+    /** Pretends a user is signed in (no Google, no token). Requests go out with the anon key, so RLS-protected writes may fail. */
+    public void devLogin(Role role) {
+        userId = "00000000-0000-0000-0000-0000000de000";
+        profile = new Profile(userId, role, true, "Dev Tester (" + role.db() + ")", "", "", null, "verified");
     }
 
     /* ---------- profile / role ---------- */

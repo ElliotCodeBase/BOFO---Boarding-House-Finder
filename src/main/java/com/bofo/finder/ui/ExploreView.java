@@ -20,27 +20,35 @@ public final class ExploreView extends VBox {
     private final BhService bh = new BhService();
     private final TextField search = new TextField();
     private final TextField maxPrice = new TextField();
-    private final CheckBox water = new CheckBox("💧 Water"), elec = new CheckBox("⚡ Electricity"), wifi = new CheckBox("📶 WiFi");
+    private final Ui.Chip water = new Ui.Chip("Free water"), elec = new Ui.Chip("Free electricity"), wifi = new Ui.Chip("Free Wi-Fi");
     private final ComboBox<String> sort = new ComboBox<>();
     private final MapPane map = new MapPane(220);
     private final VBox list = new VBox(10);
     private Set<String> favs = new HashSet<>();
+    private final Label count = Ui.label("", "secondary");
     private int seq = 0;
 
     public ExploreView() {
-        search.setPromptText("Search boarding houses"); maxPrice.setPromptText("Max ₱/mo");
-        maxPrice.setPrefWidth(110);
+        search.setPromptText("Search by name or area"); maxPrice.setPromptText("Max \u20B1 per month");
+        maxPrice.setPrefWidth(150); maxPrice.setMaxWidth(150);
+        search.getStyleClass().add("search-field");
         sort.getItems().addAll("Nearest", "Lowest price", "Most beds"); sort.getSelectionModel().selectFirst();
-        Button go = Ui.btn("Apply", "btn-primary", this::run);
+        Button go = new Button(); go.getStyleClass().add("icon-btn-primary");
+        go.setGraphic(Icons.icon(Icons.SEARCH, 20, javafx.scene.paint.Color.WHITE)); go.setOnAction(e -> run());
         if (pendingFilters != null) apply(pendingFilters);
         search.setOnAction(e -> run());
         HBox row1 = Ui.hbox(8, search, go); HBox.setHgrow(search, Priority.ALWAYS);
-        HBox row2 = Ui.hbox(10, maxPrice, water, elec, wifi);
-        HBox row3 = Ui.hbox(8, Ui.label("Sort:", "secondary"), sort);
-        VBox filters = Ui.padded(8, row1, row2, row3);
-        list.setPadding(new Insets(8, 16, 90, 16));
+        HBox chips = Ui.hbox(8, water, elec, wifi);
+        sort.setPrefWidth(150);
+        HBox row3 = Ui.hbox(8, maxPrice, Ui.grow(), sort);
+        VBox filters = new VBox(10, row1, chips, row3); filters.getStyleClass().add("filter-panel");
+        // filters apply immediately; no need to press search
+        for (Ui.Chip c : new Ui.Chip[]{water, elec, wifi}) c.addEventHandler(javafx.event.ActionEvent.ACTION, e -> javafx.application.Platform.runLater(this::run));
+        sort.setOnAction(e -> run()); maxPrice.setOnAction(e -> run());
+        HBox resultsHead = Ui.hbox(0, count); resultsHead.setPadding(new Insets(12, 16, 0, 16));
+        list.setPadding(new Insets(8, 16, 72, 16));
         map.onPinTap(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
-        ScrollPane sp = Ui.scroll(new VBox(map, list)); VBox.setVgrow(sp, Priority.ALWAYS);
+        ScrollPane sp = Ui.scroll(new VBox(map, resultsHead, list)); VBox.setVgrow(sp, Priority.ALWAYS);
         getChildren().addAll(Ui.appBar("Explore"), filters, sp);
         Async.run(bh::favoriteIds, f -> { favs = f; run(); }, e -> run());
     }
@@ -48,7 +56,7 @@ public final class ExploreView extends VBox {
     private void apply(JSONObject f) {
         pendingFilters = null;
         if (f.has("max_price")) maxPrice.setText(String.valueOf(f.optDouble("max_price")));
-        water.setSelected(f.optBoolean("free_water")); elec.setSelected(f.optBoolean("free_electricity")); wifi.setSelected(f.optBoolean("free_wifi"));
+        water.set(f.optBoolean("free_water")); elec.set(f.optBoolean("free_electricity")); wifi.set(f.optBoolean("free_wifi"));
         if (f.has("text")) search.setText(f.optString("text"));
         if ("price".equals(f.optString("sort"))) sort.getSelectionModel().select(1);
     }
@@ -56,7 +64,7 @@ public final class ExploreView extends VBox {
     private void run() {
         BhService.Filter f = new BhService.Filter();
         try { if (!maxPrice.getText().isBlank()) f.maxPrice = Double.parseDouble(maxPrice.getText().trim()); } catch (NumberFormatException e) { Nav.toast("Enter a valid price"); return; }
-        f.water = water.isSelected(); f.electricity = elec.isSelected(); f.wifi = wifi.isSelected(); f.text = search.getText();
+        f.water = water.isOn(); f.electricity = elec.isOn(); f.wifi = wifi.isOn(); f.text = search.getText();
         double[] ref = State.ref(); int s = sort.getSelectionModel().getSelectedIndex(); final int my = ++seq;
         Async.run(() -> {
             var items = bh.list(BhService.Tab.NEW, ref == null ? null : ref[0], ref == null ? null : ref[1], null, f);
@@ -67,8 +75,9 @@ public final class ExploreView extends VBox {
         }, items -> {
             if (my != seq) return;
             map.show(ref, 0, items, false, null);
+            count.setText(items.size() + (items.size() == 1 ? " result" : " results"));
             list.getChildren().clear();
-            if (items.isEmpty()) list.getChildren().add(Ui.label("No results. Try loosening your filters.", "secondary"));
+            if (items.isEmpty()) list.getChildren().add(Ui.emptyState("No matches", "Try removing a filter or raising the maximum price."));
             String uid = AuthService.get().userId();
             for (BoardingHouse b : items) list.getChildren().add(new BhCard(b, false, favs.contains(b.id()),
                     x -> Nav.show(new BhDetailView(x.id(), () -> Nav.show(new StudentShell(), true)), true),

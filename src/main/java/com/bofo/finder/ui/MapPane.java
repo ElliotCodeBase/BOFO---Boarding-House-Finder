@@ -38,7 +38,7 @@ public final class MapPane extends StackPane {
     public void onPinTap(Consumer<BoardingHouse> c) { this.onPin = c; }
 
     /** Current map center {lat, lng}. Used for the owner's "drop pin" (a fixed crosshair sits over the center). */
-    public double[] center() { MapPoint p = map.getMapPoint(map.getWidth() / 2, map.getHeight() / 2); return new double[]{p.getLatitude(), p.getLongitude()}; }
+    public double[] center() { javafx.geometry.Point2D s = map.localToScene(map.getWidth() / 2, map.getHeight() / 2); MapPoint p = map.getMapPosition(s.getX(), s.getY()); return new double[]{p.getLatitude(), p.getLongitude()}; }
 
     /** Adds a fixed crosshair pin in the middle of the map for pin-dropping. */
     public void enableCenterPin() {
@@ -61,9 +61,9 @@ public final class MapPane extends StackPane {
         private final List<Node> pinNodes = new ArrayList<>();
 
         PinLayer() {
-            ring.setFill(Color.web("#6C3FC5", 0.14)); ring.setStroke(Color.web("#6C3FC5")); ring.setStrokeWidth(1.5);
+            ring.setFill(Color.web("#5B34B8", 0.14)); ring.setStroke(Color.web("#5B34B8")); ring.setStrokeWidth(1.5);
             collegeDot.setStroke(Color.WHITE); collegeDot.setStrokeWidth(2);
-            route.setStroke(Color.web("#FFB400")); route.setStrokeWidth(4);
+            route.setStroke(Color.web("#3F2285")); route.setStrokeWidth(4);
             getChildren().addAll(ring, route, collegeDot);
         }
 
@@ -72,9 +72,9 @@ public final class MapPane extends StackPane {
             getChildren().removeAll(pinNodes); pinNodes.clear(); pins.clear(); pins.addAll(p);
             for (BoardingHouse b : p) {
                 Polygon pin = new Polygon(0, 0, -7, -18, 7, -18);                    // teardrop-ish marker
-                Circle head = new Circle(0, -22, 9, Color.web("#6C3FC5")); head.setStroke(Color.WHITE); head.setStrokeWidth(2);
+                Circle head = new Circle(0, -22, 9, Color.web("#5B34B8")); head.setStroke(Color.WHITE); head.setStrokeWidth(2);
                 StackPane g = new StackPane(); g.getChildren().addAll(pin, head);
-                pin.setFill(Color.web("#6C3FC5")); pin.setTranslateY(0);
+                pin.setFill(Color.web("#5B34B8")); pin.setTranslateY(0);
                 g.setPickOnBounds(false);
                 g.setOnMouseClicked(e -> onPin.accept(b));
                 g.setUserData(b); pinNodes.add(g); getChildren().add(g);

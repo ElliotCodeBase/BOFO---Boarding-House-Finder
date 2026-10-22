@@ -14,6 +14,8 @@ public final class AppConfig {
     public static String get(String k) { return P.getProperty(k, ""); }
     public static String supabaseUrl() { return get("supabase.url"); }
     public static String anonKey() { return get("supabase.anonKey"); }
+    public static boolean devBypass() { return "true".equalsIgnoreCase(get("dev.bypassLogin").trim()); }
+    public static String devRole() { String r = get("dev.role").trim(); return r.isEmpty() ? "student" : r; }
     public static boolean isAndroid() { return "android".equalsIgnoreCase(System.getProperty("javafx.platform")); }
     public static String redirectUri() { return isAndroid() ? get("auth.redirect.android") : get("auth.redirect.desktop"); }
 }
