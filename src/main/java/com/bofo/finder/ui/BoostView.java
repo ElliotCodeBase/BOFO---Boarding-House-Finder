@@ -31,7 +31,7 @@ public final class BoostView extends VBox {
     public BoostView(BoardingHouse bh, Runnable onBack) {
         this.bh = bh; this.onBack = onBack;
         Button back = Ui.btn("←", "heart", () -> { stopPoll(); onBack.run(); });
-        back.setStyle("-fx-text-fill:-bofo-text;-fx-font-size:18px;-fx-background-color:white;-fx-background-radius:999;-fx-min-width:38;-fx-min-height:38;-fx-padding:0;");
+        back.getStyleClass().setAll("button", "icon-btn");
         HBox bar = Ui.appBar("Boost listing"); bar.getChildren().add(0, back);
         body.setPadding(new Insets(16, 16, 90, 16));
         getChildren().addAll(bar, Ui.scroll(body));

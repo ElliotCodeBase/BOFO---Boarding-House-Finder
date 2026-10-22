@@ -37,7 +37,7 @@ public final class Nav {
         Label l = new Label(msg);
         l.getStyleClass().add("toast");
         StackPane.setAlignment(l, Pos.BOTTOM_CENTER);
-        StackPane.setMargin(l, new javafx.geometry.Insets(0, 0, 96, 0));
+        StackPane.setMargin(l, new javafx.geometry.Insets(0, 0, 80, 0));
         ROOT.getChildren().add(l);
         PauseTransition t = new PauseTransition(Duration.seconds(2.5));
         t.setOnFinished(e -> ROOT.getChildren().remove(l)); t.play();

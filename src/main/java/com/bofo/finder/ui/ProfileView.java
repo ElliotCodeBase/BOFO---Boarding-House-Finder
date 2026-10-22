@@ -59,8 +59,8 @@ public final class ProfileView extends VBox {
                 Ui.card(4, Ui.label("General", "h2"), notif, mascot, roleRow, googleRow),
                 Ui.card(4, Ui.label("About", "h2"), termsRow, privRow, agreeRow),
                 Ui.card(4, logoutRow),
-                delete, Ui.label("BOFO Finder v1.0.0", "secondary"));
-        form.setPadding(new Insets(8, 16, 110, 16));
+                delete, Ui.label("BOFO Finder v1.1.1", "secondary"));
+        form.setPadding(new Insets(12, 16, 72, 16));
         getChildren().addAll(Ui.appBar("Profile"), Ui.scroll(form));
     }
 
@@ -72,7 +72,7 @@ public final class ProfileView extends VBox {
 
     private void confirmDelete() {
         Alert a = new Alert(Alert.AlertType.CONFIRMATION, "This permanently removes your account, listings, chats and verification images. This cannot be undone.", ButtonType.CANCEL, ButtonType.OK);
-        a.setTitle("Delete account"); a.setHeaderText("Delete my account and data?");
+        Ui.style(a); a.setTitle("Delete account"); a.setHeaderText("Delete my account and data?");
         a.showAndWait().filter(b -> b == ButtonType.OK).ifPresent(b ->
                 Async.run(() -> SupabaseClient.get().rpc("delete_my_account", new JSONObject()), r -> Main.signOutToLogin(), e -> Nav.toast("Could not delete. Try again.")));
     }

@@ -19,7 +19,7 @@ public final class BhDetailView extends VBox {
     private final VBox body = new VBox(12);
 
     public BhDetailView(String id, Runnable onBack) {
-        Button back = Ui.btn("←", "heart", onBack); back.setStyle("-fx-text-fill:-bofo-text;-fx-font-size:18px;-fx-background-color:white;-fx-background-radius:999;-fx-min-width:38;-fx-min-height:38;-fx-padding:0;");
+        Button back = Ui.btn("←", "heart", onBack); back.getStyleClass().setAll("button", "icon-btn");
         getChildren().addAll(Ui.appBar("Boarding house", back), Ui.scroll(body));
         VBox.setVgrow(getChildren().get(1), Priority.ALWAYS);
         body.setPadding(new Insets(0, 0, 40, 0));
@@ -36,7 +36,7 @@ public final class BhDetailView extends VBox {
         double[] ref = State.ref();
         double km = ref == null ? 0 : Geo.km(ref[0], ref[1], b.lat(), b.lng());
         FlowPane tags = new FlowPane(6, 6);
-        if (b.ownerVerified()) tags.getChildren().add(Ui.label("VERIFIED OWNER", "badge-verified"));
+        if (b.ownerVerified()) tags.getChildren().add(Ui.label("Verified owner", "badge-verified"));
         if (b.water()) tags.getChildren().add(Ui.label("Free water", "tag"));
         if (b.electricity()) tags.getChildren().add(Ui.label("Free electricity", "tag"));
         if (b.wifi()) tags.getChildren().add(Ui.label("Free Wi-Fi", "tag"));

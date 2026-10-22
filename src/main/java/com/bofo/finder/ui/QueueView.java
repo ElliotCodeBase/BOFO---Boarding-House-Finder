@@ -14,7 +14,7 @@ public final class QueueView extends VBox {
     private final VBox rows = new VBox(10);
 
     public QueueView() {
-        rows.setPadding(new Insets(12, 16, 90, 16));
+        rows.setPadding(new Insets(12, 16, 72, 16));
         getChildren().addAll(Ui.appBar("Verification queue"), Ui.scroll(rows));
         load();
     }

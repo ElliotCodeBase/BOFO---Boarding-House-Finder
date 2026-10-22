@@ -20,7 +20,7 @@ public final class ListingFormView extends VBox {
     private final MapPane map = new MapPane(220);
 
     public ListingFormView(Runnable onDone) {
-        Button back = Ui.btn("←", "heart", onDone); back.setStyle("-fx-text-fill:-bofo-text;-fx-font-size:18px;-fx-background-color:white;-fx-background-radius:999;-fx-min-width:38;-fx-min-height:38;-fx-padding:0;");
+        Button back = Ui.btn("←", "heart", onDone); back.getStyleClass().setAll("button", "icon-btn");
         HBox bar = Ui.appBar("New listing"); bar.getChildren().add(0, back);
 
         name.setPromptText("BH name"); address.setPromptText("Address"); price.setPromptText("Monthly payment (₱)");

@@ -9,6 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 import java.util.function.Consumer;
@@ -22,10 +23,10 @@ public final class BhCard extends VBox {
         ImageView iv = Ui.photo(b.photoUrl(), 340, 190);
         Rectangle clip = (Rectangle) iv.getClip();
         iv.fitWidthProperty().bind(widthProperty().subtract(24));
-        clip.widthProperty().bind(iv.fitWidthProperty()); clip.setArcWidth(30); clip.setArcHeight(30);
+        clip.widthProperty().bind(iv.fitWidthProperty()); clip.setArcWidth(24); clip.setArcHeight(24);
         Region ph = new Region(); ph.getStyleClass().add("photo-placeholder");
         ph.setMinHeight(190); ph.setPrefHeight(190); ph.setMaxHeight(190);
-        StackPane photoBox = new StackPane(ph, iv);
+        StackPane photoBox = new StackPane(ph, Icons.icon(Icons.HOME, 44, Color.web("#B9A9E3")), iv);
 
         Button heart = new Button(favorite ? "\u2665" : "\u2661");
         heart.getStyleClass().add(favorite ? "heart-fab-on" : "heart-fab");
@@ -49,15 +50,17 @@ public final class BhCard extends VBox {
         HBox.setHgrow(name, Priority.ALWAYS);
 
         Label where = Ui.label(b.distanceKm() > 0 ? Geo.fmt(b.distanceKm()) + " \u00B7 " + Geo.walkMinutes(b.distanceKm()) + " min walk" : b.address(), "secondary");
-        HBox rating = Ui.hbox(6, Ui.label(Ui.stars(b.avgRating()), "stars"), Ui.label(String.format("%.1f (%d)", b.avgRating(), b.reviewCount()), "secondary"));
+        HBox rating = b.reviewCount() > 0
+                ? Ui.hbox(6, Ui.label(Ui.stars(b.avgRating()), "stars"), Ui.label(String.format("%.1f (%d)", b.avgRating(), b.reviewCount()), "secondary"))
+                : Ui.hbox(6, Ui.label("No reviews yet", "secondary"));
 
         FlowPane tags = new FlowPane(6, 6);
         if (b.water()) tags.getChildren().add(Ui.label("Water", "tag"));
         if (b.electricity()) tags.getChildren().add(Ui.label("Power", "tag"));
         if (b.wifi()) tags.getChildren().add(Ui.label("Wi-Fi", "tag"));
-        if (b.featured()) tags.getChildren().add(Ui.label("FEATURED", "badge-hot"));
-        if (hot) tags.getChildren().add(Ui.label("HOT", "badge-hot"));
-        if (b.ownerVerified()) tags.getChildren().add(Ui.label("VERIFIED", "badge-verified"));
+        if (b.featured()) tags.getChildren().add(Ui.label("Featured", "badge-hot"));
+        if (hot) tags.getChildren().add(Ui.label("Hot", "badge-hot"));
+        if (b.ownerVerified()) tags.getChildren().add(Ui.label("Verified owner", "badge-verified"));
 
         getChildren().addAll(photoBox, top, where, rating, tags);
         setOnMouseClicked(e -> {

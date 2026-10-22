@@ -13,7 +13,7 @@ import javafx.scene.layout.*;
 public final class ChatsView extends VBox {
     public ChatsView() {
         ChatService chat = new ChatService();
-        VBox rows = new VBox(8); rows.setPadding(new Insets(12, 16, 90, 16));
+        VBox rows = new VBox(8); rows.setPadding(new Insets(12, 16, 72, 16));
         getChildren().addAll(Ui.appBar("Chats"), Ui.scroll(rows));
         Async.run(chat::inbox, list -> {
             if (list.isEmpty()) rows.getChildren().add(Ui.emptyState("No conversations yet", "Open a boarding house and tap Chat with owner."));

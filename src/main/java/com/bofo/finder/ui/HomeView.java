@@ -41,9 +41,9 @@ public final class HomeView extends VBox {
         Button bell = new Button(); bell.getStyleClass().add("icon-btn");
         bell.setGraphic(Icons.icon(Icons.BELL, 20, Color.web("#1B1630")));
         bell.setOnAction(e -> Nav.toast("No new notifications"));
-        HBox top = Ui.hbox(12, Ui.avatar(full, 44),
+        HBox top = Ui.hbox(12, Ui.avatar(full, 40),
                 Ui.vbox(0, Ui.label("Welcome back,", "secondary"), Ui.label(name.isBlank() ? "there" : name, "greet-name")), Ui.grow(), bell);
-        top.setPadding(new Insets(16, 16, 0, 16));
+        top.setPadding(new Insets(14, 16, 0, 16));
 
         HBox searchPill = Ui.hbox(10, Icons.icon(Icons.SEARCH, 20, Color.web("#8A84A0")), Ui.label("Find boarding houses near campus", "secondary"));
         searchPill.getStyleClass().add("search-pill");
@@ -67,10 +67,10 @@ public final class HomeView extends VBox {
         HBox chips = Ui.chipRow(new String[]{"New", "Hot", "Best rated"}, 0, i -> { tab = BhService.Tab.values()[i]; reload(); });
         chips.setPadding(new Insets(14, 16, 4, 16));
         Label nearby = Ui.section("Nearby boarding houses"); nearby.setPadding(new Insets(8, 16, 0, 16));
-        list.setPadding(new Insets(4, 16, 110, 16));
+        list.setPadding(new Insets(4, 16, 72, 16));
 
         StackPane mapWrap = new StackPane(map);
-        Rectangle mc = new Rectangle(); mc.setArcWidth(44); mc.setArcHeight(44);
+        Rectangle mc = new Rectangle(); mc.setArcWidth(28); mc.setArcHeight(28);
         mc.widthProperty().bind(mapWrap.widthProperty()); mc.heightProperty().bind(mapWrap.heightProperty());
         mapWrap.setClip(mc);
         VBox.setMargin(mapWrap, new Insets(12, 16, 0, 16));
@@ -103,7 +103,7 @@ public final class HomeView extends VBox {
     private void pickCollege() {
         Async.run(bh::colleges, cs -> {
             ChoiceDialog<College> d = new ChoiceDialog<>(State.college.get(), cs);
-            d.setTitle("Choose your college"); d.setHeaderText("See boarding houses near your campus");
+            Ui.style(d); d.setTitle("Choose your college"); d.setHeaderText("See boarding houses near your campus");
             d.showAndWait().ifPresent(c -> {
                 State.college.set(c);
                 String uid = AuthService.get().userId();

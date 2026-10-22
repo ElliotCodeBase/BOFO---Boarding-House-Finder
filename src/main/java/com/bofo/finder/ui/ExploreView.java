@@ -29,8 +29,8 @@ public final class ExploreView extends VBox {
     private int seq = 0;
 
     public ExploreView() {
-        search.setPromptText("Search by name or area"); maxPrice.setPromptText("Max price per month");
-        maxPrice.setPrefWidth(170);
+        search.setPromptText("Search by name or area"); maxPrice.setPromptText("Max \u20B1 per month");
+        maxPrice.setPrefWidth(150); maxPrice.setMaxWidth(150);
         search.getStyleClass().add("search-field");
         sort.getItems().addAll("Nearest", "Lowest price", "Most beds"); sort.getSelectionModel().selectFirst();
         Button go = new Button(); go.getStyleClass().add("icon-btn-primary");
@@ -38,12 +38,17 @@ public final class ExploreView extends VBox {
         if (pendingFilters != null) apply(pendingFilters);
         search.setOnAction(e -> run());
         HBox row1 = Ui.hbox(8, search, go); HBox.setHgrow(search, Priority.ALWAYS);
-        FlowPane chips = new FlowPane(8, 8, maxPrice, water, elec, wifi);
-        HBox row3 = Ui.hbox(8, count, Ui.grow(), Ui.label("Sort", "secondary"), sort);
-        VBox filters = Ui.padded(10, row1, chips, row3);
-        list.setPadding(new Insets(8, 16, 90, 16));
+        HBox chips = Ui.hbox(8, water, elec, wifi);
+        sort.setPrefWidth(150);
+        HBox row3 = Ui.hbox(8, maxPrice, Ui.grow(), sort);
+        VBox filters = new VBox(10, row1, chips, row3); filters.getStyleClass().add("filter-panel");
+        // filters apply immediately; no need to press search
+        for (Ui.Chip c : new Ui.Chip[]{water, elec, wifi}) c.addEventHandler(javafx.event.ActionEvent.ACTION, e -> javafx.application.Platform.runLater(this::run));
+        sort.setOnAction(e -> run()); maxPrice.setOnAction(e -> run());
+        HBox resultsHead = Ui.hbox(0, count); resultsHead.setPadding(new Insets(12, 16, 0, 16));
+        list.setPadding(new Insets(8, 16, 72, 16));
         map.onPinTap(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
-        ScrollPane sp = Ui.scroll(new VBox(map, list)); VBox.setVgrow(sp, Priority.ALWAYS);
+        ScrollPane sp = Ui.scroll(new VBox(map, resultsHead, list)); VBox.setVgrow(sp, Priority.ALWAYS);
         getChildren().addAll(Ui.appBar("Explore"), filters, sp);
         Async.run(bh::favoriteIds, f -> { favs = f; run(); }, e -> run());
     }

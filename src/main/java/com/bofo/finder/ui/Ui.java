@@ -42,7 +42,7 @@ public final class Ui {
             iv.setImage(img);
         }
         iv.setFitWidth(w); iv.setFitHeight(h); iv.setPreserveRatio(false);
-        Rectangle clip = new Rectangle(w, h); clip.setArcWidth(16); clip.setArcHeight(16); iv.setClip(clip);
+        Rectangle clip = new Rectangle(w, h); clip.setArcWidth(24); clip.setArcHeight(24); iv.setClip(clip);
         return iv;
     }
     public static String stars(double rating) {
@@ -79,6 +79,11 @@ public final class Ui {
         return v;
     }
     public static Label section(String t) { return label(t, "section"); }
+    /** Applies the BOFO stylesheet to a dialog (dialogs are separate windows and do not inherit it). */
+    public static void style(Dialog<?> d) {
+        var css = Ui.class.getResource("/com/bofo/finder/bofo.css");
+        if (css != null) d.getDialogPane().getStylesheets().add(css.toExternalForm());
+    }
     public static VBox card(double gap, Node... n) {
         VBox v = new VBox(gap, n); v.getStyleClass().add("card"); v.setPadding(new Insets(14)); return v;
     }
