@@ -4,3 +4,6 @@ target/
 *.log
 
 _backup*/
+
+_backup*/
+build.log
