@@ -41,6 +41,8 @@ public final class AuthService {
     public void init(HostServices hs) { this.hostServices = hs; }
     public void onSessionLost(Runnable r) { this.onSessionLost = r; }
     public Profile profile() { return profile; }
+    /** DEV ONLY: skip Google sign-in and open the app as a fake user of the given role. Remove before release. */
+    public void devForce(Role r) { profile = new Profile("dev-user", r, true, "Dev User", "", "", null, "verified"); }
     public String userId() { return userId; }
     public boolean signedIn() { return accessToken != null; }
 

@@ -31,10 +31,10 @@ public final class ChatView extends VBox {
     public ChatView(String convId, String bhName, String bhPhoto, String otherUserId, Runnable onBack) {
         this.convId = convId; this.otherUserId = otherUserId; this.me = AuthService.get().userId();
         Button back = Ui.btn("←", "heart", () -> { stop(); onBack.run(); });
-        back.setStyle("-fx-text-fill:white;-fx-font-size:20px;-fx-background-color:transparent;");
+        back.setStyle("-fx-text-fill:-bofo-text;-fx-font-size:18px;-fx-background-color:white;-fx-background-radius:999;-fx-min-width:38;-fx-min-height:38;-fx-padding:0;");
         Button more = Ui.btn("⋯", "heart", this::reportDialog);
-        more.setStyle("-fx-text-fill:white;-fx-font-size:20px;-fx-background-color:transparent;");
-        HBox bar = Ui.appBar("🏠 " + bhName, more); bar.getChildren().add(0, back);
+        more.setStyle("-fx-text-fill:-bofo-text;-fx-font-size:18px;-fx-background-color:white;-fx-background-radius:999;-fx-min-width:38;-fx-min-height:38;-fx-padding:0;");
+        HBox bar = Ui.appBar(bhName, more); bar.getChildren().add(0, back);
 
         msgs.setPadding(new Insets(10));
         VBox.setVgrow(scroll, Priority.ALWAYS);

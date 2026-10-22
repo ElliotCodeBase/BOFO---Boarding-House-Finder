@@ -19,7 +19,7 @@ public final class BhDetailView extends VBox {
     private final VBox body = new VBox(12);
 
     public BhDetailView(String id, Runnable onBack) {
-        Button back = Ui.btn("←", "heart", onBack); back.setStyle("-fx-text-fill:white;-fx-font-size:20px;-fx-background-color:transparent;");
+        Button back = Ui.btn("←", "heart", onBack); back.setStyle("-fx-text-fill:-bofo-text;-fx-font-size:18px;-fx-background-color:white;-fx-background-radius:999;-fx-min-width:38;-fx-min-height:38;-fx-padding:0;");
         getChildren().addAll(Ui.appBar("Boarding house", back), Ui.scroll(body));
         VBox.setVgrow(getChildren().get(1), Priority.ALWAYS);
         body.setPadding(new Insets(0, 0, 40, 0));
@@ -35,17 +35,21 @@ public final class BhDetailView extends VBox {
 
         double[] ref = State.ref();
         double km = ref == null ? 0 : Geo.km(ref[0], ref[1], b.lat(), b.lng());
+        FlowPane tags = new FlowPane(6, 6);
+        if (b.ownerVerified()) tags.getChildren().add(Ui.label("VERIFIED OWNER", "badge-verified"));
+        if (b.water()) tags.getChildren().add(Ui.label("Free water", "tag"));
+        if (b.electricity()) tags.getChildren().add(Ui.label("Free electricity", "tag"));
+        if (b.wifi()) tags.getChildren().add(Ui.label("Free Wi-Fi", "tag"));
         VBox info = Ui.padded(8,
                 Ui.label(b.name(), "title"), Ui.label(b.address(), "secondary"),
-                Ui.label("₱" + String.format("%,.0f", b.price()) + " / month (" + d.optString("price_mode", "per_bed").replace('_', ' ') + ")", "price"),
-                Ui.hbox(8, Ui.label(Ui.stars(b.avgRating()), "stars"), Ui.label(String.format("%.1f · %d reviews", b.avgRating(), b.reviewCount()), "secondary")),
-                b.ownerVerified() ? Ui.label("✔ Verified Owner", "badge-verified") : new Label(),
-                Ui.label((b.water() ? "💧 Free water   " : "") + (b.electricity() ? "⚡ Free electricity   " : "") + (b.wifi() ? "📶 Free WiFi" : ""), "label"),
+                Ui.label("\u20B1" + String.format("%,.0f", b.price()) + " / month (" + d.optString("price_mode", "per_bed").replace('_', ' ') + ")", "price"),
+                Ui.hbox(8, Ui.label(Ui.stars(b.avgRating()), "stars"), Ui.label(String.format("%.1f \u00B7 %d reviews", b.avgRating(), b.reviewCount()), "secondary")),
+                tags,
                 Ui.label(b.availableBeds() + " beds available", "h2"));
-        if (ref != null) info.getChildren().add(Ui.label("📍 " + Geo.fmt(km) + " from " + (State.college.get() != null ? State.college.get().name() : "you") + " · ~" + Geo.walkMinutes(km) + " min walk", "secondary"));
+        if (ref != null) info.getChildren().add(Ui.label(Geo.fmt(km) + " from " + (State.college.get() != null ? State.college.get().name() : "you") + " \u00B7 about " + Geo.walkMinutes(km) + " min walk", "secondary"));
 
         JSONArray rooms = d.getJSONArray("rooms");
-        VBox roomBox = new VBox(4);
+        VBox roomBox = new VBox(4, Ui.section("Rooms"));
         for (int i = 0; i < rooms.length(); i++) {
             JSONObject r = rooms.getJSONObject(i);
             roomBox.getChildren().add(Ui.label("Room " + (i + 1) + ": " + r.getInt("beds") + " beds · " + r.getInt("occupants") + " occupied", "label"));
@@ -55,13 +59,13 @@ public final class BhDetailView extends VBox {
         map.show(ref != null ? ref : new double[]{b.lat(), b.lng()}, 0, java.util.List.of(b), false, ref == null ? null : new double[]{b.lat(), b.lng()});
 
         JSONObject contact = d.getJSONArray("contact").isEmpty() ? new JSONObject() : d.getJSONArray("contact").getJSONObject(0);
-        HBox actions = Ui.hbox(10,
-                Ui.btn("📞 Call", "btn-outline", () -> { String p = contact.optString("phone"); if (!p.isBlank()) Main.host().showDocument("tel:" + p); else Nav.toast("No phone listed"); }),
-                Ui.btn("💬 Chat with owner", "btn-primary", () -> openChat(b)));
-        actions.setPadding(new Insets(0, 16, 0, 16));
+        Button callBtn = Ui.btn("Call", "btn-outline", () -> { String p = contact.optString("phone"); if (!p.isBlank()) Main.host().showDocument("tel:" + p); else Nav.toast("No phone listed"); });
+        Button chatBtn = Ui.btn("Chat with owner", "btn-primary", () -> openChat(b));
+        chatBtn.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(chatBtn, Priority.ALWAYS);
+        HBox actions = Ui.hbox(10, callBtn, chatBtn); actions.getStyleClass().add("action-bar");
 
         VBox reviews = new VBox(8); reviews.setPadding(new Insets(0, 16, 0, 16));
-        reviews.getChildren().add(Ui.label("Reviews", "h2"));
+        reviews.getChildren().add(Ui.section("Reviews"));
         Async.run(() -> bh.reviews(b.id()), arr -> {
             if (arr.isEmpty()) reviews.getChildren().add(Ui.label("No reviews yet.", "secondary"));
             for (int i = 0; i < arr.length(); i++) {
@@ -73,7 +77,8 @@ public final class BhDetailView extends VBox {
         }, e -> {});
         if (AuthService.get().profile().role() == com.bofo.finder.model.Role.STUDENT) reviews.getChildren().add(reviewForm(b.id()));
 
-        body.getChildren().addAll(photoScroll, info, wrap(roomBox), map, actions, reviews);
+        body.getChildren().addAll(photoScroll, info, wrap(roomBox), map, reviews);
+        getChildren().add(actions);   // sticky bottom bar
     }
 
     private VBox wrap(VBox v) { v.setPadding(new Insets(0, 16, 0, 16)); return v; }

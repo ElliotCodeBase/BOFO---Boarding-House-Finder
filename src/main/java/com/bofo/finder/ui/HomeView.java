@@ -9,6 +9,9 @@ import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import org.json.JSONObject;
 
 import java.util.List;
 import java.util.Set;
@@ -19,7 +22,7 @@ public final class HomeView extends VBox {
     private final BhService bh = new BhService();
     private final MapPane map = new MapPane(240);
     private final VBox list = new VBox(10);
-    private final Label collegeLabel = Ui.label("", "h2");
+    private final Button collegeBtn = new Button();
     private final Slider radius = new Slider(0.5, 5, State.radiusKm.get());
     private BhService.Tab tab = BhService.Tab.NEW;
     private Set<String> favs = new HashSet<>();
@@ -31,28 +34,51 @@ public final class HomeView extends VBox {
 
     public HomeView() {
         super(0);
-        String name = AuthService.get().profile() == null ? "" : AuthService.get().profile().fullName().split(" ")[0];
-        Button change = Ui.btn("Change college", "btn-cta", this::pickCollege);
-        Button bell = Ui.btn("🔔", "heart", () -> Nav.toast("No new notifications"));
-        bell.setStyle("-fx-text-fill:white;-fx-font-size:18px;-fx-background-color:transparent;");
-        HBox bar = Ui.appBar("Hi, " + name + " 👋", bell);
+        var prof = AuthService.get().profile();
+        String full = prof == null ? "" : prof.fullName();
+        String name = full.isBlank() ? "" : full.split(" ")[0];
+
+        Button bell = new Button(); bell.getStyleClass().add("icon-btn");
+        bell.setGraphic(Icons.icon(Icons.BELL, 20, Color.web("#1B1630")));
+        bell.setOnAction(e -> Nav.toast("No new notifications"));
+        HBox top = Ui.hbox(12, Ui.avatar(full, 44),
+                Ui.vbox(0, Ui.label("Welcome back,", "secondary"), Ui.label(name.isBlank() ? "there" : name, "greet-name")), Ui.grow(), bell);
+        top.setPadding(new Insets(16, 16, 0, 16));
+
+        HBox searchPill = Ui.hbox(10, Icons.icon(Icons.SEARCH, 20, Color.web("#8A84A0")), Ui.label("Find boarding houses near campus", "secondary"));
+        searchPill.getStyleClass().add("search-pill");
+        searchPill.setOnMouseClicked(e -> BofoPanel.filtersListener.accept(new JSONObject()));   // opens the Explore tab
+        VBox.setMargin(searchPill, new Insets(14, 16, 0, 16));
+
+        collegeBtn.getStyleClass().add("college-chip");
+        collegeBtn.setGraphic(Icons.icon(Icons.PIN, 16, Color.web("#5B34B8")));
+        collegeBtn.setOnAction(e -> pickCollege());
         setCollegeText();
-        HBox collegeRow = Ui.hbox(8, collegeLabel, Ui.grow(), change); collegeRow.setPadding(new Insets(10, 16, 4, 16));
+        HBox collegeRow = Ui.hbox(8, collegeBtn); collegeRow.setPadding(new Insets(12, 16, 0, 16));
 
         radius.setShowTickLabels(false);
         debounce.setOnFinished(e -> reload());
         radius.valueProperty().addListener((o, a, v) -> { State.radiusKm.set(Math.round(v.doubleValue() * 10) / 10.0); debounce.playFromStart(); });   // reload once after the slider settles
         Label rLabel = Ui.label("", "secondary");
-        rLabel.textProperty().bind(State.radiusKm.asString("Radius: %.1f km"));
-        HBox rRow = Ui.hbox(8, rLabel, radius); HBox.setHgrow(radius, Priority.ALWAYS); rRow.setPadding(new Insets(0, 16, 4, 16));
+        rLabel.textProperty().bind(State.radiusKm.asString("Search radius: %.1f km"));
+        VBox radiusCard = Ui.card(4, rLabel, radius);
+        VBox.setMargin(radiusCard, new Insets(12, 16, 0, 16));
 
-        HBox chips = Ui.chipRow(new String[]{"New", "🔥 Hot", "⭐ Best"}, 0, i -> { tab = BhService.Tab.values()[i]; reload(); });
-        chips.setPadding(new Insets(4, 16, 4, 16));
-        list.setPadding(new Insets(4, 16, 90, 16));
-        VBox content = new VBox(0, map, collegeRow, rRow, chips, list);
+        HBox chips = Ui.chipRow(new String[]{"New", "Hot", "Best rated"}, 0, i -> { tab = BhService.Tab.values()[i]; reload(); });
+        chips.setPadding(new Insets(14, 16, 4, 16));
+        Label nearby = Ui.section("Nearby boarding houses"); nearby.setPadding(new Insets(8, 16, 0, 16));
+        list.setPadding(new Insets(4, 16, 110, 16));
+
+        StackPane mapWrap = new StackPane(map);
+        Rectangle mc = new Rectangle(); mc.setArcWidth(44); mc.setArcHeight(44);
+        mc.widthProperty().bind(mapWrap.widthProperty()); mc.heightProperty().bind(mapWrap.heightProperty());
+        mapWrap.setClip(mc);
+        VBox.setMargin(mapWrap, new Insets(12, 16, 0, 16));
+
+        VBox content = new VBox(0, top, searchPill, collegeRow, mapWrap, radiusCard, chips, nearby, list);
         map.onPinTap(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
         ScrollPane sp = Ui.scroll(content); VBox.setVgrow(sp, Priority.ALWAYS);
-        getChildren().addAll(bar, sp);
+        getChildren().add(sp);
         Async.run(bh::favoriteIds, f -> { favs = f; reload(); }, e -> reload());
         if (State.ref() == null) startGps();
         ChangeListener<College> l = (o, a, b) -> { setCollegeText(); reload(); };
@@ -60,7 +86,7 @@ public final class HomeView extends VBox {
     }
 
     private void setCollegeText() {
-        collegeLabel.setText(State.college.get() == null ? "Choose a college to see distances" : "📍 " + State.college.get().name());
+        collegeBtn.setText((State.college.get() == null ? "Choose your college" : State.college.get().name()) + "   \u25BE");
     }
 
     private void startGps() {
@@ -99,8 +125,7 @@ public final class HomeView extends VBox {
             current = items; shown = 0;
             map.show(ref, circle ? State.radiusKm.get() : 0, items, circle, null);
             list.getChildren().clear();
-            if (items.isEmpty()) list.getChildren().add(new Mascot(Mascot.Expression.THINKING, 90));
-            if (items.isEmpty()) list.getChildren().add(Ui.label(ref == null ? "Allow location or choose a college to see nearby boarding houses." : "No boarding houses with free beds in this radius. Try enlarging it.", "secondary"));
+            if (items.isEmpty()) list.getChildren().add(Ui.emptyState("Nothing nearby yet", ref == null ? "Allow location or choose your college to see nearby boarding houses." : "No boarding houses with free beds in this radius. Try a larger radius."));
             renderMore();
             State.offline.set(com.bofo.finder.util.Cache.servedStale);
         }, err -> { if (my == seq) State.offline.set(true); });

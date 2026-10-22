@@ -7,6 +7,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 /** Tiny UI factory so views stay short. All colors come from bofo.css. */
@@ -68,4 +69,62 @@ public final class Ui {
         return row;
     }
     public static VBox padded(double gap, Node... n) { VBox v = new VBox(gap, n); v.setPadding(new Insets(16)); return v; }
+
+    /** Friendly empty state: mascot + title + one short sentence. */
+    public static VBox emptyState(String title, String body) {
+        Label t = label(title, "h2"); t.setAlignment(Pos.CENTER); t.setStyle("-fx-text-alignment:center;");
+        Label b = label(body, "secondary"); b.setAlignment(Pos.CENTER); b.setStyle("-fx-text-alignment:center;");
+        VBox v = new VBox(8, new Mascot(Mascot.Expression.THINKING, 84), t, b);
+        v.setAlignment(Pos.CENTER); v.setPadding(new Insets(28, 20, 28, 20)); v.setMaxWidth(Double.MAX_VALUE);
+        return v;
+    }
+    public static Label section(String t) { return label(t, "section"); }
+    public static VBox card(double gap, Node... n) {
+        VBox v = new VBox(gap, n); v.getStyleClass().add("card"); v.setPadding(new Insets(14)); return v;
+    }
+    public static VBox statCard(String value, String caption) {
+        VBox v = new VBox(2, label(value, "stat-value"), label(caption, "secondary"));
+        v.getStyleClass().add("card"); v.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(v, Priority.ALWAYS); return v;
+    }
+    /** Round initials badge (used for people and chats). */
+    public static Label avatar(String name, double size) {
+        String ini = "B";
+        if (name != null && !name.isBlank()) {
+            String[] p = name.trim().split("\\s+");
+            ini = ("" + p[0].charAt(0) + (p.length > 1 ? p[1].charAt(0) : "")).toUpperCase();
+        }
+        Label l = new Label(ini); l.getStyleClass().add("avatar");
+        l.setMinSize(size, size); l.setPrefSize(size, size); l.setMaxSize(size, size); l.setAlignment(Pos.CENTER);
+        l.setStyle("-fx-background-radius:" + (size / 2) + ";-fx-font-size:" + Math.round(size * 0.36) + "px;");
+        return l;
+    }
+    /** On/off filter chip. */
+    public static final class Chip extends Button {
+        private final javafx.beans.property.BooleanProperty on = new javafx.beans.property.SimpleBooleanProperty(false);
+        public Chip(String text) {
+            super(text); getStyleClass().add("chip");
+            setOnAction(e -> on.set(!on.get()));
+            on.addListener((o, a, v) -> { getStyleClass().removeAll("chip", "chip-selected"); getStyleClass().add(v ? "chip-selected" : "chip"); });
+        }
+        public boolean isOn() { return on.get(); }
+        public void set(boolean v) { on.set(v); }
+    }
+
+    /** Settings-style row: round icon, label, chevron. */
+    public static HBox menuRow(String iconPath, String text, Runnable r) {
+        StackPane circle = new StackPane(Icons.icon(iconPath, 18, Color.web("#5B34B8")));
+        circle.getStyleClass().add("icon-circle");
+        circle.setMinSize(36, 36); circle.setPrefSize(36, 36); circle.setMaxSize(36, 36);
+        HBox row = new HBox(12, circle, label(text, "row-label"), grow(), Icons.icon(Icons.CHEVRON, 18, Color.web("#A39DB8")));
+        row.setAlignment(Pos.CENTER_LEFT); row.getStyleClass().add("menu-row");
+        row.setOnMouseClicked(e -> r.run());
+        return row;
+    }
+    /** "---- Or ----" style divider. */
+    public static HBox divider(String text) {
+        Region l = new Region(), r = new Region();
+        l.getStyleClass().add("hline"); r.getStyleClass().add("hline");
+        HBox.setHgrow(l, Priority.ALWAYS); HBox.setHgrow(r, Priority.ALWAYS);
+        HBox h = new HBox(10, l, label(text, "secondary"), r); h.setAlignment(Pos.CENTER); return h;
+    }
 }

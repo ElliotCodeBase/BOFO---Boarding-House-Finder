@@ -82,7 +82,7 @@ public final class VerificationView extends VBox {
     private VBox step(String title, ImageView pv, java.util.function.Consumer<Image> onShot, Runnable changed) {
         StackPane frame = new StackPane(pv);
         frame.setPrefSize(290, 180); frame.setMinHeight(180);
-        frame.setStyle("-fx-border-color:#6C3FC5;-fx-border-style:dashed;-fx-border-width:2;-fx-border-radius:12;");  // on-screen frame guide
+        frame.setStyle("-fx-border-color:#5B34B8;-fx-border-style:dashed;-fx-border-width:2;-fx-border-radius:12;");  // on-screen frame guide
         Button shoot = Ui.btn("📷 Take photo / Retake", "btn-outline", () -> Capture.camera().ifPresent(img -> { onShot.accept(img); changed.run(); }));
         return new VBox(6, Ui.label(title, "h2"), frame, shoot);
     }

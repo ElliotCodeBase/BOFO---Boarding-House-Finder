@@ -1,5 +1,6 @@
 package com.bofo.finder.ui;
 
+import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -22,6 +23,10 @@ public final class Nav {
     /** @param withMascot the floating BOFO stays on top of every logged-in screen */
     public static void show(Node screen, boolean withMascot) {
         SCREEN.getChildren().setAll(screen);
+        if (!(screen instanceof SplashView)) {                       // soft fade-in for every real screen
+            screen.setOpacity(0);
+            FadeTransition ft = new FadeTransition(Duration.millis(260), screen); ft.setToValue(1); ft.play();
+        }
         mascotAllowed = withMascot;
         BOFO.setVisible(withMascot && BofoPanel.enabled());
     }
@@ -30,7 +35,7 @@ public final class Nav {
 
     public static void toast(String msg) {
         Label l = new Label(msg);
-        l.setStyle("-fx-background-color:#1F1A2E;-fx-text-fill:white;-fx-padding:10 16;-fx-background-radius:20;");
+        l.getStyleClass().add("toast");
         StackPane.setAlignment(l, Pos.BOTTOM_CENTER);
         StackPane.setMargin(l, new javafx.geometry.Insets(0, 0, 96, 0));
         ROOT.getChildren().add(l);

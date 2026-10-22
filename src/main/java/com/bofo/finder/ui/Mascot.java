@@ -19,14 +19,24 @@ public final class Mascot extends Group {
     /** WAVING = cheerful ^ ^ eyes + open smile and a small greeting tilt (there are no arms). */
     public enum Expression { HAPPY, THINKING, WAVING }
 
-    private static final Color PURPLE = Color.web("#6C3FC5"), DARK = Color.web("#4A2A8F"), AMBER = Color.web("#FFB400"),
-            AMBER_DARK = Color.web("#E39B00"), TINT = Color.web("#EDE4FA"), INK = Color.web("#1F1A2E"), WHITE = Color.WHITE;
+    /** Palette (instance, so a white variant can exist). PURPLE=body, WHITE=face screen, INK=eyes, AMBER*=hat/light accents. */
+    private final Color PURPLE, DARK, AMBER, AMBER_DARK, TINT, INK, WHITE;
 
     private final double size;
     private final Group art = new Group();
     private RotateTransition tilt;
 
-    public Mascot(Expression e, double size) {
+    public Mascot(Expression e, double size) { this(e, size, false); }
+
+    /** @param white true = white mascot (white body, deep-purple face) for use on purple backgrounds such as the splash. */
+    public Mascot(Expression e, double size, boolean white) {
+        if (white) {
+            PURPLE = Color.WHITE; DARK = Color.web("#E4D9F7"); AMBER = Color.web("#D9C8F5"); AMBER_DARK = Color.web("#C4ABEE");
+            TINT = Color.web("#5B34B8"); INK = Color.WHITE; WHITE = Color.web("#3F2285");
+        } else {
+            PURPLE = Color.web("#5B34B8"); DARK = Color.web("#3F2285"); AMBER = Color.web("#8E6BE0"); AMBER_DARK = Color.web("#6F48C9");
+            TINT = Color.web("#F0EBFA"); INK = Color.web("#1B1630"); WHITE = Color.WHITE;
+        }
         this.size = size;
         double k = size / 200.0;
         art.getTransforms().add(new Scale(k, k, 0, 0));
@@ -52,7 +62,7 @@ public final class Mascot extends Group {
         switch (e) {
             case THINKING -> {
                 art.getChildren().addAll(rr(80, 90, 14, 18, 7, INK), rr(110, 90, 14, 18, 7, INK), rr(88, 119, 24, 5, 2.5, INK));
-                art.getChildren().addAll(circle(168, 40, 5), circle(180, 26, 7), rr(166, 2, 30, 20, 10, AMBER));   // thought bubble
+                art.getChildren().addAll(circle(168, 40, 5, AMBER), circle(180, 26, 7, AMBER), rr(166, 2, 30, 20, 10, AMBER));   // thought bubble
             }
             case WAVING -> {
                 art.getChildren().addAll(arc(72, 104, 81, 88, 90, 104, INK, 5), arc(110, 104, 119, 88, 128, 104, INK, 5));
@@ -77,7 +87,7 @@ public final class Mascot extends Group {
     private static Rectangle rr(double x, double y, double w, double h, double r, Color c) {
         Rectangle rect = new Rectangle(x, y, w, h); rect.setArcWidth(r * 2); rect.setArcHeight(r * 2); rect.setFill(c); return rect;
     }
-    private static Circle circle(double cx, double cy, double r) { return new Circle(cx, cy, r, AMBER); }
+    private static Circle circle(double cx, double cy, double r, Color c) { return new Circle(cx, cy, r, c); }
     private static QuadCurve arc(double x1, double y1, double cx, double cy, double x2, double y2, Color c, double w) {
         QuadCurve q = new QuadCurve(x1, y1, cx, cy, x2, y2);
         q.setFill(null); q.setStroke(c); q.setStrokeWidth(w); q.setStrokeLineCap(StrokeLineCap.ROUND); return q;

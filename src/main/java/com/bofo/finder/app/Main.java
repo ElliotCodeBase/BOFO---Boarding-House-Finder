@@ -28,20 +28,13 @@ public class Main extends Application {
         Scene scene = new Scene(Nav.root(), 360, 720);
         scene.getStylesheets().add(getClass().getResource("/com/bofo/finder/bofo.css").toExternalForm());
         stage.setScene(scene); stage.setTitle("BOFO Finder"); stage.show();
-        try { StatusBarService.create().ifPresent(s -> s.setColor(Color.web("#4A2A8F"))); } catch (Throwable ignored) {}
-
-        if (com.bofo.finder.config.AppConfig.devBypass()) {   // DEV ONLY: skip login entirely
-            try { auth.devLogin(Role.valueOf(com.bofo.finder.config.AppConfig.devRole().toUpperCase())); }
-            catch (IllegalArgumentException e) { auth.devLogin(Role.STUDENT); }
-            route();
-            return;
-        }
+        try { StatusBarService.create().ifPresent(s -> s.setColor(Color.web("#3F2285"))); } catch (Throwable ignored) {}
 
         SplashView splash = new SplashView();
         Nav.show(splash, false);
         long t0 = System.currentTimeMillis();
         Async.run(auth::restore, result -> {
-            long wait = Math.max(0, 1200 - (System.currentTimeMillis() - t0));   // splash shows at least ~1.2 s
+            long wait = Math.max(0, 2200 - (System.currentTimeMillis() - t0));   // splash shows at least ~2.2 s so the mascot jump is seen
             new Thread(() -> { try { Thread.sleep(wait); } catch (InterruptedException ignored) {}
                 Platform.runLater(() -> dispatch(result, splash)); }).start();
         }, e -> showLogin(null));

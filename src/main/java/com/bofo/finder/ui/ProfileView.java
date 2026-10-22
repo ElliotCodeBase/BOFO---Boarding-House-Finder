@@ -43,11 +43,24 @@ public final class ProfileView extends VBox {
         Button delete = Ui.btn("Delete my account and data", "btn-danger", this::confirmDelete);
         Button logout = Ui.btn("Log out", "btn-outline", () -> Main.signOutToLogin());
 
-        VBox form = Ui.padded(10, Ui.label("Edit profile", "h2"), name, email, phone, age, sex, save,
-                Ui.label("Preferences", "h2"), notif, mascot, Ui.label("Account", "h2"), switchRole, switchGoogle,
-                Ui.label("Legal", "h2"), Ui.hbox(6, terms, priv), agree,
-                Ui.label("Danger zone", "h2"), delete, logout, Ui.label("BOFO Finder v1.0.0 · About", "secondary"));
-        form.setPadding(new Insets(16, 16, 100, 16));
+        String nm = p.fullName() == null || p.fullName().isBlank() ? "Your profile" : p.fullName();
+        String roleName = p.role().name().charAt(0) + p.role().name().substring(1).toLowerCase();
+        VBox idCard = Ui.card(0, Ui.hbox(14, Ui.avatar(nm, 60), Ui.vbox(2, Ui.label(nm, "title"), Ui.label(roleName + " account", "secondary"))));
+        HBox roleRow = Ui.menuRow(Icons.SWAP, "Switch to " + (p.role() == Role.STUDENT ? "Owner" : "Student") + " mode", () -> switchRole(p));
+        roleRow.setVisible(p.role() != Role.ADMIN); roleRow.setManaged(p.role() != Role.ADMIN);
+        HBox googleRow = Ui.menuRow(Icons.PERSON, "Switch Google account", () -> Main.signOutToLogin());
+        HBox termsRow = Ui.menuRow(Icons.DOC, "Terms of Service", () -> Nav.toast("Open Terms URL"));
+        HBox privRow = Ui.menuRow(Icons.SHIELD, "Privacy Policy", () -> Nav.toast("Open Privacy URL"));
+        HBox agreeRow = Ui.menuRow(Icons.INFO, "Agreements and Guidelines", () -> Nav.toast("Open Owner Agreement / Community Guidelines"));
+        HBox logoutRow = Ui.menuRow(Icons.LOGOUT, "Log out", () -> Main.signOutToLogin());
+        delete.setMaxWidth(Double.MAX_VALUE);
+        VBox form = Ui.padded(14, idCard,
+                Ui.card(10, Ui.label("Edit profile", "h2"), name, email, phone, age, sex, save),
+                Ui.card(4, Ui.label("General", "h2"), notif, mascot, roleRow, googleRow),
+                Ui.card(4, Ui.label("About", "h2"), termsRow, privRow, agreeRow),
+                Ui.card(4, logoutRow),
+                delete, Ui.label("BOFO Finder v1.0.0", "secondary"));
+        form.setPadding(new Insets(8, 16, 110, 16));
         getChildren().addAll(Ui.appBar("Profile"), Ui.scroll(form));
     }
 

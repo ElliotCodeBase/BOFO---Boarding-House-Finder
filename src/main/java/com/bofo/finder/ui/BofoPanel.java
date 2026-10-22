@@ -11,6 +11,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.json.JSONObject;
+import javafx.event.EventHandler;
+import javafx.scene.input.MouseEvent;
 
 import java.util.function.Consumer;
 
@@ -32,6 +34,15 @@ public final class BofoPanel extends Pane {
     private double dx, dy; private boolean dragged;
     private long lastAsk = 0; private int asksThisMinute = 0;
     private boolean greeted = false;
+    private final EventHandler<MouseEvent> outsideClose = e -> {
+        if (!chat.isVisible()) return;
+        if (e.getTarget() instanceof Node n && (isInside(n, chat) || isInside(n, fab))) return;
+        chat.setVisible(false);
+    };
+    private static boolean isInside(Node n, Node root) {
+        for (Node x = n; x != null; x = x.getParent()) if (x == root) return true;
+        return false;
+    }
 
     public BofoPanel() {
         setPickOnBounds(false);
@@ -58,20 +69,24 @@ public final class BofoPanel extends Pane {
         chat.setPadding(new Insets(12)); chat.setVisible(false);
         chat.setPrefSize(320, 420); chat.setLayoutX(20); chat.setLayoutY(120);
         Label head = Ui.label("BOFO", "h2");
-        Button close = Ui.btn("✕", "heart", this::toggle);
+        Button close = Ui.btn("X", "heart", this::toggle);
         ScrollPane sp = Ui.scroll(messages); VBox.setVgrow(sp, Priority.ALWAYS);
-        input.setPromptText("Ask BOFO…"); HBox.setHgrow(input, Priority.ALWAYS);
+        input.setPromptText("Ask BOFO..."); HBox.setHgrow(input, Priority.ALWAYS);
         Button send = Ui.btn("Send", "btn-primary", this::send);
         input.setOnAction(e -> send());
         Label note = Ui.label("BOFO can make mistakes. Check details with the owner.", "secondary");
         chat.getChildren().addAll(Ui.hbox(8, head, Ui.grow(), close), sp, note, Ui.hbox(6, input, send));
         getChildren().addAll(chat, fab);
         messages.setPadding(new Insets(4));
+        sceneProperty().addListener((obs, oldS, newS) -> {
+            if (oldS != null) oldS.removeEventFilter(MouseEvent.MOUSE_PRESSED, outsideClose);
+            if (newS != null) newS.addEventFilter(MouseEvent.MOUSE_PRESSED, outsideClose);
+        });
     }
 
     private void toggle() {
         chat.setVisible(!chat.isVisible());
-        if (chat.isVisible() && !greeted) { greeted = true; bubble("Hi! I'm BOFO 👋 Ask me to find a boarding house, compare listings, or explain verification.", false); }
+        if (chat.isVisible() && !greeted) { greeted = true; bubble("Hi! I'm BOFO. Ask me to find a boarding house, compare listings, or explain verification.", false); }
     }
 
     private void send() {
@@ -79,9 +94,9 @@ public final class BofoPanel extends Pane {
         if (q.isEmpty()) return;
         long now = System.currentTimeMillis();
         if (now - lastAsk > 60_000) { asksThisMinute = 0; lastAsk = now; }
-        if (++asksThisMinute > 10) { bubble("Slow down a little 🙂 Try again in a minute.", false); return; }  // client-side courtesy; real limit is server-side
+        if (++asksThisMinute > 10) { bubble("Slow down a little. Try again in a minute.", false); return; }  // client-side courtesy; real limit is server-side
         input.clear(); bubble(q, true);
-        Label thinking = bubble("…", false);
+        Label thinking = bubble("...", false);
         face.set(Mascot.Expression.THINKING);
         String collegeId = State.college.get() == null ? null : State.college.get().id();
         Async.run(() -> ai.ask(q, collegeId), a -> {
