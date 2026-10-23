@@ -34,13 +34,14 @@ public final class BoostView extends VBox {
         back.getStyleClass().setAll("button", "icon-btn");
         HBox bar = Ui.appBar("Boost listing"); bar.getChildren().add(0, back);
         body.setPadding(new Insets(16, 16, 90, 16));
-        getChildren().addAll(bar, Ui.scroll(body));
+        getChildren().addAll(bar, Ui.scrollCentered(body, 560));
 
         body.getChildren().addAll(
                 Ui.label(bh.name(), "title"),
                 Ui.label("Featured listings appear at the top of Home and Explore (up to 3 per list) with a ⭐ Featured badge, "
                         + "so more students see your boarding house. A boost does not change your rating or reviews.", "label"));
-        Async.run(svc::plans, this::showPlans, e -> body.getChildren().add(Ui.label("Could not load plans. Check your connection.", "error-text")));
+        VBox plansBox = new VBox(12); body.getChildren().add(plansBox);       // skeleton / error live here, plans follow below
+        Ui.load(plansBox, () -> Skeleton.rows(3), svc::plans, this::showPlans);
     }
 
     private void showPlans(JSONArray plans) {

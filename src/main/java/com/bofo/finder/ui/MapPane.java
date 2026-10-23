@@ -37,6 +37,9 @@ public final class MapPane extends StackPane {
 
     public void onPinTap(Consumer<BoardingHouse> c) { this.onPin = c; }
 
+    /** Let the map grow to fill the space it is given (full-screen map mode), with a sensible minimum. */
+    public void fillAvailable(double minHeight) { setMinHeight(minHeight); setPrefHeight(javafx.scene.layout.Region.USE_COMPUTED_SIZE); setMaxHeight(Double.MAX_VALUE); }
+
     /** Current map center {lat, lng}. Used for the owner's "drop pin" (a fixed crosshair sits over the center). */
     public double[] center() { javafx.geometry.Point2D s = map.localToScene(map.getWidth() / 2, map.getHeight() / 2); MapPoint p = map.getMapPosition(s.getX(), s.getY()); return new double[]{p.getLatitude(), p.getLongitude()}; }
 
@@ -56,14 +59,14 @@ public final class MapPane extends StackPane {
         private double[] center, routeTo; private double radius; private boolean circleOn;
         private final List<BoardingHouse> pins = new ArrayList<>();
         private final Circle ring = new Circle();
-        private final Circle collegeDot = new Circle(7, Color.web("#4A2A8F"));
+        private final Circle collegeDot = new Circle(7, Color.web("#3A22B8"));
         private final Line route = new Line();
         private final List<Node> pinNodes = new ArrayList<>();
 
         PinLayer() {
-            ring.setFill(Color.web("#5B34B8", 0.14)); ring.setStroke(Color.web("#5B34B8")); ring.setStrokeWidth(1.5);
+            ring.setFill(Color.web("#5B3BF0", 0.14)); ring.setStroke(Color.web("#5B3BF0")); ring.setStrokeWidth(1.5);
             collegeDot.setStroke(Color.WHITE); collegeDot.setStrokeWidth(2);
-            route.setStroke(Color.web("#3F2285")); route.setStrokeWidth(4);
+            route.setStroke(Color.web("#3A22B8")); route.setStrokeWidth(4);
             getChildren().addAll(ring, route, collegeDot);
         }
 
@@ -72,9 +75,9 @@ public final class MapPane extends StackPane {
             getChildren().removeAll(pinNodes); pinNodes.clear(); pins.clear(); pins.addAll(p);
             for (BoardingHouse b : p) {
                 Polygon pin = new Polygon(0, 0, -7, -18, 7, -18);                    // teardrop-ish marker
-                Circle head = new Circle(0, -22, 9, Color.web("#5B34B8")); head.setStroke(Color.WHITE); head.setStrokeWidth(2);
+                Circle head = new Circle(0, -22, 9, Color.web("#5B3BF0")); head.setStroke(Color.WHITE); head.setStrokeWidth(2);
                 StackPane g = new StackPane(); g.getChildren().addAll(pin, head);
-                pin.setFill(Color.web("#5B34B8")); pin.setTranslateY(0);
+                pin.setFill(Color.web("#5B3BF0")); pin.setTranslateY(0);
                 g.setPickOnBounds(false);
                 g.setOnMouseClicked(e -> onPin.accept(b));
                 g.setUserData(b); pinNodes.add(g); getChildren().add(g);

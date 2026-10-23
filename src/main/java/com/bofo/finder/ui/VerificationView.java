@@ -23,11 +23,13 @@ public final class VerificationView extends VBox {
     private byte[] front, back, selfie;
     private ComboBox<String> idType;
 
-    public VerificationView() {
+    public VerificationView() { this(null); }
+
+    /** back != null: opened from Profile as a sub-screen (shows a back arrow). */
+    public VerificationView(Runnable back) {
         body.setPadding(new Insets(16, 16, 90, 16));
-        getChildren().addAll(Ui.appBar("Verification"), Ui.scroll(body));
-        Async.run(() -> svc.myLatest(AuthService.get().userId()), this::showStatus,
-                e -> body.getChildren().add(Ui.label("Could not load status.", "error-text")));
+        getChildren().addAll(back == null ? Ui.appBar("Verification") : Ui.backBar("Verification", back), Ui.scrollCentered(body, 560));
+        Ui.load(body, () -> Skeleton.rows(2), () -> svc.myLatest(AuthService.get().userId()), this::showStatus);
     }
 
     private void showStatus(JSONObject v) {
@@ -81,8 +83,9 @@ public final class VerificationView extends VBox {
 
     private VBox step(String title, ImageView pv, java.util.function.Consumer<Image> onShot, Runnable changed) {
         StackPane frame = new StackPane(pv);
-        frame.setPrefSize(290, 180); frame.setMinHeight(180);
-        frame.setStyle("-fx-border-color:#5B34B8;-fx-border-style:dashed;-fx-border-width:2;-fx-border-radius:12;");  // on-screen frame guide
+        frame.setMinHeight(180); frame.setPrefHeight(180); frame.setMaxWidth(480);
+        pv.fitWidthProperty().bind(frame.widthProperty().subtract(12));   // follows the screen width
+        frame.setStyle("-fx-border-color:#5B3BF0;-fx-border-style:dashed;-fx-border-width:2;-fx-border-radius:12;");  // on-screen frame guide
         Button shoot = Ui.btn("📷 Take photo / Retake", "btn-outline", () -> Capture.camera().ifPresent(img -> { onShot.accept(img); changed.run(); }));
         return new VBox(6, Ui.label(title, "h2"), frame, shoot);
     }

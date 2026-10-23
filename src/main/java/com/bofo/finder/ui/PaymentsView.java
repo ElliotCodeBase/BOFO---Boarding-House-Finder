@@ -21,8 +21,7 @@ public final class PaymentsView extends VBox {
     }
 
     private void load() {
-        rows.getChildren().clear();
-        Async.run(svc::allPayments, (JSONArray a) -> {
+        Ui.load(rows, () -> Skeleton.rows(6), svc::allPayments, (JSONArray a) -> {
             double total = 0;
             for (int i = 0; i < a.length(); i++) if ("paid".equals(a.getJSONObject(i).getString("status"))) total += a.getJSONObject(i).getDouble("amount_php");
             rows.getChildren().add(Ui.label("Paid (last 100): ₱" + String.format("%,.2f", total), "h2"));
@@ -33,11 +32,11 @@ public final class PaymentsView extends VBox {
                 if ("paid".equals(p.getString("status"))) {
                     c.getChildren().add(Ui.btn("Mark refunded", "btn-outline", () -> {
                         TextInputDialog d = new TextInputDialog(); d.setHeaderText("Refund reason (logged)");
-                        d.showAndWait().ifPresent(r -> { if (!r.isBlank()) Async.run(() -> { svc.refund(p.getString("id"), r); return true; }, ok -> load(), e -> Nav.toast("Failed")); });
+                        d.showAndWait().ifPresent(r -> { if (!r.isBlank()) Async.run(() -> { svc.refund(p.getString("id"), r); return true; }, ok -> load(), e -> Ui.failToast(e, "Failed")); });
                     }));
                 }
                 c.getStyleClass().add("card"); rows.getChildren().add(c);
             }
-        }, e -> rows.getChildren().add(Ui.label("Could not load payments.", "error-text")));
+        });
     }
 }

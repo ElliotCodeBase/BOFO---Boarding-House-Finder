@@ -21,7 +21,7 @@ import java.util.HashSet;
 public final class HomeView extends VBox {
     private final BhService bh = new BhService();
     private final MapPane map = new MapPane(240);
-    private final VBox list = new VBox(10);
+    private final CardGrid list = new CardGrid(10, 320);
     private final Button collegeBtn = new Button();
     private final Slider radius = new Slider(0.5, 5, State.radiusKm.get());
     private BhService.Tab tab = BhService.Tab.NEW;
@@ -39,7 +39,7 @@ public final class HomeView extends VBox {
         String name = full.isBlank() ? "" : full.split(" ")[0];
 
         Button bell = new Button(); bell.getStyleClass().add("icon-btn");
-        bell.setGraphic(Icons.icon(Icons.BELL, 20, Color.web("#1B1630")));
+        bell.setGraphic(Icons.icon(Icons.BELL, 20, Color.web("#17142A")));
         bell.setOnAction(e -> Nav.toast("No new notifications"));
         HBox top = Ui.hbox(12, Ui.avatar(full, 40),
                 Ui.vbox(0, Ui.label("Welcome back,", "secondary"), Ui.label(name.isBlank() ? "there" : name, "greet-name")), Ui.grow(), bell);
@@ -51,7 +51,7 @@ public final class HomeView extends VBox {
         VBox.setMargin(searchPill, new Insets(14, 16, 0, 16));
 
         collegeBtn.getStyleClass().add("college-chip");
-        collegeBtn.setGraphic(Icons.icon(Icons.PIN, 16, Color.web("#5B34B8")));
+        collegeBtn.setGraphic(Icons.icon(Icons.PIN, 16, Color.web("#5B3BF0")));
         collegeBtn.setOnAction(e -> pickCollege());
         setCollegeText();
         HBox collegeRow = Ui.hbox(8, collegeBtn); collegeRow.setPadding(new Insets(12, 16, 0, 16));
@@ -117,6 +117,7 @@ public final class HomeView extends VBox {
 
     private void reload() {
         final int my = ++seq;
+        list.getChildren().setAll(Skeleton.cards(4));            // skeleton while loading
         double[] ref = State.ref();
         boolean circle = State.college.get() != null;
         Double rad = circle ? State.radiusKm.get() : null;
@@ -127,8 +128,7 @@ public final class HomeView extends VBox {
             list.getChildren().clear();
             if (items.isEmpty()) list.getChildren().add(Ui.emptyState("Nothing nearby yet", ref == null ? "Allow location or choose your college to see nearby boarding houses." : "No boarding houses with free beds in this radius. Try a larger radius."));
             renderMore();
-            State.offline.set(com.bofo.finder.util.Cache.servedStale);
-        }, err -> { if (my == seq) State.offline.set(true); });
+        }, err -> { if (my == seq) list.getChildren().setAll(Ui.errorState(err, this::reload)); });   // banner is set globally
     }
 
     /** Renders the next batch of cards; a "Show more" button appears when more remain. */
@@ -140,7 +140,7 @@ public final class HomeView extends VBox {
             BoardingHouse b = current.get(i);
             list.getChildren().add(new BhCard(b, tab == BhService.Tab.HOT, favs.contains(b.id()),
                     x -> Nav.show(new BhDetailView(x.id(), () -> Nav.show(new StudentShell(), true)), true),
-                    on -> Async.run(() -> { bh.setFavorite(uid, b.id(), on); return true; }, ok -> {}, e -> Nav.toast("Could not update favorite"))));
+                    (on, undo) -> BhCard.saveFavorite(bh, uid, b.id(), on, undo)));
         }
         shown = end;
         if (shown < current.size()) list.getChildren().add(Ui.btn("Show more (" + (current.size() - shown) + ")", "btn-outline", this::renderMore));

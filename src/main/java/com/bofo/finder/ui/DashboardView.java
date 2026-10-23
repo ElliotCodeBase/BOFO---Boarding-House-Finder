@@ -18,16 +18,17 @@ public final class DashboardView extends VBox {
         Label status = Ui.label(switch (vs) {
             case "verified" -> "You are a Verified Owner. You can publish listings.";
             case "pending" -> "Verification pending. An admin is reviewing your documents.";
-            case "rejected" -> "Verification rejected. Open the Verify tab to see why and resubmit.";
-            default -> "Verify your identity before publishing listings. Open the Verify tab.";
+            case "rejected" -> "Verification rejected. Open Profile > Verification to see why and resubmit.";
+            default -> "Verify your identity before publishing listings. Open Profile > Verification.";
         }, cls);
         box.getChildren().add(status);
-        Async.run(() -> new BhService().myListings(p.id()), l -> {
+        VBox statsBox = new VBox(10); box.getChildren().add(statsBox);
+        Ui.load(statsBox, () -> Skeleton.stats(3), () -> new BhService().myListings(p.id()), l -> {
             int beds = l.stream().mapToInt(b -> b.availableBeds()).sum();
             double avg = l.stream().filter(b -> b.reviewCount() > 0).mapToDouble(b -> b.avgRating()).average().orElse(0);
             HBox stats = new HBox(10, Ui.statCard(String.valueOf(l.size()), "Listings"), Ui.statCard(String.valueOf(beds), "Beds available"),
                     Ui.statCard(avg == 0 ? "-" : String.format("%.1f", avg), "Avg rating"));
-            box.getChildren().addAll(Ui.section("Overview"), stats);
-        }, e -> box.getChildren().add(Ui.label("Could not load stats.", "error-text")));
+            statsBox.getChildren().addAll(Ui.section("Overview"), stats);
+        });
     }
 }

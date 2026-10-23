@@ -32,10 +32,10 @@ public final class Mascot extends Group {
     public Mascot(Expression e, double size, boolean white) {
         if (white) {
             PURPLE = Color.WHITE; DARK = Color.web("#E4D9F7"); AMBER = Color.web("#D9C8F5"); AMBER_DARK = Color.web("#C4ABEE");
-            TINT = Color.web("#5B34B8"); INK = Color.WHITE; WHITE = Color.web("#3F2285");
+            TINT = Color.web("#5B3BF0"); INK = Color.WHITE; WHITE = Color.web("#3A22B8");
         } else {
-            PURPLE = Color.web("#5B34B8"); DARK = Color.web("#3F2285"); AMBER = Color.web("#8E6BE0"); AMBER_DARK = Color.web("#6F48C9");
-            TINT = Color.web("#F0EBFA"); INK = Color.web("#1B1630"); WHITE = Color.WHITE;
+            PURPLE = Color.web("#5B3BF0"); DARK = Color.web("#3A22B8"); AMBER = Color.web("#8D7BFF"); AMBER_DARK = Color.web("#6B55F5");
+            TINT = Color.web("#ECE9FF"); INK = Color.web("#17142A"); WHITE = Color.WHITE;
         }
         this.size = size;
         double k = size / 200.0;

@@ -20,16 +20,15 @@ public final class ListingsView extends VBox {
     }
 
     private void load() {
-        rows.getChildren().clear();
-        Async.run(() -> bh.myListings(AuthService.get().userId()), l -> {
+        Ui.load(rows, () -> Skeleton.cards(2), () -> bh.myListings(AuthService.get().userId()), l -> {
             if (l.isEmpty()) rows.getChildren().add(Ui.label("No listings yet.", "secondary"));
             for (BoardingHouse b : l) {
-                BhCard c = new BhCard(b, false, false, x -> {}, on -> {});
-                Button unlist = Ui.btn("Unlist", "btn-outline", () -> Async.run(() -> { bh.setStatus(b.id(), "unlisted"); return true; }, ok -> load(), e -> Nav.toast("Failed")));
-                Button del = Ui.btn("Delete", "btn-danger", () -> Async.run(() -> { bh.deleteListing(b.id()); return true; }, ok -> load(), e -> Nav.toast("Failed")));
+                BhCard c = new BhCard(b, false, false, x -> {}, (on, undo) -> {});
+                Button unlist = Ui.btn("Unlist", "btn-outline", () -> Async.run(() -> { bh.setStatus(b.id(), "unlisted"); return true; }, ok -> load(), e -> Ui.failToast(e, "Failed")));
+                Button del = Ui.btn("Delete", "btn-danger", () -> Async.run(() -> { bh.deleteListing(b.id()); return true; }, ok -> load(), e -> Ui.failToast(e, "Failed")));
                 Button boost = Ui.btn(b.featured() ? "Extend boost" : "Boost", "btn-cta", () -> Nav.show(new BoostView(b, () -> Nav.show(new OwnerShell(), true)), true));
                 rows.getChildren().addAll(c, Ui.hbox(8, boost, unlist, del));
             }
-        }, e -> rows.getChildren().add(Ui.label("Could not load listings.", "error-text")));
+        });
     }
 }
