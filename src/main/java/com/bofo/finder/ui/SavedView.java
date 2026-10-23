@@ -9,14 +9,14 @@ import javafx.scene.layout.VBox;
 public final class SavedView extends VBox {
     public SavedView() {
         BhService bh = new BhService();
-        VBox list = new VBox(10); list.setPadding(new Insets(12, 16, 72, 16));
+        CardGrid list = new CardGrid(10, 320); list.setPadding(new Insets(12, 16, 72, 16));
         getChildren().addAll(Ui.appBar("Saved"), Ui.scroll(list));
-        Async.run(bh::favorites, items -> {
+        Ui.load(list, () -> Skeleton.cards(4), bh::favorites, items -> {
             if (items.isEmpty()) list.getChildren().add(Ui.emptyState("Nothing saved yet", "Tap the heart on a boarding house to keep it here."));
             String uid = AuthService.get().userId();
             items.forEach(b -> list.getChildren().add(new BhCard(b, false, true,
                     x -> Nav.show(new BhDetailView(x.id(), () -> Nav.show(new StudentShell(), true)), true),
-                    on -> Async.run(() -> { bh.setFavorite(uid, b.id(), on); return true; }, ok -> {}))));
-        }, e -> list.getChildren().add(Ui.label("Could not load saved items.", "error-text")));
+                    (on, undo) -> BhCard.saveFavorite(bh, uid, b.id(), on, undo))));
+        });
     }
 }

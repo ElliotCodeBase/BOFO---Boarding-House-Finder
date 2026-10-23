@@ -6,74 +6,93 @@ import com.bofo.finder.model.Role;
 import com.bofo.finder.service.AuthService;
 import com.bofo.finder.service.SupabaseClient;
 import com.bofo.finder.util.Async;
-import com.bofo.finder.util.Validate;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.json.JSONObject;
 
-/** Settings/Profile: edit profile, mascot toggle, switch role, policies, delete account, log out. */
+/**
+ * Profile + Settings in the GCash style: a coloured header with avatar, name and status chips, then grouped
+ * white cards of icon rows with chevrons (Account, Preferences, Security & privacy, About), a Log out button
+ * and a quiet "Delete my account" link at the bottom. Personal information opens as its own sub-screen.
+ */
 public final class ProfileView extends VBox {
     public ProfileView() {
         Profile p = AuthService.get().profile();
-        TextField name = new TextField(p.fullName()), phone = new TextField(p.phone());
-        phone.setPromptText("Phone (optional, private)");
-        TextField age = new TextField(); age.setPromptText("Age (optional, private)");
-        ComboBox<String> sex = new ComboBox<>(); sex.getItems().addAll("", "Male", "Female", "Prefer not to say"); sex.setPromptText("Sex (optional, private)");
-        TextField email = new TextField(); email.setEditable(false); email.setText("Email comes from your Google account");
-        Button save = Ui.btn("Save profile", "btn-primary", () -> {
-            JSONObject patch = new JSONObject().put("full_name", Validate.clean(name.getText(), 80)).put("phone", Validate.clean(phone.getText(), 20));
-            try { if (!age.getText().isBlank()) patch.put("age", Integer.parseInt(age.getText().trim())); } catch (NumberFormatException e) { Nav.toast("Age must be a number"); return; }
-            if (sex.getValue() != null && !sex.getValue().isBlank()) patch.put("sex", sex.getValue());
-            Async.run(() -> SupabaseClient.get().update("users", "id=eq." + p.id(), patch), r -> Nav.toast("Saved"), e -> Nav.toast("Could not save"));
-        });
-
-        CheckBox notif = new CheckBox("Notifications"); notif.setSelected(true);
-        CheckBox mascot = new CheckBox("Show BOFO mascot"); mascot.setSelected(BofoPanel.enabled());
-        mascot.setOnAction(e -> BofoPanel.setEnabled(mascot.isSelected()));
-
-        Button switchGoogle = Ui.btn("Switch Google account", "btn-outline", () -> Main.signOutToLogin());
-        Button switchRole = Ui.btn("Switch to " + (p.role() == Role.STUDENT ? "Owner" : "Student") + " mode", "btn-outline", () -> switchRole(p));
-        switchRole.setVisible(p.role() != Role.ADMIN); switchRole.setManaged(p.role() != Role.ADMIN);
-
-        Button terms = Ui.btn("Terms of Service", "chip", () -> Nav.toast("Open Terms URL"));
-        Button priv = Ui.btn("Privacy Policy", "chip", () -> Nav.toast("Open Privacy URL"));
-        Button agree = Ui.btn("Agreements & Guidelines", "chip", () -> Nav.toast("Open Owner Agreement / Community Guidelines"));
-
-        Button delete = Ui.btn("Delete my account and data", "btn-danger", this::confirmDelete);
-        Button logout = Ui.btn("Log out", "btn-outline", () -> Main.signOutToLogin());
-
+        boolean owner = p.role() == Role.OWNER, admin = p.role() == Role.ADMIN;
         String nm = p.fullName() == null || p.fullName().isBlank() ? "Your profile" : p.fullName();
         String roleName = p.role().name().charAt(0) + p.role().name().substring(1).toLowerCase();
-        VBox idCard = Ui.card(0, Ui.hbox(14, Ui.avatar(nm, 60), Ui.vbox(2, Ui.label(nm, "title"), Ui.label(roleName + " account", "secondary"))));
-        HBox roleRow = Ui.menuRow(Icons.SWAP, "Switch to " + (p.role() == Role.STUDENT ? "Owner" : "Student") + " mode", () -> switchRole(p));
-        roleRow.setVisible(p.role() != Role.ADMIN); roleRow.setManaged(p.role() != Role.ADMIN);
-        HBox googleRow = Ui.menuRow(Icons.PERSON, "Switch Google account", () -> Main.signOutToLogin());
-        HBox termsRow = Ui.menuRow(Icons.DOC, "Terms of Service", () -> Nav.toast("Open Terms URL"));
-        HBox privRow = Ui.menuRow(Icons.SHIELD, "Privacy Policy", () -> Nav.toast("Open Privacy URL"));
-        HBox agreeRow = Ui.menuRow(Icons.INFO, "Agreements and Guidelines", () -> Nav.toast("Open Owner Agreement / Community Guidelines"));
-        HBox logoutRow = Ui.menuRow(Icons.LOGOUT, "Log out", () -> Main.signOutToLogin());
-        delete.setMaxWidth(Double.MAX_VALUE);
-        VBox form = Ui.padded(14, idCard,
-                Ui.card(10, Ui.label("Edit profile", "h2"), name, email, phone, age, sex, save),
-                Ui.card(4, Ui.label("General", "h2"), notif, mascot, roleRow, googleRow),
-                Ui.card(4, Ui.label("About", "h2"), termsRow, privRow, agreeRow),
-                Ui.card(4, logoutRow),
-                delete, Ui.label("BOFO Finder v1.1.1", "secondary"));
-        form.setPadding(new Insets(12, 16, 72, 16));
-        getChildren().addAll(Ui.appBar("Profile"), Ui.scroll(form));
+
+        // ---- header (gradient, rounded bottom) ----
+        Label name = Ui.label(nm, "profile-name"); name.setWrapText(true);
+        HBox chips = Ui.hbox(6, Ui.label(roleName, "profile-chip"));
+        if (owner) chips.getChildren().add(Ui.label(statusText(p), "profile-chip"));
+        VBox who = Ui.vbox(6, name, chips);
+        HBox idRow = Ui.hbox(14, Ui.avatar(nm, 64), who); idRow.setAlignment(Pos.CENTER_LEFT);
+        VBox header = new VBox(12, Ui.label("Profile", "profile-title"), idRow);
+        header.getStyleClass().add("profile-header");
+
+        // ---- Account ----
+        Node personal = Ui.settingsRow(Glyphs.USER, "Personal information", p.phone(), () -> Nav.show(new PersonalInfoView(ProfileView::backToProfile), true));
+        VBox account = Ui.settingsGroup("Account", personal);
+        VBox accountCard = (VBox) account.getChildren().get(1);
+        if (owner) addRow(accountCard, Ui.settingsRow(Glyphs.SHIELD_CHECK, "Verification", statusText(p), () -> Nav.show(new VerificationView(ProfileView::backToProfile), true)));
+        if (!admin) addRow(accountCard, Ui.settingsRow(Glyphs.SWAP, "Switch to " + (p.role() == Role.STUDENT ? "Owner" : "Student") + " mode", null, () -> switchRole(p)));
+
+        // ---- Preferences ----
+        Node notif = Ui.settingsToggle(Glyphs.BELL, "Notifications", true, on -> {});
+        Node mascot = Ui.settingsToggle(Glyphs.SMILE, "Show BOFO mascot", BofoPanel.enabled(), BofoPanel::setEnabled);
+        VBox prefs = Ui.settingsGroup("Preferences", notif, mascot);
+
+        // ---- Security & privacy ----
+        VBox security = Ui.settingsGroup("Security and privacy",
+                Ui.settingsRow(Glyphs.USERS, "Switch Google account", null, Main::signOutToLogin),
+                Ui.settingsRow(Glyphs.LOCK, "Privacy Policy", null, () -> Nav.toast("Open Privacy URL")),
+                Ui.settingsRow(Glyphs.FILE, "Terms of Service", null, () -> Nav.toast("Open Terms URL")),
+                Ui.settingsRow(Glyphs.INFO, "Agreements and Guidelines", null, () -> Nav.toast("Open Owner Agreement / Community Guidelines")));
+
+        // ---- About ----
+        VBox about = Ui.settingsGroup("About", Ui.settingsRow(Glyphs.INFO, "BOFO Finder", "v1.1.1", null));
+
+        Button logout = Ui.btn("Log out", "btn-logout", Main::signOutToLogin); logout.setMaxWidth(Double.MAX_VALUE);
+        Button delete = Ui.btn("Delete my account and data", "link-danger", this::confirmDelete);
+
+        VBox body = new VBox(18, account, prefs, security, about, logout, delete);
+        body.setPadding(new Insets(16, 16, 24, 16)); body.setAlignment(Pos.TOP_CENTER);
+        VBox.setMargin(logout, new Insets(4, 0, 0, 0));
+        VBox page = new VBox(header, body);
+        getChildren().add(Ui.scrollCentered(page, 560));
+    }
+
+    private static void addRow(VBox card, Node row) {
+        Region line = new Region(); line.getStyleClass().add("hline"); VBox.setMargin(line, new Insets(0, 0, 0, 52));
+        card.getChildren().addAll(line, row);
+    }
+
+    private static String statusText(Profile p) {
+        if (p.verified()) return "Verified";
+        String s = p.verificationStatus() == null ? "" : p.verificationStatus().toLowerCase();
+        return s.equals("pending") ? "Pending review" : s.equals("rejected") ? "Rejected" : "Not verified";
+    }
+
+    /** Returns to the Profile tab after a sub-screen (Personal information, Verification). */
+    static void backToProfile() {
+        Shell.pendingTab = AuthService.get().profile().role() == Role.ADMIN ? 3 : 4;
+        Main.route();
     }
 
     private void switchRole(Profile p) {
         Role target = p.role() == Role.STUDENT ? Role.OWNER : Role.STUDENT;
         Async.run(() -> { SupabaseClient.get().rpc("switch_role", new JSONObject().put("new_role", target.db())); AuthService.get().loadProfile(); return true; },
-                ok -> Main.route(), e -> Nav.toast("Switching failed"));
+                ok -> Main.route(), e -> Ui.failToast(e, "Switching failed"));
     }
 
     private void confirmDelete() {
         Alert a = new Alert(Alert.AlertType.CONFIRMATION, "This permanently removes your account, listings, chats and verification images. This cannot be undone.", ButtonType.CANCEL, ButtonType.OK);
         Ui.style(a); a.setTitle("Delete account"); a.setHeaderText("Delete my account and data?");
         a.showAndWait().filter(b -> b == ButtonType.OK).ifPresent(b ->
-                Async.run(() -> SupabaseClient.get().rpc("delete_my_account", new JSONObject()), r -> Main.signOutToLogin(), e -> Nav.toast("Could not delete. Try again.")));
+                Async.run(() -> SupabaseClient.get().rpc("delete_my_account", new JSONObject()), r -> Main.signOutToLogin(), e -> Ui.failToast(e, "Could not delete. Try again.")));
     }
 }

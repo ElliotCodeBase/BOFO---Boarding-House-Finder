@@ -14,14 +14,17 @@ public final class Nav {
     private static final StackPane SCREEN = new StackPane();
     private static final BofoPanel BOFO = new BofoPanel();
     private static boolean mascotAllowed = false;
+    /** Widest the app column gets; on tablets / landscape / desktop the column is centred and the sides stay page-colour. */
+    private static final double MAX_COLUMN = 840;
 
-    static { ROOT.getChildren().addAll(SCREEN, BOFO); }
+    static { SCREEN.setMaxWidth(MAX_COLUMN); ROOT.getChildren().addAll(SCREEN, BOFO); }
     private Nav() {}
 
     public static StackPane root() { return ROOT; }
 
     /** @param withMascot the floating BOFO stays on top of every logged-in screen */
     public static void show(Node screen, boolean withMascot) {
+        SCREEN.setMaxWidth(screen instanceof SplashView ? Double.MAX_VALUE : MAX_COLUMN);
         SCREEN.getChildren().setAll(screen);
         if (!(screen instanceof SplashView)) {                       // soft fade-in for every real screen
             screen.setOpacity(0);

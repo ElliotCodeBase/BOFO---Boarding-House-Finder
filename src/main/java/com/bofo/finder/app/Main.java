@@ -25,11 +25,21 @@ public class Main extends Application {
         auth.init(host);
         auth.onSessionLost(() -> Platform.runLater(() -> showLogin("Your session expired. Please sign in again.")));
 
-        Scene scene = new Scene(Nav.root(), 360, 720);
+        double w = 360, h = 720;                                     // phone-sized by default on desktop
+        for (String a : getParameters().getRaw())                    // preview other devices: --size=820x1180
+            if (a.startsWith("--size=")) try { String[] p = a.substring(7).toLowerCase().split("x"); w = Double.parseDouble(p[0]); h = Double.parseDouble(p[1]); } catch (Exception ignored) {}
+        Scene scene = new Scene(Nav.root(), w, h);
+        stage.setMinWidth(320); stage.setMinHeight(480);
         scene.getStylesheets().add(getClass().getResource("/com/bofo/finder/bofo.css").toExternalForm());
         stage.setScene(scene); stage.setTitle("BOFO Finder"); stage.show();
-        try { StatusBarService.create().ifPresent(s -> s.setColor(Color.web("#3F2285"))); } catch (Throwable ignored) {}
+        try { StatusBarService.create().ifPresent(s -> s.setColor(Color.web("#17142A"))); } catch (Throwable ignored) {}
 
+        boot();
+    }
+
+    /** Splash + session restore. Also what "Try again" runs on the no-internet screen. */
+    private static void boot() {
+        AuthService auth = AuthService.get();
         SplashView splash = new SplashView();
         Nav.show(splash, false);
         long t0 = System.currentTimeMillis();
@@ -37,7 +47,14 @@ public class Main extends Application {
             long wait = Math.max(0, 2200 - (System.currentTimeMillis() - t0));   // splash shows at least ~2.2 s so the mascot jump is seen
             new Thread(() -> { try { Thread.sleep(wait); } catch (InterruptedException ignored) {}
                 Platform.runLater(() -> dispatch(result, splash)); }).start();
-        }, e -> showLogin(null));
+        }, e -> {
+            if (com.bofo.finder.util.Connectivity.isNetworkError(e)) showNoInternet(); else showLogin(null);
+        });
+    }
+
+    /** Full-screen "No internet connection": Try again button, and it reopens the app by itself when the network returns. */
+    private static void showNoInternet() {
+        Nav.show(new javafx.scene.layout.StackPane(Ui.errorState(new java.net.ConnectException("offline"), Main::boot)), false);
     }
 
     private static void dispatch(AuthService.Restore r, SplashView splash) {
@@ -48,7 +65,7 @@ public class Main extends Application {
             case OFFLINE -> {
                 // Offline launch: with a cached profile open the app with an offline banner, else offer retry.
                 if (AuthService.get().profile() != null) { State.offline.set(true); route(); }
-                else { splash.setStatus("You're offline. Check your connection and reopen the app."); }
+                else showNoInternet();
             }
         }
     }

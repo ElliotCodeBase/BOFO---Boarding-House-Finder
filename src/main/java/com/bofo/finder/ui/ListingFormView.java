@@ -47,7 +47,7 @@ public final class ListingFormView extends VBox {
                 Ui.label("Photos", "h2"), Ui.hbox(8, cam, gal, photoLabel),
                 Ui.label("Contact (at least one)", "h2"), phone, fb, email, errors, publish);
         form.setPadding(new Insets(16, 16, 60, 16));
-        getChildren().addAll(bar, Ui.scroll(form));
+        getChildren().addAll(bar, Ui.scrollCentered(form, 560));
         ((ScrollPane) getChildren().get(1)).setVvalue(0);
         this.onDone = onDone;
     }

@@ -4,6 +4,7 @@ import com.bofo.finder.service.BofoAiService;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.Validate;
 import javafx.animation.*;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -48,7 +49,8 @@ public final class BofoPanel extends Pane {
         setPickOnBounds(false);
         fab.getStyleClass().add("bofo-fab");
         fab.setGraphic(face); fab.setStyle("-fx-padding:4;");
-        fab.setLayoutX(290); fab.setLayoutY(520);
+        widthProperty().addListener((o, a, w) -> fit());      // re-fit on rotate / resize / first layout
+        heightProperty().addListener((o, a, h) -> fit());
         TranslateTransition idle = new TranslateTransition(Duration.seconds(1.2), fab);
         idle.setByY(-6); idle.setAutoReverse(true); idle.setCycleCount(Animation.INDEFINITE); idle.play();
 
@@ -67,7 +69,6 @@ public final class BofoPanel extends Pane {
 
         chat.getStyleClass().add("card");
         chat.setPadding(new Insets(12)); chat.setVisible(false);
-        chat.setPrefSize(320, 420); chat.setLayoutX(20); chat.setLayoutY(120);
         Label head = Ui.label("BOFO", "h2");
         Button close = Ui.btn("X", "heart", this::toggle);
         ScrollPane sp = Ui.scroll(messages); VBox.setVgrow(sp, Priority.ALWAYS);
@@ -82,6 +83,18 @@ public final class BofoPanel extends Pane {
             if (oldS != null) oldS.removeEventFilter(MouseEvent.MOUSE_PRESSED, outsideClose);
             if (newS != null) newS.addEventFilter(MouseEvent.MOUSE_PRESSED, outsideClose);
         });
+    }
+
+    private boolean placed;
+    /** Keeps the mascot on screen and sizes the chat panel to the screen (phone, tablet, landscape). */
+    private void fit() {
+        double w = getWidth(), h = getHeight();
+        if (w <= 0 || h <= 0) return;
+        if (!placed) { fab.setLayoutX(w - 62); fab.setLayoutY(Math.max(40, h - 200)); placed = true; }
+        else { fab.setLayoutX(clamp(fab.getLayoutX(), 0, w - 56)); fab.setLayoutY(clamp(fab.getLayoutY(), 40, Math.max(40, h - 140))); }
+        double cw = Math.min(380, w - 24), ch = Math.max(220, Math.min(500, h - 230));
+        chat.setMinSize(cw, ch); chat.setPrefSize(cw, ch); chat.setMaxSize(cw, ch);
+        chat.setLayoutX((w - cw) / 2); chat.setLayoutY(Math.max(12, h - ch - 150));
     }
 
     private void toggle() {
@@ -106,7 +119,7 @@ public final class BofoPanel extends Pane {
     }
 
     private Label bubble(String text, boolean me) {
-        Label l = new Label(text); l.setWrapText(true); l.setMaxWidth(240);
+        Label l = new Label(text); l.setWrapText(true); l.maxWidthProperty().bind(Bindings.max(160, chat.widthProperty().multiply(0.72)));
         HBox wrap = new HBox(new StackPane(l)); wrap.getChildren().get(0).getStyleClass().add(me ? "bubble-me" : "bubble-them");
         wrap.setAlignment(me ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
         messages.getChildren().add(wrap); return l;

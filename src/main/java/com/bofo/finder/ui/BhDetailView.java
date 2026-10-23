@@ -23,14 +23,14 @@ public final class BhDetailView extends VBox {
         getChildren().addAll(Ui.appBar("Boarding house", back), Ui.scroll(body));
         VBox.setVgrow(getChildren().get(1), Priority.ALWAYS);
         body.setPadding(new Insets(0, 0, 40, 0));
-        Async.run(() -> bh.detail(id), this::render, e -> body.getChildren().add(Ui.label("Could not load this listing.", "error-text")));
+        Ui.load(body, Skeleton::detail, () -> bh.detail(id), this::render);
     }
 
     private void render(JSONObject d) {
         BoardingHouse b = BoardingHouse.from(d);
         JSONArray photos = d.getJSONArray("photos");
         HBox strip = new HBox(8); strip.setPadding(new Insets(0, 16, 0, 16));
-        for (int i = 0; i < photos.length(); i++) strip.getChildren().add(Ui.photo(photos.getJSONObject(i).getString("url"), 260, 180));
+        for (int i = 0; i < photos.length(); i++) strip.getChildren().add(Ui.photoLoading(photos.getJSONObject(i).getString("url"), 260, 180));
         ScrollPane photoScroll = new ScrollPane(strip); photoScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); photoScroll.setPrefHeight(190);
 
         double[] ref = State.ref();
@@ -89,7 +89,7 @@ public final class BhDetailView extends VBox {
         Button post = Ui.btn("Post review", "btn-cta", () -> {
             String uid = AuthService.get().userId();
             Async.run(() -> { bh.upsertReview(bhId, uid, stars.getValue(), text.getText()); return true; },
-                    ok -> Nav.toast("Thanks for your review!"), e -> Nav.toast("You can only review a place once."));
+                    ok -> Nav.toast("Thanks for your review!"), e -> Ui.failToast(e, "You can only review a place once."));
         });
         return new VBox(6, Ui.label("Your rating", "h2"), stars, text, post);
     }
@@ -97,6 +97,6 @@ public final class BhDetailView extends VBox {
     private void openChat(BoardingHouse b) {
         Async.run(() -> new ChatService().openConversation(b.id()), cid ->
                 Nav.show(new ChatView(cid, b.name(), b.photoUrl(), b.ownerId(), () -> Nav.show(new StudentShell(), true)), true),
-                e -> Nav.toast("Chat unavailable (owner may not be verified)"));
+                e -> Ui.failToast(e, "Chat unavailable (owner may not be verified)"));
     }
 }

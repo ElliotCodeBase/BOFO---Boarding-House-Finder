@@ -6,17 +6,18 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
-public final class LoginView extends VBox {
+public final class LoginView extends ScrollPane {
     public LoginView(Runnable onSignedIn, String notice) {
-        super(14); setAlignment(Pos.TOP_CENTER); setPadding(new Insets(48, 24, 24, 24));
+        VBox col = new VBox(14); col.setAlignment(Pos.TOP_CENTER); col.setPadding(new Insets(48, 24, 24, 24)); col.setMaxWidth(440);
         Mascot mascot = new Mascot(Mascot.Expression.HAPPY, 120).bob();
-        StackPane logo = new StackPane(new Circle(80, Color.web("#EFEAFB")), mascot);
+        StackPane logo = new StackPane(new Circle(80, Color.web("#ECE9FF")), mascot);
         logo.setMaxSize(160, 160);
         Label title = Ui.label("Welcome to BOFO", "login-title"); center(title);
         Label tag = Ui.label("Find a safe, affordable boarding house near your campus.", "secondary"); center(tag);
@@ -45,7 +46,10 @@ public final class LoginView extends VBox {
         Button priv = Ui.btn("Privacy Policy", "link", () -> Nav.toast("Open Privacy Policy"));
         HBox legalRow = Ui.hbox(2, terms, Ui.label("and", "secondary"), priv); legalRow.setAlignment(Pos.CENTER);
 
-        getChildren().addAll(logo, title, tag, google, err, Ui.divider("Developer: force login"), devRow, Ui.grow(), legal, legalRow);
+        col.getChildren().addAll(logo, title, tag, google, err, Ui.divider("Developer: force login"), devRow, Ui.grow(), legal, legalRow);
+        StackPane holder = new StackPane(col); holder.setAlignment(Pos.TOP_CENTER);
+        setContent(holder); setFitToWidth(true); setFitToHeight(true);        // scrolls on short / landscape screens
+        setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
     }
 
     private static void center(Label l) { l.setAlignment(Pos.CENTER); l.setMaxWidth(Double.MAX_VALUE); l.setStyle("-fx-text-alignment:center;"); }

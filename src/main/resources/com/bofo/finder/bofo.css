@@ -1,20 +1,24 @@
-/* ===== BOFO theme v4 - calm, flat, professional. Change colors ONLY in the .root block. =====
-   Radius scale: chips 999 | buttons & inputs 12 | cards 14 | photos 12
-   Surfaces are flat (1px line, no shadow). Only floating things (mascot, toast) get a shadow. */
+/* ===== BOFO theme v5 "Dock" - built around the floating dark dock. Change colors ONLY in the .root block. =====
+   Shape language (same as the dock): pills and circles for anything you tap, big soft corners for surfaces.
+   Radius scale: chips / buttons / search 999 | inputs 16 | cards 20 | photos 16 | notices 16
+   Colour roles: indigo = action + active state | ink (dock colour) = selected + strong secondary action.
+   Cards stay flat (1px cool line, no shadow) so long lists scroll smoothly on phones.
+   Only floating things (dock, mascot, toast, primary button, popups) get a shadow. */
 .root {
-  -bofo-primary: #5B34B8;
-  -bofo-primary-dark: #43248F;
-  -bofo-primary-tint: #EFEAFB;
-  -bofo-accent: #5B34B8;
-  -bofo-gold: #C98A0B;
+  -bofo-primary: #5B3BF0;
+  -bofo-primary-dark: #3A22B8;
+  -bofo-primary-tint: #ECE9FF;
+  -bofo-accent: #5B3BF0;
+  -bofo-ink: #17142A;
+  -bofo-gold: #E3A008;
   -bofo-white: #FFFFFF;
-  -bofo-bg: #F6F6F9;
+  -bofo-bg: #F5F6FC;
   -bofo-text: #17142A;
-  -bofo-text-2: #5E5A70;
-  -bofo-muted: #8C88A0;
-  -bofo-border: #E4E2EC;
-  -bofo-success: #1E7F55;
-  -bofo-error: #C23B3B;
+  -bofo-text-2: #5F5C75;
+  -bofo-muted: #8D8AA3;
+  -bofo-border: #E7E8F2;
+  -bofo-success: #1E8E5E;
+  -bofo-error: #D14343;
   -fx-font-family: "Segoe UI", "Roboto", "System";
   -fx-font-size: 14px;
   -fx-background-color: -bofo-bg;
@@ -24,123 +28,125 @@
 }
 .label { -fx-text-fill: -bofo-text; }
 
-/* ---- Type scale: 12 caption / 14 body / 16 subtitle / 20 title / 26 display ---- */
+/* ---- Type scale: 12 caption / 14 body / 17 subtitle / 22 title / 28 display ---- */
 .secondary { -fx-text-fill: -bofo-text-2; -fx-font-size: 12px; }
-.title { -fx-font-size: 20px; -fx-font-weight: bold; }
-.login-title { -fx-font-size: 26px; -fx-font-weight: bold; }
-.greet-name { -fx-font-size: 20px; -fx-font-weight: bold; }
-.h2 { -fx-font-size: 16px; -fx-font-weight: bold; }
-.section { -fx-font-size: 16px; -fx-font-weight: bold; }
+.title { -fx-font-size: 22px; -fx-font-weight: bold; }
+.login-title { -fx-font-size: 28px; -fx-font-weight: bold; }
+.greet-name { -fx-font-size: 22px; -fx-font-weight: bold; }
+.h2 { -fx-font-size: 17px; -fx-font-weight: bold; }
+.section { -fx-font-size: 17px; -fx-font-weight: bold; }
 .row-label { -fx-font-size: 14px; }
 .preview { -fx-text-fill: -bofo-text-2; -fx-font-size: 13px; }
 .error-text { -fx-text-fill: -bofo-error; -fx-font-size: 13px; }
 .hline { -fx-background-color: -bofo-border; -fx-min-height: 1; -fx-pref-height: 1; -fx-max-height: 1; }
 
-/* ---- Top bar: white, hairline below ---- */
-.app-bar { -fx-background-color: white; -fx-padding: 12 16; -fx-border-color: transparent transparent -bofo-border transparent; -fx-border-width: 0 0 1 0; }
-.app-bar .label { -fx-text-fill: -bofo-text; -fx-font-size: 18px; -fx-font-weight: bold; }
-.status-fill { -fx-background-color: -bofo-primary-dark; }
+/* ---- Top bar: sits straight on the page background, no strip, no line ---- */
+.app-bar { -fx-background-color: transparent; -fx-padding: 14 20 8 20; }
+.app-bar .label { -fx-text-fill: -bofo-text; -fx-font-size: 20px; -fx-font-weight: bold; }
+.status-fill { -fx-background-color: -bofo-ink; }
 
-/* ---- Buttons ---- */
+/* ---- Buttons: pills, like the dock ---- */
 .button { -fx-cursor: hand; }
 .btn-primary { -fx-background-color: -bofo-primary; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 15px;
-  -fx-background-radius: 12; -fx-padding: 13 24; }
-.btn-primary:hover { -fx-background-color: #6A43C7; }
+  -fx-background-radius: 999; -fx-padding: 14 28; -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.28), 14, 0, 0, 5); }
+.btn-primary:hover { -fx-background-color: #6D52F5; }
 .btn-primary:pressed { -fx-background-color: -bofo-primary-dark; }
-.btn-primary:disabled { -fx-opacity: 0.45; }
+.btn-primary:disabled { -fx-opacity: 0.45; -fx-effect: null; }
 .btn-outline { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-text-fill: -bofo-text; -fx-font-weight: bold;
-  -fx-border-radius: 12; -fx-background-radius: 12; -fx-padding: 12 22; }
-.btn-outline:hover { -fx-background-color: -bofo-bg; }
+  -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 12 24; }
+.btn-outline:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
 .btn-outline:pressed { -fx-background-color: -bofo-border; }
-.btn-cta { -fx-background-color: -bofo-text; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 12; -fx-padding: 12 22; }
-.btn-cta:hover { -fx-background-color: #2E2848; }
-.btn-danger { -fx-background-color: white; -fx-border-color: #EBC6C6; -fx-border-radius: 12; -fx-text-fill: -bofo-error;
-  -fx-font-weight: bold; -fx-background-radius: 12; -fx-padding: 12 22; }
-.btn-danger:hover { -fx-background-color: #FBEFEF; }
+.btn-cta { -fx-background-color: -bofo-ink; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 12 24; }
+.btn-cta:hover { -fx-background-color: #2C2750; }
+.btn-danger { -fx-background-color: white; -fx-border-color: #F0CBCB; -fx-border-radius: 999; -fx-text-fill: -bofo-error;
+  -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 12 24; }
+.btn-danger:hover { -fx-background-color: #FCEFEF; }
 .btn-google { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-text-fill: -bofo-text;
-  -fx-font-weight: bold; -fx-background-radius: 12; -fx-border-radius: 12; -fx-padding: 12 22; }
+  -fx-font-weight: bold; -fx-background-radius: 999; -fx-border-radius: 999; -fx-padding: 12 24; }
 .link { -fx-background-color: transparent; -fx-text-fill: -bofo-primary; -fx-underline: true; -fx-font-size: 12px; -fx-padding: 2 4; }
 .g-badge { -fx-background-color: white; -fx-text-fill: #4285F4; -fx-font-weight: bold; -fx-background-radius: 999;
   -fx-min-width: 24; -fx-min-height: 24; -fx-alignment: center; }
 .icon-btn { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-min-width: 40; -fx-min-height: 40; -fx-pref-width: 40; -fx-pref-height: 40; -fx-padding: 0;
+  -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; -fx-padding: 0;
   -fx-text-fill: -bofo-text; -fx-font-size: 18px; }
-.icon-btn:hover { -fx-background-color: -bofo-bg; }
-.icon-btn-primary { -fx-background-color: -bofo-primary; -fx-background-radius: 12; -fx-min-width: 46; -fx-min-height: 46;
+.icon-btn:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
+.icon-btn-primary { -fx-background-color: -bofo-primary; -fx-background-radius: 999; -fx-min-width: 46; -fx-min-height: 46;
   -fx-pref-width: 46; -fx-pref-height: 46; -fx-padding: 0; }
-.icon-btn-primary:hover { -fx-background-color: #6A43C7; }
+.icon-btn-primary:hover { -fx-background-color: #6D52F5; }
 .icon-circle { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 999; }
 
-/* ---- Cards: white, 1px line, no shadow ---- */
-.card { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 14; -fx-background-radius: 14; -fx-padding: 14; }
-.photo-placeholder { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 12; }
-.menu-row { -fx-padding: 9 0; -fx-cursor: hand; }
+/* ---- Cards: white, 1px cool line, big soft corners, no shadow ---- */
+.card { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 20; -fx-background-radius: 20; -fx-padding: 16; }
+/* loading placeholders (Skeleton.java); the whole group pulses */
+.skeleton { -fx-background-color: #E4E5F2; -fx-background-radius: 8; }
+.photo-placeholder { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 16; }
+.menu-row { -fx-padding: 10 0; -fx-cursor: hand; }
 
 /* ---- Chips, tags, badges ---- */
 .chip { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-text-fill: -bofo-text; -fx-padding: 7 14; -fx-font-size: 13px; }
-.chip:hover { -fx-background-color: -bofo-bg; }
-.chip-selected { -fx-background-color: -bofo-primary; -fx-border-color: -bofo-primary; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-text-fill: white; -fx-padding: 7 14; -fx-font-size: 13px; }
-.college-chip { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 10; -fx-background-radius: 10;
-  -fx-text-fill: -bofo-text; -fx-font-weight: bold; -fx-padding: 9 14; }
-.college-chip:hover { -fx-background-color: -bofo-bg; }
-.tag { -fx-background-color: -bofo-bg; -fx-border-color: -bofo-border; -fx-border-radius: 6; -fx-background-radius: 6;
+  -fx-text-fill: -bofo-text; -fx-padding: 8 16; -fx-font-size: 13px; }
+.chip:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
+.chip-selected { -fx-background-color: -bofo-ink; -fx-border-color: -bofo-ink; -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-text-fill: white; -fx-padding: 8 16; -fx-font-size: 13px; }
+.college-chip { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-text-fill: -bofo-text; -fx-font-weight: bold; -fx-padding: 9 16; }
+.college-chip:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
+.tag { -fx-background-color: -bofo-bg; -fx-border-color: -bofo-border; -fx-border-radius: 8; -fx-background-radius: 8;
   -fx-text-fill: -bofo-text-2; -fx-padding: 2 8; -fx-font-size: 11px; }
-.badge-hot { -fx-background-color: #FFF4DC; -fx-text-fill: #7A5200; -fx-background-radius: 6; -fx-padding: 3 8; -fx-font-weight: bold; -fx-font-size: 11px; }
-.badge-verified { -fx-background-color: #E4F3EB; -fx-text-fill: -bofo-success; -fx-background-radius: 6; -fx-padding: 3 8; -fx-font-weight: bold; -fx-font-size: 11px; }
+.badge-hot { -fx-background-color: #FFF4DC; -fx-text-fill: #7A5200; -fx-background-radius: 8; -fx-padding: 3 8; -fx-font-weight: bold; -fx-font-size: 11px; }
+.badge-verified { -fx-background-color: #E1F4EA; -fx-text-fill: -bofo-success; -fx-background-radius: 8; -fx-padding: 3 8; -fx-font-weight: bold; -fx-font-size: 11px; }
 .pill-green { -fx-background-color: white; -fx-text-fill: -bofo-success; -fx-background-radius: 999; -fx-padding: 4 10;
   -fx-font-size: 11px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.18), 6, 0, 0, 1); }
 .pill-grey { -fx-background-color: white; -fx-text-fill: -bofo-text-2; -fx-background-radius: 999; -fx-padding: 4 10;
   -fx-font-size: 11px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.18), 6, 0, 0, 1); }
 .stars { -fx-text-fill: -bofo-gold; -fx-font-size: 12px; }
-.price { -fx-text-fill: -bofo-text; -fx-font-weight: bold; -fx-font-size: 16px; }
+.price { -fx-text-fill: -bofo-text; -fx-font-weight: bold; -fx-font-size: 17px; }
 .heart { -fx-background-color: transparent; -fx-text-fill: -bofo-text-2; -fx-font-size: 20px; }
 .heart-on { -fx-background-color: transparent; -fx-text-fill: -bofo-primary; -fx-font-size: 20px; }
-.heart-fab { -fx-background-color: white; -fx-background-radius: 999; -fx-min-width: 34; -fx-min-height: 34; -fx-pref-width: 34;
-  -fx-pref-height: 34; -fx-padding: 0; -fx-font-size: 17px; -fx-text-fill: -bofo-text-2;
+.heart-fab { -fx-background-color: white; -fx-background-radius: 999; -fx-min-width: 36; -fx-min-height: 36; -fx-pref-width: 36;
+  -fx-pref-height: 36; -fx-padding: 0; -fx-font-size: 17px; -fx-text-fill: -bofo-text-2;
   -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.18), 6, 0, 0, 1); }
-.heart-fab-on { -fx-background-color: white; -fx-background-radius: 999; -fx-min-width: 34; -fx-min-height: 34; -fx-pref-width: 34;
-  -fx-pref-height: 34; -fx-padding: 0; -fx-font-size: 17px; -fx-text-fill: -bofo-primary;
+.heart-fab-on { -fx-background-color: white; -fx-background-radius: 999; -fx-min-width: 36; -fx-min-height: 36; -fx-pref-width: 36;
+  -fx-pref-height: 36; -fx-padding: 0; -fx-font-size: 17px; -fx-text-fill: -bofo-primary;
   -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.18), 6, 0, 0, 1); }
-.stat-value { -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: -bofo-primary; }
+.stat-value { -fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: -bofo-primary; }
 .avatar { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-font-weight: bold; }
 .unread { -fx-background-color: -bofo-primary; -fx-text-fill: white; -fx-background-radius: 999;
   -fx-padding: 1 7; -fx-font-size: 11px; -fx-font-weight: bold; }
 
 /* ---- Inputs ---- */
 .text-field, .text-area, .combo-box-base { -fx-background-color: white; -fx-background-insets: 0; -fx-border-color: -bofo-border;
-  -fx-border-radius: 12; -fx-background-radius: 12; -fx-padding: 11 14; -fx-prompt-text-fill: #9A96AD; }
+  -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 12 16; -fx-prompt-text-fill: #A3A0B8; }
 .text-field:focused, .text-area:focused, .combo-box-base:focused { -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
 .text-field:disabled, .text-area:disabled { -fx-opacity: 0.6; }
-.text-area .content { -fx-background-color: white; -fx-background-radius: 12; }
-.search-field { -fx-background-radius: 12; -fx-border-radius: 12; -fx-padding: 12 16; }
-.search-pill { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 12; -fx-background-radius: 12;
-  -fx-padding: 13 16; -fx-cursor: hand; }
+.text-area .content { -fx-background-color: white; -fx-background-radius: 16; }
+.search-field { -fx-background-radius: 999; -fx-border-radius: 999; -fx-padding: 13 20; }
+.search-pill { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-padding: 14 20; -fx-cursor: hand; }
 .search-pill:hover { -fx-border-color: -bofo-primary; }
 
 /* Combo box (Sort, dropdowns) */
 .combo-box-base { -fx-padding: 0 4 0 0; }
-.combo-box-base > .list-cell { -fx-background-color: transparent; -fx-text-fill: -bofo-text; -fx-padding: 11 6 11 14; }
+.combo-box-base > .list-cell { -fx-background-color: transparent; -fx-text-fill: -bofo-text; -fx-padding: 12 6 12 16; }
 .combo-box-base > .arrow-button { -fx-background-color: transparent; -fx-padding: 0 10 0 4; }
 .combo-box-base > .arrow-button > .arrow { -fx-background-color: -bofo-text-2; }
-.combo-box-popup > .list-view { -fx-background-color: white; -fx-background-radius: 12; -fx-border-color: -bofo-border; -fx-border-radius: 12;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.14), 14, 0, 0, 4); -fx-padding: 4; }
-.combo-box-popup > .list-view .list-cell { -fx-background-color: transparent; -fx-background-radius: 8; -fx-padding: 10 12; -fx-text-fill: -bofo-text; }
+.combo-box-popup > .list-view { -fx-background-color: white; -fx-background-radius: 16; -fx-border-color: -bofo-border; -fx-border-radius: 16;
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.16), 16, 0, 0, 5); -fx-padding: 6; }
+.combo-box-popup > .list-view .list-cell { -fx-background-color: transparent; -fx-background-radius: 999; -fx-padding: 10 14; -fx-text-fill: -bofo-text; }
 .combo-box-popup > .list-view .list-cell:hover { -fx-background-color: -bofo-bg; }
 .combo-box-popup > .list-view .list-cell:filled:selected { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
 
 /* Check box */
 .check-box { -fx-text-fill: -bofo-text; -fx-label-padding: 0 0 0 10; -fx-padding: 6 0; }
-.check-box > .box { -fx-background-color: white; -fx-background-insets: 0; -fx-background-radius: 6; -fx-border-color: #BDB8CE;
-  -fx-border-radius: 6; -fx-border-width: 1.5; -fx-padding: 3; }
+.check-box > .box { -fx-background-color: white; -fx-background-insets: 0; -fx-background-radius: 7; -fx-border-color: #C4C1D8;
+  -fx-border-radius: 7; -fx-border-width: 1.5; -fx-padding: 3; }
 .check-box > .box > .mark { -fx-background-color: transparent; -fx-padding: 0.4em 0.5em; }
 .check-box:selected > .box { -fx-background-color: -bofo-primary; -fx-border-color: -bofo-primary; }
 .check-box:selected > .box > .mark { -fx-background-color: white; }
 
 /* Slider */
 .slider { -fx-padding: 6 0; }
-.slider > .track { -fx-background-color: -bofo-border; -fx-background-insets: 0; -fx-background-radius: 4; -fx-padding: 3; }
+.slider > .track { -fx-background-color: -bofo-border; -fx-background-insets: 0; -fx-background-radius: 999; -fx-padding: 3; }
 .slider > .thumb { -fx-background-color: -bofo-primary; -fx-background-insets: 0; -fx-background-radius: 999; -fx-padding: 9;
   -fx-border-color: white; -fx-border-width: 3; -fx-border-radius: 999; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.25), 5, 0, 0, 1); }
 
@@ -150,51 +156,85 @@
 .scroll-bar:vertical { -fx-background-color: transparent; -fx-pref-width: 8; -fx-padding: 2; }
 .scroll-bar:horizontal { -fx-background-color: transparent; -fx-pref-height: 8; -fx-padding: 2; }
 .scroll-bar > .track, .scroll-bar > .track-background { -fx-background-color: transparent; -fx-border-color: transparent; }
-.scroll-bar > .thumb { -fx-background-color: #D2CEDF; -fx-background-radius: 6; -fx-background-insets: 0; }
-.scroll-bar > .thumb:hover { -fx-background-color: #B9B4CB; }
+.scroll-bar > .thumb { -fx-background-color: #D5D3E6; -fx-background-radius: 6; -fx-background-insets: 0; }
+.scroll-bar > .thumb:hover { -fx-background-color: #BDBAD4; }
 .scroll-bar > .increment-button, .scroll-bar > .decrement-button { -fx-padding: 0; -fx-pref-height: 0; -fx-pref-width: 0; -fx-background-color: transparent; }
 .scroll-bar > .increment-button > .increment-arrow, .scroll-bar > .decrement-button > .decrement-arrow { -fx-padding: 0; -fx-shape: ""; }
 .scroll-pane > .corner { -fx-background-color: transparent; }
 
 /* Tooltip and dialogs */
-.tooltip { -fx-background-color: -bofo-text; -fx-text-fill: white; -fx-background-radius: 8; -fx-font-size: 12px; -fx-padding: 6 10; }
+.tooltip { -fx-background-color: -bofo-ink; -fx-text-fill: white; -fx-background-radius: 999; -fx-font-size: 12px; -fx-padding: 6 12; }
 .dialog-pane { -fx-background-color: white; -fx-font-family: "Segoe UI", "Roboto", "System"; }
-.dialog-pane > .header-panel { -fx-background-color: white; -fx-padding: 16 20 4 20; }
-.dialog-pane > .header-panel .label { -fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
-.dialog-pane > .content.label { -fx-text-fill: -bofo-text-2; -fx-padding: 4 20 16 20; }
-.dialog-pane > .button-bar > .container { -fx-padding: 8 16 16 16; }
-.dialog-pane .button { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 9 18; }
+.dialog-pane > .header-panel { -fx-background-color: white; -fx-padding: 18 22 4 22; }
+.dialog-pane > .header-panel .label { -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
+.dialog-pane > .content.label { -fx-text-fill: -bofo-text-2; -fx-padding: 4 22 18 22; }
+.dialog-pane > .button-bar > .container { -fx-padding: 8 18 18 18; }
+.dialog-pane .button { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 10 22; }
 .dialog-pane .button:default { -fx-background-color: -bofo-primary; -fx-border-color: -bofo-primary; -fx-text-fill: white; -fx-font-weight: bold; }
 
-/* ---- Bottom tab bar: full width, icon over label ---- */
-.tab-bar { -fx-background-color: white; -fx-border-color: -bofo-border transparent transparent transparent; -fx-border-width: 1 0 0 0; -fx-padding: 6 6 8 6; }
-.tab-btn, .tab-btn-active { -fx-background-radius: 10; -fx-padding: 6 0 4 0; -fx-content-display: top; -fx-graphic-text-gap: 3; -fx-font-size: 11px; }
-.tab-btn { -fx-background-color: transparent; -fx-text-fill: -bofo-text-2; }
-.tab-btn:hover { -fx-background-color: -bofo-bg; }
-.tab-btn-active { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary; -fx-font-weight: bold; }
-.nav-badge { -fx-background-color: -bofo-error; -fx-text-fill: white; -fx-background-radius: 999; -fx-font-size: 10px;
+/* ---- Floating tab bar: white bar, lavender highlight that slides to the active tab (see Shell.java) ---- */
+.dock-bar { -fx-background-color: white; -fx-background-radius: 24; }
+.dock-highlight { -fx-background-color: #E9E5FF; -fx-background-radius: 16; }
+.dock-btn { -fx-background-color: transparent; -fx-background-radius: 16; -fx-padding: 0; }
+.dock-btn:hover { -fx-background-color: rgba(91,59,240,0.06); }
+.nav-badge { -fx-background-color: #E5484D; -fx-text-fill: white; -fx-background-radius: 999; -fx-font-size: 10px;
   -fx-font-weight: bold; -fx-padding: 1 5; -fx-border-color: white; -fx-border-radius: 999; -fx-border-width: 1.5; }
 
-.filter-panel { -fx-background-color: white; -fx-padding: 12 16 14 16; -fx-border-color: transparent transparent -bofo-border transparent; -fx-border-width: 0 0 1 0; }
+/* ---- Explore: search bar, filter button, filter panel, List | Map switch ---- */
+.search-bar { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-padding: 0 8 0 18; -fx-min-height: 50; -fx-pref-height: 50; }
+.search-bar-focus { -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
+.search-input, .search-input:focused { -fx-background-color: transparent; -fx-background-insets: 0; -fx-border-color: transparent;
+  -fx-padding: 0; -fx-font-size: 15px; -fx-prompt-text-fill: #A3A0B8; }
+.search-clear { -fx-background-color: transparent; -fx-background-radius: 999; -fx-padding: 8; }
+.search-clear:hover { -fx-background-color: -bofo-bg; }
+.filter-btn { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-min-width: 50; -fx-min-height: 50; -fx-pref-width: 50; -fx-pref-height: 50; -fx-padding: 0; }
+.filter-btn:hover { -fx-background-color: -bofo-primary-tint; }
+.filter-btn-on { -fx-border-color: -bofo-primary; -fx-background-color: -bofo-primary-tint; }
+.filter-badge { -fx-background-color: -bofo-primary; -fx-text-fill: white; -fx-background-radius: 999; -fx-font-size: 10px;
+  -fx-font-weight: bold; -fx-padding: 1 6; -fx-border-color: -bofo-bg; -fx-border-radius: 999; -fx-border-width: 2; }
+.filter-panel { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 20; -fx-background-radius: 20; -fx-padding: 16; }
+.seg-wrap { -fx-background-color: #E8E6F6; -fx-background-radius: 999; -fx-padding: 3; }
+.seg { -fx-background-color: transparent; -fx-background-radius: 999; -fx-text-fill: -bofo-text-2; -fx-font-weight: bold; -fx-font-size: 13px; -fx-padding: 6 18; }
+.seg-on { -fx-background-color: white; -fx-background-radius: 999; -fx-text-fill: -bofo-text; -fx-font-weight: bold; -fx-font-size: 13px; -fx-padding: 6 18;
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.12), 6, 0, 0, 1); }
+
+/* ---- Profile / Settings (GCash-style): gradient header, grouped icon rows, outlined Log out ---- */
+.profile-header { -fx-background-color: linear-gradient(to bottom right, #6B4DF6, #3A22B8); -fx-background-radius: 0 0 28 28; -fx-padding: 20 20 26 20; }
+.profile-title { -fx-text-fill: white; -fx-font-size: 17px; -fx-font-weight: bold; }
+.profile-name { -fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold; }
+.profile-chip { -fx-background-color: rgba(255,255,255,0.20); -fx-text-fill: white; -fx-background-radius: 999; -fx-padding: 3 10; -fx-font-size: 11px; -fx-font-weight: bold; }
+.profile-header .avatar { -fx-background-color: white; -fx-text-fill: -bofo-primary; -fx-background-radius: 999; }
+.settings-heading { -fx-text-fill: -bofo-text-2; -fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 0 0 0 6; }
+.settings-card { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 20; -fx-background-radius: 20; }
+.settings-row { -fx-padding: 15 16; -fx-background-radius: 20; }
+.settings-row:hover { -fx-background-color: #F7F5FF; }
+.btn-logout { -fx-background-color: white; -fx-border-color: -bofo-primary; -fx-border-width: 1.5; -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-text-fill: -bofo-primary; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 13 24; }
+.btn-logout:hover { -fx-background-color: -bofo-primary-tint; }
+.link-danger { -fx-background-color: transparent; -fx-text-fill: -bofo-error; -fx-font-size: 13px; -fx-padding: 8 12; }
+.link-danger:hover { -fx-underline: true; }
 
 /* ---- Chat ---- */
-.bubble-me { -fx-background-color: -bofo-primary; -fx-background-radius: 16 16 4 16; -fx-padding: 9 14; }
+.bubble-me { -fx-background-color: -bofo-primary; -fx-background-radius: 20 20 6 20; -fx-padding: 10 16; }
 .bubble-me .label { -fx-text-fill: white; }
-.bubble-them { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16 16 16 4; -fx-background-radius: 16 16 16 4; -fx-padding: 9 14; }
+.bubble-them { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 20 20 20 6; -fx-background-radius: 20 20 20 6; -fx-padding: 10 16; }
 
 /* ---- Floating mascot, banners, notices ---- */
 .bofo-fab { -fx-background-color: white; -fx-background-radius: 30; -fx-border-color: -bofo-border; -fx-border-radius: 30; -fx-min-width: 56; -fx-min-height: 56;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.18), 12, 0, 0, 3); }
-.action-bar { -fx-background-color: white; -fx-border-color: -bofo-border transparent transparent transparent; -fx-border-width: 1 0 0 0; -fx-padding: 12 16; }
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.20), 14, 0, 0, 4); }
+.action-bar { -fx-background-color: white; -fx-border-color: -bofo-border transparent transparent transparent; -fx-border-width: 1 0 0 0; -fx-padding: 14 20; }
 .offline-banner { -fx-background-color: #FFF4DC; -fx-text-fill: #7A5200; -fx-font-size: 12px; -fx-padding: 6 12; -fx-alignment: center; }
-.toast { -fx-background-color: -bofo-text; -fx-text-fill: white; -fx-padding: 10 18; -fx-background-radius: 10;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.25), 12, 0, 0, 3); }
-.notice-ok { -fx-background-color: #E4F3EB; -fx-text-fill: #17603F; -fx-background-radius: 12; -fx-padding: 12 14; -fx-font-size: 13px; }
-.notice-warn { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-background-radius: 12; -fx-padding: 12 14; -fx-font-size: 13px; }
-.notice-bad { -fx-background-color: #FBEAEA; -fx-text-fill: #9A2B2B; -fx-background-radius: 12; -fx-padding: 12 14; -fx-font-size: 13px; }
+.toast { -fx-background-color: -bofo-ink; -fx-text-fill: white; -fx-padding: 11 20; -fx-background-radius: 999;
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.28), 14, 0, 0, 4); }
+.toast .label, .toast { -fx-text-fill: white; }
+.notice-ok { -fx-background-color: #E1F4EA; -fx-text-fill: #17603F; -fx-background-radius: 16; -fx-padding: 12 16; -fx-font-size: 13px; }
+.notice-warn { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-background-radius: 16; -fx-padding: 12 16; -fx-font-size: 13px; }
+.notice-bad { -fx-background-color: #FCEBEB; -fx-text-fill: #9A2B2B; -fx-background-radius: 16; -fx-padding: 12 16; -fx-font-size: 13px; }
 
-/* ---- Splash ---- */
-.splash { -fx-background-color: -bofo-primary-dark; }
+/* ---- Splash: same ink as the dock ---- */
+.splash { -fx-background-color: -bofo-ink; }
 .splash-title { -fx-text-fill: white; -fx-font-size: 34px; -fx-font-weight: bold; }
-.splash-sub { -fx-text-fill: #CBB9F1; -fx-font-size: 13px; }
-.splash-status { -fx-text-fill: #CBB9F1; -fx-font-size: 12px; }
+.splash-sub { -fx-text-fill: #B7B2DA; -fx-font-size: 13px; }
+.splash-status { -fx-text-fill: #B7B2DA; -fx-font-size: 12px; }

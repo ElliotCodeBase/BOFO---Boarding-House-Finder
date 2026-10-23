@@ -1,6 +1,7 @@
 package com.bofo.finder.service;
 
 import com.bofo.finder.config.AppConfig;
+import com.bofo.finder.util.Connectivity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -14,7 +15,7 @@ import java.util.function.Supplier;
 
 /** Thin REST client for Supabase (PostgREST, Auth, Storage, Edge Functions). Uses ONLY the anon key + user JWT. */
 public final class SupabaseClient {
-    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build();
+    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
     private static final SupabaseClient INSTANCE = new SupabaseClient();
     public static SupabaseClient get() { return INSTANCE; }
 
@@ -37,7 +38,10 @@ public final class SupabaseClient {
     }
 
     private String send(HttpRequest req) throws Exception {
-        HttpResponse<String> r = HTTP.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        HttpResponse<String> r;
+        try { r = HTTP.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)); }
+        catch (java.io.IOException noNetwork) { Connectivity.report(false); throw noNetwork; }   // drives the offline banner + screens
+        Connectivity.report(true);                                                               // server answered (any status) = online
         if (r.statusCode() >= 300) throw new ApiException(r.statusCode(), r.body());
         return r.body();
     }

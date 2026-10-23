@@ -8,6 +8,7 @@ import javafx.scene.shape.SVGPath;
 /** Simple 24x24 vector icons drawn as JavaFX SVGPath (no image files, no emojis). */
 public final class Icons {
     private Icons() {}
+    public static final String PLUS = "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z";
     public static final String HOME = "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z";
     public static final String EXPLORE = "M12 10.9c-.61 0-1.1.49-1.1 1.1s.49 1.1 1.1 1.1c.61 0 1.1-.49 1.1-1.1s-.49-1.1-1.1-1.1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm2.19 12.19L6 18l3.81-8.19L18 6l-3.81 8.19z";
     public static final String HEART = "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z";
@@ -26,6 +27,40 @@ public final class Icons {
     public static final String INFO = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z";
     public static final String DOC = "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z";
     public static final String LOGOUT = "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z";
+
+    // ---- Dock icons: {silhouette, inner detail}, drawn on a 24x24 grid with a 1.8 stroke ----
+    // Idle = outline only. Active = silhouette filled, detail drawn in the dock colour (cut-out look).
+    private static final String NONE = "M0 0";
+    private static final String[] O_HOME = {"M3 10.5L12 3l9 7.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z", "M9.5 21v-6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6"};
+    private static final String[] O_EXPLORE = {"M12 2.5a9.5 9.5 0 1 0 0 19a9.5 9.5 0 1 0 0-19Z", "M15.8 8.2l-2.2 5.4-5.4 2.2 2.2-5.4Z"};
+    private static final String[] O_HEART = {"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z", NONE};
+    private static final String[] O_CHAT = {"M7.9 20A9 9 0 1 0 4 16.1L2 22Z", "M8 10h8M8 14h5"};
+    private static final String[] O_PERSON = {"M12 3a4.5 4.5 0 1 0 0 9a4.5 4.5 0 0 0 0-9ZM4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1Z", NONE};
+    private static final String[] O_DASH = {"M4 4h6v7H4ZM14 4h6v4h-6ZM14 12h6v8h-6ZM4 15h6v5H4Z", NONE};
+    private static final String[] O_LIST = {"M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z", "M8 8h8M8 12h8M8 16h5"};
+    private static final String[] O_SHIELD = {"M12 2.5L20 5.5V11c0 5-3.4 8.7-8 10.5C7.4 19.7 4 16 4 11V5.5Z", "M8.5 12l2.5 2.5 4.5-5"};
+    private static final String[] O_CARD = {"M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z", "M3 10h18M7 15h3"};
+    private static final String[] O_SEARCH = {"M11 3a8 8 0 1 0 0 16a8 8 0 1 0 0-16Z", "M21 21l-4.3-4.3"};
+    private static final String[] O_PLUS_CIRCLE = {"M12 2.5a9.5 9.5 0 1 0 0 19a9.5 9.5 0 1 0 0-19Z", "M12 8v8M8 12h8"};
+    private static final String[] O_USER_CIRCLE = {"M12 2.5a9.5 9.5 0 1 0 0 19a9.5 9.5 0 1 0 0-19Z", "M12 7a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 1 0 0-6.4ZM6.2 19a6.5 6.5 0 0 1 11.6 0"};
+    private static final String[] O_FLAG = {"M5 4h13.5L16 9l2.5 5H5Z", "M5 3v18"};
+
+    /** Outline icon pair {silhouette, detail} for a dock tab label. */
+    public static String[] outlineFor(String label) {
+        String s = label.toLowerCase();
+        if (s.startsWith("home")) return O_HOME;
+        if (s.startsWith("explore") || s.startsWith("search")) return O_SEARCH;
+        if (s.startsWith("create") || s.startsWith("add")) return O_PLUS_CIRCLE;
+        if (s.startsWith("saved")) return O_HEART;
+        if (s.startsWith("chats")) return O_CHAT;
+        if (s.startsWith("profile")) return O_USER_CIRCLE;
+        if (s.startsWith("dashboard")) return O_DASH;
+        if (s.startsWith("listings")) return O_LIST;
+        if (s.startsWith("verify") || s.startsWith("queue")) return O_SHIELD;
+        if (s.startsWith("payments")) return O_CARD;
+        if (s.startsWith("reports")) return O_FLAG;
+        return O_LIST;
+    }
 
     public static StackPane icon(String path, double size, Color color) {
         SVGPath p = new SVGPath(); p.setContent(path); p.setFill(color);

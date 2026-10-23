@@ -1,7 +1,11 @@
 package com.bofo.finder.ui;
 
 import com.bofo.finder.model.BoardingHouse;
+import com.bofo.finder.service.BhService;
+import com.bofo.finder.util.Async;
+import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.Geo;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -12,29 +16,41 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /** Listing card: big rounded photo (heart + availability on top), name and price, distance, rating, tags. */
 public final class BhCard extends VBox {
-    public BhCard(BoardingHouse b, boolean hot, boolean favorite, Consumer<BoardingHouse> open, Consumer<Boolean> onFav) {
+    public BhCard(BoardingHouse b, boolean hot, boolean favorite, Consumer<BoardingHouse> open, BiConsumer<Boolean, Runnable> onFav) {
         super(10); getStyleClass().add("card"); setPadding(new Insets(12));
 
         // photo that follows the card width
-        ImageView iv = Ui.photo(b.photoUrl(), 340, 190);
-        Rectangle clip = (Rectangle) iv.getClip();
-        iv.fitWidthProperty().bind(widthProperty().subtract(24));
-        clip.widthProperty().bind(iv.fitWidthProperty()); clip.setArcWidth(24); clip.setArcHeight(24);
+        ImageView iv = Ui.coverPhoto(b.photoUrl(), 720);
+        iv.setFitHeight(190);
+        iv.fitWidthProperty().bind(widthProperty().subtract(Bindings.createDoubleBinding(
+                () -> getPadding().getLeft() + getPadding().getRight(), paddingProperty())));   // uses the real (CSS) padding
         Region ph = new Region(); ph.getStyleClass().add("photo-placeholder");
         ph.setMinHeight(190); ph.setPrefHeight(190); ph.setMaxHeight(190);
-        StackPane photoBox = new StackPane(ph, Icons.icon(Icons.HOME, 44, Color.web("#B9A9E3")), iv);
+        widthProperty().addListener((o, a, w) -> {                // taller photo on wide cards (tablet, single column)
+            double h = w.doubleValue() >= 640 ? 260 : w.doubleValue() >= 440 ? 220 : 190;
+            iv.setFitHeight(h); ph.setMinHeight(h); ph.setPrefHeight(h); ph.setMaxHeight(h);
+        });
+        ph.setStyle("-fx-background-radius:16;");
+        Node homeIcon = Icons.icon(Icons.HOME, 44, Color.web("#C9BEFA"));
+        StackPane photoBox = new StackPane(ph, homeIcon, iv);
+        Ui.trackLoading(iv, ph, homeIcon);                        // grey pulse while the photo downloads
 
         Button heart = new Button(favorite ? "\u2665" : "\u2661");
         heart.getStyleClass().add(favorite ? "heart-fab-on" : "heart-fab");
         final boolean[] on = {favorite};
-        heart.setOnAction(e -> {
-            on[0] = !on[0]; heart.setText(on[0] ? "\u2665" : "\u2661");
+        Runnable paint = () -> {
+            heart.setText(on[0] ? "\u2665" : "\u2661");
             heart.getStyleClass().setAll("button", on[0] ? "heart-fab-on" : "heart-fab");
-            onFav.accept(on[0]);
+        };
+        heart.setOnAction(e -> {
+            on[0] = !on[0]; paint.run();
+            final boolean attempted = on[0];
+            onFav.accept(attempted, () -> { on[0] = !attempted; paint.run(); });   // undo the heart if saving fails
         });
         StackPane.setAlignment(heart, Pos.TOP_RIGHT); StackPane.setMargin(heart, new Insets(10));
         Label avail = Ui.label(b.availableBeds() > 0 ? b.availableBeds() + (b.availableBeds() == 1 ? " bed left" : " beds left") : "Full", b.availableBeds() > 0 ? "pill-green" : "pill-grey");
@@ -67,6 +83,16 @@ public final class BhCard extends VBox {
             Node t = (Node) e.getTarget();
             while (t != null) { if (t == heart) return; t = t.getParent(); }
             open.accept(b);
+        });
+    }
+
+    /** Standard save / unsave handler: if it fails the heart is undone and the toast says why (offline or server). */
+    public static void saveFavorite(BhService bh, String uid, String bhId, boolean on, Runnable undo) {
+        Async.run(() -> { bh.setFavorite(uid, bhId, on); return true; }, ok -> {}, e -> {
+            undo.run();
+            Nav.toast(Connectivity.isNetworkError(e)
+                    ? "No internet connection. Couldn't " + (on ? "save" : "remove") + " this place."
+                    : "Could not update favorite");
         });
     }
 }

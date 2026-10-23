@@ -15,7 +15,7 @@ public final class ChatsView extends VBox {
         ChatService chat = new ChatService();
         VBox rows = new VBox(8); rows.setPadding(new Insets(12, 16, 72, 16));
         getChildren().addAll(Ui.appBar("Chats"), Ui.scroll(rows));
-        Async.run(chat::inbox, list -> {
+        Ui.load(rows, () -> Skeleton.rows(5), chat::inbox, list -> {
             if (list.isEmpty()) rows.getChildren().add(Ui.emptyState("No conversations yet", "Open a boarding house and tap Chat with owner."));
             String me = AuthService.get().userId();
             for (Conversation c : list) {
@@ -30,6 +30,6 @@ public final class ChatsView extends VBox {
                 row.setOnMouseClicked(e -> Nav.show(new ChatView(c.id(), c.bhName(), null, other, () -> Nav.show(Main.home(), true)), true));
                 rows.getChildren().add(row);
             }
-        }, e -> rows.getChildren().add(Ui.label("Could not load chats (offline?).", "error-text")));
+        });
     }
 }
