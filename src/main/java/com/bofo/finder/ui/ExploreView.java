@@ -112,7 +112,7 @@ public final class ExploreView extends VBox {
     private void togglePanel() {
         boolean show = !panel.isVisible();
         panel.setManaged(show); panel.setVisible(show);
-        if (show) { panel.setOpacity(0); new javafx.animation.FadeTransition(Duration.millis(180), panel) {{ setToValue(1); }}.play(); }
+        if (show) { panel.setOpacity(0); javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(Duration.millis(180), panel); fade.setToValue(1); fade.play(); }
     }
 
     private void paintSort() {
