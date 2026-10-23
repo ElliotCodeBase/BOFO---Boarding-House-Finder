@@ -71,7 +71,7 @@ public final class AuthService {
                 + "&redirect_to=" + enc(AppConfig.redirectUri())
                 + "&code_challenge=" + Pkce.challenge(pkceVerifier) + "&code_challenge_method=s256";
         pendingLogin = new CompletableFuture<>();
-        if (!AppConfig.isAndroid()) startLoopback();
+        if (!AppConfig.isAndroid() && !startLoopback()) return pendingLogin;   // already failed with a clear message; don't open the browser
         hostServices.showDocument(url);
         return pendingLogin;
     }
@@ -89,7 +89,12 @@ public final class AuthService {
         } catch (Exception e) { if (pendingLogin != null) pendingLogin.completeExceptionally(e); }
     }
 
-    private void startLoopback() {
+    private HttpServer loopback;     // the single desktop callback listener (port 54321)
+
+    /** Starts (or restarts) the desktop callback listener. Any listener left over from an earlier click is stopped first,
+     *  so a second "Continue with Google" never fails with "address already in use". Returns false if it could not start. */
+    private synchronized boolean startLoopback() {
+        if (loopback != null) { try { loopback.stop(0); } catch (Exception ignored) { } loopback = null; }
         try {
             HttpServer srv = HttpServer.create(new InetSocketAddress("127.0.0.1", 54321), 0);
             srv.createContext("/callback", ex -> {
@@ -99,9 +104,15 @@ public final class AuthService {
                 ex.sendResponseHeaders(200, b.length);
                 ex.getResponseBody().write(b); ex.close();
                 srv.stop(1);
+                synchronized (AuthService.this) { if (loopback == srv) loopback = null; }
             });
             srv.start();
-        } catch (Exception e) { pendingLogin.completeExceptionally(e); }
+            loopback = srv;
+            return true;
+        } catch (Exception e) {
+            if (pendingLogin != null) pendingLogin.completeExceptionally(new IllegalStateException("Port 54321 is busy. Close other BOFO windows and try again.", e));
+            return false;
+        }
     }
 
     /* ---------- DEV ONLY: login bypass ---------- */

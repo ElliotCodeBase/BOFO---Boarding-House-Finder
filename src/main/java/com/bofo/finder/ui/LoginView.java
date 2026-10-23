@@ -30,7 +30,7 @@ public final class LoginView extends ScrollPane {
             google.setDisable(true); err.setText("");
             AuthService.get().signInWithGoogle().whenComplete((v, ex) -> javafx.application.Platform.runLater(() -> {
                 google.setDisable(false);
-                if (ex != null) err.setText("Sign-in failed. Please try again."); else onSignedIn.run();
+                if (ex != null) { Throwable c = ex.getCause() != null ? ex.getCause() : ex; ex.printStackTrace(); err.setText("Sign-in failed: " + (c.getMessage() == null ? c.getClass().getSimpleName() : c.getMessage())); } else onSignedIn.run();
             }));
         });
         VBox.setMargin(google, new Insets(18, 0, 0, 0));

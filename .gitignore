@@ -12,3 +12,9 @@ target/
 
 # local secrets (dev test-account passwords)
 src/main/resources/com/bofo/finder/config.local.properties
+
+# anything named *.local.* or KEYS.local.md stays on this PC only
+KEYS.local.md
+*.local.md
+*.local.properties
+*.local.env

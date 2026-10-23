@@ -9,6 +9,9 @@
 - `LoginView`: the Student / Owner / Admin dev buttons now call `devSignIn` and show "No internet connection" or the error text on failure.
 - Removed the stale duplicate nested folder `BOFO---Boarding-House-Finder-main/BOFO---Boarding-House-Finder-main/` from the zip (older copy of the same sources).
 
+## Google login (see docs/GOOGLE_LOGIN_SETUP.md)
+Steps done 2026-10-23: Google Cloud project "BOFO Finder", consent screen (External), test user, Web OAuth client "BOFO Supabase" -> then paste Client ID/secret into Supabase Auth > Providers > Google and add redirect URLs. Keys are in `KEYS.local.md` (git-ignored). Status: finish steps 4-6 of that doc if not yet done.
+
 ## NOT verified (no Maven/network access in Claude's sandbox)
 - Not compiled; the password login was not tested against Supabase from here. If the dev button shows "Dev sign-in failed", paste the message.
 - Edge functions (`bofo-chat`, `create-boost-checkout`, `paymongo-webhook`) are NOT deployed and need secrets (LLM key, PayMongo). BOFO AI chat and Boost payments will fail until then.
