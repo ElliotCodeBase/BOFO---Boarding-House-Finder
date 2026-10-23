@@ -1,3 +1,12 @@
+# Handoff - Delete account fix (2026-10-23)
+- Cause 1: `delete_my_account()` ran `delete from storage.objects`; Supabase forbids that from SQL ("Use the Storage API instead"), so it ALWAYS failed.
+- Cause 2: `recompute_bh()` re-inserted a `bh_activity` row for a listing being cascade-deleted -> FK violation (also broke deleting listings/owner accounts).
+- Fix (already applied to the live Supabase project BOFO): migration `supabase/migrations/004_delete_account_fix.sql` (fixes recompute_bh, strips storage SQL from the RPC, `owner_verifications.reviewed_by` -> ON DELETE SET NULL) and Edge Function `supabase/functions/delete-account` (deployed, verify_jwt on): deletes the user's files in `id-verification` and `bh-photos` via the Storage API, then the auth user (everything cascades).
+- App: `ProfileView.confirmDelete` now calls `SupabaseClient.function("delete-account", ...)` instead of the RPC.
+- Tested: DB deletion of the dev owner (with listings) succeeded in a rolled-back transaction. NOT tested: the Edge Function call and the Java change (no network/Maven in Claude's sandbox).
+- If delete still fails: Supabase dashboard > Edge Functions > delete-account > Logs (look for "delete-account failed"), and paste the app's toast/console text.
+
+---
 # Handoff - Online mode: real Supabase sign-in for dev (2026-10-23)
 
 ## What changed

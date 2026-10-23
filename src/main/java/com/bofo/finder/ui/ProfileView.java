@@ -93,6 +93,6 @@ public final class ProfileView extends VBox {
         Alert a = new Alert(Alert.AlertType.CONFIRMATION, "This permanently removes your account, listings, chats and verification images. This cannot be undone.", ButtonType.CANCEL, ButtonType.OK);
         Ui.style(a); a.setTitle("Delete account"); a.setHeaderText("Delete my account and data?");
         a.showAndWait().filter(b -> b == ButtonType.OK).ifPresent(b ->
-                Async.run(() -> SupabaseClient.get().rpc("delete_my_account", new JSONObject()), r -> Main.signOutToLogin(), e -> Ui.failToast(e, "Could not delete. Try again.")));
+                Async.run(() -> SupabaseClient.get().function("delete-account", new JSONObject()), r -> Main.signOutToLogin(), e -> Ui.failToast(e, "Could not delete. Try again.")));
     }
 }

@@ -38,3 +38,6 @@ It is the BROWSER flow, so Google needs a **Web application** OAuth client (not 
 - Supabase auth logs confirmed Google PKCE login works end to end (user_signedup + /token 200). Dev email/password test accounts also log in (200).
 - Bug fixed: clicking "Continue with Google" twice left the old localhost:54321 listener running -> "Sign-in failed" even though login succeeded. `AuthService.startLoopback` now stops the old listener first and returns a clear error; `LoginView` now shows the real error text.
 - To read auth logs yourself: Supabase dashboard > Logs > Auth, or ask Claude to query `auth_logs`.
+
+## Delete account (2026-10-23)
+Fixed with migration 004 + Edge Function `delete-account` (see HANDOFF.md). Deleting your Google test account also removes its Supabase user; sign in with Google again to recreate it (new role choice).
