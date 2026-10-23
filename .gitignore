@@ -9,3 +9,6 @@ _backup*/
 build.log
 
 target/
+
+# local secrets (dev test-account passwords)
+src/main/resources/com/bofo/finder/config.local.properties

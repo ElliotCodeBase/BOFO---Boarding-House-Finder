@@ -111,6 +111,17 @@ public final class AuthService {
         profile = new Profile(userId, role, true, "Dev Tester (" + role.db() + ")", "", "", null, "verified");
     }
 
+    /** DEV ONLY: real Supabase sign-in with a test account (email + password from config.local.properties).
+     *  Unlike {@link #devLogin}, this produces a genuine JWT, so RLS, chat, favorites, listings and storage all work over the internet. */
+    public void devSignIn(Role role) throws Exception {
+        String email = AppConfig.devEmail(role.db()), pw = AppConfig.devPassword(role.db());
+        if (email.isEmpty() || pw.isEmpty())
+            throw new IllegalStateException("No dev." + role.db() + ".email / .password in config.local.properties");
+        JSONObject r = api.authPost("token?grant_type=password", new JSONObject().put("email", email).put("password", pw));
+        apply(r); store.save(r);
+        if (!loadProfile()) throw new IllegalStateException("Test account has no row in public.users");
+    }
+
     /* ---------- profile / role ---------- */
     /** @return true when a users row exists (role already chosen). */
     public boolean loadProfile() throws Exception {

@@ -1,3 +1,26 @@
+# Handoff - Online mode: real Supabase sign-in for dev (2026-10-23)
+
+## What changed
+- Supabase project **BOFO** (ref `zfxldzcoirqolflkkhrh`, ap-southeast-1) is live: 001-003 migrations applied, 15 colleges, 3 boost plans, buckets `bh-photos` (public) and `id-verification` (private). `config.properties` already points to it.
+- Created 3 REAL test accounts (auth.users + public.users): student, owner (verified), admin. Emails/passwords are in `src/main/resources/com/bofo/finder/config.local.properties` (git-ignored, NEVER commit).
+- Seeded 6 demo boarding houses (names start with "Demo BH", owned by the dev owner) near NORSU, Silliman, Foundation, St. Paul, La Salle and CHMSU Alijis, so Home/Explore/map are not empty.
+- `AppConfig`: loads optional `config.local.properties`; `devEmail(role)` / `devPassword(role)`.
+- `AuthService.devSignIn(Role)`: real password sign-in (`/auth/v1/token?grant_type=password`), saves the session, loads the profile. Gives a genuine JWT, so RLS, favorites, chat, listings and storage work online (the old fake `devForce`/`devLogin` could not).
+- `LoginView`: the Student / Owner / Admin dev buttons now call `devSignIn` and show "No internet connection" or the error text on failure.
+- Removed the stale duplicate nested folder `BOFO---Boarding-House-Finder-main/BOFO---Boarding-House-Finder-main/` from the zip (older copy of the same sources).
+
+## NOT verified (no Maven/network access in Claude's sandbox)
+- Not compiled; the password login was not tested against Supabase from here. If the dev button shows "Dev sign-in failed", paste the message.
+- Edge functions (`bofo-chat`, `create-boost-checkout`, `paymongo-webhook`) are NOT deployed and need secrets (LLM key, PayMongo). BOFO AI chat and Boost payments will fail until then.
+- Google login still needs the Google provider + redirect URLs (`bofo://auth-callback`, `http://localhost:54321/callback`) in Supabase Auth settings.
+
+## Before release
+- Delete the dev buttons in `LoginView` and `devSignIn`/`devLogin`/`devForce` in `AuthService`; delete the 3 test users and "Demo BH" rows in Supabase.
+
+## Git
+Follow the "Clean repo update guide" below. Check `git status` first: `config.local.properties` must NOT appear (it is in `.gitignore`).
+
+---
 # Handoff – Dev login bypass (2026-10-22)
 
 ## What changed
