@@ -30,15 +30,15 @@ public final class LoginView extends ScrollPane {
             google.setDisable(true); err.setText("");
             AuthService.get().signInWithGoogle().whenComplete((v, ex) -> javafx.application.Platform.runLater(() -> {
                 google.setDisable(false);
-                if (ex != null) err.setText("Sign-in failed. Please try again."); else onSignedIn.run();
+                if (ex != null) { Throwable c = ex.getCause() != null ? ex.getCause() : ex; ex.printStackTrace(); err.setText("Sign-in failed: " + (c.getMessage() == null ? c.getClass().getSimpleName() : c.getMessage())); } else onSignedIn.run();
             }));
         });
         VBox.setMargin(google, new Insets(18, 0, 0, 0));
 
         // DEV ONLY (remove before release): force login without Google, pick a role
-        Button fs = Ui.btn("Student", "chip", () -> forceLogin(Role.STUDENT));
-        Button fo = Ui.btn("Owner", "chip", () -> forceLogin(Role.OWNER));
-        Button fa = Ui.btn("Admin", "chip", () -> forceLogin(Role.ADMIN));
+        Button fs = Ui.btn("Student", "chip", () -> forceLogin(Role.STUDENT, err));
+        Button fo = Ui.btn("Owner", "chip", () -> forceLogin(Role.OWNER, err));
+        Button fa = Ui.btn("Admin", "chip", () -> forceLogin(Role.ADMIN, err));
         HBox devRow = Ui.hbox(8, fs, fo, fa); devRow.setAlignment(Pos.CENTER);
 
         Label legal = Ui.label("By continuing you agree to our", "secondary"); center(legal);
@@ -46,7 +46,7 @@ public final class LoginView extends ScrollPane {
         Button priv = Ui.btn("Privacy Policy", "link", () -> Nav.toast("Open Privacy Policy"));
         HBox legalRow = Ui.hbox(2, terms, Ui.label("and", "secondary"), priv); legalRow.setAlignment(Pos.CENTER);
 
-        col.getChildren().addAll(logo, title, tag, google, err, Ui.divider("Developer: force login"), devRow, Ui.grow(), legal, legalRow);
+        col.getChildren().addAll(logo, title, tag, google, err, Ui.divider("Developer: test accounts (real sign-in)"), devRow, Ui.grow(), legal, legalRow);
         StackPane holder = new StackPane(col); holder.setAlignment(Pos.TOP_CENTER);
         setContent(holder); setFitToWidth(true); setFitToHeight(true);        // scrolls on short / landscape screens
         setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -54,8 +54,13 @@ public final class LoginView extends ScrollPane {
 
     private static void center(Label l) { l.setAlignment(Pos.CENTER); l.setMaxWidth(Double.MAX_VALUE); l.setStyle("-fx-text-alignment:center;"); }
 
-    private static void forceLogin(Role r) {
-        AuthService.get().devForce(r);
-        com.bofo.finder.app.Main.route();
+    /** DEV ONLY: signs in to Supabase with the role's test account (online), then opens the matching home. */
+    private static void forceLogin(Role r, Label err) {
+        err.setText("Signing in as " + r.db() + "...");
+        com.bofo.finder.util.Async.run(() -> { AuthService.get().devSignIn(r); return null; },
+                v -> com.bofo.finder.app.Main.route(),
+                e -> err.setText(com.bofo.finder.util.Connectivity.isNetworkError(e)
+                        ? "No internet connection. Check your network and try again."
+                        : "Dev sign-in failed: " + e.getMessage()));
     }
 }
