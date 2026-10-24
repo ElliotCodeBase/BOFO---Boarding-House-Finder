@@ -1,0 +1,70 @@
+# BOFO Finder: Map tracking + route feature (2026-10-24)
+
+Design reference: the blue map mockup (live location, radius circle, BH pins, bottom card, route line).
+**Status: written but NOT compiled or run by the author** (no Maven / JavaFX in the authoring environment; only a
+Java syntax check was done). Build it once and use the fix guide in section 5 if anything complains.
+
+## 1. What was added
+
+| Feature | What you see | Where |
+|---|---|---|
+| **Live tracking marker** | Blue dot that *glides* between GPS fixes, pulses, and shows a small direction arrow once you move 4 m or more. Pulse stops when the map is off screen (saves battery). | every map |
+| **Follow me** | The round locate button flies the camera to you and keeps following. Dragging or zooming the map turns follow off (button un-highlights). | every map |
+| **Pins pop in** | Purple pins pop in one after another. Selected pin grows and turns dark purple. Only *new* pins animate, so the radius slider does not re-pop everything. | Home, Explore, Owner dashboard |
+| **Preview card** | Tap a pin: a card slides up (photo, name, price, stars, distance, Water/Power/Wi-Fi tags). Tap the card to open the BH page, X or empty map to close. Locate button lifts above the card. | Home, Explore, Owner dashboard (no details page) |
+| **Walking route that draws itself** | Real walking path (follows roads), white outline + purple line "walking" from the start to the BH, camera glides to fit it, badge on the middle of the route: `750 m · 10 min`. | Home, Explore, BH detail, Owner |
+| **Route start** | Chosen college, else (owner screens) the **nearest college** to that BH, else your location. | |
+| **Dotted you-to-college line** | Faint dotted line from you to the college when you are more than 120 m away from it. | Home / Explore / detail |
+| **Radius badge + growing circle** | College circle grows/shrinks smoothly to the new radius, with a `1.0 km` badge on its edge. | Home |
+| **Owner dashboard map** | "Your listings on the map" under Overview; fits all your pins; tap one to see the walk from the nearest campus. | Owner > Dashboard |
+| **Owner pin check** | In *New listing*, press "Set pin at map center": the route from the nearest college is drawn and the label shows e.g. `Pin: ... · 850 m from NU Cebu (about 11 min walk)`. | Owner > Create |
+| **Admin** | The admin app has no map screens (Queue, Payments, Reports, Profile), so nothing was added there. | n/a |
+
+## 2. How to access / test
+
+1. `git pull origin main`, extract `bofo-map-update.zip` over the project folder (section 4), then `mvn clean` and run the app as usual.
+2. **Student > Home:** choose a college, tap a purple pin. Watch the card slide up and the route draw.
+3. **Student > Explore > Map:** same behavior over the whole list.
+4. **Student > any BH page:** the small map now shows an animated real route from your college (or you).
+5. **Owner > Dashboard:** scroll to "Your listings on the map" (appears once you have a listing). **Owner > Create:** set a pin.
+6. Dev logins: Student / Owner / Admin buttons on the login screen (see SESSION_CHANGES.md).
+7. The marker only *moves* with real GPS (phone). On a PC you get one location fix, so it appears but will not glide.
+
+## 3. Files
+
+New: `util/Router.java` (walking route + straight-line fallback), `ui/MapCard.java` (preview card).
+Rewritten: `ui/MapPane.java` (same public API as before, plus `enablePreview`, `setColleges`, `fitPins`, `showRoute`, `clearRoute`, `framed`).
+Edited: `util/Geo.java` (bearing, fitZoom), `config/AppConfig.java` (`route.url`, `route.online`), `ui/HomeView.java` (map 240 to 300 px, preview on), `ui/ExploreView.java` (preview on), `ui/DashboardView.java` (owner map), `ui/ListingFormView.java` (route after Set pin), `bofo.css` (appended map styles).
+All paths are under `src/main/java/com/bofo/finder/` (css under `src/main/resources/com/bofo/finder/`).
+
+## 4. Install
+
+```powershell
+cd C:\Users\user\bofo-finder
+git pull origin main
+Expand-Archive -Path "$HOME\Downloads\bofo-map-update.zip" -DestinationPath . -Force
+mvn clean
+```
+Then run the app. Commit when happy: `git add -A; git commit -m "Map: tracking, preview card, animated walking routes"; git push origin main`.
+
+Optional settings (`config.properties` or your `config.local.properties`, all have defaults):
+```properties
+# route.url=https://routing.openstreetmap.de/routed-foot/route/v1/foot/{lng1},{lat1};{lng2},{lat2}?overview=full&geometries=geojson
+# route.online=false     # always draw a straight line, never call the routing server
+```
+
+## 5. If something goes wrong
+
+| Problem | Fix |
+|---|---|
+| Build fails with "cannot find symbol" / "incompatible types" | Copy the first 5 error lines and send them. Fastest rollback: `git checkout -- .` then `git clean -fd src` (undoes this update only if you have not committed it). |
+| Route is a straight line and the card says "(straight line)" | The routing server could not be reached (offline, blocked, or busy). Check internet, or set `route.url` to another OSRM-style foot server. Straight line is the built-in fallback. |
+| Card says "Turn on location or choose a college" | No start point: pick a college on Home or allow location (Profile > location switch). Owners get the nearest college automatically once colleges load. |
+| Blue dot does not move on PC | Normal: PCs report one fix. Test movement on the phone. |
+| Pins/map look unstyled, no badges | Old CSS cached: run `mvn clean` and start again. |
+| Tapping a pin opens the BH page directly (no card) | That screen was not switched to preview mode: it needs `map.enablePreview(...)` instead of `map.onPinTap(...)`. Home, Explore and the owner dashboard already have it. |
+| Map jumps back to me while I drag | Follow mode is on; dragging turns it off. If it does not, tap the locate button once more and drag again. |
+| Route takes long / huge routes lag | Routes are thinned to 400 points; if still slow lower `400` in `Router.walk` (`thin(pts, 400)`). |
+| Public routing server limits | The free OpenStreetMap server is for light use. For heavy use, host OSRM or use a paid routing API and set `route.url`. |
+
+Walking minutes are computed at 5 km/h from the route distance, not taken from the server.

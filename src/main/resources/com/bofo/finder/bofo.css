@@ -146,7 +146,7 @@
 
 /* Slider */
 .slider { -fx-padding: 6 0; }
-.slider > .track { -fx-background-color: -bofo-border; -fx-background-insets: 0; -fx-background-radius: 999; -fx-padding: 3; }
+.slider > .track { -fx-background-color: -bofo-border; -fx-background-insets: 0; -fx-background-radius: 3; -fx-padding: 3; }   /* small radius: JavaFX stretches the track by this much on each side */
 .slider > .thumb { -fx-background-color: -bofo-primary; -fx-background-insets: 0; -fx-background-radius: 999; -fx-padding: 9;
   -fx-border-color: white; -fx-border-width: 3; -fx-border-radius: 999; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.25), 5, 0, 0, 1); }
 
@@ -244,3 +244,31 @@
   -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; -fx-max-width: 42; -fx-max-height: 42;
   -fx-padding: 0; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.20), 8, 0, 0, 2); }
 .map-fab:hover { -fx-background-color: -bofo-primary-tint; }
+
+/* Map: preview card, follow-me button, distance badges */
+.map-card { -fx-background-color: white; -fx-background-radius: 20; -fx-padding: 10;
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.24), 16, 0, 0, 4); -fx-cursor: hand; }
+.map-fab-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; }
+.map-badge { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-primary; -fx-border-radius: 999;
+  -fx-padding: 2 8 2 8; -fx-text-fill: -bofo-primary-dark; -fx-font-size: 11px; -fx-font-weight: bold; }
+.map-route-badge { -fx-background-color: -bofo-primary; -fx-background-radius: 999; -fx-padding: 3 10 3 10;
+  -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.25), 6, 0, 0, 2); }
+.map-origin-tag { -fx-background-color: rgba(255,255,255,0.92); -fx-background-radius: 8; -fx-padding: 1 6 1 6;
+  -fx-text-fill: -bofo-primary-dark; -fx-font-size: 10px; -fx-font-weight: bold; }
+
+/* ---- Home: college row, floating radius pill, campus names on the map ---- */
+.near-btn { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999;
+  -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-padding: 0; -fx-cursor: hand; }
+.near-btn:hover { -fx-background-color: -bofo-primary-tint; }
+.radius-bar { -fx-background-color: rgba(255,255,255,0.96); -fx-background-radius: 999; -fx-padding: 5 6 5 16;
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.22), 12, 0, 0, 3); }
+.radius-pill { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-background-radius: 999;
+  -fx-padding: 5 12; -fx-font-size: 12px; -fx-font-weight: bold; }
+.radius-slider { -fx-padding: 4 8; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; }
+.radius-slider > .track { -fx-background-insets: 0; -fx-background-radius: 3; -fx-padding: 3; }
+.radius-slider > .thumb { -fx-background-color: white; -fx-background-insets: 0; -fx-background-radius: 999; -fx-padding: 8;
+  -fx-border-color: #5B3BF0; -fx-border-width: 3.5; -fx-border-radius: 999;
+  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.35), 8, 0, 0, 2); }
+.radius-slider:focused > .thumb { -fx-background-insets: 0; }
+.map-college-tag { -fx-background-color: rgba(255,255,255,0.88); -fx-background-radius: 6; -fx-padding: 1 5 1 5;
+  -fx-text-fill: -bofo-primary-dark; -fx-font-size: 10px; -fx-font-weight: bold; }

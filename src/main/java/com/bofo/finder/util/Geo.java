@@ -12,4 +12,28 @@ public final class Geo {
     /** Rough walking time (5 km/h) in minutes. Use a routing API for real travel time. */
     public static int walkMinutes(double km) { return (int) Math.round(km / 5.0 * 60); }
     public static String fmt(double km) { return km < 1 ? Math.round(km * 1000) + " m" : String.format("%.1f km", km); }
+
+    /** Compass direction from point 1 to point 2 in degrees (0 = north, 90 = east). Used for the "which way am I walking" arrow. */
+    public static double bearing(double lat1, double lng1, double lat2, double lng2) {
+        double p1 = Math.toRadians(lat1), p2 = Math.toRadians(lat2), dl = Math.toRadians(lng2 - lng1);
+        double y = Math.sin(dl) * Math.cos(p2);
+        double x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
+        return (Math.toDegrees(Math.atan2(y, x)) + 360) % 360;
+    }
+
+    /** Pixel position of a point on the whole-world map at zoom z (256 px tiles, Web Mercator). */
+    private static double[] worldPx(double lat, double lng, int z) {
+        double world = 256.0 * (1 << z);
+        double s = Math.sin(Math.toRadians(Math.max(-85, Math.min(85, lat))));
+        return new double[]{(lng + 180) / 360 * world, (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * world};
+    }
+
+    /** Highest zoom (between minZ and maxZ) at which the box fits inside w x h pixels. */
+    public static int fitZoom(double minLat, double minLng, double maxLat, double maxLng, double w, double h, int minZ, int maxZ) {
+        for (int z = maxZ; z > minZ; z--) {
+            double[] a = worldPx(maxLat, minLng, z), b = worldPx(minLat, maxLng, z);
+            if (Math.abs(b[0] - a[0]) <= w && Math.abs(b[1] - a[1]) <= h) return z;
+        }
+        return minZ;
+    }
 }
