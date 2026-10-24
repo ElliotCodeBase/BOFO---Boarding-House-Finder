@@ -21,7 +21,7 @@ import java.util.HashSet;
 /** Default student home: greeting, college selector, map with radius, New/Hot/Best tabs sorted nearest-first. */
 public final class HomeView extends VBox {
     private final BhService bh = new BhService();
-    private final MapPane map = new MapPane(240);
+    private final MapPane map = new MapPane(300);
     private final CardGrid list = new CardGrid(10, 320);
     private final Button collegeBtn = new Button();
     private final Slider radius = new Slider(0.5, 5, State.radiusKm.get());
@@ -88,7 +88,7 @@ public final class HomeView extends VBox {
         VBox.setMargin(mapWrap, new Insets(12, 16, 0, 16));
 
         VBox content = new VBox(0, top, searchPill, collegeRow, locHint, mapWrap, radiusCard, chips, nearby, list);
-        map.onPinTap(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
+        map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
         ScrollPane sp = Ui.scroll(content); VBox.setVgrow(sp, Priority.ALWAYS);
         getChildren().add(sp);
         Async.run(bh::favoriteIds, f -> { favs = f; reload(); }, e -> reload());

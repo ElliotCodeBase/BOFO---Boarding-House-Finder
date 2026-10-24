@@ -100,7 +100,7 @@ public final class ExploreView extends VBox {
         list.setPadding(new Insets(4, 16, 24, 16));
         listScroll = Ui.scroll(list);
         map.fillAvailable(260);
-        map.onPinTap(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
+        map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
         content.getChildren().setAll(listScroll); VBox.setVgrow(content, Priority.ALWAYS);
 
         getChildren().addAll(Ui.appBar("Explore"), top, chips, panel, head, content);

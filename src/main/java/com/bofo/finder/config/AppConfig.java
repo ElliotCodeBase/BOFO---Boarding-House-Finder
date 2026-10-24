@@ -48,5 +48,9 @@ public final class AppConfig {
         String a = get("map.attribution").trim();
         return a.isEmpty() ? "\u00A9 OpenStreetMap contributors \u00A9 CARTO" : a;
     }
+    /** Walking-route service (OSRM style). {lng1},{lat1};{lng2},{lat2} are filled in. Override with route.url in config.properties. */
+    public static String routeUrl() { String u = get("route.url").trim(); return u.isEmpty() ? "https://routing.openstreetmap.de/routed-foot/route/v1/foot/{lng1},{lat1};{lng2},{lat2}?overview=full&geometries=geojson" : u; }
+    /** route.online=false skips the routing service and always draws a straight line. */
+    public static boolean routeOnline() { return !"false".equalsIgnoreCase(get("route.online").trim()); }
     public static String redirectUri() { return isAndroid() ? get("auth.redirect.android") : get("auth.redirect.desktop"); }
 }

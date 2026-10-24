@@ -1,5 +1,6 @@
 package com.bofo.finder.ui;
 
+import com.bofo.finder.model.College;
 import com.bofo.finder.service.AuthService;
 import com.bofo.finder.service.BhService;
 import com.bofo.finder.util.Async;
@@ -18,6 +19,7 @@ public final class ListingFormView extends VBox {
     private final VBox roomRows = new VBox(6);
     private final Label pinLabel = Ui.label("No pin yet", "secondary"), photoLabel = Ui.label("0 photos", "secondary"), errors = Ui.label("", "error-text");
     private final MapPane map = new MapPane(220);
+    private java.util.List<College> colleges = java.util.List.of();      // for "how far is this from campus"
 
     public ListingFormView(Runnable onDone) {
         Button back = Ui.btn("←", "heart", onDone); back.getStyleClass().setAll("button", "icon-btn");
@@ -29,8 +31,10 @@ public final class ListingFormView extends VBox {
 
         double[] ref = State.ref(); map.show(ref != null ? ref : new double[]{14.5995, 120.9842}, 0, java.util.List.of(), false, null);
         map.enableCenterPin();
+        Async.run(() -> new BhService().colleges(), cs -> colleges = cs, e -> {});
         Button setPin = Ui.btn("📍 Set pin at map center", "btn-outline", () -> {
             double[] c = map.center(); d.lat = c[0]; d.lng = c[1]; pinLabel.setText(String.format("Pin: %.5f, %.5f", c[0], c[1]));
+            routeToNearestCollege(c);
         });
 
         addRoom(4, 0);
@@ -52,6 +56,19 @@ public final class ListingFormView extends VBox {
         this.onDone = onDone;
     }
     private final Runnable onDone;
+
+    /** Draws the walking route from the nearest college to the dropped pin and shows the distance under the map. */
+    private void routeToNearestCollege(double[] pin) {
+        College best = null; double bestKm = Double.MAX_VALUE;
+        for (College c : colleges) { double km = com.bofo.finder.util.Geo.km(c.lat(), c.lng(), pin[0], pin[1]); if (km < bestKm) { bestKm = km; best = c; } }
+        if (best == null) return;
+        final College college = best;
+        map.showRoute(new double[]{college.lat(), college.lng()}, pin, college.name(), false, r -> {
+            double km = r.meters() / 1000.0;
+            pinLabel.setText(String.format("Pin: %.5f, %.5f", pin[0], pin[1]) + "  \u00B7  " + com.bofo.finder.util.Geo.fmt(km) + " from " + college.name()
+                    + " (about " + Math.max(1, com.bofo.finder.util.Geo.walkMinutes(km)) + " min walk)");
+        });
+    }
 
     private void addPhoto(javafx.scene.image.Image img) {
         d.photos.add(Capture.png(img, 1280)); photoLabel.setText(d.photos.size() + " photos");
