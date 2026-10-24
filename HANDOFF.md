@@ -1,3 +1,7 @@
+# Handoff - v1.4.1 compile fix (2026-10-24)
+- `CampusPicker`: fixed "variable sync might not have been initialized" (state listener lambda was a field initializer reading the final `sync`; now assigned in the constructor). v1.4.0 compiled-failed, so this supersedes it. Version bumped to 1.4.1 (versionCode 5).
+
+---
 # Handoff - v1.4.0 campus search with autocomplete (2026-10-24)
 - NEW `ui/CampusPicker`: campus search box with our OWN autocomplete (local matching in Java on the cached campus list; no per-keystroke API, no Google Places). Order: starts-with, word starts-with, contains, initials (e.g. "norsu"). Dropdown arrow lists all campuses; Up/Down/Enter/Esc work; typed part is bold.
 - Explore: picker above the search bar. Choosing a campus sets `State.college`, so the LIST sorts nearest-first and the MAP recenters/zooms (works in both List and Map modes). Clearing it goes back to GPS. Count reads "N places near <campus>".

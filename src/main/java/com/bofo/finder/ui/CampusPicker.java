@@ -44,13 +44,14 @@ public final class CampusPicker extends VBox {
     private final Consumer<College> onPick;
     private final Consumer<String> onEnterText;     // Enter with text that matches no campus (may be null)
     private final Runnable onClear;                 // the clear button was used (may be null)
-    private final ChangeListener<College> stateListener = (o, a, b) -> { if (sync) showChosen(); };
+    private final ChangeListener<College> stateListener;
     private List<College> all = List.of();
     private boolean settingText;                    // true while we fill the field ourselves (not the user typing)
 
     public CampusPicker(String prompt, boolean syncWithState, Consumer<College> onPick, Consumer<String> onEnterText, Runnable onClear) {
         super(6);
         this.sync = syncWithState; this.onPick = onPick; this.onEnterText = onEnterText; this.onClear = onClear;
+        this.stateListener = (o, was, now) -> { if (syncWithState) showChosen(); };
 
         field.getStyleClass().add("college-field"); field.setPromptText(prompt);
         HBox.setHgrow(field, Priority.ALWAYS);
