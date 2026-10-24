@@ -72,6 +72,7 @@ public final class MapPane extends StackPane {
     private double camLat = Double.NaN, camLng = Double.NaN;
     private Timeline cam;
     private boolean follow;
+    private double zoomVal = Double.NaN;       // zoom we last set ourselves; NaN after the user pinched / scrolled (then the next move just jumps)
 
     // selection / preview card / route
     private boolean preview;
@@ -85,13 +86,13 @@ public final class MapPane extends StackPane {
     private boolean originIsCollege;
 
     private final ChangeListener<double[]> gpsMoved = (o, was, now) -> {
-        if (now != null && !centered) { centered = true; setCenterNow(now[0], now[1]); map.setZoom(16); }   // open on the user
+        if (now != null && !centered) { centered = true; setCenterNow(now[0], now[1]); applyZoom(16); }   // open on the user
         layer.moveMe(now);
     };
 
     public MapPane(double height) {
         setMinHeight(height); setPrefHeight(height); setMaxHeight(height);
-        map.setZoom(15); map.addLayer(layer);
+        applyZoom(15); map.addLayer(layer);
         Label attr = new Label(AppConfig.mapAttribution());
         attr.setStyle("-fx-font-size:9px;-fx-text-fill:#6B6580;-fx-background-color:rgba(255,255,255,0.7);-fx-padding:1 4;");
         attr.setMouseTransparent(true);
@@ -107,7 +108,8 @@ public final class MapPane extends StackPane {
         // touching the map stops a running camera move; dragging or zooming it ends "follow me"
         addEventFilter(MouseEvent.MOUSE_PRESSED, e -> { if (cam != null) cam.stop(); });
         addEventFilter(MouseEvent.MOUSE_DRAGGED, e -> setFollow(false));
-        addEventFilter(ScrollEvent.SCROLL, e -> setFollow(false));
+        addEventFilter(ScrollEvent.SCROLL, e -> { setFollow(false); zoomVal = Double.NaN; });
+        addEventFilter(javafx.scene.input.ZoomEvent.ANY, e -> zoomVal = Double.NaN);
         addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {              // tap on empty map = close the card
             if (selected != null && e.isStillSincePress() && !inside(e.getTarget(), locate) && !inside(e.getTarget(), card)) deselect();
         });
@@ -196,7 +198,7 @@ public final class MapPane extends StackPane {
         if (radiusKm > 0 && selected == null) {
             double lat = center != null ? center[0] : Double.isNaN(camLat) ? 10.3 : camLat;
             double z = zoomForRadius(radiusKm, lat);
-            if (glide) flyTo(center[0], center[1], z, 450); else map.setZoom(z);
+            if (glide) flyTo(center[0], center[1], z, 450); else { applyZoom(z); setCenterNow(center != null ? center[0] : camLat, center != null ? center[1] : camLng); }
         }
         if (routeTo != null && center != null) {
             boolean fromCollege = State.college.get() != null;
@@ -235,6 +237,8 @@ public final class MapPane extends StackPane {
 
     // ---------------------------------------------------------------- camera
 
+    private void applyZoom(double z) { zoomVal = z; map.setZoom(z); }
+
     private void setCenterNow(double lat, double lng) { camLat = lat; camLng = lng; map.setCenter(lat, lng); }
 
     private double[] currentCenter() {
@@ -242,21 +246,22 @@ public final class MapPane extends StackPane {
         return Double.isNaN(camLat) ? null : new double[]{camLat, camLng};
     }
 
-    /** Glides the camera to a point and zoom together (zoom <= 0 keeps the current zoom). */
+    /** Glides the camera to a point and zoom together (zoom <= 0 keeps the current zoom). The centre is set after the zoom on every frame, so it never drifts. */
     private void flyTo(double lat, double lng, double zoom, int ms) {
         if (cam != null) cam.stop();
         double[] from = currentCenter();
-        double z0 = layer.zoomNow();
-        if (from == null || ms <= 0 || Double.isNaN(z0)) { setCenterNow(lat, lng); if (zoom > 0) map.setZoom(zoom); return; }
+        double z0 = zoomVal;
+        if (from == null || ms <= 0 || (zoom > 0 && Double.isNaN(z0))) { if (zoom > 0) applyZoom(zoom); setCenterNow(lat, lng); return; }
         DoubleProperty t = new SimpleDoubleProperty(0);
         t.addListener((o, a, v) -> {
             double k = v.doubleValue();
+            if (zoom > 0) applyZoom(z0 + (zoom - z0) * k);
             setCenterNow(from[0] + (lat - from[0]) * k, from[1] + (lng - from[1]) * k);
-            if (zoom > 0) map.setZoom(z0 + (zoom - z0) * k);
         });
         cam = new Timeline(
                 new KeyFrame(Duration.ZERO, new KeyValue(t, 0)),
                 new KeyFrame(Duration.millis(ms), new KeyValue(t, 1, Interpolator.EASE_BOTH)));
+        cam.setOnFinished(e -> { if (zoom > 0) applyZoom(zoom); setCenterNow(lat, lng); });
         cam.play();
     }
 
@@ -267,7 +272,7 @@ public final class MapPane extends StackPane {
         int z = Geo.fitZoom(bb[0], bb[1], bb[2], bb[3], w * 0.78, Math.max(80, (h - cardPx) * 0.66), 11, maxZoom);
         double lat = (bb[0] + bb[2]) / 2, lng = (bb[1] + bb[3]) / 2;
         lat -= 360.0 / (256.0 * (1 << z)) * Math.cos(Math.toRadians(lat)) * cardPx / 2.0;     // shift up so the card does not cover the route
-        if (ms <= 0) { setCenterNow(lat, lng); map.setZoom(z); } else flyTo(lat, lng, z, ms);
+        if (ms <= 0) { applyZoom(z); setCenterNow(lat, lng); } else flyTo(lat, lng, z, ms);
     }
 
     private void setFollow(boolean on) {
@@ -311,7 +316,6 @@ public final class MapPane extends StackPane {
     private void startRoute(double[] from, double[] to, String label, boolean fromCollege, BoardingHouse forBh, boolean moveCamera, Consumer<Router.Route> done) {
         final int my = ++routeToken;
         curOrigin = from;
-        if (moveCamera) fitBounds(new double[]{Math.min(from[0], to[0]), Math.min(from[1], to[1]), Math.max(from[0], to[0]), Math.max(from[1], to[1])}, 17, 700);
         if (card != null && forBh != null) card.setRouteInfo("Finding the best walking route\u2026");
         Async.run(() -> Router.walk(from[0], from[1], to[0], to[1]), r -> {
             if (my != routeToken) return;                       // the selection changed while the route was loading
@@ -444,13 +448,8 @@ public final class MapPane extends StackPane {
             if (on && !Double.isNaN(meLat)) pulse.play(); else pulse.pause();
         }
 
-        /** Live zoom read from the layer's own projection (pixels per degree of longitude). NaN until the map is laid out. */
-        double zoomNow() {
-            try {
-                double px = Math.abs(getMapPoint(0, 1).getX() - getMapPoint(0, 0).getX());
-                return px > 0 ? Math.log(px * 360.0 / 256.0) / Math.log(2) : Double.NaN;
-            } catch (Throwable t) { return Double.NaN; }
-        }
+        /** Zoom we last set (NaN when unknown). */
+        double zoomNow() { return zoomVal; }
 
         void animateRing(double want, int ms) {
             if (ringAnim != null) ringAnim.stop();
