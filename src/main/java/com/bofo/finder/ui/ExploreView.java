@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Explore: one search bar (searches as you type) with a filter button, quick amenity chips, a collapsible filter
+ * Explore: one search bar (campus autocomplete + name/area search as you type) with a filter button, removable active-filter chips, a collapsible filter
  * panel (max price + sort), and a List | Map switch. The map only loads when you open it, so the list gets the whole screen.
  */
 public final class ExploreView extends VBox {
@@ -32,7 +32,8 @@ public final class ExploreView extends VBox {
     private static final String[] SORTS = {"Nearest", "Lowest price", "Most beds"};
 
     private final BhService bh = new BhService();
-    private final TextField search = new TextField();
+    private CampusPicker campus;                              // the single search bar (campus autocomplete + name/area search)
+    private final FlowPane activeRow = new FlowPane(8, 8);     // filters that are ON, each removable with its x; hidden when none
     private final TextField maxPrice = new TextField();
     private final Ui.Chip water = new Ui.Chip("Free water"), elec = new Ui.Chip("Free electricity"), wifi = new Ui.Chip("Free Wi-Fi");
     private final Button[] sortBtns = new Button[SORTS.length];
@@ -54,39 +55,27 @@ public final class ExploreView extends VBox {
     private int seq = 0;
 
     public ExploreView() {
-        // ---- search bar (icon + field + clear) and the filter button ----
-        search.setPromptText("Search by name or area"); search.getStyleClass().add("search-input");
-        Button clear = new Button(); clear.getStyleClass().add("search-clear");
-        clear.setGraphic(Ui.strokeIcon(Glyphs.CLOSE, 14, Color.web("#8D8AA3")));
-        clear.visibleProperty().bind(search.textProperty().isNotEmpty()); clear.managedProperty().bind(clear.visibleProperty());
-        clear.setOnAction(e -> { search.clear(); typing.stop(); run(); });
-        HBox bar = new HBox(10, Ui.strokeIcon(Glyphs.SEARCH, 20, Color.web("#8D8AA3")), search, clear);
-        bar.setAlignment(Pos.CENTER_LEFT); bar.getStyleClass().add("search-bar"); HBox.setHgrow(search, Priority.ALWAYS);
-        search.focusedProperty().addListener((o, was, now) -> { bar.getStyleClass().remove("search-bar-focus"); if (now) bar.getStyleClass().add("search-bar-focus"); });
+        // ---- ONE search bar: type a campus (autocomplete + dropdown arrow) OR a boarding house name / area; plus the filter button ----
+        campus = new CampusPicker("Search campus, name or area", true, c -> CampusPicker.remember(c), null, t -> typing.playFromStart());
+        ChangeListener<College> campusListener = (o, a, b) -> { typing.stop(); flyToCampus = b != null; run(); };
+        State.college.addListener(campusListener);
+        sceneProperty().addListener((o, was, sc) -> {
+            State.college.removeListener(campusListener);
+            if (sc != null) State.college.addListener(campusListener);
+        });
         typing.setOnFinished(e -> run());                                     // search as you type, once typing pauses
-        search.textProperty().addListener((o, a, b) -> typing.playFromStart());
-        search.setOnAction(e -> { typing.stop(); run(); });
 
         filterBtn.getStyleClass().add("filter-btn"); filterBtn.setGraphic(Ui.strokeIcon(Glyphs.FILTER, 20, Color.web("#17142A")));
         filterBadge.getStyleClass().add("filter-badge"); filterBadge.setVisible(false); filterBadge.setMouseTransparent(true);
         StackPane filterWrap = new StackPane(filterBtn, filterBadge);
         StackPane.setAlignment(filterBadge, Pos.TOP_RIGHT);
         filterBtn.setOnAction(e -> togglePanel());
-        HBox top = new HBox(10, bar, filterWrap); top.setAlignment(Pos.CENTER); HBox.setHgrow(bar, Priority.ALWAYS);
+        HBox top = new HBox(10, campus, filterWrap); top.setAlignment(Pos.TOP_LEFT); HBox.setHgrow(campus, Priority.ALWAYS);
         top.setPadding(new Insets(0, 16, 0, 16));
 
-        // ---- campus search: autocomplete + dropdown; drives both the list (nearest first) and the map ----
-        CampusPicker campus = new CampusPicker("Search a campus (e.g. NORSU)", true, c -> CampusPicker.remember(c), null, null);
-        VBox.setMargin(campus, new Insets(0, 16, 10, 16));
-        ChangeListener<College> campusListener = (o, a, b) -> { flyToCampus = b != null; run(); };
-        State.college.addListener(campusListener);
-        sceneProperty().addListener((o, was, sc) -> {
-            State.college.removeListener(campusListener);
-            if (sc != null) State.college.addListener(campusListener);
-        });
-
-        // ---- quick amenity chips ----
-        FlowPane chips = new FlowPane(8, 8, water, elec, wifi); chips.setPadding(new Insets(12, 16, 0, 16));
+        // ---- active filters: only shown while something is turned on; tap one to remove it ----
+        activeRow.setPadding(new Insets(12, 16, 0, 16)); activeRow.setVisible(false); activeRow.setManaged(false);
+        FlowPane amenities = new FlowPane(8, 8, water, elec, wifi);       // turned on here (inside the filter panel)
         for (Ui.Chip c : new Ui.Chip[]{water, elec, wifi}) c.addEventHandler(javafx.event.ActionEvent.ACTION, e -> javafx.application.Platform.runLater(this::run));
 
         // ---- collapsible filter panel: max price + sort ----
@@ -101,7 +90,7 @@ public final class ExploreView extends VBox {
         paintSort();
         Button reset = Ui.btn("Reset filters", "link", this::resetFilters);
         HBox panelHead = new HBox(8, Ui.label("Filters", "h2"), Ui.grow(), reset); panelHead.setAlignment(Pos.CENTER_LEFT);
-        panel.getChildren().addAll(panelHead, Ui.label("Maximum price per month", "secondary"), maxPrice, Ui.label("Sort by", "secondary"), sorts);
+        panel.getChildren().addAll(panelHead, Ui.label("Amenities", "secondary"), amenities, Ui.label("Maximum price per month", "secondary"), maxPrice, Ui.label("Sort by", "secondary"), sorts);
         panel.getStyleClass().add("filter-panel"); panel.setVisible(false); panel.setManaged(false);
         VBox.setMargin(panel, new Insets(12, 16, 0, 16));
 
@@ -117,7 +106,7 @@ public final class ExploreView extends VBox {
         Async.run(() -> new BhService().colleges(), map::showColleges, e -> {});     // every campus is always on the map
         content.getChildren().setAll(listScroll); VBox.setVgrow(content, Priority.ALWAYS);
 
-        getChildren().addAll(Ui.appBar("Explore"), campus, top, chips, panel, head, content);
+        getChildren().addAll(Ui.appBar("Explore"), top, activeRow, panel, head, content);
         if (pendingFilters != null) apply(pendingFilters);
         refreshBadge();
         Async.run(bh::favoriteIds, f -> { favs = f; run(); }, e -> run());
@@ -127,6 +116,13 @@ public final class ExploreView extends VBox {
         boolean show = !panel.isVisible();
         panel.setManaged(show); panel.setVisible(show);
         if (show) { panel.setOpacity(0); javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(Duration.millis(180), panel); fade.setToValue(1); fade.play(); }
+    }
+
+    /** A filter that is on, shown as a dark pill with an x; tapping it turns that filter off and reloads. */
+    private Button activeChip(String text, Runnable off) {
+        Button b = new Button(text + "  \u2715"); b.getStyleClass().add("chip-selected");
+        b.setOnAction(e -> { off.run(); run(); });
+        return b;
     }
 
     private void paintSort() {
@@ -144,6 +140,13 @@ public final class ExploreView extends VBox {
     private void refreshBadge() {
         int n = (water.isOn() ? 1 : 0) + (elec.isOn() ? 1 : 0) + (wifi.isOn() ? 1 : 0) + (maxPrice.getText().isBlank() ? 0 : 1) + (sortIdx != 0 ? 1 : 0);
         filterBadge.setText(String.valueOf(n)); filterBadge.setVisible(n > 0);
+        activeRow.getChildren().clear();
+        if (water.isOn()) activeRow.getChildren().add(activeChip("Free water", () -> water.set(false)));
+        if (elec.isOn()) activeRow.getChildren().add(activeChip("Free electricity", () -> elec.set(false)));
+        if (wifi.isOn()) activeRow.getChildren().add(activeChip("Free Wi-Fi", () -> wifi.set(false)));
+        if (!maxPrice.getText().isBlank()) activeRow.getChildren().add(activeChip("Max \u20B1" + maxPrice.getText().trim(), () -> maxPrice.clear()));
+        boolean any = !activeRow.getChildren().isEmpty();
+        activeRow.setVisible(any); activeRow.setManaged(any);
         filterBtn.getStyleClass().remove("filter-btn-on"); if (n > 0) filterBtn.getStyleClass().add("filter-btn-on");
     }
 
@@ -166,7 +169,7 @@ public final class ExploreView extends VBox {
         pendingFilters = null;
         if (f.has("max_price")) maxPrice.setText(String.valueOf((long) f.optDouble("max_price")));
         water.set(f.optBoolean("free_water")); elec.set(f.optBoolean("free_electricity")); wifi.set(f.optBoolean("free_wifi"));
-        if (f.has("text")) search.setText(f.optString("text"));
+        if (f.has("text")) campus.setText(f.optString("text"));
         if ("price".equals(f.optString("sort"))) { sortIdx = 1; paintSort(); }
         typing.stop();
     }
@@ -175,7 +178,7 @@ public final class ExploreView extends VBox {
         refreshBadge();
         BhService.Filter f = new BhService.Filter();
         try { if (!maxPrice.getText().isBlank()) f.maxPrice = Double.parseDouble(maxPrice.getText().trim()); } catch (NumberFormatException e) { Nav.toast("Enter a valid price"); return; }
-        f.water = water.isOn(); f.electricity = elec.isOn(); f.wifi = wifi.isOn(); f.text = search.getText();
+        f.water = water.isOn(); f.electricity = elec.isOn(); f.wifi = wifi.isOn(); f.text = campus.searchText();
         double[] ref = State.ref(); int s = sortIdx; final int my = ++seq;
         list.getChildren().setAll(Skeleton.cards(4)); count.setText("");   // skeleton while loading
         Async.run(() -> {

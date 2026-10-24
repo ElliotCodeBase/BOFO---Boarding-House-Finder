@@ -1,3 +1,27 @@
+# Handoff - v1.5.2 one search bar, solid road route, removable filters (2026-10-24)
+- Explore now has ONE search bar (`CampusPicker`): type a campus (autocomplete, arrow = full list, pick = list+map jump to it) or type a BH name/area (searches as you type; the dropdown hides when no campus matches). X on the campus name clears the campus; X on typed text clears the text. Fixed the pill-inside-a-pill look (`.college-field` border now transparent).
+- Filters: Free water / electricity / Wi-Fi toggles moved INTO the filter panel (Amenities). Under the search bar, only filters that are ON show, as dark pills with an x (tap = turn off). Max price shows too. Row is hidden when nothing is on.
+- Route: no more dotted line (always solid). `Router` now tries OSRM foot, then Valhalla pedestrian (valhalla1.openstreetmap.de, polyline6 decoder tested), 2 tries each. If both fail the straight line is drawn and the card shows the reason (`Router.lastError()`), and MapPane keeps retrying 4x. NOT verifiable from Claude's sandbox (routing hosts blocked): if the road path still does not show, read the reason on the card / `[Router]` console lines.
+- Still NOT compiled by Claude (no Maven central access). Version 1.5.2 / versionCode 8.
+- Idea if public routing servers keep failing: build roads locally from the OpenFreeMap vector tiles (A*) - bigger job.
+
+---
+# Handoff - v1.5.1 route fix: real roads, not the dotted line (2026-10-24)
+- Bug in 1.5.0: I shortened the route server timeouts (4/6 s) and retries; the free OSRM server then often failed and the app drew the dashed STRAIGHT-LINE fallback instead of the road path.
+- Fix: timeouts back to 8/12 s, 3 attempts (600 ms apart), and `MapPane.fetchRoute` keeps retrying quietly (4x, every 2.5 s) while showing the guide line, swapping in the real road path the moment it arrives. Dashed line only appears if the server stays unreachable. Cached roads and the instant km/min estimate on the card are kept.
+- If it is still dotted: console shows `[Router] ...` lines (HTTP code / exception). `route.online=false` in config would force the straight line; check config.local.properties.
+
+---
+# Handoff - v1.5.0 faster walking route (2026-10-24)
+- The route (path) is computed by the free OSRM server (`Router.walk`); the wait was network + retries. Changes:
+  1. `Router.peek()`: known routes (and the reverse direction) are drawn instantly from a 300-entry cache (was 40), no network.
+  2. `MapPane.startRoute`: shows an instant offline estimate (straight line x1.3, "about X km - Y min walk (finding the exact route...)") and starts the camera move at once; the real road route replaces it. The camera re-fits only if the road leaves the straight-line box.
+  3. `Router`: identical in-flight requests share ONE server call; timeouts 8/10 s -> 4/6 s; retry pause 700 -> 250 ms; `warmUp()` (called in `Main.start`) opens the TLS connection early.
+- Not changed: still needs the internet for a NEW route; without it the straight line is used as before. Routing itself is the server's job (it is not computed in the app).
+- NOT compiled/run. Check: tap a BH pin twice (second should be instant), and tap a new pin (card shows estimate first).
+- Possible next step: save routes to disk, or a self-hosted/faster routing server (the public one is the main limit).
+
+---
 # Handoff - v1.4.1 compile fix (2026-10-24)
 - `CampusPicker`: fixed "variable sync might not have been initialized" (state listener lambda was a field initializer reading the final `sync`; now assigned in the constructor). v1.4.0 compiled-failed, so this supersedes it. Version bumped to 1.4.1 (versionCode 5).
 

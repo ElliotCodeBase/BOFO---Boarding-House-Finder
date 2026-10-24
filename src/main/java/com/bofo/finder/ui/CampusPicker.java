@@ -43,15 +43,15 @@ public final class CampusPicker extends VBox {
     private final boolean sync;
     private final Consumer<College> onPick;
     private final Consumer<String> onEnterText;     // Enter with text that matches no campus (may be null)
-    private final Runnable onClear;                 // the clear button was used (may be null)
+    private final Consumer<String> onType;          // the user typed or cleared text: use it as a name/area search (may be null)
     private final ChangeListener<College> stateListener;
     private List<College> all = List.of();
     private boolean settingText;                    // true while we fill the field ourselves (not the user typing)
 
-    public CampusPicker(String prompt, boolean syncWithState, Consumer<College> onPick, Consumer<String> onEnterText, Runnable onClear) {
+    public CampusPicker(String prompt, boolean syncWithState, Consumer<College> onPick, Consumer<String> onEnterText, Consumer<String> onType) {
         super(6);
-        this.sync = syncWithState; this.onPick = onPick; this.onEnterText = onEnterText; this.onClear = onClear;
-        this.stateListener = (o, was, now) -> { if (syncWithState) showChosen(); };
+        this.sync = syncWithState; this.onPick = onPick; this.onEnterText = onEnterText; this.onType = onType;
+        this.stateListener = (o, was, now) -> { if (syncWithState) setField(now == null ? "" : now.name()); };
 
         field.getStyleClass().add("college-field"); field.setPromptText(prompt);
         HBox.setHgrow(field, Priority.ALWAYS);
@@ -59,9 +59,10 @@ public final class CampusPicker extends VBox {
         clear.setGraphic(Ui.strokeIcon(Glyphs.CLOSE, 14, Color.web("#8D8AA3")));
         clear.visibleProperty().bind(field.textProperty().isNotEmpty()); clear.managedProperty().bind(clear.visibleProperty());
         clear.setOnAction(e -> {
+            boolean wasCampus = sync && isChosenText();
             setField("");
-            if (sync && State.college.get() != null) State.college.set(null);
-            if (this.onClear != null) this.onClear.run();
+            if (wasCampus) State.college.set(null);                                       // X on the campus name clears the campus; X on typed text clears only the text
+            if (this.onType != null) this.onType.accept("");
             field.requestFocus(); refresh("");
         });
         Button arrow = new Button("▾"); arrow.getStyleClass().add("college-arrow");
@@ -81,12 +82,12 @@ public final class CampusPicker extends VBox {
         list.setVisible(false); list.setManaged(false);
         list.setOnMouseClicked(e -> { College c = list.getSelectionModel().getSelectedItem(); if (c != null) pick(c); });
 
-        field.textProperty().addListener((o, was, now) -> { if (!settingText) refresh(now); });
+        field.textProperty().addListener((o, was, now) -> { if (!settingText) { refresh(now); if (this.onType != null) this.onType.accept(now); } });
         field.focusedProperty().addListener((o, was, on) -> {
             if (on) { field.selectAll(); refresh(sync && isChosenText() ? "" : field.getText()); } else closeLater.playFromStart();
         });
         list.focusedProperty().addListener((o, was, on) -> { if (!on) closeLater.playFromStart(); });
-        closeLater.setOnFinished(e -> { if (!field.isFocused() && !list.isFocused() && !list.isHover()) { close(); if (sync) showChosen(); } });
+        closeLater.setOnFinished(e -> { if (!field.isFocused() && !list.isFocused() && !list.isHover()) { close(); } });
         field.setOnKeyPressed(e -> {
             KeyCode k = e.getCode();
             if (k == KeyCode.DOWN || k == KeyCode.UP) {
@@ -95,7 +96,7 @@ public final class CampusPicker extends VBox {
                 int i = list.getSelectionModel().getSelectedIndex();
                 i = k == KeyCode.DOWN ? Math.min(n - 1, i + 1) : Math.max(0, i - 1);
                 list.getSelectionModel().select(i); list.scrollTo(i); e.consume();
-            } else if (k == KeyCode.ESCAPE) { close(); if (sync) showChosen(); }
+            } else if (k == KeyCode.ESCAPE) { close(); }
         });
         field.setOnAction(e -> {
             College sel = list.getSelectionModel().getSelectedItem();
@@ -108,7 +109,7 @@ public final class CampusPicker extends VBox {
         State.college.addListener(stateListener);
         sceneProperty().addListener((o, was, sc) -> { if (sc == null) State.college.removeListener(stateListener); else { State.college.removeListener(stateListener); State.college.addListener(stateListener); } });
         Async.run(() -> new BhService().colleges(), cs -> { all = cs; if (list.isVisible()) refresh(field.isFocused() ? field.getText() : ""); }, e -> {});
-        showChosen();
+        if (sync && State.college.get() != null) setField(State.college.get().name());
     }
 
     /** Saves the chosen campus as the user's default (same as the Home college box). Fire-and-forget. */
@@ -128,7 +129,11 @@ public final class CampusPicker extends VBox {
         return c != null && field.getText().trim().equalsIgnoreCase(c.name());
     }
 
-    private void showChosen() { if (!field.isFocused()) setField(State.college.get() == null ? "" : State.college.get().name()); }
+    /** What to search boarding houses for: the typed text, or nothing while the box just shows the chosen campus's name. */
+    public String searchText() { return isChosenText() ? "" : field.getText().trim(); }
+
+    /** Fills the box from code (e.g. a BOFO AI filter) without triggering typing events. */
+    public void setText(String t) { setField(t == null ? "" : t); }
 
     private void setField(String t) { settingText = true; field.setText(t); settingText = false; }
 
@@ -144,6 +149,7 @@ public final class CampusPicker extends VBox {
 
     private void refresh(String text) {
         List<College> out = match(all, text);
+        if (out.isEmpty() && text != null && !text.isBlank()) { close(); return; }        // typed text is a name/area search, not a campus: no empty dropdown
         list.getItems().setAll(out);
         list.getSelectionModel().clearSelection();
         list.setPrefHeight(Math.min(Math.max(out.size(), 1), MAX_ROWS) * ROW + 10);

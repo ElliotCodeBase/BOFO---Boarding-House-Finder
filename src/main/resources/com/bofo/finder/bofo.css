@@ -276,6 +276,7 @@
 /* ---- Home: college search box + suggestion list ---- */
 .college-box { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-padding: 2 4 2 14; }
 .college-field, .college-field:focused { -fx-background-color: transparent; -fx-background-insets: 0; -fx-background-radius: 0; -fx-padding: 8 4 8 4;
+  -fx-border-color: transparent; -fx-border-width: 0; -fx-border-radius: 0;
   -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; -fx-prompt-text-fill: #8A84A0;
   -fx-focus-color: transparent; -fx-faint-focus-color: transparent; }
 .college-arrow { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 999; -fx-text-fill: -bofo-primary-dark; -fx-font-size: 14px;
