@@ -67,7 +67,7 @@ public final class ProfileView extends VBox {
                 Ui.settingsRow(Glyphs.INFO, "Agreements and Guidelines", null, () -> Nav.toast("Open Owner Agreement / Community Guidelines")));
 
         // ---- About ----
-        VBox about = Ui.settingsGroup("About", Ui.settingsRow(Glyphs.INFO, "BOFO Finder", "v1.1.1", null));
+        VBox about = Ui.settingsGroup("About", Ui.settingsRow(Glyphs.INFO, "BOFO Finder", "v1.3.0", null));
 
         Button logout = Ui.btn("Log out", "btn-logout", Main::signOutToLogin); logout.setMaxWidth(Double.MAX_VALUE);
         Button delete = Ui.btn("Delete my account and data", "link-danger", this::confirmDelete);
