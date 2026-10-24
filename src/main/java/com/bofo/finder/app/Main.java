@@ -24,6 +24,7 @@ public class Main extends Application {
 
     @Override public void start(Stage stage) {
         host = getHostServices();
+        com.bofo.finder.util.Router.warmUp();                       // open the route server connection early so the first walking route is faster
         window = stage;
         AuthService auth = AuthService.get();
         auth.init(host);

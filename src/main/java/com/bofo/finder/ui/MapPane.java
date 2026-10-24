@@ -319,11 +319,41 @@ public final class MapPane extends StackPane {
     private void startRoute(double[] from, double[] to, String label, boolean fromCollege, BoardingHouse forBh, boolean moveCamera, Consumer<Router.Route> done) {
         final int my = ++routeToken;
         curOrigin = from;
-        if (card != null && forBh != null) card.setRouteInfo("Finding the best walking route\u2026");
+        Router.Route known = Router.peek(from[0], from[1], to[0], to[1]);
+        if (known != null) {                                    // seen before: draw at once, no waiting
+            layer.setRoute(known, label, fromCollege);
+            if (moveCamera) fitBounds(known.bounds(), 17, 600);
+            if (card != null && forBh != null) card.setRouteInfo(routeText(known, label));
+            if (done != null) done.accept(known);
+            return;
+        }
+        // not known yet: show an instant estimate and start the camera move now, the real road route replaces it when it arrives
+        Router.Route guess = Router.estimate(from[0], from[1], to[0], to[1]);
+        double[] gb = guess.bounds();
+        if (moveCamera) fitBounds(gb, 17, 600);
+        if (card != null && forBh != null) card.setRouteInfo("about " + Geo.fmt(guess.meters() / 1000.0) + " \u00B7 " + Math.max(1, Geo.walkMinutes(guess.meters() / 1000.0)) + " min walk (finding the exact route\u2026)");
+        fetchRoute(my, 0, from, to, label, fromCollege, forBh, moveCamera, gb, done);
+    }
+
+    /** Asks for the road route. If the server could not be reached (straight line came back) it quietly tries again, up to 4 times, and swaps in the real road path as soon as it arrives. */
+    private void fetchRoute(int my, int tries, double[] from, double[] to, String label, boolean fromCollege, BoardingHouse forBh, boolean moveCamera, double[] gb, Consumer<Router.Route> done) {
         Async.run(() -> Router.walk(from[0], from[1], to[0], to[1]), r -> {
             if (my != routeToken) return;                       // the selection changed while the route was loading
+            if (r.approximate() && tries < 4 && com.bofo.finder.config.AppConfig.routeOnline()) {
+                if (tries == 0) {                               // show the straight guide only once; keep trying for the real roads
+                    layer.setRoute(r, label, fromCollege);
+                    if (card != null && forBh != null) card.setRouteInfo("Finding the road route\u2026 (" + routeText(r, label) + ")");
+                }
+                javafx.animation.PauseTransition wait = new javafx.animation.PauseTransition(Duration.seconds(2.5));
+                wait.setOnFinished(e -> { if (my == routeToken) fetchRoute(my, tries + 1, from, to, label, fromCollege, forBh, moveCamera, gb, done); });
+                wait.play();
+                return;
+            }
             layer.setRoute(r, label, fromCollege);
-            if (moveCamera) fitBounds(r.bounds(), 17, 850);
+            double[] rb = r.bounds();
+            double padLat = (gb[2] - gb[0]) * 0.15 + 1e-4, padLng = (gb[3] - gb[1]) * 0.15 + 1e-4;
+            boolean outside = rb[0] < gb[0] - padLat || rb[2] > gb[2] + padLat || rb[1] < gb[1] - padLng || rb[3] > gb[3] + padLng;
+            if (moveCamera && outside) fitBounds(rb, 17, 600);  // the road wandered off the straight line: re-fit once; otherwise the camera is already right
             if (card != null && forBh != null) card.setRouteInfo(routeText(r, label));
             if (done != null) done.accept(r);
         }, e -> {});

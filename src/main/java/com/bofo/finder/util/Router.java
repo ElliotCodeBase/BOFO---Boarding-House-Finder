@@ -15,6 +15,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Walking route between two points (follows real roads and paths). Asks an OSRM-style service (see AppConfig.routeUrl);
@@ -37,20 +39,63 @@ public final class Router {
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8))
             .followRedirects(HttpClient.Redirect.NORMAL).build();
     private static final Map<String, Route> CACHE = Collections.synchronizedMap(new LinkedHashMap<>(32, 0.75f, true) {
-        @Override protected boolean removeEldestEntry(Map.Entry<String, Route> e) { return size() > 40; }
+        @Override protected boolean removeEldestEntry(Map.Entry<String, Route> e) { return size() > 300; }
     });
 
+    /** Same request already running (two taps, map + card)? Both callers wait for ONE server call. */
+    private static final Map<String, CompletableFuture<Route>> INFLIGHT = new ConcurrentHashMap<>();
+
+    private static String key(double lat1, double lng1, double lat2, double lng2) {
+        return String.format(Locale.ROOT, "%.5f,%.5f>%.5f,%.5f", lat1, lng1, lat2, lng2);
+    }
+
+    /** Already-known real route (no network, no waiting), or null. Call on the FX thread to draw it instantly. */
+    public static Route peek(double lat1, double lng1, double lat2, double lng2) {
+        Route r = CACHE.get(key(lat1, lng1, lat2, lng2));
+        if (r != null) return r;
+        Route rev = CACHE.get(key(lat2, lng2, lat1, lng1));            // A->B walked the other way is the same road
+        if (rev == null) return null;
+        double[][] back = new double[rev.pts().length][];
+        for (int i = 0; i < back.length; i++) back[i] = rev.pts()[back.length - 1 - i];
+        return new Route(back, rev.meters(), rev.approximate());
+    }
+
+    /** Instant offline guess: straight line, with distance x1.3 to allow for bends. No network, so it is ready right away. */
+    public static Route estimate(double lat1, double lng1, double lat2, double lng2) {
+        return new Route(new double[][]{{lat1, lng1}, {lat2, lng2}}, Geo.km(lat1, lng1, lat2, lng2) * 1300, true);
+    }
+
+    /** Opens the connection to the route server early (TLS handshake takes a good part of the first route's wait). Fire and forget. */
+    public static void warmUp() {
+        Async.bg(() -> {
+            try {
+                String u = AppConfig.routeUrl();
+                int i = u.indexOf('/', u.indexOf("://") + 3);
+                HTTP.send(HttpRequest.newBuilder(URI.create(i > 0 ? u.substring(0, i) + "/" : u)).timeout(Duration.ofSeconds(5)).method("HEAD", HttpRequest.BodyPublishers.noBody()).build(),
+                        HttpResponse.BodyHandlers.discarding());
+            } catch (Throwable ignored) { }
+        });
+    }
+
     public static Route walk(double lat1, double lng1, double lat2, double lng2) {
-        String key = String.format(Locale.ROOT, "%.5f,%.5f>%.5f,%.5f", lat1, lng1, lat2, lng2);
-        Route cached = CACHE.get(key);
-        if (cached != null) return cached;
+        Route known = peek(lat1, lng1, lat2, lng2);
+        if (known != null) return known;
+        String key = key(lat1, lng1, lat2, lng2);
+        CompletableFuture<Route> mine = new CompletableFuture<>();
+        CompletableFuture<Route> other = INFLIGHT.putIfAbsent(key, mine);
+        if (other != null) { try { return other.get(); } catch (Exception e) { return estimate(lat1, lng1, lat2, lng2); } }
+        try { Route r = fetch(key, lat1, lng1, lat2, lng2); mine.complete(r); return r; }
+        finally { INFLIGHT.remove(key); mine.complete(estimate(lat1, lng1, lat2, lng2)); }   // no-op if already completed
+    }
+
+    private static Route fetch(String key, double lat1, double lng1, double lat2, double lng2) {
         if (AppConfig.routeOnline()) {
             String url = AppConfig.routeUrl()
                     .replace("{lat1}", String.format(Locale.ROOT, "%.6f", lat1)).replace("{lng1}", String.format(Locale.ROOT, "%.6f", lng1))
                     .replace("{lat2}", String.format(Locale.ROOT, "%.6f", lat2)).replace("{lng2}", String.format(Locale.ROOT, "%.6f", lng2));
-            for (int attempt = 1; attempt <= 2; attempt++) {              // the free server sometimes times out or says "busy": try twice
+            for (int attempt = 1; attempt <= 3; attempt++) {              // the free server sometimes times out or says "busy": try twice
                 try {
-                    HttpRequest req = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(10))
+                    HttpRequest req = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(12))
                             .header("User-Agent", "BOFO-Finder/1.2 (boarding house finder app)").GET().build();
                     HttpResponse<String> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
                     if (resp.statusCode() == 200) {
@@ -74,10 +119,10 @@ public final class Router {
                 } catch (Throwable offlineOrBlocked) {
                     System.err.println("[Router] " + offlineOrBlocked + " (try " + attempt + ")");
                 }
-                try { Thread.sleep(700); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+                try { Thread.sleep(600); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
             }
         }
-        return new Route(new double[][]{{lat1, lng1}, {lat2, lng2}}, Geo.km(lat1, lng1, lat2, lng2) * 1000, true);
+        return new Route(new double[][]{{lat1, lng1}, {lat2, lng2}}, Geo.km(lat1, lng1, lat2, lng2) * 1000, true);   // (also the answer when the server is unreachable)
     }
 
     /** Keeps at most {@code max} points (evenly spaced, first and last always kept) so drawing stays light. */
