@@ -1,10 +1,12 @@
 package com.bofo.finder.ui;
 
 import com.bofo.finder.model.BoardingHouse;
+import com.bofo.finder.model.College;
 import com.bofo.finder.service.AuthService;
 import com.bofo.finder.service.BhService;
 import com.bofo.finder.util.Async;
 import javafx.animation.PauseTransition;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -48,6 +50,7 @@ public final class ExploreView extends VBox {
     private List<BoardingHouse> lastItems = List.of();
     private double[] lastRef;
     private boolean mapMode = false;
+    private boolean flyToCampus = false;   // zoom the map to the campus the next time it is drawn
     private int seq = 0;
 
     public ExploreView() {
@@ -71,6 +74,16 @@ public final class ExploreView extends VBox {
         filterBtn.setOnAction(e -> togglePanel());
         HBox top = new HBox(10, bar, filterWrap); top.setAlignment(Pos.CENTER); HBox.setHgrow(bar, Priority.ALWAYS);
         top.setPadding(new Insets(0, 16, 0, 16));
+
+        // ---- campus search: autocomplete + dropdown; drives both the list (nearest first) and the map ----
+        CampusPicker campus = new CampusPicker("Search a campus (e.g. NORSU)", true, c -> CampusPicker.remember(c), null, null);
+        VBox.setMargin(campus, new Insets(0, 16, 10, 16));
+        ChangeListener<College> campusListener = (o, a, b) -> { flyToCampus = b != null; run(); };
+        State.college.addListener(campusListener);
+        sceneProperty().addListener((o, was, sc) -> {
+            State.college.removeListener(campusListener);
+            if (sc != null) State.college.addListener(campusListener);
+        });
 
         // ---- quick amenity chips ----
         FlowPane chips = new FlowPane(8, 8, water, elec, wifi); chips.setPadding(new Insets(12, 16, 0, 16));
@@ -104,7 +117,7 @@ public final class ExploreView extends VBox {
         Async.run(() -> new BhService().colleges(), map::showColleges, e -> {});     // every campus is always on the map
         content.getChildren().setAll(listScroll); VBox.setVgrow(content, Priority.ALWAYS);
 
-        getChildren().addAll(Ui.appBar("Explore"), top, chips, panel, head, content);
+        getChildren().addAll(Ui.appBar("Explore"), campus, top, chips, panel, head, content);
         if (pendingFilters != null) apply(pendingFilters);
         refreshBadge();
         Async.run(bh::favoriteIds, f -> { favs = f; run(); }, e -> run());
@@ -137,8 +150,17 @@ public final class ExploreView extends VBox {
     private void setMapMode(boolean on) {
         mapMode = on;
         content.getChildren().setAll(on ? map : listScroll);
-        if (on) map.show(lastRef, 0, lastItems, false, null);              // the map only loads when it is opened
+        if (on) showMap(lastRef, lastItems);                               // the map only loads when it is opened
     }
+
+    /** Draws the map; right after a campus was chosen it also zooms to that campus (no circle: the list is not radius-limited). */
+    private void showMap(double[] ref, List<BoardingHouse> items) {
+        boolean zoom = flyToCampus && State.college.get() != null;
+        flyToCampus = false;
+        map.show(ref, zoom ? State.radiusKm.get() : 0, items, false, null);
+    }
+
+    private static String shortName(String n) { return n.length() > 28 ? n.substring(0, 27) + "\u2026" : n; }
 
     private void apply(JSONObject f) {
         pendingFilters = null;
@@ -165,8 +187,9 @@ public final class ExploreView extends VBox {
         }, items -> {
             if (my != seq) return;
             lastItems = items; lastRef = ref;
-            if (mapMode) map.show(ref, 0, items, false, null);
-            count.setText(items.size() + (items.size() == 1 ? " place" : " places"));
+            if (mapMode) showMap(ref, items);
+            College near = State.college.get();
+            count.setText(items.size() + (items.size() == 1 ? " place" : " places") + (near == null ? "" : " near " + shortName(near.name())));
             list.getChildren().clear();
             if (items.isEmpty()) list.getChildren().add(Ui.emptyState("No matches", "Try removing a filter or raising the maximum price."));
             String uid = AuthService.get().userId();

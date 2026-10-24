@@ -1,3 +1,12 @@
+# Handoff - v1.4.0 campus search with autocomplete (2026-10-24)
+- NEW `ui/CampusPicker`: campus search box with our OWN autocomplete (local matching in Java on the cached campus list; no per-keystroke API, no Google Places). Order: starts-with, word starts-with, contains, initials (e.g. "norsu"). Dropdown arrow lists all campuses; Up/Down/Enter/Esc work; typed part is bold.
+- Explore: picker above the search bar. Choosing a campus sets `State.college`, so the LIST sorts nearest-first and the MAP recenters/zooms (works in both List and Map modes). Clearing it goes back to GPS. Count reads "N places near <campus>".
+- Home: the fake search pill is now a CampusPicker (`syncWithState=false`): pick a campus -> opens Explore near it; Enter on non-campus text -> Explore name search.
+- Version: `app.version` in config.properties is now the one number shown in Profile > About (was hard-coded "v1.3.0"); pom 1.4.0 / versionCode 4. RULE (CLAUDE.md): bump all of these in EVERY pull request.
+- NOT compiled/run (no Maven/JavaFX in sandbox). Risks: `TextFlow` cells in the ListView, `sceneProperty` listener add/remove in ExploreView/CampusPicker.
+- Campus list still comes from Supabase `colleges` (1 h cache, same list the map uses); no schema change needed.
+
+---
 # Handoff - Vector map from OpenFreeMap (2026-10-24)
 - NEW `util/VectorTileRetriever` (registered in META-INF/services, replaces MinimalTileRetriever as the Gluon Maps provider) + `util/Mvt` (own MVT decoder). Draws land (faint lavender), parks/wood/grass (soft green), water (light blue), buildings (light, outlined from z16), roads (white + thin outline; main roads outlined in brand-purple tint #C5BAF7) into a 512 px Canvas image per tile. Gluon shows tiles at 256 px (`TileImageView.fitWidth=256`, checked in maps 2.0.0-ea+6 source), so it is 2x sharp. No labels, no POI icons: the layers place/poi/*_name/housenumber/boundary are skipped while decoding.
 - Config: `map.renderer=vector|raster` (config.properties, default vector), `map.vector.tilejson`, `map.attribution.vector`. `AppConfig.mapAttribution()` follows the renderer, so the MapPane label now reads "OpenFreeMap (c) OpenMapTiles, data from OpenStreetMap". `raster` = old MinimalTileRetriever (CARTO/Esri URL still from map.tiles.* / config.local.properties). A single tile also falls back to raster if TileJSON/tile/draw fails.

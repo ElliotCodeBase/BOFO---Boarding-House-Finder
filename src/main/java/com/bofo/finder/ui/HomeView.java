@@ -51,9 +51,11 @@ public final class HomeView extends VBox {
                 Ui.vbox(0, Ui.label("Welcome back,", "secondary"), Ui.label(name.isBlank() ? "there" : name, "greet-name")), Ui.grow(), bell);
         top.setPadding(new Insets(14, 16, 0, 16));
 
-        HBox searchPill = Ui.hbox(10, Icons.icon(Icons.SEARCH, 20, Color.web("#8A84A0")), Ui.label("Find boarding houses near campus", "secondary"));
-        searchPill.getStyleClass().add("search-pill");
-        searchPill.setOnMouseClicked(e -> BofoPanel.filtersListener.accept(new JSONObject()));   // opens the Explore tab
+        // Search bar: type a campus (autocomplete) or open the dropdown; picking one opens Explore near that campus.
+        // Enter on text that is not a campus searches boarding houses by name in Explore.
+        CampusPicker searchPill = new CampusPicker("Find boarding houses near campus", false,
+                c -> { CampusPicker.remember(c); BofoPanel.filtersListener.accept(new JSONObject()); },
+                text -> BofoPanel.filtersListener.accept(new JSONObject().put("text", text)), null);
         VBox.setMargin(searchPill, new Insets(14, 16, 0, 16));
 
         // ---- college: search box with a dropdown arrow ----
