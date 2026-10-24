@@ -34,7 +34,7 @@ public final class Router {
         }
     }
 
-    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(6))
+    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8))
             .followRedirects(HttpClient.Redirect.NORMAL).build();
     private static final Map<String, Route> CACHE = Collections.synchronizedMap(new LinkedHashMap<>(32, 0.75f, true) {
         @Override protected boolean removeEldestEntry(Map.Entry<String, Route> e) { return size() > 40; }
@@ -45,28 +45,37 @@ public final class Router {
         Route cached = CACHE.get(key);
         if (cached != null) return cached;
         if (AppConfig.routeOnline()) {
-            try {
-                String url = AppConfig.routeUrl()
-                        .replace("{lat1}", String.format(Locale.ROOT, "%.6f", lat1)).replace("{lng1}", String.format(Locale.ROOT, "%.6f", lng1))
-                        .replace("{lat2}", String.format(Locale.ROOT, "%.6f", lat2)).replace("{lng2}", String.format(Locale.ROOT, "%.6f", lng2));
-                HttpRequest req = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(8))
-                        .header("User-Agent", "BOFO-Finder/1.2 (boarding house finder app)").GET().build();
-                HttpResponse<String> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
-                if (resp.statusCode() == 200) {
-                    JSONObject o = new JSONObject(resp.body());
-                    if ("Ok".equals(o.optString("code")) && o.getJSONArray("routes").length() > 0) {
-                        JSONObject r = o.getJSONArray("routes").getJSONObject(0);
-                        JSONArray c = r.getJSONObject("geometry").getJSONArray("coordinates");   // [lng, lat] pairs
-                        List<double[]> pts = new ArrayList<>(c.length() + 2);
-                        pts.add(new double[]{lat1, lng1});                                       // start exactly on the college / you
-                        for (int i = 0; i < c.length(); i++) { JSONArray pt = c.getJSONArray(i); pts.add(new double[]{pt.getDouble(1), pt.getDouble(0)}); }
-                        pts.add(new double[]{lat2, lng2});                                       // end exactly on the BH
-                        Route route = new Route(thin(pts, 400), Math.max(r.optDouble("distance", 0), Geo.km(lat1, lng1, lat2, lng2) * 1000), false);
-                        CACHE.put(key, route);
-                        return route;
+            String url = AppConfig.routeUrl()
+                    .replace("{lat1}", String.format(Locale.ROOT, "%.6f", lat1)).replace("{lng1}", String.format(Locale.ROOT, "%.6f", lng1))
+                    .replace("{lat2}", String.format(Locale.ROOT, "%.6f", lat2)).replace("{lng2}", String.format(Locale.ROOT, "%.6f", lng2));
+            for (int attempt = 1; attempt <= 2; attempt++) {              // the free server sometimes times out or says "busy": try twice
+                try {
+                    HttpRequest req = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(10))
+                            .header("User-Agent", "BOFO-Finder/1.2 (boarding house finder app)").GET().build();
+                    HttpResponse<String> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
+                    if (resp.statusCode() == 200) {
+                        JSONObject o = new JSONObject(resp.body());
+                        String code = o.optString("code");
+                        if ("Ok".equals(code) && o.getJSONArray("routes").length() > 0) {
+                            JSONObject r = o.getJSONArray("routes").getJSONObject(0);
+                            JSONArray c = r.getJSONObject("geometry").getJSONArray("coordinates");   // [lng, lat] pairs
+                            List<double[]> pts = new ArrayList<>(c.length() + 2);
+                            pts.add(new double[]{lat1, lng1});                                       // start exactly on the college / you
+                            for (int i = 0; i < c.length(); i++) { JSONArray pt = c.getJSONArray(i); pts.add(new double[]{pt.getDouble(1), pt.getDouble(0)}); }
+                            pts.add(new double[]{lat2, lng2});                                       // end exactly on the BH
+                            Route route = new Route(thin(pts, 400), Math.max(r.optDouble("distance", 0), Geo.km(lat1, lng1, lat2, lng2) * 1000), false);
+                            CACHE.put(key, route);
+                            return route;
+                        }
+                        System.err.println("[Router] server answered '" + code + "' (no walking path between these points)");
+                        break;                                                                       // retrying will not help
                     }
+                    System.err.println("[Router] HTTP " + resp.statusCode() + " (try " + attempt + ")");
+                } catch (Throwable offlineOrBlocked) {
+                    System.err.println("[Router] " + offlineOrBlocked + " (try " + attempt + ")");
                 }
-            } catch (Throwable offlineOrBlocked) { /* fall through to the straight line */ }
+                try { Thread.sleep(700); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+            }
         }
         return new Route(new double[][]{{lat1, lng1}, {lat2, lng2}}, Geo.km(lat1, lng1, lat2, lng2) * 1000, true);
     }

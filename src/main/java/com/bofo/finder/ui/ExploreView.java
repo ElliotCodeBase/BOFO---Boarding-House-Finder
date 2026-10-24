@@ -101,6 +101,7 @@ public final class ExploreView extends VBox {
         listScroll = Ui.scroll(list);
         map.fillAvailable(260);
         map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
+        Async.run(() -> new BhService().colleges(), map::showColleges, e -> {});     // every campus is always on the map
         content.getChildren().setAll(listScroll); VBox.setVgrow(content, Priority.ALWAYS);
 
         getChildren().addAll(Ui.appBar("Explore"), top, chips, panel, head, content);

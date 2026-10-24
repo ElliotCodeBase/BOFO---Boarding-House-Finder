@@ -8,6 +8,7 @@ import com.bofo.finder.util.Async;
 import com.bofo.finder.util.Locator;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -21,7 +22,7 @@ import java.util.HashSet;
 /** Default student home: greeting, college selector, map with radius, New/Hot/Best tabs sorted nearest-first. */
 public final class HomeView extends VBox {
     private final BhService bh = new BhService();
-    private final MapPane map = new MapPane(300);
+    private final MapPane map = new MapPane(340);
     private final CardGrid list = new CardGrid(10, 320);
     private final Button collegeBtn = new Button();
     private final Slider radius = new Slider(0.5, 5, State.radiusKm.get());
@@ -55,8 +56,10 @@ public final class HomeView extends VBox {
         collegeBtn.setGraphic(Icons.icon(Icons.PIN, 16, Color.web("#5B3BF0")));
         collegeBtn.setOnAction(e -> pickCollege());
         setCollegeText();
-        Button nearMe = new Button("Near me"); nearMe.getStyleClass().add("chip");
-        nearMe.setGraphic(Ui.strokeIcon(Glyphs.LOCATE, 16, Color.web("#2F6FED"))); nearMe.setGraphicTextGap(6);
+        collegeBtn.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(collegeBtn, Priority.ALWAYS);       // the college name gets all the free width
+        Button nearMe = new Button(); nearMe.getStyleClass().add("near-btn");                       // round icon button: "show places near me"
+        nearMe.setGraphic(Ui.strokeIcon(Glyphs.LOCATE, 20, Color.web("#2F6FED")));
+        nearMe.setTooltip(new Tooltip("Near me"));
         nearMe.setOnAction(e -> Locator.get().locate(p -> { if (State.college.get() != null) State.college.set(null); else reload(); }));
         HBox collegeRow = Ui.hbox(8, collegeBtn, nearMe); collegeRow.setPadding(new Insets(12, 16, 0, 16));
 
@@ -68,33 +71,58 @@ public final class HomeView extends VBox {
         locHint.managedProperty().bind(locHint.visibleProperty());
         VBox.setMargin(locHint, new Insets(10, 16, 0, 16));
 
-        radius.setShowTickLabels(false);
+        // radius: a slim floating pill on top of the map (only when a college is chosen), snaps to 0.5 km
+        radius.setShowTickLabels(false); radius.setShowTickMarks(false);
+        radius.setMajorTickUnit(0.5); radius.setMinorTickCount(0); radius.setSnapToTicks(true); radius.setBlockIncrement(0.5);
+        radius.getStyleClass().add("radius-slider");
+        radius.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(radius, Priority.ALWAYS);
+        radius.skinProperty().addListener((o, was, sk) -> javafx.application.Platform.runLater(this::paintTrack));
         debounce.setOnFinished(e -> reload());
-        radius.valueProperty().addListener((o, a, v) -> { State.radiusKm.set(Math.round(v.doubleValue() * 10) / 10.0); debounce.playFromStart(); });   // reload once after the slider settles
-        Label rLabel = Ui.label("", "secondary");
-        rLabel.textProperty().bind(State.radiusKm.asString("Search radius: %.1f km"));
-        VBox radiusCard = Ui.card(4, rLabel, radius);
-        VBox.setMargin(radiusCard, new Insets(12, 16, 0, 16));
+        radius.valueProperty().addListener((o, a, v) -> {
+            double km = Math.round(v.doubleValue() * 10) / 10.0;
+            State.radiusKm.set(km);
+            paintTrack();
+            map.previewRadius(km);                  // circle + zoom glide right away; the list reloads once the slider settles
+            debounce.playFromStart();
+        });
+        Label rTitle = Ui.label("Radius", "secondary");
+        Label rValue = Ui.label("", "radius-pill"); rValue.setMinWidth(Region.USE_PREF_SIZE);
+        rValue.textProperty().bind(State.radiusKm.asString("%.1f km"));
+        HBox radiusBar = new HBox(10, rTitle, radius, rValue);
+        radiusBar.setAlignment(Pos.CENTER_LEFT); radiusBar.getStyleClass().add("radius-bar");
+        radiusBar.setMaxWidth(380); radiusBar.setMaxHeight(Region.USE_PREF_SIZE);
+        radiusBar.visibleProperty().bind(State.college.isNotNull());
+        radiusBar.managedProperty().bind(radiusBar.visibleProperty());
 
         HBox chips = Ui.chipRow(new String[]{"New", "Hot", "Best rated"}, 0, i -> { tab = BhService.Tab.values()[i]; reload(); });
         chips.setPadding(new Insets(14, 16, 4, 16));
         Label nearby = Ui.section("Nearby boarding houses"); nearby.setPadding(new Insets(8, 16, 0, 16));
         list.setPadding(new Insets(4, 16, 72, 16));
 
-        StackPane mapWrap = new StackPane(map);
+        StackPane mapWrap = new StackPane(map, radiusBar);
+        StackPane.setAlignment(radiusBar, Pos.TOP_CENTER); StackPane.setMargin(radiusBar, new Insets(10, 12, 0, 12));
         Rectangle mc = new Rectangle(); mc.setArcWidth(28); mc.setArcHeight(28);
         mc.widthProperty().bind(mapWrap.widthProperty()); mc.heightProperty().bind(mapWrap.heightProperty());
         mapWrap.setClip(mc);
         VBox.setMargin(mapWrap, new Insets(12, 16, 0, 16));
 
-        VBox content = new VBox(0, top, searchPill, collegeRow, locHint, mapWrap, radiusCard, chips, nearby, list);
+        VBox content = new VBox(0, top, searchPill, collegeRow, locHint, mapWrap, chips, nearby, list);
         map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
         ScrollPane sp = Ui.scroll(content); VBox.setVgrow(sp, Priority.ALWAYS);
         getChildren().add(sp);
         Async.run(bh::favoriteIds, f -> { favs = f; reload(); }, e -> reload());
+        Async.run(bh::colleges, map::showColleges, e -> {});            // every campus is always on the map
         startGps();
         ChangeListener<College> l = (o, a, b) -> { setCollegeText(); reload(); };
         State.college.addListener(l);
+    }
+
+    /** Colors the filled part of the radius track purple (JavaFX has no built-in filled track). */
+    private void paintTrack() {
+        javafx.scene.Node t = radius.lookup(".track");
+        if (t == null) return;
+        double pct = (radius.getValue() - radius.getMin()) / (radius.getMax() - radius.getMin()) * 100;
+        t.setStyle(String.format(java.util.Locale.ROOT, "-fx-background-color:linear-gradient(to right,#5B3BF0 %.1f%%,#E4E0F5 %.1f%%);", pct, pct));
     }
 
     private void setCollegeText() {

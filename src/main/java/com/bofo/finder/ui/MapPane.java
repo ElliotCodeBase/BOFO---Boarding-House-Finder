@@ -51,8 +51,9 @@ import java.util.function.Consumer;
  *       button (bottom right) flies to you and keeps the camera following you until you drag the map.</li>
  *   <li><b>Pins</b>: purple pins that pop in. With {@link #enablePreview} a tap selects a pin, shows a small card at the
  *       bottom and draws the walking route to it (from the chosen college, else the nearest college, else from you).</li>
- *   <li><b>Route</b>: a real walking path (see {@link Router}) that draws itself, with distance and minutes on a badge,
- *       and a dotted line from you to the college when you are away from it.</li>
+ *   <li><b>Route</b>: a real walking path (see {@link Router}) that draws itself, with distance and minutes on a badge.
+ *       If the routing server cannot be reached the path is a dashed straight line.</li>
+ *   <li><b>Campuses</b>: every college is always on the map as a small dot with its name.</li>
  *   <li>A college circle with a radius badge when asked for.</li>
  * </ul>
  * Attribution text comes from {@link AppConfig#mapAttribution()}.
@@ -136,7 +137,26 @@ public final class MapPane extends StackPane {
     public void enablePreview(Consumer<BoardingHouse> details) { this.preview = true; this.onDetails = details; }
 
     /** Campuses used as the route start when no college is chosen (owner screens): the nearest one to the tapped BH. */
-    public void setColleges(List<College> list) { this.colleges = list == null ? List.of() : list; }
+    public void setColleges(List<College> list) { this.colleges = list == null ? List.of() : list; layer.setMarks(this.colleges); }
+
+    /** Draws every campus on the map (dot + name) without changing where routes start. Used by Home and Explore. */
+    public void showColleges(List<College> list) { layer.setMarks(list == null ? List.of() : list); }
+
+    /** Called live while the radius slider moves: the circle and the zoom glide to the new radius right away. */
+    public void previewRadius(double km) {
+        if (selected != null || layer.center == null || !layer.circleOn) return;
+        layer.radius = km;
+        layer.animateRing(km, 280);
+        if (getScene() != null && map.getWidth() > 0) flyTo(layer.center[0], layer.center[1], zoomForRadius(km, layer.center[0]), 280);
+    }
+
+    /** Zoom (continuous) at which a circle of this radius fills about 62% of the smaller side of the map. */
+    private double zoomForRadius(double km, double lat) {
+        double side = Math.min(Math.max(map.getWidth(), 280), Math.max(map.getHeight(), 220));
+        double metersPerPx = (2 * km * 1000) / (side * 0.62);
+        double z = Math.log(156543.03392 * Math.cos(Math.toRadians(lat)) / metersPerPx) / Math.log(2);
+        return Math.max(11, Math.min(17, z));
+    }
 
     /** Hides the round "find me" button (for small maps where it would be in the way). */
     public void hideLocateButton() { locate.setVisible(false); locate.setManaged(false); }
@@ -167,11 +187,17 @@ public final class MapPane extends StackPane {
      * is also given, a walking route from {@code center} to {@code routeTo} is drawn (BH detail screen).
      */
     public void show(double[] center, double radiusKm, List<BoardingHouse> pins, boolean showCircle, double[] routeTo) {
-        if (center != null) { centered = true; setCenterNow(center[0], center[1]); }
+        boolean live = getScene() != null && map.getWidth() > 0;
+        boolean glide = live && centered && center != null && radiusKm > 0 && selected == null && routeTo == null;   // map already on screen: glide, do not jump
+        if (center != null) { centered = true; if (!glide) setCenterNow(center[0], center[1]); }
         else if (!centered && State.gps.get() != null) { centered = true; setCenterNow(State.gps.get()[0], State.gps.get()[1]); }
         List<BoardingHouse> shown = pins.size() > 60 ? pins.subList(0, 60) : pins;      // cap pins for smooth panning
         layer.set(center, radiusKm, shown, showCircle);
-        if (radiusKm > 0 && selected == null) map.setZoom(radiusKm <= 0.6 ? 16 : radiusKm <= 1.2 ? 15 : radiusKm <= 2.5 ? 14 : 13);
+        if (radiusKm > 0 && selected == null) {
+            double lat = center != null ? center[0] : Double.isNaN(camLat) ? 10.3 : camLat;
+            double z = zoomForRadius(radiusKm, lat);
+            if (glide) flyTo(center[0], center[1], z, 450); else map.setZoom(z);
+        }
         if (routeTo != null && center != null) {
             boolean fromCollege = State.college.get() != null;
             originName = fromCollege ? State.college.get().name() : "your location"; originIsCollege = fromCollege;
@@ -216,16 +242,20 @@ public final class MapPane extends StackPane {
         return Double.isNaN(camLat) ? null : new double[]{camLat, camLng};
     }
 
-    /** Glides the camera to a point (zoom &lt;= 0 keeps the current zoom; the zoom steps halfway through the glide). */
-    private void flyTo(double lat, double lng, int zoom, int ms) {
+    /** Glides the camera to a point and zoom together (zoom <= 0 keeps the current zoom). */
+    private void flyTo(double lat, double lng, double zoom, int ms) {
         if (cam != null) cam.stop();
         double[] from = currentCenter();
-        if (from == null || ms <= 0) { setCenterNow(lat, lng); if (zoom > 0) map.setZoom(zoom); return; }
+        double z0 = layer.zoomNow();
+        if (from == null || ms <= 0 || Double.isNaN(z0)) { setCenterNow(lat, lng); if (zoom > 0) map.setZoom(zoom); return; }
         DoubleProperty t = new SimpleDoubleProperty(0);
-        t.addListener((o, a, v) -> setCenterNow(from[0] + (lat - from[0]) * v.doubleValue(), from[1] + (lng - from[1]) * v.doubleValue()));
+        t.addListener((o, a, v) -> {
+            double k = v.doubleValue();
+            setCenterNow(from[0] + (lat - from[0]) * k, from[1] + (lng - from[1]) * k);
+            if (zoom > 0) map.setZoom(z0 + (zoom - z0) * k);
+        });
         cam = new Timeline(
                 new KeyFrame(Duration.ZERO, new KeyValue(t, 0)),
-                new KeyFrame(Duration.millis(ms * 0.45), e -> { if (zoom > 0) map.setZoom(zoom); }),
                 new KeyFrame(Duration.millis(ms), new KeyValue(t, 1, Interpolator.EASE_BOTH)));
         cam.play();
     }
@@ -357,9 +387,12 @@ public final class MapPane extends StackPane {
         private double[][] rpts; private double[] cum; private boolean routeFromCollege;
         private final DoubleProperty rProg = new SimpleDoubleProperty(0);
         private Timeline rAnim;
-        private final Polyline casing = new Polyline(), line = new Polyline(), toStart = new Polyline();
+        private final Polyline casing = new Polyline(), line = new Polyline();
         private final Circle originDot = new Circle(6.5, PURPLE_DARK), destDot = new Circle(5.5, PURPLE);
         private final Label originTag = Ui.label("", "map-origin-tag"), routeBadge = Ui.label("", "map-route-badge");
+        // all campuses (dot + name)
+        private final Group collegeGroup = new Group();
+        private List<College> marks = List.of();
         // you
         private final Group me = new Group();
         private final Circle halo = new Circle(13, Color.web("#2F6FED", 0.22)), meDot = new Circle(7.5, BLUE);
@@ -378,8 +411,7 @@ public final class MapPane extends StackPane {
             casing.setStroke(Color.web("#FFFFFF", 0.95)); casing.setStrokeWidth(8);
             line.setStroke(PURPLE); line.setStrokeWidth(4.5);
             for (Polyline p : new Polyline[]{casing, line}) { p.setStrokeLineCap(StrokeLineCap.ROUND); p.setStrokeLineJoin(StrokeLineJoin.ROUND); p.setMouseTransparent(true); }
-            toStart.setStroke(Color.web("#2F6FED", 0.6)); toStart.setStrokeWidth(3); toStart.setStrokeLineCap(StrokeLineCap.ROUND);
-            toStart.getStrokeDashArray().addAll(1.0, 8.0); toStart.setMouseTransparent(true);
+            collegeGroup.setMouseTransparent(true);
             for (Circle c : new Circle[]{originDot, destDot}) { c.setStroke(Color.WHITE); c.setStrokeWidth(2.5); c.setMouseTransparent(true); }
             originTag.setWrapText(false); originTag.setMouseTransparent(true);
             routeBadge.setWrapText(false); routeBadge.setMouseTransparent(true); routeBadge.setOpacity(0);
@@ -401,7 +433,7 @@ public final class MapPane extends StackPane {
                             new KeyValue(halo.opacityProperty(), 0.0, Interpolator.EASE_IN)));
             pulse.setCycleCount(Timeline.INDEFINITE);
 
-            getChildren().addAll(ring, radiusBadge, toStart, casing, line, originDot, destDot, originTag, collegeDot, pinsGroup, routeBadge, me);
+            getChildren().addAll(ring, radiusBadge, casing, line, originDot, destDot, originTag, collegeGroup, collegeDot, pinsGroup, routeBadge, me);
         }
 
         void refresh() { markDirty(); }
@@ -410,6 +442,38 @@ public final class MapPane extends StackPane {
         void setActive(boolean on) {
             active = on;
             if (on && !Double.isNaN(meLat)) pulse.play(); else pulse.pause();
+        }
+
+        /** Live zoom read from the layer's own projection (pixels per degree of longitude). NaN until the map is laid out. */
+        double zoomNow() {
+            try {
+                double px = Math.abs(getMapPoint(0, 1).getX() - getMapPoint(0, 0).getX());
+                return px > 0 ? Math.log(px * 360.0 / 256.0) / Math.log(2) : Double.NaN;
+            } catch (Throwable t) { return Double.NaN; }
+        }
+
+        void animateRing(double want, int ms) {
+            if (ringAnim != null) ringAnim.stop();
+            ringAnim = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(ringKm, ringKm.get())),
+                    new KeyFrame(Duration.millis(ms), new KeyValue(ringKm, want, Interpolator.EASE_BOTH)));
+            ringAnim.play();
+        }
+
+        /** Every campus gets a small dot and its name, always visible (names appear from a medium zoom). */
+        void setMarks(List<College> list) {
+            marks = list;
+            collegeGroup.getChildren().clear();
+            for (College c : list) {
+                Group g = new Group();
+                Circle dot = new Circle(0, 0, 5.5, Color.web("#4B33C9")); dot.setStroke(Color.WHITE); dot.setStrokeWidth(2);
+                Label name = Ui.label(c.name(), "map-college-tag"); name.setWrapText(false);
+                name.setLayoutX(9); name.setLayoutY(-9);
+                g.getChildren().addAll(dot, name);
+                g.getProperties().put("dot", dot); g.getProperties().put("name", name);
+                g.setUserData(c); g.setMouseTransparent(true); g.setVisible(false);
+                collegeGroup.getChildren().add(g);
+            }
+            markDirty();
         }
 
         // ---- you ----
@@ -451,12 +515,7 @@ public final class MapPane extends StackPane {
         void set(double[] c, double r, List<BoardingHouse> p, boolean circle) {
             center = c; radius = r; circleOn = circle;
             double want = circle && c != null ? r : 0;
-            if (Math.abs(ringKm.get() - want) > 1e-6) {                  // the circle grows / shrinks to the new radius
-                if (ringAnim != null) ringAnim.stop();
-                ringAnim = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(ringKm, ringKm.get())),
-                        new KeyFrame(Duration.millis(320), new KeyValue(ringKm, want, Interpolator.EASE_BOTH)));
-                ringAnim.play();
-            }
+            if (Math.abs(ringKm.get() - want) > 1e-6) animateRing(want, 450);   // the circle grows / shrinks to the new radius
             Map<String, Group> next = new LinkedHashMap<>();
             int fresh = 0;
             for (BoardingHouse b : p) {
@@ -514,6 +573,10 @@ public final class MapPane extends StackPane {
             double total = 0;
             for (int i = 1; i < rpts.length; i++) { total += Geo.km(rpts[i - 1][0], rpts[i - 1][1], rpts[i][0], rpts[i][1]); cum[i] = total; }
             for (int i = 1; i < cum.length; i++) cum[i] = total <= 0 ? 1 : cum[i] / total;       // 0..1 along the path
+            boolean approx = r.approximate();                                                    // no routing server: dashed straight line
+            casing.setOpacity(approx ? 0 : 1);
+            line.setStrokeLineCap(approx ? StrokeLineCap.BUTT : StrokeLineCap.ROUND);
+            if (approx) line.getStrokeDashArray().setAll(11.0, 9.0); else line.getStrokeDashArray().clear();
             originTag.setText(fromCollege ? label : "");
             double km = r.meters() / 1000.0;
             routeBadge.setText(Geo.fmt(km) + " \u00B7 " + Math.max(1, Geo.walkMinutes(km)) + " min");
@@ -558,6 +621,23 @@ public final class MapPane extends StackPane {
                 }
             }
 
+            double vw = map.getWidth(), vh = map.getHeight(), zNow = zoomNow();
+            boolean names = Double.isNaN(zNow) || zNow >= 12.8;
+            College chosen = State.college.get();
+            for (Node n : collegeGroup.getChildren()) {
+                College c = (College) n.getUserData();
+                Point2D p = getMapPoint(c.lat(), c.lng());
+                boolean vis = p.getX() > -80 && p.getX() < vw + 80 && p.getY() > -30 && p.getY() < vh + 30;
+                n.setVisible(vis);
+                if (!vis) continue;
+                n.setTranslateX(p.getX()); n.setTranslateY(p.getY());
+                boolean mine = chosen != null && java.util.Objects.equals(chosen.id(), c.id());
+                Circle dot = (Circle) n.getProperties().get("dot"); Label name = (Label) n.getProperties().get("name");
+                dot.setRadius(mine ? 7.5 : 5.5);
+                name.setVisible(names || mine);
+                name.setStyle(mine ? "-fx-font-weight:bold;-fx-text-fill:#2A1690;" : "");
+            }
+
             boolean meOn = !Double.isNaN(meLat);
             me.setVisible(meOn);
             if (meOn) { Point2D u = getMapPoint(meLat, meLng); me.setTranslateX(u.getX()); me.setTranslateY(u.getY()); }
@@ -570,10 +650,8 @@ public final class MapPane extends StackPane {
 
             boolean hasRoute = rpts != null && rpts.length > 1;
             casing.setVisible(hasRoute); line.setVisible(hasRoute); destDot.setVisible(hasRoute);
-            boolean linkOn = hasRoute && routeFromCollege && meOn && Geo.km(meLat, meLng, rpts[0][0], rpts[0][1]) > 0.12;
-            toStart.setVisible(linkOn);
             originDot.setVisible(hasRoute && !ringOn);
-            originTag.setVisible(hasRoute && routeFromCollege && !originTag.getText().isEmpty());
+            originTag.setVisible(hasRoute && routeFromCollege && !originTag.getText().isEmpty() && marks.isEmpty());
             routeBadge.setVisible(hasRoute);
             if (!hasRoute) return;
 
@@ -598,14 +676,10 @@ public final class MapPane extends StackPane {
             destDot.setCenterX(z.getX()); destDot.setCenterY(z.getY());
             destDot.setOpacity(p >= 0.98 ? 1 : 0);
             if (originTag.isVisible()) { originTag.autosize(); originTag.setTranslateX(a0.getX() + 10); originTag.setTranslateY(a0.getY() - 30); }
-            if (linkOn) {
-                Point2D u = getMapPoint(meLat, meLng);
-                toStart.getPoints().setAll(u.getX(), u.getY(), a0.getX(), a0.getY());
-                toStart.setOpacity(p);
-            }
-            int mid = 0;
+            int mid = 1;
             while (mid < cum.length - 1 && cum[mid] < 0.5) mid++;                    // badge sits on the middle of the walk
-            Point2D m = getMapPoint(rpts[mid][0], rpts[mid][1]);
+            double span = cum[mid] - cum[mid - 1], f = span <= 0 ? 0 : Math.max(0, Math.min(1, (0.5 - cum[mid - 1]) / span));
+            Point2D m = getMapPoint(rpts[mid - 1][0] + (rpts[mid][0] - rpts[mid - 1][0]) * f, rpts[mid - 1][1] + (rpts[mid][1] - rpts[mid - 1][1]) * f);
             routeBadge.autosize();
             routeBadge.setTranslateX(m.getX() - routeBadge.getWidth() / 2);
             routeBadge.setTranslateY(m.getY() - routeBadge.getHeight() - 8);
