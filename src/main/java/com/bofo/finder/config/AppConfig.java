@@ -37,6 +37,16 @@ public final class AppConfig {
     public static boolean googleNative() { return !googleWebClientId().isEmpty() && !"false".equalsIgnoreCase(get("google.native").trim()); }
     public static String tileUrl() { String u = get("map.tiles.url").trim(); return u.isEmpty() ? "https://basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}.png" : u; }
     public static String tileKey() { return get("map.tiles.key").trim(); }
-    public static String mapAttribution() { String a = get("map.attribution").trim(); return a.isEmpty() ? "\u00A9 OpenStreetMap contributors \u00A9 CARTO" : a; }
+    /** "vector" (default: OpenFreeMap vector tiles drawn by VectorTileRetriever) or "raster" (picture tiles, MinimalTileRetriever). */
+    public static String mapRenderer() { return "raster".equalsIgnoreCase(get("map.renderer").trim()) ? "raster" : "vector"; }
+    public static String vectorTileJson() { String u = get("map.vector.tilejson").trim(); return u.isEmpty() ? "https://tiles.openfreemap.org/planet" : u; }
+    public static String mapAttribution() {
+        if ("vector".equals(mapRenderer())) {
+            String v = get("map.attribution.vector").trim();
+            return v.isEmpty() ? "OpenFreeMap \u00A9 OpenMapTiles, data from OpenStreetMap" : v;
+        }
+        String a = get("map.attribution").trim();
+        return a.isEmpty() ? "\u00A9 OpenStreetMap contributors \u00A9 CARTO" : a;
+    }
     public static String redirectUri() { return isAndroid() ? get("auth.redirect.android") : get("auth.redirect.desktop"); }
 }

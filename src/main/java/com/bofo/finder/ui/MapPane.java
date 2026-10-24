@@ -24,8 +24,10 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Map built on Gluon Maps. The base map is the plain style from {@link com.bofo.finder.util.MinimalTileRetriever}
- * (roads, water, parks, building shapes; no labels or shop icons). On top: purple pins, a light-purple college circle,
+ * Map built on Gluon Maps. The base map is BOFO's own style drawn from OpenFreeMap vector tiles
+ * ({@link com.bofo.finder.util.VectorTileRetriever}; roads, water, parks, buildings; no labels or shop icons), or the
+ * old picture tiles when map.renderer=raster. The attribution label text comes from {@link AppConfig#mapAttribution()}
+ * and follows the renderer (OpenFreeMap \u00A9 OpenMapTiles, data from OpenStreetMap). On top: purple pins, a light-purple college circle,
  * an optional route line, a blue "you are here" dot and a round "find me" button (bottom right).
  */
 public final class MapPane extends StackPane {

@@ -59,7 +59,7 @@
             <list>position</list><list>pictures</list><list>statusbar</list>
           </attachList>
           <resourcesList><list>.*\.properties$</list><list>.*\.css$</list><list>.*\.png$</list><list>META-INF/services/.*</list></resourcesList>
-          <reflectionList><list>com.bofo.finder.app.Main</list><list>com.bofo.finder.util.MinimalTileRetriever</list></reflectionList>
+          <reflectionList><list>com.bofo.finder.app.Main</list><list>com.bofo.finder.util.VectorTileRetriever</list><list>com.bofo.finder.util.MinimalTileRetriever</list></reflectionList>
           <releaseConfiguration>
             <vendor>BOFO</vendor>
             <description>BOFO - Boarding House Finder</description>
