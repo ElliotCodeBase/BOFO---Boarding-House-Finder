@@ -72,6 +72,7 @@ public final class MapPane extends StackPane {
     private double camLat = Double.NaN, camLng = Double.NaN;
     private Timeline cam;
     private boolean follow;
+    private boolean centerKnown;           // false after the user drags / pinches the map: our remembered centre is then out of date
     private double zoomVal = Double.NaN;       // zoom we last set ourselves; NaN after the user pinched / scrolled (then the next move just jumps)
 
     // selection / preview card / route
@@ -107,9 +108,9 @@ public final class MapPane extends StackPane {
 
         // touching the map stops a running camera move; dragging or zooming it ends "follow me"
         addEventFilter(MouseEvent.MOUSE_PRESSED, e -> { if (cam != null) cam.stop(); });
-        addEventFilter(MouseEvent.MOUSE_DRAGGED, e -> setFollow(false));
-        addEventFilter(ScrollEvent.SCROLL, e -> { setFollow(false); zoomVal = Double.NaN; });
-        addEventFilter(javafx.scene.input.ZoomEvent.ANY, e -> zoomVal = Double.NaN);
+        addEventFilter(MouseEvent.MOUSE_DRAGGED, e -> { setFollow(false); centerKnown = false; });
+        addEventFilter(ScrollEvent.SCROLL, e -> { setFollow(false); zoomVal = Double.NaN; centerKnown = false; });
+        addEventFilter(javafx.scene.input.ZoomEvent.ANY, e -> { zoomVal = Double.NaN; centerKnown = false; });
         addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {              // tap on empty map = close the card
             if (selected != null && e.isStillSincePress() && !inside(e.getTarget(), locate) && !inside(e.getTarget(), card)) deselect();
         });
@@ -239,7 +240,7 @@ public final class MapPane extends StackPane {
 
     private void applyZoom(double z) { zoomVal = z; map.setZoom(z); }
 
-    private void setCenterNow(double lat, double lng) { camLat = lat; camLng = lng; map.setCenter(lat, lng); }
+    private void setCenterNow(double lat, double lng) { camLat = lat; camLng = lng; centerKnown = true; map.setCenter(lat, lng); }
 
     private double[] currentCenter() {
         try { if (getScene() != null && map.getWidth() > 0) return center(); } catch (Throwable ignored) { }
@@ -249,9 +250,11 @@ public final class MapPane extends StackPane {
     /** Glides the camera to a point and zoom together (zoom <= 0 keeps the current zoom). The centre is set after the zoom on every frame, so it never drifts. */
     private void flyTo(double lat, double lng, double zoom, int ms) {
         if (cam != null) cam.stop();
-        double[] from = currentCenter();
+        // start from the centre WE last set (reading it back from the map gave a wrong point, so the camera slid in from the sea);
+        // after the user dragged the map we do not know it, so the centre snaps and only the zoom glides
+        double[] from = centerKnown && !Double.isNaN(camLat) ? new double[]{camLat, camLng} : new double[]{lat, lng};
         double z0 = zoomVal;
-        if (from == null || ms <= 0 || (zoom > 0 && Double.isNaN(z0))) { if (zoom > 0) applyZoom(zoom); setCenterNow(lat, lng); return; }
+        if (ms <= 0 || (zoom > 0 && Double.isNaN(z0))) { if (zoom > 0) applyZoom(zoom); setCenterNow(lat, lng); return; }
         DoubleProperty t = new SimpleDoubleProperty(0);
         t.addListener((o, a, v) -> {
             double k = v.doubleValue();
