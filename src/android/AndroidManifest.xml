@@ -17,5 +17,15 @@
         <data android:scheme="bofo" android:host="auth-callback"/>
       </intent-filter>
     </activity>
+    <!-- Google account sheet inside the app (no browser). Opened by bofo://google-signin, see NativeGoogle.java -->
+    <activity android:name="com.bofo.finder.android.GoogleSignInActivity" android:exported="true"
+              android:theme="@android:style/Theme.Translucent.NoTitleBar" android:excludeFromRecents="true">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="bofo" android:host="google-signin"/>
+      </intent-filter>
+    </activity>
   </application>
 </manifest>

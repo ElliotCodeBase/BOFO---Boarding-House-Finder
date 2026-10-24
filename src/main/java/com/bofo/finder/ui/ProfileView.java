@@ -1,16 +1,28 @@
 package com.bofo.finder.ui;
 
+import com.bofo.finder.util.Locator;
 import com.bofo.finder.app.Main;
+import com.bofo.finder.util.Locator;
 import com.bofo.finder.model.Profile;
+import com.bofo.finder.util.Locator;
 import com.bofo.finder.model.Role;
+import com.bofo.finder.util.Locator;
 import com.bofo.finder.service.AuthService;
+import com.bofo.finder.util.Locator;
 import com.bofo.finder.service.SupabaseClient;
+import com.bofo.finder.util.Locator;
 import com.bofo.finder.util.Async;
+import com.bofo.finder.util.Locator;
 import javafx.geometry.Insets;
+import com.bofo.finder.util.Locator;
 import javafx.geometry.Pos;
+import com.bofo.finder.util.Locator;
 import javafx.scene.Node;
+import com.bofo.finder.util.Locator;
 import javafx.scene.control.*;
+import com.bofo.finder.util.Locator;
 import javafx.scene.layout.*;
+import com.bofo.finder.util.Locator;
 import org.json.JSONObject;
 
 /**
@@ -44,7 +56,8 @@ public final class ProfileView extends VBox {
         // ---- Preferences ----
         Node notif = Ui.settingsToggle(Glyphs.BELL, "Notifications", true, on -> {});
         Node mascot = Ui.settingsToggle(Glyphs.SMILE, "Show BOFO mascot", BofoPanel.enabled(), BofoPanel::setEnabled);
-        VBox prefs = Ui.settingsGroup("Preferences", notif, mascot);
+        Node loc = Ui.settingsToggle(Glyphs.LOCATE, "Use my location", Locator.get().enabled.get(), on -> Locator.get().setEnabled(on));
+        VBox prefs = Ui.settingsGroup("Preferences", notif, mascot, loc);
 
         // ---- Security & privacy ----
         VBox security = Ui.settingsGroup("Security and privacy",

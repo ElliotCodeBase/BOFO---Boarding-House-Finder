@@ -26,11 +26,19 @@ public final class LoginView extends ScrollPane {
         Label g = new Label("G"); g.getStyleClass().add("g-badge");
         Button google = new Button("Continue with Google"); google.setGraphic(g); google.setGraphicTextGap(10);
         google.getStyleClass().add("btn-primary"); google.setMaxWidth(Double.MAX_VALUE);
+        Button cancel = Ui.btn("Cancel", "link", () -> AuthService.get().cancelSignIn());
+        cancel.setVisible(false); cancel.setManaged(false);
         google.setOnAction(e -> {
-            google.setDisable(true); err.setText("");
+            google.setDisable(true); err.setText(""); google.setText("Waiting for Google...");
+            cancel.setVisible(true); cancel.setManaged(true);
             AuthService.get().signInWithGoogle().whenComplete((v, ex) -> javafx.application.Platform.runLater(() -> {
-                google.setDisable(false);
-                if (ex != null) { Throwable c = ex.getCause() != null ? ex.getCause() : ex; ex.printStackTrace(); err.setText("Sign-in failed: " + (c.getMessage() == null ? c.getClass().getSimpleName() : c.getMessage())); } else onSignedIn.run();
+                google.setDisable(false); google.setText("Continue with Google");
+                cancel.setVisible(false); cancel.setManaged(false);
+                if (ex == null) { onSignedIn.run(); return; }
+                Throwable c = ex.getCause() != null ? ex.getCause() : ex;
+                if (c instanceof java.util.concurrent.CancellationException || ex instanceof java.util.concurrent.CancellationException) return;   // user backed out
+                ex.printStackTrace();
+                err.setText("Sign-in failed: " + (c.getMessage() == null ? c.getClass().getSimpleName() : c.getMessage()));
             }));
         });
         VBox.setMargin(google, new Insets(18, 0, 0, 0));
@@ -46,7 +54,7 @@ public final class LoginView extends ScrollPane {
         Button priv = Ui.btn("Privacy Policy", "link", () -> Nav.toast("Open Privacy Policy"));
         HBox legalRow = Ui.hbox(2, terms, Ui.label("and", "secondary"), priv); legalRow.setAlignment(Pos.CENTER);
 
-        col.getChildren().addAll(logo, title, tag, google, err, Ui.divider("Developer: test accounts (real sign-in)"), devRow, Ui.grow(), legal, legalRow);
+        col.getChildren().addAll(logo, title, tag, google, cancel, err, Ui.divider("Developer: test accounts (real sign-in)"), devRow, Ui.grow(), legal, legalRow);
         StackPane holder = new StackPane(col); holder.setAlignment(Pos.TOP_CENTER);
         setContent(holder); setFitToWidth(true); setFitToHeight(true);        // scrolls on short / landscape screens
         setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
