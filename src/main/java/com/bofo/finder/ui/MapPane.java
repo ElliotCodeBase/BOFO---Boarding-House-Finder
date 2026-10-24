@@ -342,7 +342,7 @@ public final class MapPane extends StackPane {
             if (r.approximate() && tries < 4 && com.bofo.finder.config.AppConfig.routeOnline()) {
                 if (tries == 0) {                               // show the straight guide only once; keep trying for the real roads
                     layer.setRoute(r, label, fromCollege);
-                    if (card != null && forBh != null) card.setRouteInfo("Finding the road route\u2026 (" + routeText(r, label) + ")");
+                    if (card != null && forBh != null) card.setRouteInfo("Finding the road route\u2026 " + (Router.lastError().isEmpty() ? "" : "(" + Router.lastError() + ")"));
                 }
                 javafx.animation.PauseTransition wait = new javafx.animation.PauseTransition(Duration.seconds(2.5));
                 wait.setOnFinished(e -> { if (my == routeToken) fetchRoute(my, tries + 1, from, to, label, fromCollege, forBh, moveCamera, gb, done); });
@@ -361,7 +361,7 @@ public final class MapPane extends StackPane {
 
     private static String routeText(Router.Route r, String label) {
         double km = r.meters() / 1000.0;
-        return Geo.fmt(km) + " \u00B7 " + Math.max(1, Geo.walkMinutes(km)) + " min walk" + (r.approximate() ? " (straight line)" : "") + " from " + label;
+        return Geo.fmt(km) + " \u00B7 " + Math.max(1, Geo.walkMinutes(km)) + " min walk" + (r.approximate() ? " (straight line" + (Router.lastError().isEmpty() ? "" : ": " + Router.lastError()) + ")" : "") + " from " + label;
     }
 
     private void deselect() {
@@ -606,9 +606,9 @@ public final class MapPane extends StackPane {
             for (int i = 1; i < rpts.length; i++) { total += Geo.km(rpts[i - 1][0], rpts[i - 1][1], rpts[i][0], rpts[i][1]); cum[i] = total; }
             for (int i = 1; i < cum.length; i++) cum[i] = total <= 0 ? 1 : cum[i] / total;       // 0..1 along the path
             boolean approx = r.approximate();                                                    // no routing server: dashed straight line
-            casing.setOpacity(approx ? 0 : 1);
-            line.setStrokeLineCap(approx ? StrokeLineCap.BUTT : StrokeLineCap.ROUND);
-            if (approx) line.getStrokeDashArray().setAll(11.0, 9.0); else line.getStrokeDashArray().clear();
+            casing.setOpacity(1);                                                                // always a solid line (no dots), even for the temporary straight guide
+            line.setStrokeLineCap(StrokeLineCap.ROUND);
+            line.getStrokeDashArray().clear();
             originTag.setText(fromCollege ? label : "");
             double km = r.meters() / 1000.0;
             routeBadge.setText(Geo.fmt(km) + " \u00B7 " + Math.max(1, Geo.walkMinutes(km)) + " min");
