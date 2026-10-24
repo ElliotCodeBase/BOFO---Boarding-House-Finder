@@ -64,8 +64,45 @@ public final class AuthService {
         }
     }
 
-    /* ---------- Google OAuth (PKCE) ---------- */
+    /* ---------- Google sign-in ---------- */
+    /** Android with google.webClientId set: Google's account sheet inside the app. Otherwise (PC, or not set up yet): browser. */
     public CompletableFuture<Void> signInWithGoogle() {
+        if (!NativeGoogle.available()) return signInWithBrowser();
+        CompletableFuture<Void> out = new CompletableFuture<>();
+        pendingLogin = out;
+        CompletableFuture<NativeGoogle.Result> picker = NativeGoogle.signIn(hostServices);
+        out.whenComplete((v, e) -> { if (e != null) picker.cancel(true); });          // user pressed Cancel
+        picker.whenComplete((res, ex) -> {
+            if (ex == null) { exchangeIdToken(res, out); return; }
+            if (ex instanceof NativeGoogle.Unavailable) {                             // screen missing: browser still works
+                javafx.application.Platform.runLater(() ->      // opening the browser must happen on the FX thread
+                        signInWithBrowser().whenComplete((v, e2) -> { if (e2 == null) out.complete(null); else out.completeExceptionally(e2); }));
+            } else if (!out.isDone()) out.completeExceptionally(ex);
+        });
+        return out;
+    }
+
+    /** Trades the Google ID token for a Supabase session (no browser, no redirect). */
+    private void exchangeIdToken(NativeGoogle.Result r, CompletableFuture<Void> out) {
+        com.bofo.finder.util.Async.bg(() -> {
+            try {
+                JSONObject s = api.authPost("token?grant_type=id_token", new JSONObject()
+                        .put("provider", "google").put("id_token", r.idToken).put("nonce", r.rawNonce));
+                apply(s); store.save(s);
+                out.complete(null);
+            } catch (Throwable e) { out.completeExceptionally(e); }
+        });
+    }
+
+    /** Stops a sign-in that is waiting (Cancel button). */
+    public void cancelSignIn() {
+        synchronized (this) { if (loopback != null) { try { loopback.stop(0); } catch (Exception ignored) { } loopback = null; } }
+        CompletableFuture<Void> p = pendingLogin;
+        if (p != null) p.completeExceptionally(new java.util.concurrent.CancellationException("cancelled"));
+    }
+
+    /* ---------- Google OAuth in the system browser (PKCE) ---------- */
+    private CompletableFuture<Void> signInWithBrowser() {
         pkceVerifier = Pkce.verifier();
         String url = AppConfig.supabaseUrl() + "/auth/v1/authorize?provider=google"
                 + "&redirect_to=" + enc(AppConfig.redirectUri())
@@ -86,6 +123,7 @@ public final class AuthService {
                     new JSONObject().put("auth_code", code).put("code_verifier", pkceVerifier));
             apply(r); store.save(r);
             if (pendingLogin != null) pendingLogin.complete(null);
+            javafx.application.Platform.runLater(com.bofo.finder.app.Main::focusApp);
         } catch (Exception e) { if (pendingLogin != null) pendingLogin.completeExceptionally(e); }
     }
 
@@ -99,7 +137,10 @@ public final class AuthService {
             HttpServer srv = HttpServer.create(new InetSocketAddress("127.0.0.1", 54321), 0);
             srv.createContext("/callback", ex -> {
                 handleDeepLink("http://localhost/callback?" + ex.getRequestURI().getRawQuery());
-                byte[] b = "<html><body style='font-family:sans-serif'><h3>Signed in. Return to BOFO.</h3></body></html>".getBytes(StandardCharsets.UTF_8);
+                byte[] b = ("<html><head><meta name='viewport' content='width=device-width,initial-scale=1'><title>BOFO</title></head>"
+                        + "<body style='font-family:sans-serif;text-align:center;padding:64px 24px;color:#17142A'>"
+                        + "<h2 style='color:#5B3BF0'>You're signed in</h2><p>You can close this tab and go back to BOFO.</p>"
+                        + "<script>setTimeout(function(){window.close()},700)</script></body></html>").getBytes(StandardCharsets.UTF_8);
                 ex.getResponseHeaders().add("Content-Type", "text/html");
                 ex.sendResponseHeaders(200, b.length);
                 ex.getResponseBody().write(b); ex.close();

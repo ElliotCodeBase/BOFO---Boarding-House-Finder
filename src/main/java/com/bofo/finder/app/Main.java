@@ -17,10 +17,14 @@ import javafx.stage.Stage;
 /** App entry. Flow: Splash (restore session) -> Login | Role | Home/Dashboard/Admin. */
 public class Main extends Application {
     private static HostServices host;
+    private static Stage window;
     public static HostServices host() { return host; }
+    /** Brings the app window back to the front (after signing in through the browser on a PC). */
+    public static void focusApp() { if (window != null) { window.setIconified(false); window.toFront(); window.requestFocus(); } }
 
     @Override public void start(Stage stage) {
         host = getHostServices();
+        window = stage;
         AuthService auth = AuthService.get();
         auth.init(host);
         auth.onSessionLost(() -> Platform.runLater(() -> showLogin("Your session expired. Please sign in again.")));

@@ -5,6 +5,7 @@ import com.bofo.finder.model.College;
 import com.bofo.finder.service.AuthService;
 import com.bofo.finder.service.BhService;
 import com.bofo.finder.util.Async;
+import com.bofo.finder.util.Locator;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
@@ -54,7 +55,18 @@ public final class HomeView extends VBox {
         collegeBtn.setGraphic(Icons.icon(Icons.PIN, 16, Color.web("#5B3BF0")));
         collegeBtn.setOnAction(e -> pickCollege());
         setCollegeText();
-        HBox collegeRow = Ui.hbox(8, collegeBtn); collegeRow.setPadding(new Insets(12, 16, 0, 16));
+        Button nearMe = new Button("Near me"); nearMe.getStyleClass().add("chip");
+        nearMe.setGraphic(Ui.strokeIcon(Glyphs.LOCATE, 16, Color.web("#2F6FED"))); nearMe.setGraphicTextGap(6);
+        nearMe.setOnAction(e -> Locator.get().locate(p -> { if (State.college.get() != null) State.college.set(null); else reload(); }));
+        HBox collegeRow = Ui.hbox(8, collegeBtn, nearMe); collegeRow.setPadding(new Insets(12, 16, 0, 16));
+
+        Label hintText = Ui.label("Location is off, so we can't show places near you. Turn it on, or choose your college.", "secondary");
+        HBox.setHgrow(hintText, Priority.ALWAYS);
+        HBox locHint = Ui.hbox(10, hintText, Ui.btn("Try again", "link", () -> Locator.get().start()));
+        locHint.getStyleClass().add("card");
+        locHint.visibleProperty().bind(Locator.get().status.isEqualTo(Locator.Status.UNAVAILABLE).and(State.college.isNull()));
+        locHint.managedProperty().bind(locHint.visibleProperty());
+        VBox.setMargin(locHint, new Insets(10, 16, 0, 16));
 
         radius.setShowTickLabels(false);
         debounce.setOnFinished(e -> reload());
@@ -75,12 +87,12 @@ public final class HomeView extends VBox {
         mapWrap.setClip(mc);
         VBox.setMargin(mapWrap, new Insets(12, 16, 0, 16));
 
-        VBox content = new VBox(0, top, searchPill, collegeRow, mapWrap, radiusCard, chips, nearby, list);
+        VBox content = new VBox(0, top, searchPill, collegeRow, locHint, mapWrap, radiusCard, chips, nearby, list);
         map.onPinTap(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
         ScrollPane sp = Ui.scroll(content); VBox.setVgrow(sp, Priority.ALWAYS);
         getChildren().add(sp);
         Async.run(bh::favoriteIds, f -> { favs = f; reload(); }, e -> reload());
-        if (State.ref() == null) startGps();
+        startGps();
         ChangeListener<College> l = (o, a, b) -> { setCollegeText(); reload(); };
         State.college.addListener(l);
     }
@@ -89,15 +101,15 @@ public final class HomeView extends VBox {
         collegeBtn.setText((State.college.get() == null ? "Choose your college" : State.college.get().name()) + "   \u25BE");
     }
 
+    /** Asks for location (system dialog on Android). On the first fix the list reloads if it is sorted by "where I am". */
     private void startGps() {
-        try {
-            com.gluonhq.attach.position.PositionService.create().ifPresent(ps -> {
-                ps.start();
-                ps.positionProperty().addListener((o, a, p) -> {
-                    if (p != null && State.gps.get() == null) { State.gps.set(new double[]{p.getLatitude(), p.getLongitude()}); reload(); }
-                });
-            });
-        } catch (Throwable ignored) { /* permission denied or unsupported: user must pick a college */ }
+        Locator.get().startWithPrompt();
+        boolean[] first = {State.gps.get() == null};
+        ChangeListener<double[]> l = (o, a, p) -> {
+            if (first[0] && p != null) { first[0] = false; if (State.college.get() == null) reload(); }
+        };
+        State.gps.addListener(l);
+        sceneProperty().addListener((o, was, sc) -> { if (sc == null) State.gps.removeListener(l); });
     }
 
     private void pickCollege() {

@@ -238,3 +238,9 @@
 .splash-title { -fx-text-fill: white; -fx-font-size: 34px; -fx-font-weight: bold; }
 .splash-sub { -fx-text-fill: #B7B2DA; -fx-font-size: 13px; }
 .splash-status { -fx-text-fill: #B7B2DA; -fx-font-size: 12px; }
+
+/* "Find me" button on the map */
+.map-fab { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999;
+  -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; -fx-max-width: 42; -fx-max-height: 42;
+  -fx-padding: 0; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.20), 8, 0, 0, 2); }
+.map-fab:hover { -fx-background-color: -bofo-primary-tint; }

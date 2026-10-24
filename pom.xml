@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.bofo</groupId>
   <artifactId>finder</artifactId>
-  <version>1.1.1</version>
+  <version>1.2.0</version>
   <name>BOFO Finder</name>
 
   <properties>
@@ -58,14 +58,14 @@
             <list>lifecycle</list><list>storage</list><list>display</list>
             <list>position</list><list>pictures</list><list>statusbar</list>
           </attachList>
-          <resourcesList><list>.*\.properties$</list><list>.*\.css$</list><list>.*\.png$</list></resourcesList>
-          <reflectionList><list>com.bofo.finder.app.Main</list></reflectionList>
+          <resourcesList><list>.*\.properties$</list><list>.*\.css$</list><list>.*\.png$</list><list>META-INF/services/.*</list></resourcesList>
+          <reflectionList><list>com.bofo.finder.app.Main</list><list>com.bofo.finder.util.MinimalTileRetriever</list></reflectionList>
           <releaseConfiguration>
             <vendor>BOFO</vendor>
             <description>BOFO - Boarding House Finder</description>
             <packageType>aab</packageType>
-            <versionCode>2</versionCode>
-            <versionName>1.1.1</versionName>
+            <versionCode>3</versionCode>
+            <versionName>1.2.0</versionName>
           </releaseConfiguration>
         </configuration>
       </plugin>

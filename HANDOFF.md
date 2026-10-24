@@ -1,3 +1,20 @@
+# Handoff - v1.2.0 location, Profile switch, map tiles (2026-10-24)
+- Version bumped to 1.2.0 (versionCode 3). Fixed AuthService compile error (parenthesize the HTML string before .getBytes).
+- Location: `util/Locator` has a saved on/off choice (`~/.bofo/location.properties`), a non-blocking "Allow location?" prompt after login, and `setEnabled()`. Android uses Attach PositionService. PC asks Windows through PowerShell (System.Device GeoCoordinateWatcher), then falls back to a browser page calling navigator.geolocation. `dev.location` in config.local.properties overrides everything (remove it to use the real location).
+- `ProfileView`: "Use my location" switch under "Show BOFO mascot". `MapPane`: opens centered on the user's first fix.
+- Map tiles: CARTO now returns an "API KEY REQUIRED" image without a key (HTTP 200, so no fallback). config.local.properties currently points at Esri tiles (no key). The MapTiler key was removed on purpose.
+- NEXT: draw the map inside the app (vector tiles from OpenFreeMap, own style, no labels, sharp) as a new TileRetriever. Not started.
+- NOT compiled by the assistant; the user ran the app on Windows. Android build not tested.
+
+---
+# Handoff - Map style, location, in-app Google sign-in (2026-10-24)
+- Files: `util/MinimalTileRetriever`, `util/Locator`, `service/NativeGoogle`, `ui/MapPane` (rewritten), `ui/HomeView`, `service/AuthService`, `ui/LoginView`, `app/Main` (focusApp), `config/AppConfig`, `config.properties`, `bofo.css`, `Glyphs`, `pom.xml` (resourcesList + reflectionList), `AndroidManifest.xml`, `src/android/java/com/bofo/finder/android/GoogleSignInActivity.java`, `docs/NATIVE_GOOGLE_SIGNIN.md`.
+- NOT compiled, NOT run. Likely first compile risks: Attach `PositionService` / `Position` calls in `Locator` (same calls HomeView used before: `create()`, `start()`, `positionProperty()`, `getLatitude/getLongitude`), `MapLayer.markDirty()` called through `PinLayer.refresh()`.
+- Map: get a free CARTO key (dashboard.basemaps.carto.com) and put `map.tiles.key=...` in `config.local.properties` (git-ignored). Without it the map falls back to plain OpenStreetMap tiles.
+- Android Google sheet: unverified assumptions = `HostServices.showDocument("bofo://google-signin...")` launches our own activity; Attach `getPrivateStorage()` is the same folder as Android `getFilesDir()`; GluonFX compiles `src/android/java` and uses `src/android/build.gradle` for libraries. Failure of the first one is handled (falls back to the browser after 4 s).
+- The Android browser flow still cannot finish on a phone (README: the `bofo://auth-callback` link is never delivered into Java). The in-app sheet avoids that problem.
+
+---
 # Handoff - Delete account fix (2026-10-23)
 - Cause 1: `delete_my_account()` ran `delete from storage.objects`; Supabase forbids that from SQL ("Use the Storage API instead"), so it ALWAYS failed.
 - Cause 2: `recompute_bh()` re-inserted a `bh_activity` row for a listing being cascade-deleted -> FK violation (also broke deleting listings/owner accounts).
