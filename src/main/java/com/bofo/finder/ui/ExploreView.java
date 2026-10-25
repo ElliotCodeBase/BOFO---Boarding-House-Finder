@@ -76,7 +76,7 @@ public final class ExploreView extends StackPane {
         filterBtn.setOnAction(e -> sheet.open(maxPrice, sortIdx, amenityIds));
         HBox top = new HBox(10, campus, filterWrap); top.setAlignment(Pos.TOP_LEFT); top.setFillHeight(false); HBox.setHgrow(campus, Priority.ALWAYS);
         top.setViewOrder(-1);                                                 // the campus dropdown floats above everything below it
-        top.setPadding(new Insets(0, 16, 0, 16));
+        top.setPadding(Insets.EMPTY);
 
         // ---- quick filters: one scrolling row ----
         quickRow.setAlignment(Pos.CENTER_LEFT); quickRow.setPadding(new Insets(2, 16, 2, 16));
@@ -109,7 +109,9 @@ public final class ExploreView extends StackPane {
         Async.run(() -> new BhService().colleges(), map::showColleges, e -> {});     // every campus is always on the map
         content.getChildren().setAll(listScroll); VBox.setVgrow(content, Priority.ALWAYS);
 
-        VBox page = new VBox(Ui.appBar("Explore"), top, quickScroll, head, content);
+        VBox header = Ui.pageHeader("Explore", "Find a boarding house near your campus");
+        header.getChildren().add(top);
+        VBox page = new VBox(header, quickScroll, head, content);
         getChildren().addAll(page, sheet);
 
         if (pendingFilters != null) apply(pendingFilters);

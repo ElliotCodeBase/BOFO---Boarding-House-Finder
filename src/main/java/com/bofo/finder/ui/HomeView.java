@@ -22,7 +22,7 @@ import java.util.HashSet;
 /** Default student home: greeting, college selector, map with radius, New/Hot/Best tabs sorted nearest-first. */
 public final class HomeView extends VBox {
     private final BhService bh = new BhService();
-    private final MapPane map = new MapPane(340);
+    private final MapPane map = new MapPane(230);
     private final CardGrid list = new CardGrid(10, 320);
     private final Slider radius = new Slider(0.5, 5, State.radiusKm.get());
     private BhService.Tab tab = BhService.Tab.NEW;
@@ -53,16 +53,15 @@ public final class HomeView extends VBox {
         String full = prof == null ? "" : prof.fullName();
         String name = full.isBlank() ? "" : full.split(" ")[0];
 
-        Button bell = new Button(); bell.getStyleClass().add("icon-btn");
-        bell.setGraphic(Icons.icon(Icons.BELL, 20, Color.web("#17142A")));
+        Button bell = new Button(); bell.getStyleClass().add("hdr-btn"); bell.setGraphic(Icons.icon(Icons.BELL, 20, Color.web("#17142A")));
         bell.setOnAction(e -> Nav.toast("No new notifications"));
         HBox top = Ui.hbox(12, Ui.avatar(full, 40),
                 Ui.vbox(0, Ui.label(greeting(), "secondary"), Ui.label(name.isBlank() ? "there" : name, "greet-name")), Ui.grow(), bell);
-        top.setPadding(new Insets(14, 16, 0, 16));
+        top.setPadding(Insets.EMPTY);
 
         // ONE search bar (merged from the old search pill + college box): type or open the list to pick your campus; the map and list below
         // follow it. Press Enter on text that is not a campus (a boarding house name or an area) to search for it in Explore.
-        searchBar = new CampusPicker("Search campus, name or area", true,
+        searchBar = new CampusPicker("Search campus or place", true,
                 c -> CampusPicker.remember(c),
                 text -> BofoPanel.filtersListener.accept(new JSONObject().put("text", text)), null);
         nearMe = new Button(); nearMe.getStyleClass().add("near-btn");                       // round icon button: "show places near me"
@@ -72,8 +71,8 @@ public final class HomeView extends VBox {
         map.onLocate(this::onLocateTap);                                  // the round button on the map does the same thing
         searchBar.field().textProperty().addListener((o, was, now) -> { suppressionChanged(); syncOverview(); });   // typing hides the overview, emptying the bar brings it back
         paintOverviewButtons();
-        HBox searchRow = new HBox(10, searchBar, nearMe); searchRow.setAlignment(Pos.TOP_LEFT); HBox.setHgrow(searchBar, Priority.ALWAYS);
-        searchRow.setPadding(new Insets(14, 16, 0, 16)); searchRow.setFillHeight(false);
+        HBox searchRow = new HBox(10, searchBar); searchRow.setAlignment(Pos.TOP_LEFT); HBox.setHgrow(searchBar, Priority.ALWAYS);
+        searchRow.setPadding(Insets.EMPTY); searchRow.setFillHeight(false);
         searchRow.setViewOrder(-1);                                  // the campus dropdown floats above the map and list
 
         Label hintText = Ui.label("Location is off, so we can't show places near you. Turn it on, or choose your college.", "secondary");
@@ -110,7 +109,7 @@ public final class HomeView extends VBox {
         HBox chips = Ui.chipRow(new String[]{"New", "Hot", "Best rated"}, 0, i -> { tab = BhService.Tab.values()[i]; reload(); });
         chips.setPadding(new Insets(16, 16, 0, 16));
         countPill.setMinWidth(Region.USE_PREF_SIZE); countPill.setVisible(false); countPill.managedProperty().bind(countPill.visibleProperty());
-        HBox nearby = new HBox(10, Ui.vbox(2, Ui.section("Nearby boarding houses"), nearbySub), Ui.grow(), countPill);
+        HBox nearby = new HBox(10, Ui.vbox(2, Ui.section("Nearby boarding houses"), nearbySub));
         nearby.setAlignment(Pos.CENTER_LEFT); nearby.setPadding(new Insets(12, 16, 4, 16));
         list.setPadding(new Insets(4, 16, 72, 16));
 
@@ -120,9 +119,11 @@ public final class HomeView extends VBox {
         Rectangle mc = new Rectangle(); mc.setArcWidth(28); mc.setArcHeight(28);
         mc.widthProperty().bind(mapWrap.widthProperty()); mc.heightProperty().bind(mapWrap.heightProperty());
         mapWrap.setClip(mc);
-        VBox.setMargin(mapWrap, new Insets(12, 16, 0, 16));
+        VBox.setMargin(mapWrap, new Insets(16, 16, 0, 16));
 
-        VBox content = new VBox(0, top, searchRow, locHint, mapWrap, chips, nearby, list);
+        VBox header = new VBox(16, top, searchRow); header.getStyleClass().add("page-header"); header.setViewOrder(-1);   // greeting + search in one branded band
+        VBox.setMargin(locHint, new Insets(12, 16, 0, 16));
+        VBox content = new VBox(0, header, locHint, mapWrap, chips, nearby, list);
         map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
         ScrollPane sp = Ui.scroll(content); VBox.setVgrow(sp, Priority.ALWAYS);
         getChildren().add(sp);
@@ -142,10 +143,9 @@ public final class HomeView extends VBox {
     /** Subtitle + count under "Nearby boarding houses". */
     private void updateHeader(int n, double[] ref) {
         College c = State.college.get();
-        nearbySub.setText(c != null ? String.format(java.util.Locale.ROOT, "Within %.1f km of %s", State.radiusKm.get(), c.name())
-                : ref != null ? "Closest to you first" : "Choose a campus to see what is close");
-        countPill.setText(n == 1 ? "1 place" : n + " places");
-        countPill.setVisible(true);
+        String base = c != null ? String.format(java.util.Locale.ROOT, "Within %.1f km of %s", State.radiusKm.get(), c.name())
+                : ref != null ? "Closest to you first" : "Choose a campus to see what is close";
+        nearbySub.setText(base + " \u00B7 " + (n == 1 ? "1 place" : n + " places"));   // the count lives in the subtitle now (the mascot used to cover the pill)
     }
 
     /** Colors the filled part of the radius track purple (JavaFX has no built-in filled track). */

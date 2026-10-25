@@ -1,4 +1,22 @@
-﻿# Handoff - v1.12.9 Listing card redesign (2026-10-25)
+﻿# Handoff - v1.13.2 Home cleanup (2026-10-25)
+- **PR title:** `v1.13.2 - Home: one location button, shorter map, count in subtitle, slim map credit`. Version in `config.properties`, `pom.xml` (versionCode 47), CHANGES.md.
+- `HomeView`: `nearMe` is no longer added to the layout (still used for the overview state; the map button is the only visible one), `MapPane(230)`, `updateHeader` appends the count to `nearbySub`, `countPill` not in the layout. `MapPane`: credit `setWrapText(false)`. CSS block at end of bofo.css. Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.13.1 Light top section (2026-10-25)
+- **PR title:** `v1.13.1 - Top section: light, clean header (no gradient band)`. Version in `config.properties`, `pom.xml` (versionCode 46), CHANGES.md.
+- Only the CSS block at the end of bofo.css was replaced (`.page-header` transparent, dark text, white `.hdr-btn`) and the Home bell icon is dark again. Java structure from v1.13.0 unchanged. Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.13.0 Top section redesign (2026-10-25)
+- **PR title:** `v1.13.0 - Branded gradient top section on all main tabs`. Version in `config.properties`, `pom.xml` (versionCode 45), CHANGES.md.
+- `Ui.pageHeader(title, sub, right...)` + CSS block at the end of bofo.css (`.page-header`, `.page-title`, `.page-sub`, `.hdr-btn`, overrides for avatar / near-btn / filter-btn / btn-cta inside the band). Used by HomeView (own band), ExploreView, SavedView, ChatsView, DashboardView, ListingsView, PaymentsView, QueueView, ReportsView. Sub-screens keep `Ui.appBar` / `backBar`. Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.12.9 Listing card redesign (2026-10-25)
 - **PR title:** `v1.12.9 - Listing card: big price line, one-row rating + distance, badges first`. Version in `config.properties`, `pom.xml` (versionCode 44), CHANGES.md.
 - `BhCard` text block rebuilt (`head` VBox, `meta` FlowPane, `tags`); CSS `.price-big`, `.price-unit`, `.meta-dot`, `.card:hover` appended to bofo.css. Not compiled/run by Claude.
 

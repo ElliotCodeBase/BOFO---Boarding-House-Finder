@@ -152,6 +152,16 @@ public final class Ui {
         HBox bar = new HBox(8, label(title, "h2"), grow()); bar.getChildren().addAll(right);
         bar.getStyleClass().add("app-bar"); bar.setAlignment(Pos.CENTER_LEFT); return bar;
     }
+    /** Branded top section of a main tab: indigo gradient band with rounded bottom, title (+ subtitle) and optional round buttons on the right.
+     *  Extra rows (a search bar, a filter row) can be added to the returned box with getChildren().add(...). */
+    public static VBox pageHeader(String title, String sub, Node... right) {
+        VBox t = new VBox(2, label(title, "page-title")); t.setMinWidth(0);
+        if (sub != null && !sub.isBlank()) t.getChildren().add(label(sub, "page-sub"));
+        HBox row = new HBox(10, t, grow()); row.setAlignment(Pos.CENTER_LEFT); row.getChildren().addAll(right);
+        VBox h = new VBox(14, row); h.getStyleClass().add("page-header");
+        h.setViewOrder(-1);                                          // dropdowns inside the header float above the page below
+        return h;
+    }
     public static HBox chipRow(String[] names, int selected, java.util.function.IntConsumer onPick) {
         HBox row = new HBox(8); row.setPadding(new Insets(4, 0, 4, 0));
         Button[] bs = new Button[names.length];

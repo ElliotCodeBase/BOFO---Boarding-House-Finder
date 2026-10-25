@@ -23,9 +23,7 @@ public final class ChatsView extends VBox {
     public ChatsView() {
         ChatService chat = new ChatService();
         VBox rows = new VBox(10); rows.setPadding(new Insets(6, 16, 96, 16));
-        Label sub = Ui.label("Your conversations with owners and students", "secondary");
-        VBox head = new VBox(0, Ui.appBar("Chats"), sub); head.setPadding(new Insets(0, 0, 4, 20));
-        getChildren().addAll(head, Ui.scroll(rows));
+        getChildren().addAll(Ui.pageHeader("Chats", "Your conversations with owners and students"), Ui.scroll(rows));
         Ui.load(rows, () -> Skeleton.rows(5), chat::inbox, list -> {
             if (list.isEmpty()) rows.getChildren().add(Ui.emptyState("No conversations yet", "Open a boarding house and tap Chat with owner."));
             String me = AuthService.get().userId();

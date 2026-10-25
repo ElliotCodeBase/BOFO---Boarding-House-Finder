@@ -10,7 +10,7 @@ public final class SavedView extends VBox {
     public SavedView() {
         BhService bh = new BhService();
         CardGrid list = new CardGrid(10, 320); list.setPadding(new Insets(12, 16, 72, 16));
-        getChildren().addAll(Ui.appBar("Saved"), Ui.scroll(list));
+        getChildren().addAll(Ui.pageHeader("Saved", "Places you hearted"), Ui.scroll(list));
         Ui.load(list, () -> Skeleton.cards(4), bh::favorites, items -> {
             if (items.isEmpty()) list.getChildren().add(Ui.emptyState("Nothing saved yet", "Tap the heart on a boarding house to keep it here."));
             String uid = AuthService.get().userId();
