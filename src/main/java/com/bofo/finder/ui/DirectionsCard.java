@@ -131,7 +131,7 @@ final class DirectionsCard extends VBox {
         planFrom = from;
         results.getChildren().setAll(tripHeader(t), loading());
         previewLine(t, from, to);                                      // draw this tab's trip right now; the real plan replaces it a moment later
-        Async.run(() -> TripPlanner.planWithin(from, to, PLAN_SECONDS), p -> {
+        Async.run(() -> TripPlanner.plan(from, to), p -> {
             if (my != token) return;
             planning = false; plan = p; chosen = p.best();
             render(t);
