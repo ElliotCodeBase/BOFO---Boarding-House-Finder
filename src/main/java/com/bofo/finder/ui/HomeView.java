@@ -28,6 +28,7 @@ public final class HomeView extends VBox {
     private BhService.Tab tab = BhService.Tab.NEW;
     private Set<String> favs = new HashSet<>();
     private List<BoardingHouse> current = List.of();
+    private static String entryUser;                                    // the user whose login already got its first Home
     private CampusPicker searchBar;
     private Button nearMe;
     // zoomed-out overview of every boarding house + me: on when the app opens and whenever the search bar is empty,
@@ -44,6 +45,8 @@ public final class HomeView extends VBox {
 
     public HomeView() {
         super(0);
+        String uid0 = AuthService.get().userId();                      // first Home of a login: start with no campus chosen, so the overview shows
+        if (uid0 != null && !uid0.equals(entryUser)) { entryUser = uid0; State.college.set(null); }
         var prof = AuthService.get().profile();
         String full = prof == null ? "" : prof.fullName();
         String name = full.isBlank() ? "" : full.split(" ")[0];

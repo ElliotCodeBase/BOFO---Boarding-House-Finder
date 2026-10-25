@@ -120,13 +120,29 @@ public final class VectorTileRetriever implements TileRetriever {
                 int sz = zoom - dz;
                 byte[] pbf = source(sz, i >> dz, j >> dz);
                 List<Mvt.Layer> layers = pbf.length == 0 ? new ArrayList<>() : Mvt.decode(Mvt.maybeGunzip(pbf), WANTED);
-                Platform.runLater(() -> {                       // Canvas must be used on the FX thread
+                enqueueDraw(() -> {                             // Canvas must be used on the FX thread; one tile per turn, newest first (see enqueueDraw)
                     try { out.complete(draw(layers, zoom, i, j)); }
                     catch (Throwable t) { fallback(out, zoom, i, j); }
                 });
             } catch (Throwable t) { fallback(out, zoom, i, j); }
         });
         return out;
+    }
+
+    // Drawing a dense city tile takes tens of milliseconds on the FX thread. Doing every waiting tile in one go froze the whole app while
+    // zooming, so tiles are drawn one per turn (the screen repaints in between) and the most recently asked tile goes first (it is the one on screen).
+    private static final java.util.ArrayDeque<Runnable> DRAWQ = new java.util.ArrayDeque<>();
+    private static boolean drawing;
+
+    private static void enqueueDraw(Runnable r) {
+        synchronized (DRAWQ) { DRAWQ.addFirst(r); if (drawing) return; drawing = true; }
+        Platform.runLater(VectorTileRetriever::drawNext);
+    }
+
+    private static void drawNext() {
+        Runnable r;
+        synchronized (DRAWQ) { r = DRAWQ.pollFirst(); if (r == null) { drawing = false; return; } }
+        try { r.run(); } finally { Platform.runLater(VectorTileRetriever::drawNext); }
     }
 
     private void fallback(CompletableFuture<Image> out, int z, long x, long y) {
@@ -267,7 +283,7 @@ public final class VectorTileRetriever implements TileRetriever {
         water(g, by.get("water"), t);
         waterways(g, by.get("waterway"), t, z);
         aeroway(g, by.get("aeroway"), t, z);
-        if (z >= 14) buildings(g, by.get("building"), t, z);
+        // buildings are not drawn any more: thousands of tiny shapes per city tile (slow) and the main reason the map looked cluttered
         roads(g, by.get("transportation"), t, z);
 
         SnapshotParameters sp = new SnapshotParameters();
@@ -373,9 +389,10 @@ public final class VectorTileRetriever implements TileRetriever {
         for (Mvt.Feature f : l.features) {
             int r = rank(f.str("class"));
             if (r < 0) continue;
-            if (f.type == Mvt.POLYGON) { if (z >= 15 && r <= 1) areas.add(f); continue; }   // pedestrian squares
+            if (r <= 1) continue;                               // service roads, tracks, paths, pedestrian areas: not drawn (clutter + slow)
+            if (f.type == Mvt.POLYGON) continue;
             if (f.type != Mvt.LINE) continue;
-            if (r <= 1 && z < 15) continue;                     // alleys / paths only when zoomed in
+            if (r == 2 && z < 14) continue;                     // small streets only when zoomed in a bit
             String bt = f.str("brunnel");
             int layer = bt.equals("tunnel") ? 0 : bt.equals("bridge") ? 2 : 1;
             int idx = r * 2 + (f.num("ramp", 0) == 1 ? 1 : 0);
@@ -392,7 +409,7 @@ public final class VectorTileRetriever implements TileRetriever {
             g.setGlobalAlpha(layer == 0 ? 0.55 : 1.0);          // tunnels are drawn faded
             if (z >= 12) {
                 for (int idx = 0; idx < 12; idx++) {            // 1) all outlines (so crossings merge cleanly) ...
-                    if (set[layer][idx] == null) continue;
+                    if (set[layer][idx] == null || idx / 2 < 3) continue;   // outlines only on main roads
                     g.setStroke(idx / 2 >= 4 ? CASING_MAJOR : CASING);
                     g.setLineWidth((width(idx, z) + 2 * 1.0) * DP);
                     stroke(g, set[layer][idx], t, 40);

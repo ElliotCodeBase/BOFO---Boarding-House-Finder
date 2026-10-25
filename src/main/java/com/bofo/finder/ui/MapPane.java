@@ -204,7 +204,7 @@ public final class MapPane extends StackPane {
         if (ms >= 0) fitOverview(ms);
     }
 
-    /** Works out the zoom + centre that frame all pins and the user inside ~90% of the map (pin heads included) and moves there. */
+    /** Works out the zoom + centre that frame all pins and the user inside ~90% of the map (markers included) and moves there. */
     private void fitOverview(int ms) {
         double minX = 2, maxX = -1, minY = 2, maxY = -1;
         int n = 0;
@@ -217,14 +217,19 @@ public final class MapPane extends StackPane {
             minX = Math.min(minX, w[0]); maxX = Math.max(maxX, w[0]); minY = Math.min(minY, w[1]); maxY = Math.max(maxY, w[1]); n++;
         }
         if (n == 0) return;
-        final double pinH = 31;                                                    // a pin head sticks up this far above its spot
         double w = Math.max(map.getWidth(), 280), h = Math.max(map.getHeight(), 220);
-        double availW = w * 0.90, availH = h * 0.90 - pinH;
+        final double pad = 26;                                                     // a marker / bubble on the edge is about this big, so nothing is cut off
         double spanX = maxX - minX, spanY = maxY - minY;
-        double zx = spanX <= 1e-12 ? 99 : Math.log(availW / (spanX * 256)) / Math.log(2);
-        double zy = spanY <= 1e-12 ? 99 : Math.log(availH / (spanY * 256)) / Math.log(2);
-        double z = Math.max(5, Math.min(16, Math.min(zx, zy)));
-        double cx = (minX + maxX) / 2, cy = (minY + maxY) / 2 - (pinH / 2) / (256 * Math.pow(2, z));   // nudge so the pin heads sit inside the frame too
+        double pinH = 0, z = 0;
+        for (int pass = 0; pass < 2; pass++) {                                    // pass 2 only when the zoom is high enough to draw full pins (they stand up 31 px)
+            double availW = w * 0.90 - 2 * pad, availH = h * 0.90 - 2 * pad - pinH;
+            double zx = spanX <= 1e-12 ? 99 : Math.log(availW / (spanX * 256)) / Math.log(2);
+            double zy = spanY <= 1e-12 ? 99 : Math.log(availH / (spanY * 256)) / Math.log(2);
+            z = Math.max(5, Math.min(16, Math.min(zx, zy)));
+            if (z < 15 || pinH > 0) break;
+            pinH = 31;
+        }
+        double cx = (minX + maxX) / 2, cy = (minY + maxY) / 2 - (pinH / 2) / (256 * Math.pow(2, z));
         double lng = cx * 360 - 180;
         double lat = Math.toDegrees(Math.atan(Math.sinh(Math.PI * (1 - 2 * cy))));
         boolean live = getScene() != null && map.getWidth() > 0;
@@ -365,8 +370,11 @@ public final class MapPane extends StackPane {
         // start from the centre WE last set (reading it back from the map gave a wrong point, so the camera slid in from the sea);
         // after the user dragged the map we do not know it, so the centre snaps and only the zoom glides
         double[] from = centerKnown && !Double.isNaN(camLat) ? new double[]{camLat, camLng} : new double[]{lat, lng};
-        double z0 = zoomVal;
-        if (ms <= 0 || (zoom > 0 && Double.isNaN(z0))) { if (zoom > 0) applyZoom(zoom); setCenterNow(lat, lng); return; }
+        double zCur = zoomVal;
+        if (ms <= 0 || (zoom > 0 && Double.isNaN(zCur))) { if (zoom > 0) applyZoom(zoom); setCenterNow(lat, lng); return; }
+        // a long zoom (overview <-> street) would draw tiles for every zoom level on the way and stutter: start 2.2 levels away from the target instead
+        final double z0 = (zoom > 0 && Math.abs(zoom - zCur) > 2.5) ? zoom + (zCur > zoom ? 2.2 : -2.2) : zCur;
+        if (z0 != zCur) { applyZoom(z0); setCenterNow(lat, lng); from[0] = lat; from[1] = lng; }
         DoubleProperty t = new SimpleDoubleProperty(0);
         t.addListener((o, a, v) -> {
             double k = v.doubleValue();
@@ -612,7 +620,7 @@ public final class MapPane extends StackPane {
             collegeGroup.getChildren().clear();
             for (College c : list) {
                 Group g = new Group();
-                Circle dot = new Circle(0, 0, 5.5, Color.web("#4B33C9")); dot.setStroke(Color.WHITE); dot.setStrokeWidth(2);
+                Circle dot = new Circle(0, 0, 5.5, Color.web("#FF8A3D")); dot.setStroke(Color.WHITE); dot.setStrokeWidth(2);
                 Label name = Ui.label(c.name(), "map-college-tag"); name.setWrapText(false);
                 name.setLayoutX(9); name.setLayoutY(-9);
                 g.getChildren().addAll(dot, name);
@@ -682,7 +690,6 @@ public final class MapPane extends StackPane {
                 Group g = new Group();
                 Circle halo2 = new Circle(0, 0, 20, Color.web("#5B3BF0", 0.20)); halo2.setMouseTransparent(true);
                 Circle body = new Circle(0, 0, 14, PURPLE); body.setStroke(Color.WHITE); body.setStrokeWidth(2.5);
-                body.setEffect(new javafx.scene.effect.DropShadow(6, 0, 2, Color.web("#17142A", 0.28)));
                 Text t = new Text("0"); t.setFont(Font.font("System", FontWeight.BOLD, 13)); t.setFill(Color.WHITE); t.setMouseTransparent(true);
                 g.getChildren().addAll(halo2, body, t);
                 g.getProperties().put("halo", halo2); g.getProperties().put("body", body); g.getProperties().put("txt", t);
@@ -709,6 +716,7 @@ public final class MapPane extends StackPane {
             Scale zs = new Scale(1, 1, 0, 0);                                // zoom-dependent size (bigger when zoomed out), also pivoting on the tip
             g.getTransforms().add(zs); g.getProperties().put("zs", zs);
             g.getProperties().put("sc", sc); g.getProperties().put("head", head); g.getProperties().put("tail", tail);
+            g.getProperties().put("hit", hit); g.getProperties().put("dotc", dot);
             g.setUserData(b);
             g.setOnMouseClicked(e -> { e.consume(); pinTapped((BoardingHouse) g.getUserData()); });
             g.setOpacity(0);
@@ -725,6 +733,8 @@ public final class MapPane extends StackPane {
             for (Map.Entry<String, Group> en : pinMap.entrySet()) {
                 boolean on = en.getKey().equals(id);
                 Group g = en.getValue();
+                if (Boolean.TRUE.equals(g.getProperties().get("sel")) == on) continue;       // unchanged: no new animation (60 pins were animated on every tap)
+                g.getProperties().put("sel", on);
                 Scale sc = (Scale) g.getProperties().get("sc");
                 Color fill = on ? PURPLE_DARK : PURPLE;
                 ((Circle) g.getProperties().get("head")).setFill(fill); ((Polygon) g.getProperties().get("tail")).setFill(fill);
@@ -809,30 +819,47 @@ public final class MapPane extends StackPane {
                 Circle dot = (Circle) n.getProperties().get("dot"); Label name = (Label) n.getProperties().get("name");
                 dot.setRadius((mine ? 7.5 : 5.5) * Math.min(k, 1.5));
                 name.setVisible(names || mine);
-                name.setStyle(mine ? "-fx-font-weight:bold;-fx-text-fill:#2A1690;" : "");
+                if (!Boolean.valueOf(mine).equals(n.getProperties().get("mine"))) {          // CSS restyle is slow: only when it really changes
+                    n.getProperties().put("mine", mine);
+                    name.setStyle(mine ? "-fx-font-weight:bold;-fx-text-fill:#2A1690;" : "");
+                }
             }
 
             boolean meOn = !Double.isNaN(meLat);
             me.setVisible(meOn); me.setScaleX(k); me.setScaleY(k);
             if (meOn) { Point2D u = getMapPoint(meLat, meLng); me.setTranslateX(u.getX()); me.setTranslateY(u.getY()); }
 
-            // pins: placed, sized for the zoom, and (zoomed out) grouped into numbered bubbles when they would overlap
-            final double cell = 46;
+            // pins: zoomed out they are small round dots (full pins would pile up); dots that would overlap become one numbered bubble
             String selId = selected == null ? null : selected.id();
-            Map<Long, List<Group>> cells = new HashMap<>();
+            List<Group> cand = new ArrayList<>();
             for (Node n : pinsGroup.getChildren()) {
-                BoardingHouse b = (BoardingHouse) n.getUserData();
+                Group g = (Group) n;
+                BoardingHouse b = (BoardingHouse) g.getUserData();
                 Point2D p = getMapPoint(b.lat(), b.lng());
-                n.setTranslateX(p.getX()); n.setTranslateY(p.getY());
-                Scale zs = (Scale) n.getProperties().get("zs");
-                if (zs != null) { zs.setX(k); zs.setY(k); }
-                n.setVisible(true);
-                boolean inView = p.getX() > -40 && p.getX() < vw + 40 && p.getY() > -60 && p.getY() < vh + 40;
-                if (far && inView && !b.id().equals(selId))
-                    cells.computeIfAbsent(((long) Math.floor(p.getX() / cell)) * 100000L + (long) Math.floor(p.getY() / cell), q -> new ArrayList<>()).add((Group) n);
+                g.setTranslateX(p.getX()); g.setTranslateY(p.getY());
+                boolean dotMode = far && !b.id().equals(selId);
+                Scale zs = (Scale) g.getProperties().get("zs");
+                double ks = dotMode ? Math.min(k, 1.25) : k;
+                if (zs != null) { zs.setX(ks); zs.setY(ks); }
+                ((Polygon) g.getProperties().get("tail")).setVisible(!dotMode);
+                double cyp = dotMode ? 0 : -21;
+                ((Circle) g.getProperties().get("head")).setCenterY(cyp); ((Circle) g.getProperties().get("dotc")).setCenterY(cyp);
+                ((Circle) g.getProperties().get("hit")).setCenterY(dotMode ? 0 : -16);
+                g.setVisible(true);
+                if (dotMode && p.getX() > -40 && p.getX() < vw + 40 && p.getY() > -40 && p.getY() < vh + 40) cand.add(g);
             }
             int used = 0;
-            for (List<Group> grp : cells.values()) {
+            double reach = 34 * Math.min(k, 1.3);                               // dots closer than this (px) share a bubble
+            boolean[] taken = new boolean[cand.size()];
+            for (int i = 0; i < cand.size(); i++) {
+                if (taken[i]) continue;
+                Group seed = cand.get(i);
+                List<Group> grp = new ArrayList<>();
+                for (int j = i; j < cand.size(); j++) {
+                    if (taken[j]) continue;
+                    Group o = cand.get(j);
+                    if (Math.hypot(o.getTranslateX() - seed.getTranslateX(), o.getTranslateY() - seed.getTranslateY()) <= reach) { grp.add(o); taken[j] = true; }
+                }
                 if (grp.size() < 2) continue;
                 double sx = 0, sy = 0, la = 0, ln = 0;
                 for (Group g : grp) {
@@ -842,12 +869,13 @@ public final class MapPane extends StackPane {
                 int cnt = grp.size();
                 Group c = clusterAt(used++);
                 c.setVisible(true);
-                c.setTranslateX(sx / cnt); c.setTranslateY(sy / cnt - 12 * k);
+                c.setTranslateX(sx / cnt); c.setTranslateY(sy / cnt);
                 c.getProperties().put("lat", la / cnt); c.getProperties().put("lng", ln / cnt);
                 Circle halo2 = (Circle) c.getProperties().get("halo"), body = (Circle) c.getProperties().get("body"); Text t = (Text) c.getProperties().get("txt");
-                double r = (13 + Math.min(9, Math.log(cnt) / Math.log(2) * 2.6)) * Math.min(k, 1.4);
+                double r = (13 + Math.min(9, Math.log(cnt) / Math.log(2) * 2.6)) * Math.min(k, 1.3);
                 body.setRadius(r); halo2.setRadius(r + 6);
-                t.setText(String.valueOf(cnt));
+                String ct = String.valueOf(cnt);
+                if (!ct.equals(t.getText())) t.setText(ct);
                 t.setTranslateX(-t.getLayoutBounds().getWidth() / 2); t.setTranslateY(t.getLayoutBounds().getHeight() * 0.27);
             }
             for (int i = used; i < clusterPool.size(); i++) clusterPool.get(i).setVisible(false);
