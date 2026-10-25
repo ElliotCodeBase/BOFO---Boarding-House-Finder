@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 /** Listing card: big rounded photo (heart + availability on top), name and price, distance, rating, tags. */
 public final class BhCard extends VBox {
     public BhCard(BoardingHouse b, boolean hot, boolean favorite, Consumer<BoardingHouse> open, BiConsumer<Boolean, Runnable> onFav) {
-        super(10); getStyleClass().add("card"); setPadding(new Insets(12));
+        super(12); getStyleClass().add("card"); setPadding(new Insets(12));
 
         // photo that follows the card width
         ImageView iv = Ui.coverPhoto(b.photoUrl(), 720);
@@ -58,25 +58,32 @@ public final class BhCard extends VBox {
         StackPane.setAlignment(avail, Pos.TOP_LEFT); StackPane.setMargin(avail, new Insets(12));
         photoBox.getChildren().addAll(avail, heart);
 
-        // text block
+        // text block: name, then a big price line, then rating + distance on one wrapping row, then tags
         Label name = Ui.label(b.name(), "h2");
-        Label price = Ui.label("\u20B1" + String.format("%,.0f", b.price()) + " / mo", "price");
-        price.setWrapText(false); price.setMinWidth(Region.USE_PREF_SIZE);
-        HBox top = new HBox(8, name, Ui.grow(), price); top.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(name, Priority.ALWAYS);
+        name.setWrapText(true); name.setMaxWidth(Double.MAX_VALUE);
+        Label price = Ui.label("\u20B1" + String.format("%,.0f", b.price()), "price-big");
+        Label unit = Ui.label("/ month", "price-unit");
+        price.setMinWidth(Region.USE_PREF_SIZE); unit.setMinWidth(Region.USE_PREF_SIZE);
+        HBox priceRow = new HBox(5, price, unit); priceRow.setAlignment(Pos.BASELINE_LEFT);
+        VBox head = new VBox(4, name, priceRow);
 
-        Label where = Ui.label(b.distanceKm() > 0 ? Geo.walkText(b.distanceKm()) : b.address(), "secondary");
-        HBox rating = b.reviewCount() > 0
-                ? Ui.hbox(6, Ui.label(Ui.stars(b.avgRating()), "stars"), Ui.label(String.format("%.1f (%d)", b.avgRating(), b.reviewCount()), "secondary"))
-                : Ui.hbox(6, Ui.label("No reviews yet", "secondary"));
+        FlowPane meta = new FlowPane(6, 2); meta.setAlignment(Pos.CENTER_LEFT);
+        if (b.reviewCount() > 0) {
+            meta.getChildren().addAll(Ui.label(Ui.stars(b.avgRating()), "stars"),
+                    Ui.label(String.format("%.1f (%d)", b.avgRating(), b.reviewCount()), "secondary"));
+        } else {
+            meta.getChildren().add(Ui.label("New listing", "secondary"));
+        }
+        meta.getChildren().addAll(Ui.label("\u00B7", "meta-dot"),
+                Ui.label(b.distanceKm() > 0 ? Geo.walkText(b.distanceKm()) : b.address(), "secondary"));
 
         FlowPane tags = new FlowPane(6, 6);
-        addAmenityTags(tags, b, 4);
+        if (b.ownerVerified()) tags.getChildren().add(Ui.label("Verified owner", "badge-verified"));
         if (b.featured()) tags.getChildren().add(Ui.label("Featured", "badge-hot"));
         if (hot) tags.getChildren().add(Ui.label("Hot", "badge-hot"));
-        if (b.ownerVerified()) tags.getChildren().add(Ui.label("Verified owner", "badge-verified"));
+        addAmenityTags(tags, b, 3);
 
-        getChildren().addAll(photoBox, top, where, rating, tags);
+        getChildren().addAll(photoBox, head, meta, tags);
         setOnMouseClicked(e -> {
             Node t = (Node) e.getTarget();
             while (t != null) { if (t == heart) return; t = t.getParent(); }

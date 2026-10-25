@@ -1,4 +1,11 @@
-﻿# v1.12.8 - Home screen polish
+﻿# v1.12.9 - Listing card redesign
+
+- Price is now its own big indigo line under the name (no more squeezing the name next to the price).
+- Rating and distance share one wrapping row ("No reviews yet" became "New listing").
+- Verified / Featured / Hot badges come first, then at most 3 amenity tags.
+- Card border tints on hover; slightly more spacing.
+
+# v1.12.8 - Home screen polish
 
 - Greeting follows the time of day (Good morning / afternoon / evening).
 - The list title now has a subtitle ("Within 2.0 km of <campus>", "Closest to you first" or a hint to choose a campus) and a "12 places" count pill.
