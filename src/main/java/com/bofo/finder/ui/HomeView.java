@@ -31,6 +31,8 @@ public final class HomeView extends VBox {
     private static String entryUser;                                    // the user whose login already got its first Home
     private CampusPicker searchBar;
     private Button nearMe;
+    private final Label nearbySub = Ui.label("", "secondary");     // under the list title: what the list is sorted / limited by
+    private final Label countPill = Ui.label("", "count-pill");     // "12 places"
     // zoomed-out overview of every boarding house + me: on when the app opens and whenever the search bar is empty,
     // switched off by the location button and back on by pressing it again
     private boolean ovWanted = true;         // the user's choice (the location button)
@@ -55,7 +57,7 @@ public final class HomeView extends VBox {
         bell.setGraphic(Icons.icon(Icons.BELL, 20, Color.web("#17142A")));
         bell.setOnAction(e -> Nav.toast("No new notifications"));
         HBox top = Ui.hbox(12, Ui.avatar(full, 40),
-                Ui.vbox(0, Ui.label("Welcome back,", "secondary"), Ui.label(name.isBlank() ? "there" : name, "greet-name")), Ui.grow(), bell);
+                Ui.vbox(0, Ui.label(greeting(), "secondary"), Ui.label(name.isBlank() ? "there" : name, "greet-name")), Ui.grow(), bell);
         top.setPadding(new Insets(14, 16, 0, 16));
 
         // ONE search bar (merged from the old search pill + college box): type or open the list to pick your campus; the map and list below
@@ -106,11 +108,14 @@ public final class HomeView extends VBox {
         radiusBar.managedProperty().bind(radiusBar.visibleProperty());
 
         HBox chips = Ui.chipRow(new String[]{"New", "Hot", "Best rated"}, 0, i -> { tab = BhService.Tab.values()[i]; reload(); });
-        chips.setPadding(new Insets(14, 16, 4, 16));
-        Label nearby = Ui.section("Nearby boarding houses"); nearby.setPadding(new Insets(8, 16, 0, 16));
+        chips.setPadding(new Insets(16, 16, 0, 16));
+        countPill.setMinWidth(Region.USE_PREF_SIZE); countPill.setVisible(false); countPill.managedProperty().bind(countPill.visibleProperty());
+        HBox nearby = new HBox(10, Ui.vbox(2, Ui.section("Nearby boarding houses"), nearbySub), Ui.grow(), countPill);
+        nearby.setAlignment(Pos.CENTER_LEFT); nearby.setPadding(new Insets(12, 16, 4, 16));
         list.setPadding(new Insets(4, 16, 72, 16));
 
-        StackPane mapWrap = new StackPane(map, radiusBar);
+        Region mapFrame = new Region(); mapFrame.getStyleClass().add("map-frame"); mapFrame.setMouseTransparent(true);   // thin rounded outline on top of the map
+        StackPane mapWrap = new StackPane(map, mapFrame, radiusBar);
         StackPane.setAlignment(radiusBar, Pos.TOP_CENTER); StackPane.setMargin(radiusBar, new Insets(10, 12, 0, 12));
         Rectangle mc = new Rectangle(); mc.setArcWidth(28); mc.setArcHeight(28);
         mc.widthProperty().bind(mapWrap.widthProperty()); mc.heightProperty().bind(mapWrap.heightProperty());
@@ -127,6 +132,20 @@ public final class HomeView extends VBox {
         ChangeListener<College> l = (o, a, b) -> { suppressionChanged(); reload(); };
         State.college.addListener(l);
         sceneProperty().addListener((o, was, sc) -> { State.college.removeListener(l); if (sc != null) State.college.addListener(l); });
+    }
+
+    private static String greeting() {
+        int h = java.time.LocalTime.now().getHour();
+        return h < 12 ? "Good morning," : h < 18 ? "Good afternoon," : "Good evening,";
+    }
+
+    /** Subtitle + count under "Nearby boarding houses". */
+    private void updateHeader(int n, double[] ref) {
+        College c = State.college.get();
+        nearbySub.setText(c != null ? String.format(java.util.Locale.ROOT, "Within %.1f km of %s", State.radiusKm.get(), c.name())
+                : ref != null ? "Closest to you first" : "Choose a campus to see what is close");
+        countPill.setText(n == 1 ? "1 place" : n + " places");
+        countPill.setVisible(true);
     }
 
     /** Colors the filled part of the radius track purple (JavaFX has no built-in filled track). */
@@ -195,12 +214,14 @@ public final class HomeView extends VBox {
     private void reload() {
         final int my = ++seq;
         list.getChildren().setAll(Skeleton.cards(4));            // skeleton while loading
+        countPill.setVisible(false);
         double[] ref = State.ref();
         boolean circle = State.college.get() != null;
         Double rad = circle ? State.radiusKm.get() : null;
         Async.run(() -> bh.list(tab, ref == null ? null : ref[0], ref == null ? null : ref[1], rad, null), items -> {
             if (my != seq) return;                               // a newer request is in flight
             current = items; shown = 0;
+            updateHeader(items.size(), ref);
             if (overviewActive()) {                              // zoomed out: all boarding houses + my location (the camera only moves when it needs to)
                 map.showOverview(items, State.gps.get(), ovFit ? 700 : -1);
                 ovFit = false;

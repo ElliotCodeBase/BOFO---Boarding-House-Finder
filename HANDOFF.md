@@ -1,4 +1,10 @@
-﻿# Handoff - v1.12.7 Thinking arm simplified (2026-10-25)
+﻿# Handoff - v1.12.8 Home polish (2026-10-25)
+- **PR title:** `v1.12.8 - Home: time-of-day greeting, list subtitle + count, map outline`. Version in `config.properties`, `pom.xml` (versionCode 43), CHANGES.md.
+- `HomeView`: `greeting()`, `nearbySub` + `countPill` (`updateHeader()` in `reload()`), `mapFrame` Region over the map; CSS `.count-pill`, `.map-frame` appended to bofo.css. Needs v1.12.6/v1.12.7 Mascot files too if not merged yet. Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.12.7 Thinking arm simplified (2026-10-25)
 - **PR title:** `v1.12.7 - BOFO chat head: cleaner thinking pose`. Version in `config.properties`, `pom.xml` (versionCode 42), CHANGES.md.
 - `Mascot.build` THINKING: chin arm is now `Polyline(160,130 -> 138,138)` + hand circle (132,138). Not compiled/run by Claude.
 

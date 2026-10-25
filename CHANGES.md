@@ -1,4 +1,10 @@
-﻿# v1.12.7 - Thinking pose cleaned up
+﻿# v1.12.8 - Home screen polish
+
+- Greeting follows the time of day (Good morning / afternoon / evening).
+- The list title now has a subtitle ("Within 2.0 km of <campus>", "Closest to you first" or a hint to choose a campus) and a "12 places" count pill.
+- Thin rounded outline around the map, slightly more even spacing between the map, the New / Hot / Best chips and the list.
+
+# v1.12.7 - Thinking pose cleaned up
 
 - The raised arm no longer sticks out of the body like a lump: it is now a short straight arm with the hand under the chin (still taps).
 
