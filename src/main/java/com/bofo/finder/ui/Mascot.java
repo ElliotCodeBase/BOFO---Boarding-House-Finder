@@ -82,30 +82,29 @@ public final class Mascot extends Group {
         if (tilt != null) { tilt.stop(); setRotate(0); tilt = null; }
         art.getChildren().clear();
         eyeL = eyeR = mouth = null; thought = null; hand = null;
-        final boolean low = p == Idle.SITTING || p == Idle.SLEEPING;   // body is 40 units shorter, hat sits 40 lower
+        final boolean low = p == Idle.SITTING || p == Idle.SLEEPING;   // same body, sat down 12 units lower, feet out in front
 
         torso = new Group();
         torsoRot = new Rotate(0, 100, 162); torso.getTransforms().add(torsoRot);
         rotL = new Rotate(0, 36, 114); rotR = new Rotate(0, 164, 114);
 
         // feet: standing = under the body; sitting = out in front of it, splayed
-        footL = low ? rr(22, 150, 40, 20, 10, DARK) : rr(60, 156, 30, 16, 8, DARK);
-        footR = low ? rr(138, 150, 40, 20, 10, DARK) : rr(110, 156, 30, 16, 8, DARK);
+        footL = low ? rr(18, 164, 46, 20, 10, DARK) : rr(60, 156, 30, 16, 8, DARK);
+        footR = low ? rr(136, 164, 46, 20, 10, DARK) : rr(110, 156, 30, 16, 8, DARK);
         if (!low) art.getChildren().addAll(footL, footR);
 
         // hat: chimney + roof + brim in ONE group so it can come off the head (see hat()); the brim hides the roof's base
         Polygon roof = new Polygon(57, 48, 100, 16, 143, 48);
         roof.setFill(AMBER); roof.setStroke(AMBER); roof.setStrokeWidth(8); roof.setStrokeLineJoin(StrokeLineJoin.ROUND);
         hat = new Group(rr(119, 18, 13, 24, 4, AMBER_DARK), roof, rr(38, 45, 124, 14, 7, AMBER_DARK));
-        hat.setTranslateY(low ? 40 : 0);
         // body, face screen, glass highlight, status light, hat
-        if (low) torso.getChildren().addAll(rr(34, 90, 132, 72, 30, PURPLE), rr(52, 102, 96, 48, 18, WHITE), rr(62, 108, 34, 4, 2, TINT), rr(86, 152, 28, 6, 3, AMBER), hat);
-        else torso.getChildren().addAll(rr(40, 50, 120, 112, 32, PURPLE), rr(56, 70, 88, 68, 22, WHITE), rr(66, 77, 36, 5, 2.5, TINT), rr(86, 146, 28, 6, 3, AMBER), hat);
+        if (low) torso.setLayoutY(12);
+        torso.getChildren().addAll(rr(40, 50, 120, 112, 32, PURPLE), rr(56, 70, 88, 68, 22, WHITE), rr(66, 77, 36, 5, 2.5, TINT), rr(86, 146, 28, 6, 3, AMBER), hat);
 
         // face
         if (p == Idle.SLEEPING) {
-            torso.getChildren().addAll(arc(72, 124, 83, 134, 94, 124, INK, 5), arc(106, 124, 117, 134, 128, 124, INK, 5));   // shut eyes
-            mouth = rr(94, 138, 12, 7, 3.5, INK);                                                                         // small open mouth
+            torso.getChildren().addAll(arc(72, 106, 83, 118, 94, 106, INK, 5), arc(106, 106, 117, 118, 128, 106, INK, 5));   // shut eyes
+            mouth = rr(94, 124, 12, 7, 3.5, INK);                                                                         // small open mouth
             torso.getChildren().add(mouth);
         } else switch (e) {
             case THINKING -> {
@@ -124,9 +123,8 @@ public final class Mascot extends Group {
                 }
             }
             default -> {
-                double ey = low ? 112 : 92, eh = low ? 18 : 22, my = low ? 136 : 122;
-                eyeL = rr(76, ey, 14, eh, 7, INK); eyeR = rr(110, ey, 14, eh, 7, INK);
-                torso.getChildren().addAll(eyeL, eyeR, arc(86 + (low ? 2 : 0), my, 100, my + (low ? 10 : 12), 114 - (low ? 2 : 0), my, INK, 5));
+                eyeL = rr(76, 92, 14, 22, 7, INK); eyeR = rr(110, 92, 14, 22, 7, INK);
+                torso.getChildren().addAll(eyeL, eyeR, arc(86, 122, 100, 134, 114, 122, INK, 5));
             }
         }
 
@@ -135,9 +133,9 @@ public final class Mascot extends Group {
             rotL.setPivotX(40); rotL.setPivotY(112); rotR.setPivotX(160); rotR.setPivotY(112);
             torso.getChildren().addAll(arm(rotL, 40, 112, 38), arm(rotR, 160, 112, 38));
         } else if (low) {
-            rotL.setPivotX(34); rotL.setPivotY(112); rotR.setPivotX(166); rotR.setPivotY(112);
-            rotL.setAngle(p == Idle.SLEEPING ? 7 : 15); rotR.setAngle(p == Idle.SLEEPING ? -7 : -15);   // hands rest out to the sides
-            torso.getChildren().addAll(arm(rotL, 34, 112, 42), arm(rotR, 166, 112, 42));
+            rotL.setPivotX(40); rotL.setPivotY(112); rotR.setPivotX(160); rotR.setPivotY(112);
+            rotL.setAngle(p == Idle.SLEEPING ? 6 : 16); rotR.setAngle(p == Idle.SLEEPING ? -6 : -16);   // hands rest out to the sides
+            torso.getChildren().addAll(arm(rotL, 40, 112, 40), arm(rotR, 160, 112, 40));
         }
 
         art.getChildren().add(torso);
@@ -314,19 +312,19 @@ public final class Mascot extends Group {
     /** Sleeping: slumped sit, eyes shut, mouth breathing, head nodding forward with the hat drooping, z's floating up. */
     private void idleSleeping() {
         build(Expression.HAPPY, Idle.SLEEPING);
-        loop(true, new KeyFrame(Duration.ZERO, kv(torsoRot.angleProperty(), 1), kv(hat.rotateProperty(), 0)),
-                new KeyFrame(Duration.millis(2200), kv(torsoRot.angleProperty(), 9, Interpolator.EASE_BOTH), kv(hat.rotateProperty(), 7, Interpolator.EASE_BOTH)));
+        loop(true, new KeyFrame(Duration.ZERO, kv(torsoRot.angleProperty(), 3), kv(hat.rotateProperty(), 0)),
+                new KeyFrame(Duration.millis(2400), kv(torsoRot.angleProperty(), 15, Interpolator.EASE_BOTH), kv(hat.rotateProperty(), 6, Interpolator.EASE_BOTH)));
         loop(true, new KeyFrame(Duration.ZERO, kv(torso.translateYProperty(), 0), kv(mouth.scaleXProperty(), 0.8), kv(mouth.scaleYProperty(), 0.8)),
                 new KeyFrame(Duration.millis(1800), kv(torso.translateYProperty(), -2, Interpolator.EASE_BOTH),
                         kv(mouth.scaleXProperty(), 1.3, Interpolator.EASE_BOTH), kv(mouth.scaleYProperty(), 1.5, Interpolator.EASE_BOTH)));
         double[] sz = {44, 54, 64};
         for (int i = 0; i < 3; i++) {
-            Text z = new Text(148, 84, "z"); z.setFont(Font.font("System", FontWeight.BOLD, sz[i])); z.setFill(DARK); z.setOpacity(0);
+            Text z = new Text(150, 48, "z"); z.setFont(Font.font("System", FontWeight.BOLD, sz[i])); z.setFill(DARK); z.setOpacity(0);
             fx.getChildren().add(z);
             Timeline fl = new Timeline(
                     new KeyFrame(Duration.ZERO, kv(z.opacityProperty(), 0), kv(z.translateYProperty(), 0), kv(z.translateXProperty(), 0)),
                     new KeyFrame(Duration.millis(500), kv(z.opacityProperty(), 1)),
-                    new KeyFrame(Duration.millis(2400), kv(z.opacityProperty(), 0), kv(z.translateYProperty(), -56), kv(z.translateXProperty(), 18)));
+                    new KeyFrame(Duration.millis(2400), kv(z.opacityProperty(), 0), kv(z.translateYProperty(), -44), kv(z.translateXProperty(), 16)));
             fl.setDelay(Duration.millis(800L * i)); fl.setCycleCount(Animation.INDEFINITE); keep(fl);
         }
     }

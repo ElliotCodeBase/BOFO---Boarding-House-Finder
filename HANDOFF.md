@@ -1,4 +1,10 @@
-﻿# Handoff - v1.12.5 Hop between poses (2026-10-25)
+﻿# Handoff - v1.12.6 Sit/sleep poses redrawn (2026-10-25)
+- **PR title:** `v1.12.6 - BOFO chat head: better sitting and sleeping poses`. Version in `config.properties`, `pom.xml` (versionCode 41), CHANGES.md.
+- `Mascot.build`: `low` (sit/sleep) now uses the NORMAL body/face geometry with `torso.setLayoutY(12)`, feet at y 164 out front, arms at the normal shoulders. Sleeping nod 3 to 15 degrees, hat droop 6, z start (150,48). Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.12.5 Hop between poses (2026-10-25)
 - **PR title:** `v1.12.5 - BOFO chat head: hop animation between idle poses`. Version in `config.properties`, `pom.xml` (versionCode 40), CHANGES.md.
 - `Mascot.swap()` now plays crouch (90 ms) -> launch (130 ms, `art.translateY` up `size*0.22`, `pose` Scale stretch) -> runs the change at the top -> fall/impact/settle (380 ms). Latest request wins; no scene = immediate. `cancelSwap()` resets everything (used by public `set()`). `stopAnims()` leaves `pose` alone while a hop plays.
 - Tune the numbers in `swap()` if the hop is too big/small at 46 px. Not compiled/run by Claude.

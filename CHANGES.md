@@ -1,4 +1,8 @@
-﻿# v1.12.5 - Poses change with a hop instead of a fade
+﻿# v1.12.6 - Better sitting and sleeping poses
+
+- Sitting and sleeping no longer squash the body into a flat slab. BOFO keeps its normal body and face, sits a little lower with the feet stretched out in front, and the arms rest at the sides. Sleeping: eyes shut, small breathing mouth, head slowly drooping to the side with the hat tipping, z z z floating up.
+
+# v1.12.5 - Poses change with a hop instead of a fade
 
 - Switching idle poses (or going back to normal after a tap) is now an animation: BOFO crouches, hops up, changes pose in the air, lands with a squash and settles (about 0.6 s). Replaces the fade of v1.12.4.
 
