@@ -1,3 +1,8 @@
+# v1.12.1 - Idle moods start sooner and are easier to see
+
+- The chat head now starts a mood after 4-10 s of quiet (was 8-18 s) and rests 4-10 s between moods.
+- Bigger movement on the small 46 px head: wider head tilt and eye movement when thinking, deeper sit with feet spread, bigger running circle, deeper sleep and larger z's.
+
 # v1.12.0 - The floating BOFO head has 4 idle moods
 
 - After 8-18 seconds of quiet the chat head plays one mood, then rests and picks another (never the same one twice in a row): **Thinking** (head tilts, eyes look around, thought bubble floats), **Sitting down** (sinks and spreads its feet, breathes, blinks), **Running in a circle** (happy face, runs a lap every 1.8 s, leans into the turn, feet take turns), **Sleeping** (eyes closed, head nodding, z z z floating up).

@@ -1,3 +1,9 @@
+# Handoff - v1.12.1 Idle moods easier to see (2026-10-25)
+- **PR title:** `v1.12.1 - BOFO chat head: idle moods start sooner and move more`. Version in `config.properties`, `pom.xml` (versionCode 36), CHANGES.md.
+- Checked by running the real `Mascot` and `BofoPanel` under JavaFX 21 + Xvfb (software render): all four moods draw and the scheduler starts/ends them. Only timing (`scheduleIdle`: 4-10 s) and amplitudes (Mascot idle methods) changed.
+
+---
+
 # Handoff - v1.12.0 Idle moods for the chat head (2026-10-25)
 - **PR title:** `v1.12.0 - BOFO chat head: thinking, sitting, running and sleeping idle animations`. Version in `config.properties`, `pom.xml` (versionCode 35), CHANGES.md.
 - **`Mascot`:** `enum Idle {THINKING, SITTING, RUNNING, SLEEPING}`, `idle(Idle)`, `endIdle()`. Pure vector: parts are kept in fields (`eyeL/eyeR/footL/footR/thought`), a `pose` Scale pivoting on the feet does the sit/sleep squash. `set()` rebuilds everything, so `endIdle()` resets by calling `set(HAPPY)`.

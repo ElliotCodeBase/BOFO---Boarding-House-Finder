@@ -144,10 +144,10 @@ public final class Mascot extends Group {
         set(Expression.THINKING);
         if (tilt != null) { tilt.stop(); tilt = null; }
         RotateTransition t = new RotateTransition(Duration.seconds(1.8), this);
-        t.setFromAngle(-4); t.setToAngle(5); t.setInterpolator(Interpolator.EASE_BOTH); t.setAutoReverse(true); t.setCycleCount(Animation.INDEFINITE);
+        t.setFromAngle(-7); t.setToAngle(8); t.setInterpolator(Interpolator.EASE_BOTH); t.setAutoReverse(true); t.setCycleCount(Animation.INDEFINITE);
         keep(t);
-        Timeline look = new Timeline(eyes(Duration.ZERO, eyeL, eyeR, 0, 0), eyes(Duration.millis(700), eyeL, eyeR, -4, -5),
-                eyes(Duration.millis(1700), eyeL, eyeR, 5, -5), eyes(Duration.millis(2500), eyeL, eyeR, 0, 0), eyes(Duration.millis(3000), eyeL, eyeR, 0, 0));
+        Timeline look = new Timeline(eyes(Duration.ZERO, eyeL, eyeR, 0, 0), eyes(Duration.millis(700), eyeL, eyeR, -7, -8),
+                eyes(Duration.millis(1700), eyeL, eyeR, 8, -8), eyes(Duration.millis(2500), eyeL, eyeR, 0, 0), eyes(Duration.millis(3000), eyeL, eyeR, 0, 0));
         look.setCycleCount(Animation.INDEFINITE); keep(look);
         Timeline bubble = new Timeline(
                 new KeyFrame(Duration.ZERO, new KeyValue(thought.opacityProperty(), 1.0), new KeyValue(thought.translateYProperty(), 0)),
@@ -160,11 +160,11 @@ public final class Mascot extends Group {
     private void idleSitting() {
         set(Expression.HAPPY);
         Timeline sit = new Timeline(new KeyFrame(Duration.millis(500),
-                new KeyValue(pose.yProperty(), 0.86, Interpolator.EASE_OUT), new KeyValue(pose.xProperty(), 1.06, Interpolator.EASE_OUT),
-                new KeyValue(footL.translateXProperty(), -9, Interpolator.EASE_OUT), new KeyValue(footR.translateXProperty(), 9, Interpolator.EASE_OUT)));
+                new KeyValue(pose.yProperty(), 0.78, Interpolator.EASE_OUT), new KeyValue(pose.xProperty(), 1.10, Interpolator.EASE_OUT),
+                new KeyValue(footL.translateXProperty(), -14, Interpolator.EASE_OUT), new KeyValue(footR.translateXProperty(), 14, Interpolator.EASE_OUT)));
         keep(sit);
-        Timeline breathe = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(pose.yProperty(), 0.86)),
-                new KeyFrame(Duration.millis(1500), new KeyValue(pose.yProperty(), 0.885, Interpolator.EASE_BOTH)));
+        Timeline breathe = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(pose.yProperty(), 0.78)),
+                new KeyFrame(Duration.millis(1500), new KeyValue(pose.yProperty(), 0.81, Interpolator.EASE_BOTH)));
         breathe.setAutoReverse(true); breathe.setCycleCount(Animation.INDEFINITE);
         sit.setOnFinished(e -> keep(breathe));
         idleAnims.add(breathe);                      // registered now so endIdle() also stops it if the sit never finished
@@ -180,7 +180,7 @@ public final class Mascot extends Group {
     private void idleRunning() {
         set(Expression.WAVING);
         if (tilt != null) { tilt.stop(); tilt = null; setRotate(0); }   // the greeting tilt would fight the lean
-        final double r = size * 0.34, TAU = Math.PI * 2;
+        final double r = size * 0.45, TAU = Math.PI * 2;
         Transition run = new Transition() {
             { setCycleDuration(Duration.millis(1800)); setInterpolator(Interpolator.LINEAR); }
             @Override protected void interpolate(double f) {
@@ -200,21 +200,21 @@ public final class Mascot extends Group {
         set(Expression.HAPPY);
         eyeL.setVisible(false); eyeR.setVisible(false);
         art.getChildren().addAll(arc(72, 104, 83, 114, 94, 104, INK, 5), arc(106, 104, 117, 114, 128, 104, INK, 5));   // closed eyes
-        pose.setY(0.9); pose.setX(1.04);
+        pose.setY(0.84); pose.setX(1.06);
         RotateTransition nod = new RotateTransition(Duration.millis(2200), this);
-        nod.setFromAngle(2); nod.setToAngle(9); nod.setInterpolator(Interpolator.EASE_BOTH); nod.setAutoReverse(true); nod.setCycleCount(Animation.INDEFINITE);
+        nod.setFromAngle(2); nod.setToAngle(12); nod.setInterpolator(Interpolator.EASE_BOTH); nod.setAutoReverse(true); nod.setCycleCount(Animation.INDEFINITE);
         keep(nod);
-        Timeline breathe = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(pose.yProperty(), 0.9)),
-                new KeyFrame(Duration.millis(1800), new KeyValue(pose.yProperty(), 0.93, Interpolator.EASE_BOTH)));
+        Timeline breathe = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(pose.yProperty(), 0.84)),
+                new KeyFrame(Duration.millis(1800), new KeyValue(pose.yProperty(), 0.88, Interpolator.EASE_BOTH)));
         breathe.setAutoReverse(true); breathe.setCycleCount(Animation.INDEFINITE); keep(breathe);
-        double[] sz = {34, 42, 50};
+        double[] sz = {44, 54, 64};
         for (int i = 0; i < 3; i++) {
-            Text z = new Text(150, 64, "z"); z.setFont(Font.font("System", FontWeight.BOLD, sz[i])); z.setFill(DARK); z.setOpacity(0);
+            Text z = new Text(146, 70, "z"); z.setFont(Font.font("System", FontWeight.BOLD, sz[i])); z.setFill(DARK); z.setOpacity(0);
             fx.getChildren().add(z);
             Timeline fl = new Timeline(
                     new KeyFrame(Duration.ZERO, new KeyValue(z.opacityProperty(), 0), new KeyValue(z.translateYProperty(), 0), new KeyValue(z.translateXProperty(), 0)),
                     new KeyFrame(Duration.millis(500), new KeyValue(z.opacityProperty(), 1)),
-                    new KeyFrame(Duration.millis(2400), new KeyValue(z.opacityProperty(), 0), new KeyValue(z.translateYProperty(), -44), new KeyValue(z.translateXProperty(), 14)));
+                    new KeyFrame(Duration.millis(2400), new KeyValue(z.opacityProperty(), 0), new KeyValue(z.translateYProperty(), -56), new KeyValue(z.translateXProperty(), 18)));
             fl.setDelay(Duration.millis(800L * i)); fl.setCycleCount(Animation.INDEFINITE); keep(fl);
         }
     }
