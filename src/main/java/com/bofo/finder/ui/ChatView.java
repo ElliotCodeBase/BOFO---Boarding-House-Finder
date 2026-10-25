@@ -26,6 +26,9 @@ import java.util.concurrent.TimeUnit;
 public final class ChatView extends VBox {
     private final ChatService chat = new ChatService();
     private final String convId, me, otherUserId;
+    private final boolean iAmOwner;
+    private final HBox quickRow = new HBox(8);
+    private final Button sendBtn = new Button("\u27A4");
     private final VBox msgs = new VBox(6);
     private final ScrollPane scroll = Ui.scroll(msgs);
     private final TextField input = new TextField();
@@ -46,18 +49,42 @@ public final class ChatView extends VBox {
 
     public ChatView(String convId, String bhName, String bhPhoto, String otherUserId, Runnable onBack) {
         this.convId = convId; this.otherUserId = otherUserId; this.me = AuthService.get().userId();
+        this.iAmOwner = AuthService.get().profile() != null && AuthService.get().profile().role() == com.bofo.finder.model.Role.OWNER;
         Button back = Ui.btn("←", "heart", () -> { stop(); onBack.run(); });
         back.getStyleClass().setAll("button", "icon-btn");
         Button more = Ui.btn("⋯", "heart", this::reportDialog);
         more.getStyleClass().setAll("button", "icon-btn");
-        HBox bar = Ui.appBar(bhName, more); bar.getChildren().add(0, back);
+        Label who = Ui.label(bhName, "chat-name");
+        Label role = Ui.label(iAmOwner ? "Student" : "Boarding house owner", "chat-role");
+        VBox titleBox = new VBox(1, who, role); titleBox.setAlignment(Pos.CENTER_LEFT);
+        HBox bar = Ui.appBar("", more); bar.getChildren().setAll(back, Ui.avatar(bhName, 38), titleBox, Ui.grow(), more);
+        bar.setSpacing(10); bar.getStyleClass().add("chat-bar");
 
         msgs.setPadding(new Insets(10));
         VBox.setVgrow(scroll, Priority.ALWAYS);
-        input.setPromptText("Message (max " + ChatService.MAX_LEN + " chars)"); HBox.setHgrow(input, Priority.ALWAYS);
+        input.setPromptText("Write a message\u2026"); input.getStyleClass().add("chat-input"); HBox.setHgrow(input, Priority.ALWAYS);
         input.setOnAction(e -> send());
-        HBox composer = Ui.hbox(8, input, Ui.btn("Send", "btn-primary", this::send)); composer.setPadding(new Insets(8, 12, 8, 12));
-        getChildren().addAll(bar, scroll, composer);
+        sendBtn.getStyleClass().add("chat-send"); sendBtn.setOnAction(e -> send());
+        sendBtn.disableProperty().bind(input.textProperty().isEmpty());
+        HBox composer = Ui.hbox(8, input, sendBtn); composer.setPadding(new Insets(8, 12, 12, 12)); composer.setAlignment(Pos.CENTER);
+        composer.getStyleClass().add("chat-composer");
+
+        // one-tap replies, different for students and owners; they hide after the first message
+        String[] quick = iAmOwner
+                ? new String[]{"Yes, it is still available", "When would you like to visit?", "Rent is as listed"}
+                : new String[]{"Is it still available?", "Can I visit this week?", "What is included in the rent?"};
+        for (String q : quick) {
+            Button c = new Button(q); c.getStyleClass().add("chat-quick");
+            c.setOnAction(e -> { input.setText(q); send(); });
+            quickRow.getChildren().add(c);
+        }
+        quickRow.setPadding(new Insets(0, 12, 0, 12));
+        ScrollPane quickScroll = new ScrollPane(quickRow);
+        quickScroll.setFitToHeight(true); quickScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); quickScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        quickScroll.setStyle("-fx-background-color:transparent;-fx-background:transparent;");
+        quickScroll.managedProperty().bind(quickScroll.visibleProperty());
+        quickScroll.visibleProperty().bind(javafx.beans.binding.Bindings.size(msgs.getChildren()).lessThanOrEqualTo(1));
+        getChildren().addAll(bar, scroll, quickScroll, composer);
 
         Outbox.LISTENERS.add(outboxListener);
         for (JSONObject e : Outbox.pending(convId)) addPending(e);     // messages written offline in an earlier visit are still here
@@ -85,7 +112,7 @@ public final class ChatView extends VBox {
         if (first) msgs.getChildren().setAll(Skeleton.bubbles());          // skeleton while the history loads
         Async.run(() -> chat.page(convId, first ? null : oldest), page -> {
             if (first) msgs.getChildren().clear();
-            if (page.isEmpty()) { if (first) restoreQueued(); return; }
+            if (page.isEmpty()) { if (first) { msgs.getChildren().add(Ui.emptyState("Say hello", iAmOwner ? "Reply to the student to answer their questions." : "Ask the owner about price, rooms or a visit.")); restoreQueued(); } return; }
             List<Message> asc = new ArrayList<>(page); Collections.reverse(asc);
             oldest = asc.get(0).createdAt();
             if (first) newest = asc.get(asc.size() - 1).createdAt();
@@ -127,8 +154,9 @@ public final class ChatView extends VBox {
         boolean mine = m.senderId().equals(me);
         Label l = new Label(m.body()); l.setWrapText(true); l.maxWidthProperty().bind(javafx.beans.binding.Bindings.max(180, scroll.widthProperty().multiply(0.74)));
         StackPane b = new StackPane(l); b.getStyleClass().add(mine ? "bubble-me" : "bubble-them");
-        String status = mine ? (m.readAt() != null ? "✓✓ Read" : "✓ Sent") : "";
-        VBox box = new VBox(2, b, Ui.label(status, "secondary")); box.setAlignment(mine ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
+        String t = m.createdAt() != null && m.createdAt().length() >= 16 ? m.createdAt().substring(11, 16) : "";
+        String status = mine ? (t + (t.isEmpty() ? "" : "  \u00B7  ") + (m.readAt() != null ? "\u2713\u2713 Read" : "\u2713 Sent")) : t;
+        VBox box = new VBox(2, b, Ui.label(status, "chat-time")); box.setAlignment(mine ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
         HBox row = new HBox(box); row.setAlignment(mine ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT); return row;
     }
 

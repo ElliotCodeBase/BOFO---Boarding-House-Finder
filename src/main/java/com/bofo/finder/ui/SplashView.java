@@ -28,7 +28,7 @@ public final class SplashView extends VBox {
     /** One loop = two jumps + a short rest (ms). */
     private static final double CYCLE = 2400;
     /** Directions (degrees, -90 = straight up) of the spark dots in a pop burst. */
-    private static final double[] ANG = {-165, -125, -90, -55, -15};
+    private static final double[] ANG = {-170, -145, -118, -90, -62, -35, -10};
 
     private final Label status = Ui.label("Getting things ready", "splash-status");
     private final Timeline jump;
@@ -55,10 +55,10 @@ public final class SplashView extends VBox {
         Group fx = mascot.fx(); fx.setMouseTransparent(true);
         sparks = new Circle[ANG.length];
         for (int i = 0; i < ANG.length; i++) {
-            sparks[i] = new Circle(100, 48, i % 2 == 0 ? 4 : 3, i % 2 == 0 ? Color.WHITE : Color.web("#B8A6FF"));
+            sparks[i] = new Circle(100, 48, i % 2 == 0 ? 5 : 3.5, i % 2 == 0 ? Color.WHITE : Color.web("#C9BBFF"));
             sparks[i].setOpacity(0); fx.getChildren().add(sparks[i]);
         }
-        ring = new Circle(100, 48, 16); ring.setFill(null); ring.setStroke(Color.WHITE); ring.setStrokeWidth(3); ring.setOpacity(0);
+        ring = new Circle(100, 48, 16); ring.setFill(null); ring.setStroke(Color.WHITE); ring.setStrokeWidth(4); ring.setOpacity(0);
         fx.getChildren().add(ring);
 
         shadow = new Ellipse(54, 8); shadow.setFill(Color.web("#8D7BFF", 0.32));   // light purple: a black shadow is invisible on the dark ink background
@@ -129,14 +129,14 @@ public final class SplashView extends VBox {
         hatKey(k, t0,            0,      0,     1.00, 1.00, null);
         hatKey(k, t0 + 420,      2,      0,     1.04, 0.94, null);   // lag: the hat is pressed down while the body shoots up
         hatKey(k, t0 + 560,      0,      0,     1.00, 1.00, null);   // apex
-        hatKey(k, t0 + 650,      hatUp,  tilt,  0.88, 1.18, pop);     // POP: shoots off, stretched
+        hatKey(k, t0 + 650,      hatUp - 8,  tilt * 1.5,  0.80, 1.30, pop);     // POP: shoots off, stretched
         hatKey(k, t0 + 770,      hatUp + 3, tilt * 0.4, 1.00, 1.00, out);   // hover at the top
         hatKey(k, t0 + 900,     -3,      0,     0.96, 1.08, in);     // falls back, stretched
-        hatKey(k, t0 + 950,      3,      0,     1.14, 0.84, in);     // lands on the head: squash (same moment as the feet)
-        hatKey(k, t0 + 1015,    -3,      0,     0.96, 1.06, out);    // rebound
+        hatKey(k, t0 + 950,      4,      0,     1.22, 0.74, in);     // lands on the head: squash (same moment as the feet)
+        hatKey(k, t0 + 1015,    -6,      0,     0.92, 1.14, out);    // rebound
         hatKey(k, t0 + 1070,     0,      0,     1.00, 1.00, out);    // settle
-        addBurst(k, t0 + 640, 280);    // pop off
-        addBurst(k, t0 + 950, 240);    // pop on
+        addBurst(k, t0 + 640, 380);    // pop off
+        addBurst(k, t0 + 950, 340);    // pop on
     }
 
     private void hatKey(List<KeyFrame> k, double t, double y, double angle, double sx, double sy, Interpolator ip) {
@@ -150,9 +150,9 @@ public final class SplashView extends VBox {
         List<KeyValue> reset = new ArrayList<>(), start = new ArrayList<>(), end = new ArrayList<>();
         reset.add(new KeyValue(ring.opacityProperty(), 0)); reset.add(new KeyValue(ring.scaleXProperty(), 0.4)); reset.add(new KeyValue(ring.scaleYProperty(), 0.4));
         start.add(new KeyValue(ring.opacityProperty(), 0.9));
-        end.add(new KeyValue(ring.opacityProperty(), 0, out)); end.add(new KeyValue(ring.scaleXProperty(), 2.0, out)); end.add(new KeyValue(ring.scaleYProperty(), 2.0, out));
+        end.add(new KeyValue(ring.opacityProperty(), 0, out)); end.add(new KeyValue(ring.scaleXProperty(), 2.8, out)); end.add(new KeyValue(ring.scaleYProperty(), 2.8, out));
         for (int i = 0; i < sparks.length; i++) {
-            Circle c = sparks[i]; double a = Math.toRadians(ANG[i]), d = 36;
+            Circle c = sparks[i]; double a = Math.toRadians(ANG[i]), d = i % 2 == 0 ? 56 : 42;
             reset.add(new KeyValue(c.opacityProperty(), 0)); reset.add(new KeyValue(c.translateXProperty(), 0)); reset.add(new KeyValue(c.translateYProperty(), 0));
             reset.add(new KeyValue(c.scaleXProperty(), 1)); reset.add(new KeyValue(c.scaleYProperty(), 1));
             start.add(new KeyValue(c.opacityProperty(), 1));

@@ -47,37 +47,39 @@ public final class FilterSheet extends StackPane {
         handle.setStyle("-fx-background-color:#D9D6EA;-fx-background-radius:999;");
         HBox handleRow = new HBox(handle); handleRow.setAlignment(Pos.CENTER); handleRow.setPadding(new Insets(10, 0, 4, 0));
         Button close = new Button(); close.getStyleClass().add("search-clear");
-        close.setGraphic(Ui.strokeIcon(Glyphs.CLOSE, 16, Color.web("#17142A")));
+        close.getStyleClass().add("filter-close"); close.setGraphic(Ui.strokeIcon(Glyphs.CLOSE, 16, Color.web("#17142A")));
         close.setOnAction(e -> close());
-        HBox head = new HBox(8, Ui.label("Filters", "title"), Ui.grow(), Ui.btn("Reset", "link", this::reset), close);
+        HBox head = new HBox(8, Ui.label("Filters", "filter-title"), Ui.grow(), close);
         head.setAlignment(Pos.CENTER_LEFT); head.setPadding(new Insets(4, 16, 8, 20));
 
         // ---- price ----
-        FlowPane quick = new FlowPane(8, 8);
+        FlowPane quick = new FlowPane(8, 8); quick.setPrefWrapLength(320);
         priceChips[0] = priceChip("Any", null);
         quick.getChildren().add(priceChips[0]);
         for (int i = 0; i < PRICES.length; i++) {
             priceChips[i + 1] = priceChip("\u20B1" + String.format("%,d", PRICES[i]), PRICES[i]);
             quick.getChildren().add(priceChips[i + 1]);
         }
-        maxPrice.setPromptText("Or type your own maximum (\u20B1)");
+        maxPrice.setPromptText("Or type your own maximum (\u20B1)"); maxPrice.getStyleClass().add("filter-input");
         maxPrice.textProperty().addListener((o, a, b) -> paintPrice());
-        VBox price = section("Maximum price per month", quick, maxPrice);
+        VBox price = section("Maximum price per month", Ui.label("Per person, per month.", "secondary"), quick, maxPrice);
 
         // ---- sort ----
+        sortHolder.setMaxWidth(Double.MAX_VALUE);
         VBox sortBox = section("Sort by", sortHolder);
 
         // ---- amenities ----
         VBox amenities = section("Amenities", Ui.label("Show only places that have all of these.", "secondary"), picker);
 
-        VBox body = new VBox(22, price, sortBox, amenities);
+        VBox body = new VBox(14, card(price), card(sortBox), card(amenities));
         body.setPadding(new Insets(4, 20, 20, 20));
         scroll = Ui.scroll(body); scroll.getStyleClass().add("sheet-scroll");
         VBox.setVgrow(scroll, Priority.ALWAYS);
 
         Button apply = Ui.btn("Show results", "btn-primary", this::apply);
         apply.setMaxWidth(Double.MAX_VALUE);
-        HBox foot = new HBox(apply); foot.setPadding(new Insets(10, 20, 16, 20)); HBox.setHgrow(apply, Priority.ALWAYS);
+        Button clear = Ui.btn("Reset", "btn-ghost-filter", this::reset);
+        HBox foot = new HBox(10, clear, apply); foot.setPadding(new Insets(10, 20, 16, 20)); HBox.setHgrow(apply, Priority.ALWAYS);
         foot.setStyle("-fx-border-color:#E7E8F2;-fx-border-width:1 0 0 0;");
 
         sheet.getChildren().addAll(handleRow, head, scroll, foot);
@@ -97,6 +99,26 @@ public final class FilterSheet extends StackPane {
         return v;
     }
 
+    /** Each filter group sits on its own soft card so the sheet reads as three clear blocks. */
+    private static VBox card(VBox inner) { inner.getStyleClass().add("filter-group"); return inner; }
+
+    /** Full-width segmented control: every option gets the same share of the row. */
+    private HBox sortSegments() {
+        HBox wrap = new HBox(2); wrap.getStyleClass().add("seg-wrap"); wrap.setAlignment(Pos.CENTER);
+        Button[] bs = new Button[SORTS.length];
+        for (int i = 0; i < SORTS.length; i++) {
+            final int idx = i;
+            bs[i] = new Button(SORTS[i]); bs[i].getStyleClass().addAll(i == sort ? "seg-on" : "seg", "seg-fit");
+            bs[i].setMinWidth(0); bs[i].setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(bs[i], Priority.ALWAYS);
+            bs[i].setOnAction(e -> {
+                sort = idx;
+                for (int j = 0; j < bs.length; j++) { bs[j].getStyleClass().removeAll("seg", "seg-on"); bs[j].getStyleClass().add(j == idx ? "seg-on" : "seg"); }
+            });
+            wrap.getChildren().add(bs[i]);
+        }
+        return wrap;
+    }
+
     private Button priceChip(String text, Integer value) {
         Button b = new Button(text); b.getStyleClass().add("amenity-chip");
         b.setOnAction(e -> maxPrice.setText(value == null ? "" : String.valueOf(value)));
@@ -112,7 +134,7 @@ public final class FilterSheet extends StackPane {
         }
     }
 
-    private void paintSort() { sortHolder.getChildren().setAll(Ui.segmented(SORTS, sort, i -> sort = i)); }
+    private void paintSort() { sortHolder.getChildren().setAll(sortSegments()); }
 
     private void reset() { maxPrice.clear(); sort = 0; paintSort(); picker.clearSelection(); }
 

@@ -36,11 +36,12 @@ import java.util.Locale;
  */
 final class DirectionsCard extends VBox {
     private static final String[] TABS = {"Me \u2192 BH", "Me \u2192 Campus", "BH \u2192 Campus"};   // short enough to stay on one line
+    private static final int[] SHOWN_ORDER = {0, 2, 1};              // left to right on screen: Me->BH, BH->Campus (centre), Me->Campus. Trip ids (0,1,2) are unchanged
     private static final int PLAN_SECONDS = 12;                      // longest wait for the real plan; then an offline estimate is shown
     private static final double MOVE_REPLAN_KM = 0.08;               // re-plan when you walked this far (only trips that start at you)
 
     private final BoardingHouse bh;
-    private final MapPane map = new MapPane(250);
+    private final MapPane map = new MapPane(280);
     private final Button[] tabButtons = new Button[3];
     private final VBox results = new VBox(10);
     private College campus;
@@ -75,15 +76,17 @@ final class DirectionsCard extends VBox {
         for (int i = 0; i < 3; i++) {
             ColumnConstraints cc = new ColumnConstraints(); cc.setPercentWidth(100.0 / 3); cc.setHgrow(Priority.ALWAYS); cc.setFillWidth(true);
             tabRow.getColumnConstraints().add(cc);
-            final int idx = i;
-            Button t = new Button(TABS[i]);
+            final int idx = SHOWN_ORDER[i];
+            Button t = new Button(TABS[idx]);
             t.getStyleClass().addAll("seg", "seg-fit");
             t.setMinWidth(0); t.setMaxWidth(Double.MAX_VALUE); t.setWrapText(true); t.setTextAlignment(TextAlignment.CENTER); t.setTextOverrun(OverrunStyle.CLIP);
             t.setOnAction(e -> select(idx));
-            tabButtons[i] = t;
+            tabButtons[idx] = t;
             tabRow.add(t, i, 0);
+            if (idx == 2) t.getStyleClass().add("seg-centre");
         }
 
+        tabRow.setAlignment(Pos.CENTER);
         map.hideLocateButton();
         map.show(new double[]{bh.lat(), bh.lng()}, 0, List.of(bh), false, null);
         StackPane mapBox = MapPane.framed(map);

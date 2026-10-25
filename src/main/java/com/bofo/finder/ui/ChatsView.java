@@ -21,11 +21,12 @@ public final class ChatsView extends VBox {
             for (Conversation c : list) {
                 String time = c.lastAt().length() >= 16 ? c.lastAt().substring(11, 16) : "";
                 Label unread = c.unread() > 0 ? Ui.label(String.valueOf(c.unread()), "unread") : new Label();
-                VBox mid = Ui.vbox(2, Ui.label(c.otherName(), "h2"), Ui.label(c.bhName(), "secondary"), Ui.label(c.lastMessage(), "preview"));
+                VBox mid = Ui.vbox(2, Ui.label(c.otherName(), "chat-row-name"), Ui.label(c.bhName(), "secondary"), Ui.label(c.lastMessage(), "preview"));
                 HBox.setHgrow(mid, Priority.ALWAYS);
                 VBox right = Ui.vbox(4, Ui.label(time, "secondary"), unread); right.setAlignment(javafx.geometry.Pos.TOP_RIGHT);
                 HBox row = Ui.hbox(12, Ui.avatar(c.otherName(), 44), mid, right);
-                row.getStyleClass().add("card");
+                row.getStyleClass().addAll("card", "chat-row"); row.setAlignment(javafx.geometry.Pos.CENTER_LEFT); row.setCursor(javafx.scene.Cursor.HAND);
+                if (c.unread() > 0) row.getStyleClass().add("chat-row-unread");
                 String other = c.studentId().equals(me) ? c.ownerId() : c.studentId();
                 // owners see the student's name in the chat header; students see the boarding house name
                 String title = c.ownerId().equals(me) && !c.otherName().isBlank() ? c.otherName() : c.bhName();
