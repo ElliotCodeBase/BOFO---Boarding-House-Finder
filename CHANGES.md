@@ -1,3 +1,8 @@
+# v1.9.12 - Always open the app when signed in, even with no internet
+
+- Fixed: a signed-in user who started the app with no internet (and nothing saved yet) still got a dead "No internet connection" screen. Now the app always opens after a 4 s wait: with the saved profile if there is one, otherwise with a basic profile from the Google account (student view until the real role can be loaded). The offline banner shows and every section says "No internet connection" until the network is back.
+- Only a user who never signed in on this device still needs internet (to sign in).
+
 # v1.9.11 - Works without internet (saved chats, saved places, listings) + fewer false "no internet" screens
 
 - **Opens offline:** the signed-in profile is now kept on the device. Starting the app with no internet (or a server that answers slower than 4 s) opens it straight into Home / Dashboard with the "No internet connection - showing saved data" banner instead of a dead "No internet" screen. Only the very first sign-in on a device needs internet.

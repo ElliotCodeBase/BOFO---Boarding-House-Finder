@@ -56,15 +56,18 @@ public final class AuthService {
         Optional<JSONObject> s = store.load();
         if (s.isEmpty()) return Restore.NO_SESSION;
         apply(s.get());
-        Profile cached = cachedProfile();                     // saved by the last successful profile load on this device
-        if (cached == null) return restoreOnline();           // first launch on this device: must go online
-        // Returning user: wait at most 4 s for the server, then open the app from the saved profile (offline banner + saved data).
+        // Wait at most 4 s for the server. If it does not answer, ALWAYS open the app (offline banner + saved data) as long as the
+        // user is signed in on this device: with the saved profile, or - when none was saved yet - a basic one built from the Google account.
         java.util.concurrent.Future<Restore> f = com.bofo.finder.util.Async.pool().submit(this::restoreOnline);
-        try {
-            Restore r = f.get(4, java.util.concurrent.TimeUnit.SECONDS);
-            if (r == Restore.OFFLINE) profile = cached;
-            return r;
-        } catch (Exception slowOrDown) { profile = cached; return Restore.OFFLINE; }
+        Restore r;
+        try { r = f.get(4, java.util.concurrent.TimeUnit.SECONDS); }
+        catch (Exception slowOrDown) { r = Restore.OFFLINE; }
+        if (r == Restore.OFFLINE && profile == null) {
+            Profile cached = cachedProfile();                 // saved by the last successful profile load on this device
+            profile = cached != null ? cached
+                    : new Profile(userId, Role.STUDENT, false, googleName(), googlePhoto(), "", null, "unverified");   // never loaded online yet: role unknown -> student view
+        }
+        return r;
     }
 
     private Profile cachedProfile() {
