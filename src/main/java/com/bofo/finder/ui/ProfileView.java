@@ -42,7 +42,7 @@ public final class ProfileView extends VBox {
         HBox chips = Ui.hbox(6, Ui.label(roleName, "profile-chip"));
         if (owner) chips.getChildren().add(Ui.label(statusText(p), "profile-chip"));
         VBox who = Ui.vbox(6, name, chips);
-        HBox idRow = Ui.hbox(14, Ui.avatar(nm, 64), who); idRow.setAlignment(Pos.CENTER_LEFT);
+        HBox idRow = Ui.hbox(14, Ui.avatar(nm, 72), who); idRow.setAlignment(Pos.CENTER_LEFT);
         VBox header = new VBox(12, Ui.label("Profile", "profile-title"), idRow);
         header.getStyleClass().add("profile-header");
 
@@ -55,8 +55,8 @@ public final class ProfileView extends VBox {
 
         // ---- Preferences ----
         Node notif = Ui.settingsToggle(Glyphs.BELL, "Notifications", true, on -> {});
-        Node mascot = Ui.settingsToggle(Glyphs.SMILE, "Show BOFO mascot", BofoPanel.enabled(), BofoPanel::setEnabled);
-        Node loc = Ui.settingsToggle(Glyphs.LOCATE, "Use my location", Locator.get().enabled.get(), on -> Locator.get().setEnabled(on));
+        Node mascot = Ui.settingsToggle(Glyphs.SMILE, "Show BOFO mascot", "The floating helper on your screens", BofoPanel.enabled(), BofoPanel::setEnabled);
+        Node loc = Ui.settingsToggle(Glyphs.LOCATE, "Use my location", "Sorts places by distance and plans your trips", Locator.get().enabled.get(), on -> Locator.get().setEnabled(on));
         VBox prefs = Ui.settingsGroup("Preferences", notif, mascot, loc);
 
         // ---- Security & privacy ----
@@ -67,20 +67,25 @@ public final class ProfileView extends VBox {
                 Ui.settingsRow(Glyphs.INFO, "Agreements and Guidelines", null, () -> Nav.toast("Open Owner Agreement / Community Guidelines")));
 
         // ---- About ----
-        VBox about = Ui.settingsGroup("About", Ui.settingsRow(Glyphs.INFO, "BOFO Finder", "v" + com.bofo.finder.config.AppConfig.appVersion(), null));
+        Label brand = Ui.label("BOFO Finder", "settings-brand");
+        Label ver = Ui.label("Version " + com.bofo.finder.config.AppConfig.appVersion(), "settings-ver");
+        VBox about = new VBox(4, new Mascot(Mascot.Expression.HAPPY, 54), brand, ver);
+        about.setAlignment(Pos.CENTER); about.setPadding(new Insets(10, 0, 0, 0));
 
         Button logout = Ui.btn("Log out", "btn-logout", Main::signOutToLogin); logout.setMaxWidth(Double.MAX_VALUE);
         Button delete = Ui.btn("Delete my account and data", "link-danger", this::confirmDelete);
+        delete.setMaxWidth(Double.MAX_VALUE);
 
-        VBox body = new VBox(18, account, prefs, security, about, logout, delete);
+        VBox body = new VBox(18, account, prefs, security, logout, delete);
         body.setPadding(new Insets(16, 16, 24, 16)); body.setAlignment(Pos.TOP_CENTER);
         VBox.setMargin(logout, new Insets(4, 0, 0, 0));
+        body.getChildren().remove(about); body.getChildren().add(about);
         VBox page = new VBox(header, body);
         getChildren().add(Ui.scrollCentered(page, 560));
     }
 
     private static void addRow(VBox card, Node row) {
-        Region line = new Region(); line.getStyleClass().add("hline"); VBox.setMargin(line, new Insets(0, 0, 0, 52));
+        Region line = new Region(); line.getStyleClass().add("hline"); VBox.setMargin(line, new Insets(0, 16, 0, 68));
         card.getChildren().addAll(line, row);
     }
 

@@ -459,3 +459,24 @@
 .chat-row-time { -fx-font-size: 11.5px; -fx-text-fill: -bofo-muted; }
 .chat-row-time-on { -fx-font-size: 11.5px; -fx-text-fill: -bofo-primary; -fx-font-weight: bold; }
 .chat-row-unread { -fx-background-color: #F6F3FF; -fx-border-color: #CFC4FF; -fx-border-width: 1; -fx-border-radius: 22; -fx-background-radius: 22; }
+
+
+/* ---- Settings / Profile polish (v1.10.4) ---- */
+.profile-header { -fx-padding: 22 20 30 20; -fx-background-radius: 0 0 32 32;
+  -fx-effect: dropshadow(gaussian, rgba(58,34,184,0.25), 14, 0, 0, 4); }
+.profile-header .avatar { -fx-border-color: rgba(255,255,255,0.55); -fx-border-width: 3; -fx-border-radius: 999; }
+.profile-name { -fx-font-size: 22px; }
+.profile-chip { -fx-padding: 4 12; -fx-font-size: 11.5px; }
+.settings-heading { -fx-font-size: 12.5px; -fx-text-fill: -bofo-muted; -fx-padding: 4 0 0 8; }
+.settings-card { -fx-border-color: #ECE9FA; -fx-border-radius: 22; -fx-background-radius: 22;
+  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.07), 12, 0, 0, 3); }
+.settings-row { -fx-padding: 13 16; -fx-background-radius: 22; }
+.settings-row:hover { -fx-background-color: #F8F6FF; }
+.settings-row .row-label { -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
+.settings-icon { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 12; }
+.settings-icon-danger { -fx-background-color: #FCEBEB; -fx-background-radius: 12; }
+.settings-value { -fx-font-size: 13px; -fx-text-fill: -bofo-muted; }
+.settings-sub { -fx-font-size: 12px; -fx-text-fill: -bofo-muted; }
+.settings-brand { -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
+.settings-ver { -fx-font-size: 12px; -fx-text-fill: -bofo-muted; }
+.btn-logout { -fx-border-width: 1.5; -fx-padding: 14 24; }

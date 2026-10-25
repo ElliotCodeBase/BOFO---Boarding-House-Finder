@@ -307,9 +307,18 @@ public final class Ui {
     }
 
     /** GCash-style settings row: outline icon, title, optional value, chevron. */
+    /** Icon on a soft rounded tile (purple, or red for destructive rows). */
+    private static Node iconTile(String glyph, boolean danger) {
+        StackPane t = new StackPane(strokeIcon(glyph, 20, Color.web(danger ? "#D64545" : "#5B3BF0")));
+        t.setMinSize(38, 38); t.setPrefSize(38, 38); t.setMaxSize(38, 38);
+        t.getStyleClass().add(danger ? "settings-icon-danger" : "settings-icon");
+        return t;
+    }
+
     public static HBox settingsRow(String glyph, String title, String value, Runnable r) {
-        HBox row = new HBox(14, strokeIcon(glyph, 22, Color.web("#5B3BF0")), label(title, "row-label"), grow());
-        if (value != null && !value.isBlank()) row.getChildren().add(label(value, "secondary"));
+        Label t = label(title, "row-label"); t.setMinWidth(0);
+        HBox row = new HBox(14, iconTile(glyph, false), t, grow());
+        if (value != null && !value.isBlank()) { Label v = label(value, "settings-value"); v.setWrapText(false); v.setMinWidth(Region.USE_PREF_SIZE); row.getChildren().add(v); }
         if (r != null) row.getChildren().add(strokeIcon(Glyphs.CHEVRON, 18, Color.web("#A39DB8")));
         row.setAlignment(Pos.CENTER_LEFT); row.getStyleClass().add("settings-row");
         if (r != null) { row.setCursor(javafx.scene.Cursor.HAND); row.setOnMouseClicked(e -> r.run()); }
@@ -318,16 +327,25 @@ public final class Ui {
 
     /** Settings row with an on/off switch instead of a chevron. */
     public static HBox settingsToggle(String glyph, String title, boolean on, Consumer<Boolean> change) {
-        HBox row = new HBox(14, strokeIcon(glyph, 22, Color.web("#5B3BF0")), label(title, "row-label"), grow(), switchControl(on, change));
+        return settingsToggle(glyph, title, null, on, change);
+    }
+
+    /** Same, with a short grey line under the title that says what the switch does. */
+    public static HBox settingsToggle(String glyph, String title, String sub, boolean on, Consumer<Boolean> change) {
+        Label t = label(title, "row-label"); t.setMinWidth(0);
+        VBox text = new VBox(1, t); text.setMinWidth(0);
+        if (sub != null && !sub.isBlank()) { Label s2 = label(sub, "settings-sub"); s2.setMinWidth(0); s2.setWrapText(true); text.getChildren().add(s2); }
+        HBox.setHgrow(text, Priority.ALWAYS);
+        HBox row = new HBox(14, iconTile(glyph, false), text, switchControl(on, change));
         row.setAlignment(Pos.CENTER_LEFT); row.getStyleClass().add("settings-row");
         return row;
     }
 
-    /** Section: small grey heading above one white rounded card; rows are separated by thin lines. */
+    /** A titled white card of rows with hairlines between them (the hairline starts after the icon tile). */
     public static VBox settingsGroup(String heading, Node... rows) {
         VBox card = new VBox(); card.getStyleClass().add("settings-card");
         for (int i = 0; i < rows.length; i++) {
-            if (i > 0) { Region line = new Region(); line.getStyleClass().add("hline"); VBox.setMargin(line, new Insets(0, 0, 0, 52)); card.getChildren().add(line); }
+            if (i > 0) { Region line = new Region(); line.getStyleClass().add("hline"); VBox.setMargin(line, new Insets(0, 16, 0, 68)); card.getChildren().add(line); }
             card.getChildren().add(rows[i]);
         }
         Label h = label(heading, "settings-heading");
