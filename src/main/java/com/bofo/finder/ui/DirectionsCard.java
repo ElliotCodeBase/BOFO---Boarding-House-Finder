@@ -7,6 +7,7 @@ import com.bofo.finder.service.BhService;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.Geo;
 import com.bofo.finder.util.Locator;
+import com.bofo.finder.util.Router;
 import com.bofo.finder.util.Trip;
 import com.bofo.finder.util.TripPlanner;
 import javafx.beans.value.ChangeListener;
@@ -17,6 +18,8 @@ import javafx.scene.control.Label;
 import javafx.scene.Node;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.TextAlignment;
 
 import java.util.ArrayList;
@@ -33,10 +36,11 @@ import java.util.Locale;
  */
 final class DirectionsCard extends VBox {
     private static final String[] TABS = {"Me \u2192 BH", "Me \u2192 Campus", "BH \u2192 Campus"};   // short enough to stay on one line
+    private static final int PLAN_SECONDS = 12;                      // longest wait for the real plan; then an offline estimate is shown
     private static final double MOVE_REPLAN_KM = 0.08;               // re-plan when you walked this far (only trips that start at you)
 
     private final BoardingHouse bh;
-    private final MapPane map = new MapPane(230);
+    private final MapPane map = new MapPane(250);
     private final Button[] tabButtons = new Button[3];
     private final VBox results = new VBox(10);
     private College campus;
@@ -44,6 +48,7 @@ final class DirectionsCard extends VBox {
     private Trip.Plan plan;
     private double[] planFrom;                                         // where the current plan starts (to notice when you moved)
     private boolean planning;
+    private final Label heroIcon = new Label(), heroHead = Ui.label("", "dir-head"), heroMeta = Ui.label("", "secondary");
 
     private final ChangeListener<double[]> gpsMoved = (o, was, now) -> {
         if (now == null) return;
@@ -62,7 +67,7 @@ final class DirectionsCard extends VBox {
         setMinWidth(0);
 
         Label title = Ui.section("Directions");
-        Label hint = Ui.label("Pick where you start and where you are going.", "secondary");
+        Label hint = Ui.label("Choose where you start and where you are going.", "secondary");
         hint.setMinWidth(0); hint.setMaxWidth(Double.MAX_VALUE);
 
         GridPane tabRow = new GridPane();
@@ -120,31 +125,69 @@ final class DirectionsCard extends VBox {
         double[] from = fromPoint(t), to = toPoint(t);
         final int my = ++token;
         plan = null; planFrom = null;
-        if (from == null || to == null) { map.clearRoute(); results.getChildren().setAll(missingInput(t)); return; }
+        map.clearRoute();                                              // never leave the previous tab's line on the map (that was the "BH -> Campus does not change" bug)
+        if (from == null || to == null) { results.getChildren().setAll(tripHeader(t), missingInput(t)); return; }
         planning = true;
         planFrom = from;
-        results.getChildren().setAll(Ui.label("Finding the best way\u2026", "secondary"));
-        Async.run(() -> TripPlanner.plan(from, to), p -> {
+        results.getChildren().setAll(tripHeader(t), loading());
+        previewLine(t, from, to);                                      // draw this tab's trip right now; the real plan replaces it a moment later
+        Async.run(() -> TripPlanner.planWithin(from, to, PLAN_SECONDS), p -> {
             if (my != token) return;
             planning = false; plan = p; chosen = p.best();
             render(t);
         }, e -> {
             if (my != token) return;
             planning = false;
-            Button retry = Ui.btn("Try again", "btn-outline", () -> select(t));
-            results.getChildren().setAll(notice("Could not work out the route. Check your connection and try again.", "notice-bad"), retry);
+            Button retry = Ui.btn("Try again", "btn-tint", () -> select(t));
+            retry.setMaxWidth(Double.MAX_VALUE);
+            results.getChildren().setAll(tripHeader(t), note("Could not work out the route. Check your connection and try again.", "bad"), retry);
         });
+    }
+
+    /** Instant, no-network preview: a saved road if we have one, else a straight guide line, and the camera moves to the trip. */
+    private void previewLine(int t, double[] from, double[] to) {
+        Router.Route r = Router.peek(from[0], from[1], to[0], to[1]);
+        if (r == null) r = Router.estimate(from[0], from[1], to[0], to[1]);
+        map.showPath(r.pts(), r.meters(), r.approximate(), Geo.fmt(r.meters() / 1000.0), "", true);
+    }
+
+    private Node loading() {
+        VBox box = new VBox(8, Skeleton.block(0, 58, 16), Skeleton.block(0, 44, 16));
+        Label l = Ui.label("Finding the best way\u2026", "secondary"); l.setMinWidth(0);
+        box.getChildren().add(l);
+        box.setMinWidth(0);
+        return box;
+    }
+
+    /** From -> to, as two dots joined by a line (replaces the plain "A -> B" text). */
+    private Node tripHeader(int t) {
+        Circle a = new Circle(5.5, t == 2 ? Color.web("#3A22B8") : Color.web("#2F6FED"));
+        Circle b = new Circle(5.5, Color.WHITE); b.setStroke(Color.web("#5B3BF0")); b.setStrokeWidth(2.5);
+        Region link = new Region(); link.setMinSize(2, 12); link.setPrefSize(2, 12); link.setMaxSize(2, 12); link.setStyle("-fx-background-color:#D6D2F5;-fx-background-radius:2;");
+        VBox.setMargin(link, new Insets(0, 0, 0, 4));
+        VBox v = new VBox(2, tripRow(a, "From", fromName(t)), link, tripRow(b, "To", toName(t)));
+        v.getStyleClass().add("dir-trip"); v.setMinWidth(0);
+        return v;
+    }
+
+    private static HBox tripRow(Circle dot, String what, String name) {
+        StackPane d = new StackPane(dot); d.setMinWidth(12); d.setPrefWidth(12);
+        Label w = Ui.label(what, "dir-trip-what"); w.setMinWidth(34); w.setWrapText(false);
+        Label n = Ui.label(name, "dir-trip-name"); n.setMinWidth(0);
+        HBox h = new HBox(8, d, w, n); h.setAlignment(Pos.CENTER_LEFT); h.setMinWidth(0);
+        HBox.setHgrow(n, Priority.ALWAYS);
+        return h;
     }
 
     /** Shown when a tab has no start or end yet (no GPS fix, or no campus known). */
     private Node missingInput(int t) {
         VBox box = new VBox(8);
         if (needsCampus(t) && campus == null) {
-            box.getChildren().add(notice("Choose a campus on the Home screen to see this route.", "notice-warn"));
+            box.getChildren().add(note("Choose a campus on the Home screen to see this route.", "warn"));
             if (t == 1 && State.gps.get() == null) box.getChildren().add(locateButton());
         } else {
-            box.getChildren().addAll(notice("BOFO does not know where you are yet. Turn on location to see the way from you.", "notice-warn"), locateButton());
-            if (campus != null) box.getChildren().add(Ui.btn("Show BH \u2192 Campus instead", "btn-outline", () -> select(2)));   // this one does not need your location
+            box.getChildren().addAll(note("BOFO does not know where you are yet. Turn on location to see the way from you.", "warn"), locateButton());
+            if (campus != null) { Button b = Ui.btn("Show BH \u2192 Campus instead", "btn-tint", () -> select(2)); b.setMaxWidth(Double.MAX_VALUE); b.setMinWidth(0); box.getChildren().add(b); }   // this one does not need your location
         }
         return box;
     }
@@ -159,63 +202,76 @@ final class DirectionsCard extends VBox {
 
     private void render(int t) {
         List<Node> out = new ArrayList<>();
-        if (!plan.note().isBlank()) out.add(notice(plan.note(), plan.straightKm() > TripPlanner.FAR_KM ? "notice-warn" : "notice-ok"));
+        out.add(tripHeader(t));
+
+        // big summary of the chosen way (filled by choose())
+        heroIcon.getStyleClass().setAll("dir-hero-icon"); heroIcon.setMinSize(48, 48); heroIcon.setAlignment(Pos.CENTER);
+        heroHead.setMinWidth(0); heroMeta.setMinWidth(0);
+        VBox heroText = new VBox(2, heroHead, heroMeta); heroText.setMinWidth(0); heroText.setAlignment(Pos.CENTER_LEFT);
+        HBox hero = new HBox(12, heroIcon, heroText); hero.getStyleClass().add("dir-hero"); hero.setAlignment(Pos.CENTER_LEFT); hero.setMinWidth(0);
+        HBox.setHgrow(heroText, Priority.ALWAYS);
+        out.add(hero);
+
+        if (!plan.note().isBlank()) out.add(note(plan.note(), plan.straightKm() > TripPlanner.FAR_KM ? "warn" : "ok"));
         if (t != 2 && State.gpsApprox.get())
-            out.add(notice("Your location comes from this computer (Wi-Fi or internet address), so it can be off by several km. A phone uses GPS and is much closer.", "notice-warn"));
-        Label head = Ui.label("", "dir-head"); head.setMinWidth(0);
-        Label sub = Ui.label(fromName(t) + " \u2192 " + toName(t), "secondary"); sub.setMinWidth(0);
-        out.add(head); out.add(sub);
+            out.add(note("Your location comes from this computer (Wi-Fi or internet address) and can be off by several km. A phone uses GPS and is much closer.", "warn"));
 
         List<HBox> rows = new ArrayList<>();
         if (plan.options().size() > 1) {
+            Label ways = Ui.label("Ways to go", "dir-section");
             VBox list = new VBox(8);
             for (int i = 0; i < plan.options().size(); i++) {
                 final int idx = i;
                 HBox row = optionRow(plan.options().get(i), i == plan.best());
-                row.setOnMouseClicked(e -> choose(idx, head, rows));
+                row.setOnMouseClicked(e -> choose(idx, rows));
                 rows.add(row); list.getChildren().add(row);
             }
-            out.add(list);
+            out.add(ways); out.add(list);
         } else {
             Label detail = Ui.label(plan.options().get(0).detail(), "secondary"); detail.setMinWidth(0);
             out.add(detail);
         }
 
-        if (plan.straightKm() > TripPlanner.FAR_KM && t != 2 && campus != null)
-            out.add(Ui.btn("Show BH \u2192 Campus instead", "btn-outline", () -> select(2)));
+        if (plan.straightKm() > TripPlanner.FAR_KM && t != 2 && campus != null) {
+            Button b = Ui.btn("Show BH \u2192 Campus instead", "btn-tint", () -> select(2));
+            b.setMaxWidth(Double.MAX_VALUE); b.setMinWidth(0);
+            out.add(b);
+        }
 
-        Label src = Ui.label("Lines: \u00A9 OpenStreetMap contributors. Fares: LTFRB, effective 19 March 2026. Times are estimates.", "secondary");
-        src.setStyle("-fx-font-size:11px;"); src.setMinWidth(0);
-        out.add(src);
-        Button open = Ui.btn("Open in OpenStreetMap", "btn-outline", () -> openExternal(t));
+        Button open = Ui.btn("Open in OpenStreetMap", "btn-link", () -> openExternal(t));
         open.setMaxWidth(Double.MAX_VALUE); open.setMinWidth(0);
-        out.add(open);
+        Label src = Ui.label("Lines: \u00A9 OpenStreetMap contributors. Fares: LTFRB, effective 19 March 2026. Times are estimates.", "dir-src");
+        src.setMinWidth(0);
+        out.add(open); out.add(src);
 
         results.getChildren().setAll(out);
-        choose(chosen, head, rows);
+        choose(chosen, rows);
     }
 
-    private void choose(int idx, Label head, List<HBox> rows) {
+    private void choose(int idx, List<HBox> rows) {
         chosen = idx;
         Trip.Option o = plan.options().get(idx);
-        head.setText(o.badge() + " " + switch (o.mode()) {
+        heroIcon.setText(o.mode().icon);
+        heroHead.setText(Geo.fmtTime(o.minutes()) + " " + switch (o.mode()) {
             case WALK -> "walk"; case TRICYCLE -> "by tricycle"; case JEEPNEY -> "by jeepney"; case FAR -> "by bus or van";
         });
+        String fare = o.mode() == Trip.Mode.WALK || o.fareText().isEmpty() ? "" : "  \u00B7  " + o.fareText();
+        heroMeta.setText(Geo.fmt(o.meters() / 1000.0) + fare + (o.approximate() ? "  \u00B7  estimate" : ""));
         for (int i = 0; i < rows.size(); i++) {
             rows.get(i).getStyleClass().removeAll("dir-opt", "dir-opt-on");
             rows.get(i).getStyleClass().add(i == idx ? "dir-opt-on" : "dir-opt");
         }
-        map.showPath(o.path(), o.meters(), o.approximate(), o.badge(), tab == 2 ? fromName(tab) : "", true);
+        map.showPath(o.path(), o.meters(), o.approximate(), o.badge(), "", true);
     }
 
     private HBox optionRow(Trip.Option o, boolean best) {
-        Label icon = new Label(o.mode().icon); icon.setStyle("-fx-font-size:20px;"); icon.setMinWidth(28);
-        Label name = Ui.label(o.title(), "h2"); name.setStyle("-fx-font-size:14px;"); name.setMinWidth(0);
+        Label icon = new Label(o.mode().icon); icon.getStyleClass().add("dir-opt-icon"); icon.setMinSize(38, 38); icon.setAlignment(Pos.CENTER);
+        Label name = Ui.label(o.title(), "dir-opt-title"); name.setMinWidth(0);
         Label detail = Ui.label(o.detail(), "secondary"); detail.setMinWidth(0);
         VBox text = new VBox(2, name, detail); text.setMinWidth(0);
         if (best) { Label pill = Ui.label("Best for you", "pill-ok"); pill.setStyle("-fx-font-size:11px;-fx-padding:2 8;"); text.getChildren().add(0, pill); }
         HBox.setHgrow(text, Priority.ALWAYS);
-        Label time = Ui.label(Geo.fmtTime(o.minutes()), "h2"); time.setStyle("-fx-font-size:14px;"); time.setWrapText(false); time.setMinWidth(Region.USE_PREF_SIZE);
+        Label time = Ui.label(Geo.fmtTime(o.minutes()), "dir-opt-title"); time.setWrapText(false); time.setMinWidth(Region.USE_PREF_SIZE);
         VBox right = new VBox(2, time);
         right.setAlignment(Pos.TOP_RIGHT); right.setMinWidth(Region.USE_PREF_SIZE);
         if (!o.fareText().isEmpty()) {
@@ -228,10 +284,14 @@ final class DirectionsCard extends VBox {
         return row;
     }
 
-    private static Label notice(String text, String style) {
-        Label l = Ui.label(text, style);
-        l.setMinWidth(0); l.setMaxWidth(Double.MAX_VALUE);
-        return l;
+    /** Small tinted message with a symbol in front: kind = ok, warn or bad. */
+    private static Node note(String text, String kind) {
+        Label sym = new Label(switch (kind) { case "ok" -> "\u2713"; case "bad" -> "!"; default -> "i"; });
+        sym.getStyleClass().addAll("dir-note-sym", "dir-note-sym-" + kind); sym.setMinSize(20, 20); sym.setAlignment(Pos.CENTER);
+        Label l = Ui.label(text, "dir-note-text"); l.setMinWidth(0); l.setMaxWidth(Double.MAX_VALUE);
+        HBox h = new HBox(10, sym, l); h.getStyleClass().addAll("dir-note", "dir-note-" + kind); h.setAlignment(Pos.TOP_LEFT); h.setMinWidth(0);
+        HBox.setHgrow(l, Priority.ALWAYS);
+        return h;
     }
 
     private void openExternal(int t) {

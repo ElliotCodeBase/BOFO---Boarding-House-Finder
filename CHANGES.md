@@ -1,3 +1,12 @@
+# v1.9.3 - Directions never stays blank
+
+- The Directions card no longer sits on "Finding the best way…" when the route servers are slow: after 12 seconds it shows an estimate (walk / tricycle / jeepney guess) with a note, and the exact roads are ready on the next try.
+
+# v1.9.2 - Directions: BH → Campus fix and new look
+
+- Fixed: tapping "BH → Campus" (or any tab) left the previous tab's line on the map while it said "Finding the best way…". The old line is cleared at once and the new trip is drawn straight away (a guide line), then replaced by the real route.
+- New look: From/To card with dots, a big summary (time, distance, fare), tidy notes with small symbols, softer buttons, and loading placeholders instead of plain text.
+
 # v1.9.1 - Directions tabs
 
 - The three tabs now read Me → BH, Me → Campus and BH → Campus (current location to the boarding house, current location to the campus, boarding house to the campus). The labels fit on one line.
