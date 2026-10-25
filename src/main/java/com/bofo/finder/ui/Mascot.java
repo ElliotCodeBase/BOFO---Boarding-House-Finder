@@ -143,9 +143,9 @@ public final class Mascot extends Group {
         if (p == Idle.THINKING) {
             rotL.setPivotX(36); rotL.setPivotY(114); rotL.setAngle(8);
             art.getChildren().add(arm(rotL, 36, 114, 38));                          // spare arm hangs down
-            Polyline up = new Polyline(160, 114, 178, 134, 138, 142);               // other arm: up to the chin
+            Polyline up = new Polyline(160, 130, 138, 138);                          // other arm: short, straight, hand under the chin (no sticking-out elbow)
             up.setFill(null); up.setStroke(DARK); up.setStrokeWidth(14); up.setStrokeLineCap(StrokeLineCap.ROUND); up.setStrokeLineJoin(StrokeLineJoin.ROUND);
-            hand = new Group(up, circle(136, 142, 9, AMBER));
+            hand = new Group(up, circle(132, 138, 9, AMBER));
             art.getChildren().add(hand);
         }
         if (thought != null) art.getChildren().add(thought);

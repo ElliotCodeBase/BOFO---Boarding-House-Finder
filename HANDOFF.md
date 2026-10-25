@@ -1,4 +1,10 @@
-﻿# Handoff - v1.12.6 Sit/sleep poses redrawn (2026-10-25)
+﻿# Handoff - v1.12.7 Thinking arm simplified (2026-10-25)
+- **PR title:** `v1.12.7 - BOFO chat head: cleaner thinking pose`. Version in `config.properties`, `pom.xml` (versionCode 42), CHANGES.md.
+- `Mascot.build` THINKING: chin arm is now `Polyline(160,130 -> 138,138)` + hand circle (132,138). Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.12.6 Sit/sleep poses redrawn (2026-10-25)
 - **PR title:** `v1.12.6 - BOFO chat head: better sitting and sleeping poses`. Version in `config.properties`, `pom.xml` (versionCode 41), CHANGES.md.
 - `Mascot.build`: `low` (sit/sleep) now uses the NORMAL body/face geometry with `torso.setLayoutY(12)`, feet at y 164 out front, arms at the normal shoulders. Sleeping nod 3 to 15 degrees, hat droop 6, z start (150,48). Not compiled/run by Claude.
 
