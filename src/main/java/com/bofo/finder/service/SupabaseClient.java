@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 
 /** Thin REST client for Supabase (PostgREST, Auth, Storage, Edge Functions). Uses ONLY the anon key + user JWT. */
 public final class SupabaseClient {
-    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
+    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(12)).build();
     private static final SupabaseClient INSTANCE = new SupabaseClient();
     public static SupabaseClient get() { return INSTANCE; }
 
@@ -40,7 +40,12 @@ public final class SupabaseClient {
     private String send(HttpRequest req) throws Exception {
         HttpResponse<String> r;
         try { r = HTTP.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)); }
-        catch (java.io.IOException noNetwork) { Connectivity.report(false); throw noNetwork; }   // drives the offline banner + screens
+        catch (java.io.IOException first) {
+            // One quiet retry for reads: a single dropped connection (Wi-Fi hiccup, stale keep-alive) must not flip the whole app offline.
+            if (!"GET".equals(req.method())) { Connectivity.report(false); throw first; }
+            try { Thread.sleep(500); r = HTTP.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)); }
+            catch (java.io.IOException noNetwork) { Connectivity.report(false); throw noNetwork; }   // drives the offline banner + screens
+        }
         Connectivity.report(true);                                                               // server answered (any status) = online
         if (r.statusCode() >= 300) throw new ApiException(r.statusCode(), r.body());
         return r.body();

@@ -20,7 +20,7 @@ public final class ChatService {
     private final SupabaseClient api = SupabaseClient.get();
 
     public List<Conversation> inbox() throws Exception {
-        JSONArray a = api.select("inbox_v", "select=*&order=last_message_at.desc");
+        JSONArray a = com.bofo.finder.util.Offline.array("inbox", () -> api.select("inbox_v", "select=*&order=last_message_at.desc"));
         List<Conversation> l = new ArrayList<>();
         for (int i = 0; i < a.length(); i++) l.add(Conversation.from(a.getJSONObject(i)));
         return l;
@@ -40,7 +40,8 @@ public final class ChatService {
     public List<Message> page(String conversationId, String before) throws Exception {
         String q = "conversation_id=eq." + conversationId + "&select=*&order=created_at.desc&limit=" + PAGE
                 + (before != null ? "&created_at=lt." + before : "");
-        JSONArray a = api.select("messages", q);
+        JSONArray a = before == null ? com.bofo.finder.util.Offline.array("msgs_" + conversationId, () -> api.select("messages", q))
+                                     : api.select("messages", q);          // newest page is kept on the device; older pages need internet
         List<Message> l = new ArrayList<>();
         for (int i = 0; i < a.length(); i++) l.add(Message.from(a.getJSONObject(i)));
         return l;

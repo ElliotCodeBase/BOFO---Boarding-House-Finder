@@ -48,19 +48,43 @@ public final class AuthService {
 
     /* ---------- restore saved session (called during splash) ---------- */
     public enum Restore { NO_SESSION, NEEDS_ROLE, READY, OFFLINE }
+    private volatile Throwable lastError;
+    /** Why the last start-up check could not reach the server (shown small on the no-internet screen). */
+    public Throwable lastError() { return lastError; }
 
     public Restore restore() {
         Optional<JSONObject> s = store.load();
         if (s.isEmpty()) return Restore.NO_SESSION;
         apply(s.get());
+        Profile cached = cachedProfile();                     // saved by the last successful profile load on this device
+        if (cached == null) return restoreOnline();           // first launch on this device: must go online
+        // Returning user: wait at most 4 s for the server, then open the app from the saved profile (offline banner + saved data).
+        java.util.concurrent.Future<Restore> f = com.bofo.finder.util.Async.pool().submit(this::restoreOnline);
+        try {
+            Restore r = f.get(4, java.util.concurrent.TimeUnit.SECONDS);
+            if (r == Restore.OFFLINE) profile = cached;
+            return r;
+        } catch (Exception slowOrDown) { profile = cached; return Restore.OFFLINE; }
+    }
+
+    private Profile cachedProfile() {
+        try {
+            String t = com.bofo.finder.util.DiskCache.read("user_profile.json");
+            if (t == null || userId == null) return null;
+            JSONObject o = new JSONObject(t);
+            return userId.equals(o.optString("id")) ? Profile.from(o) : null;
+        } catch (Exception bad) { return null; }
+    }
+
+    private Restore restoreOnline() {
         try {
             if (Instant.now().getEpochSecond() >= expiresAtEpoch - 60) refresh();
             return loadProfile() ? Restore.READY : Restore.NEEDS_ROLE;
         } catch (SupabaseClient.ApiException e) {
             if (e.status == 400 || e.status == 401 || e.status == 403) { clearLocal(); return Restore.NO_SESSION; }
-            return Restore.OFFLINE;
+            lastError = e; return Restore.OFFLINE;
         } catch (Exception netDown) {
-            return profile != null ? Restore.OFFLINE : Restore.OFFLINE;
+            lastError = netDown; return Restore.OFFLINE;
         }
     }
 
@@ -180,6 +204,7 @@ public final class AuthService {
         JSONArray rows = api.select("profiles_v", "id=eq." + userId + "&select=*");
         if (rows.isEmpty()) { profile = null; return false; }
         profile = Profile.from(rows.getJSONObject(0));
+        com.bofo.finder.util.DiskCache.write("user_profile.json", rows.getJSONObject(0).toString());   // so the app can open offline next time
         return true;
     }
 
@@ -223,7 +248,7 @@ public final class AuthService {
     }
 
     public void signOut() { api.authLogout(); clearLocal(); }
-    public void clearLocal() { store.clear(); accessToken = refreshToken = userId = null; profile = null; user = null; }
+    public void clearLocal() { store.clear(); com.bofo.finder.util.DiskCache.deletePrefix("user_"); accessToken = refreshToken = userId = null; profile = null; user = null; }
 
     /* ---------- helpers ---------- */
     private static String enc(String s) { return URLEncoder.encode(s, StandardCharsets.UTF_8); }

@@ -2,6 +2,13 @@
 
 Only read this when you need old details. Newest entries are in ../HANDOFF.md.
 
+# Handoff - v1.9.8 Splash mascot: two jumps per cycle (2026-10-25)
+- **PR title:** `v1.9.8 - Loading screen: two jumps per cycle`. Version in `config.properties`, `pom.xml` (versionCode 23), CHANGES.md.
+- `SplashView.addJump(...)` builds the key frames of one jump (1.1 s) at an offset; the timeline calls it twice (t0 = 0: apex -44, hat -34; t0 = 1100: apex -58, hat -44) plus a final 2200 ms frame. Same pose at both ends, so the loop is seamless. Tune the numbers in the two `addJump` calls.
+- Not compiled/run by Claude (no Maven, no javac). Check: two jumps, second one higher, hat leaves and lands each time, shadow touches the feet.
+
+---
+
 # Handoff - v1.9.7 Splash mascot: shadow on the feet + hat drop (2026-10-25)
 - **PR title:** `v1.9.7 - Loading screen: shadow touches the feet, hat falls off at the top of the jump and lands back on`. Version in `config.properties`, `pom.xml` (versionCode 22), CHANGES.md.
 - **Cause of the gap:** `SplashView` centred the mascot in a 210 px box but put the shadow at the bottom (about 30 px apart), and `scaleY` squash pivoted on the body centre, lifting the feet. Now the mascot is bottom-aligned (`ground` = 12), the shadow is centred on that line, and a `Scale` with pivot at the soles (`mb.getMaxY()`) replaces `scaleX/scaleY`.

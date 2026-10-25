@@ -200,9 +200,11 @@ public final class Ui {
         Label b = label(net ? "Check your Wi-Fi or mobile data. We'll reload as soon as you're back online."
                             : "We couldn't load this right now. Please try again.", "secondary");
         b.setAlignment(Pos.CENTER); b.setStyle("-fx-text-alignment:center;");
+        Label why = label(describe(err), "secondary"); why.setWrapText(true); why.setMaxWidth(300); why.setOpacity(0.6);
+        why.setStyle("-fx-font-size:11px;-fx-text-alignment:center;"); why.setAlignment(Pos.CENTER); why.setVisible(!why.getText().isEmpty()); why.setManaged(!why.getText().isEmpty());
         Button again = new Button("Try again"); again.getStyleClass().add("btn-primary");
         again.setOnAction(e -> { again.setDisable(true); again.setText("Trying..."); retry.run(); });
-        VBox v = new VBox(12, badge, t, b, again);
+        VBox v = new VBox(12, badge, t, b, why, again);
         v.setAlignment(Pos.CENTER); v.setPadding(new Insets(36, 24, 36, 24)); v.setMaxWidth(Double.MAX_VALUE);
         VBox.setMargin(again, new Insets(6, 0, 0, 0));
         if (net) {
@@ -212,6 +214,16 @@ public final class Ui {
             });
         }
         return v;
+    }
+
+    /** Short real reason ("UnknownHostException: abc.supabase.co"), shown small under the message so a failure can be told apart. */
+    private static String describe(Throwable e) {
+        if (e == null) return "";
+        Throwable r = e; for (int i = 0; i < 8 && r.getCause() != null && r.getCause() != r; i++) r = r.getCause();
+        String m = r.getMessage() == null ? "" : r.getMessage().replaceAll("\\s+", " ");
+        if ("offline".equals(m)) return "";
+        String s = r.getClass().getSimpleName() + (m.isEmpty() ? "" : ": " + m);
+        return s.length() > 110 ? s.substring(0, 110) + "..." : s;
     }
 
     /**
@@ -225,6 +237,16 @@ public final class Ui {
         Async.run(work, r -> {
             if (target.getProperties().get("bofoLoad") != mine) return;
             target.getChildren().clear(); render.accept(r);
+            if (Connectivity.OFFLINE.get()) {                         // this may be saved data: refresh it once the connection is back
+                javafx.beans.value.ChangeListener<Boolean> back = new javafx.beans.value.ChangeListener<>() {
+                    @Override public void changed(javafx.beans.value.ObservableValue<? extends Boolean> o, Boolean was, Boolean now) {
+                        if (now) return;
+                        Connectivity.OFFLINE.removeListener(this);
+                        if (target.getScene() != null && target.getProperties().get("bofoLoad") == mine) load(target, skeleton, work, render);
+                    }
+                };
+                Connectivity.OFFLINE.addListener(back);
+            }
         }, e -> {
             if (target.getProperties().get("bofoLoad") != mine) return;
             target.getChildren().setAll(errorState(e, () -> load(target, skeleton, work, render)));

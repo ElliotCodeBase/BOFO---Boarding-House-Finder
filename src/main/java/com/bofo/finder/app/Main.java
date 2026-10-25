@@ -23,6 +23,7 @@ public class Main extends Application {
     public static void focusApp() { if (window != null) { window.setIconified(false); window.toFront(); window.requestFocus(); } }
 
     @Override public void start(Stage stage) {
+        com.bofo.finder.ui.AppStorage.init();                       // device storage first: profile / chats / saved places are kept there for offline use
         host = getHostServices();
         com.bofo.finder.util.Router.warmUp();                       // open the route server connection early so the first walking route is faster
         window = stage;
@@ -53,13 +54,14 @@ public class Main extends Application {
             new Thread(() -> { try { Thread.sleep(wait); } catch (InterruptedException ignored) {}
                 Platform.runLater(() -> dispatch(result, splash)); }).start();
         }, e -> {
-            if (com.bofo.finder.util.Connectivity.isNetworkError(e)) showNoInternet(); else showLogin(null);
+            if (com.bofo.finder.util.Connectivity.isNetworkError(e)) showNoInternet(e); else showLogin(null);
         });
     }
 
     /** Full-screen "No internet connection": Try again button, and it reopens the app by itself when the network returns. */
-    private static void showNoInternet() {
-        Nav.show(new javafx.scene.layout.StackPane(Ui.errorState(new java.net.ConnectException("offline"), Main::boot)), false);
+    private static void showNoInternet() { showNoInternet(new java.net.ConnectException("offline")); }
+    private static void showNoInternet(Throwable why) {
+        Nav.show(new javafx.scene.layout.StackPane(Ui.errorState(why, Main::boot)), false);
     }
 
     private static void dispatch(AuthService.Restore r, SplashView splash) {
@@ -70,7 +72,7 @@ public class Main extends Application {
             case OFFLINE -> {
                 // Offline launch: with a cached profile open the app with an offline banner, else offer retry.
                 if (AuthService.get().profile() != null) { State.offline.set(true); route(); }
-                else showNoInternet();
+                else showNoInternet(AuthService.get().lastError() != null ? AuthService.get().lastError() : new java.net.ConnectException("offline"));
             }
         }
     }

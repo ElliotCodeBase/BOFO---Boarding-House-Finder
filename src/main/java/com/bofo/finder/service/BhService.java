@@ -47,7 +47,7 @@ public final class BhService {
     public List<College> colleges() throws Exception {
         return Cache.get("colleges", 3_600_000, () -> {            // colleges rarely change: cache 1 h
             List<College> l = new ArrayList<>();
-            JSONArray a = api.select("colleges", "select=*&order=name.asc");
+            JSONArray a = com.bofo.finder.util.Offline.array("colleges", () -> api.select("colleges", "select=*&order=name.asc"));
             for (int i = 0; i < a.length(); i++) l.add(College.from(a.getJSONObject(i)));
             return l;
         });
@@ -105,8 +105,8 @@ public final class BhService {
         };
         final String main = base + order + "&limit=60";
         final String featuredQ = base + "&is_featured=is.true&limit=10";           // featured listings are fetched separately so a top-60 cut never hides them
-        JSONArray a = Cache.get("list:" + main, 30_000, () -> cards(main));
-        JSONArray fa = Cache.get("list:" + featuredQ, 30_000, () -> cards(featuredQ));
+        JSONArray a = Cache.get("list:" + main, 30_000, () -> com.bofo.finder.util.Offline.array("list_" + Integer.toHexString(main.hashCode()), () -> cards(main)));
+        JSONArray fa = Cache.get("list:" + featuredQ, 30_000, () -> com.bofo.finder.util.Offline.array("list_" + Integer.toHexString(featuredQ.hashCode()), () -> cards(featuredQ)));
         Map<String, BoardingHouse> byId = new LinkedHashMap<>();
         for (JSONArray src : new JSONArray[]{fa, a})
             for (int i = 0; i < src.length(); i++) {
@@ -125,7 +125,10 @@ public final class BhService {
         return pinned;
     }
 
-    public JSONObject detail(String id) throws Exception {
+    /** Opens offline too: the last loaded copy of each place is kept on the device. */
+    public JSONObject detail(String id) throws Exception { return com.bofo.finder.util.Offline.object("detail_" + id, () -> detailOnline(id)); }
+
+    private JSONObject detailOnline(String id) throws Exception {
         // 4 independent requests run in parallel instead of one after another.
         var pool = Async.pool();
         var card = CompletableFuture.supplyAsync(() -> call(() -> cards("id=eq." + id + "&select=" + cols())), pool);
@@ -156,9 +159,10 @@ public final class BhService {
         else api.delete("favorites", "user_id=eq." + userId + "&boarding_house_id=eq." + bhId);
     }
     public List<BoardingHouse> favorites() throws Exception {
-        Set<String> ids = favoriteIds();
-        if (ids.isEmpty()) return List.of();
-        JSONArray a = cards("id=in.(" + String.join(",", ids) + ")&select=" + cols());
+        JSONArray a = com.bofo.finder.util.Offline.array("favorites", () -> {       // the Saved tab works offline from the last copy
+            Set<String> ids = favoriteIds();
+            return ids.isEmpty() ? new JSONArray() : cards("id=in.(" + String.join(",", ids) + ")&select=" + cols());
+        });
         List<BoardingHouse> l = new ArrayList<>();
         for (int i = 0; i < a.length(); i++) l.add(BoardingHouse.from(a.getJSONObject(i)));
         return l;

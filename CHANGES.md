@@ -1,3 +1,12 @@
+# v1.9.11 - Works without internet (saved chats, saved places, listings) + fewer false "no internet" screens
+
+- **Opens offline:** the signed-in profile is now kept on the device. Starting the app with no internet (or a server that answers slower than 4 s) opens it straight into Home / Dashboard with the "No internet connection - showing saved data" banner instead of a dead "No internet" screen. Only the very first sign-in on a device needs internet.
+- **Saved data on the device:** chat list, the newest messages of every chat you opened, the Saved tab, listing lists, each place you opened, and the campus list are stored and shown when offline. Older messages, sending, saving or removing a place, reviews and sign-in still say "No internet connection" when you try them.
+- **Back online:** screens that showed saved data reload by themselves when the connection returns.
+- **False "no internet":** a read request now retries once before the app flips to offline (one dropped connection no longer kills the whole app); connect timeout 8 s -> 12 s.
+- **Real reason on error screens:** a small grey line under "No internet connection" / "Something went wrong" names the actual error (for example `UnknownHostException: xxx.supabase.co`), so a failure while you ARE online can be told apart (wrong URL, paused Supabase project, DNS, firewall).
+- Sign-out / session expiry wipes the saved copies.
+
 # v1.9.10 - Loading screen: hat pops off and pops back on
 
 - The hat now has a proper toss: it sits on the head while the body launches, **pops off** just after the top of the jump (stretches upward, tilts 9 degrees, a white ring and five sparks burst from the head), hovers, falls back stretched, then **pops on** at the landing (squashes onto the head, rebounds, second burst) and settles. The second jump tilts the hat the other way.

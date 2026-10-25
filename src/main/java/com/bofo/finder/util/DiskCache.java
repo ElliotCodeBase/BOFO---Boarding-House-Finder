@@ -43,6 +43,11 @@ public final class DiskCache {
         } catch (Throwable ignored) { }
     }
 
+    /** Deletes every cached file whose name starts with {@code prefix} (used on sign-out for the user's own data). */
+    public static void deletePrefix(String prefix) {
+        try { File[] all = dir().listFiles((d, n) -> n.startsWith(prefix)); if (all != null) for (File f : all) f.delete(); } catch (Throwable ignored) { }
+    }
+
     /** Keeps only the {@code keep} newest files whose name starts with {@code prefix}. */
     public static void trim(String prefix, int keep) {
         try {
