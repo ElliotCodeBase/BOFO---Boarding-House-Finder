@@ -35,10 +35,16 @@ public final class BofoPanel extends Pane {
     private double dx, dy; private boolean dragged;
     private long lastAsk = 0; private int asksThisMinute = 0;
     private boolean greeted = false;
+    // idle moods: after a quiet spell the chat head thinks, sits, runs a circle or sleeps for a few seconds, then rests again
+    private final TranslateTransition bob = new TranslateTransition(Duration.seconds(1.2), fab);
+    private final PauseTransition idleTimer = new PauseTransition();
+    private final java.util.Random rnd = new java.util.Random();
+    private Mascot.Idle lastIdle;
+    private boolean idling, busy, pressing;
     private final EventHandler<MouseEvent> outsideClose = e -> {
         if (!chat.isVisible()) return;
         if (e.getTarget() instanceof Node n && (isInside(n, chat) || isInside(n, fab))) return;
-        chat.setVisible(false);
+        chat.setVisible(false); scheduleIdle();
     };
     private static boolean isInside(Node n, Node root) {
         for (Node x = n; x != null; x = x.getParent()) if (x == root) return true;
@@ -51,17 +57,19 @@ public final class BofoPanel extends Pane {
         fab.setGraphic(face); fab.setStyle("-fx-padding:4;");
         widthProperty().addListener((o, a, w) -> fit());      // re-fit on rotate / resize / first layout
         heightProperty().addListener((o, a, h) -> fit());
-        TranslateTransition idle = new TranslateTransition(Duration.seconds(1.2), fab);
-        idle.setByY(-6); idle.setAutoReverse(true); idle.setCycleCount(Animation.INDEFINITE); idle.play();
+        bob.setByY(-6); bob.setAutoReverse(true); bob.setCycleCount(Animation.INDEFINITE); bob.play();
+        visibleProperty().addListener((o, a, v) -> { if (v) scheduleIdle(); else stopIdle(false); });
 
-        fab.setOnMousePressed(e -> { dx = e.getSceneX() - fab.getLayoutX(); dy = e.getSceneY() - fab.getLayoutY(); dragged = false; });
+        fab.setOnMousePressed(e -> { pressing = true; stopIdle(false); dx = e.getSceneX() - fab.getLayoutX(); dy = e.getSceneY() - fab.getLayoutY(); dragged = false; });
         fab.setOnMouseDragged(e -> {
             dragged = true;
             fab.setLayoutX(clamp(e.getSceneX() - dx, 0, getWidth() - 56));
             fab.setLayoutY(clamp(e.getSceneY() - dy, 40, getHeight() - 140));
         });
         fab.setOnMouseReleased(e -> {
+            pressing = false;
             if (!dragged) { toggle(); return; }
+            scheduleIdle();
             double target = fab.getLayoutX() + 28 < getWidth() / 2 ? 6 : getWidth() - 62;   // snap to nearest edge
             Timeline t = new Timeline(new KeyFrame(Duration.millis(180), new KeyValue(fab.layoutXProperty(), target)));
             t.play();
@@ -82,6 +90,7 @@ public final class BofoPanel extends Pane {
         sceneProperty().addListener((obs, oldS, newS) -> {
             if (oldS != null) oldS.removeEventFilter(MouseEvent.MOUSE_PRESSED, outsideClose);
             if (newS != null) newS.addEventFilter(MouseEvent.MOUSE_PRESSED, outsideClose);
+            if (newS == null) stopIdle(false); else scheduleIdle();
         });
     }
 
@@ -97,8 +106,43 @@ public final class BofoPanel extends Pane {
         chat.setLayoutX((w - cw) / 2); chat.setLayoutY(Math.max(12, h - ch - 150));
     }
 
+    // ---- idle moods ----
+    private boolean canIdle() { return isVisible() && getScene() != null && !chat.isVisible() && !busy && !pressing; }
+
+    /** Waits 8-18 s of quiet, then starts a mood. Safe to call any time; does nothing while the chat is open or BOFO is answering. */
+    private void scheduleIdle() {
+        if (idling) return;
+        idleTimer.stop();
+        if (!canIdle()) return;
+        idleTimer.setDuration(Duration.seconds(8 + rnd.nextDouble() * 10));
+        idleTimer.setOnFinished(e -> startIdle());
+        idleTimer.playFromStart();
+    }
+
+    private void startIdle() {
+        if (!canIdle()) return;
+        Mascot.Idle[] all = Mascot.Idle.values();
+        Mascot.Idle pick;
+        do { pick = all[rnd.nextInt(all.length)]; } while (pick == lastIdle);     // never the same mood twice in a row
+        lastIdle = pick;
+        bob.stop(); fab.setTranslateY(0);
+        face.idle(pick); idling = true;
+        double secs = switch (pick) { case SLEEPING -> 12 + rnd.nextDouble() * 4; case RUNNING -> 5.4; case THINKING -> 7; case SITTING -> 8; };
+        idleTimer.setDuration(Duration.seconds(secs));
+        idleTimer.setOnFinished(e -> stopIdle(true));
+        idleTimer.playFromStart();
+    }
+
+    /** Ends the current mood (a tap, drag, open chat or question ends it at once) and optionally plans the next one. */
+    private void stopIdle(boolean reschedule) {
+        idleTimer.stop();
+        if (idling) { face.endIdle(); idling = false; bob.play(); }
+        if (reschedule) scheduleIdle();
+    }
+
     private void toggle() {
         chat.setVisible(!chat.isVisible());
+        if (chat.isVisible()) stopIdle(false); else scheduleIdle();
         if (chat.isVisible() && !greeted) { greeted = true; bubble("Hi! I'm BOFO. Ask me to find a boarding house, compare listings, or explain verification.", false); }
     }
 
@@ -110,12 +154,13 @@ public final class BofoPanel extends Pane {
         if (++asksThisMinute > 10) { bubble("Slow down a little. Try again in a minute.", false); return; }  // client-side courtesy; real limit is server-side
         input.clear(); bubble(q, true);
         Label thinking = bubble("...", false);
+        busy = true; stopIdle(false);
         face.set(Mascot.Expression.THINKING);
         String collegeId = State.college.get() == null ? null : State.college.get().id();
         Async.run(() -> ai.ask(q, collegeId), a -> {
-            face.set(Mascot.Expression.HAPPY); thinking.setText(a.reply());
+            busy = false; face.set(Mascot.Expression.HAPPY); scheduleIdle(); thinking.setText(a.reply());
             if (a.filters() != null && !a.filters().isEmpty()) filtersListener.accept(a.filters());
-        }, err -> { face.set(Mascot.Expression.HAPPY); thinking.setText(BofoAiService.faq(q)); });
+        }, err -> { busy = false; face.set(Mascot.Expression.HAPPY); scheduleIdle(); thinking.setText(BofoAiService.faq(q)); });
     }
 
     private Label bubble(String text, boolean me) {

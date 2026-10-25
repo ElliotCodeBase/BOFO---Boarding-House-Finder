@@ -1,3 +1,14 @@
+# v1.12.0 - The floating BOFO head has 4 idle moods
+
+- After 8-18 seconds of quiet the chat head plays one mood, then rests and picks another (never the same one twice in a row): **Thinking** (head tilts, eyes look around, thought bubble floats), **Sitting down** (sinks and spreads its feet, breathes, blinks), **Running in a circle** (happy face, runs a lap every 1.8 s, leans into the turn, feet take turns), **Sleeping** (eyes closed, head nodding, z z z floating up).
+- A tap, a drag, opening the chat or asking BOFO something ends the mood at once. Nothing plays while the chat is open, while BOFO is answering, or when the mascot is hidden in Settings.
+
+# v1.11.0 - Privacy Policy, Terms of Service and Agreements open inside the app
+
+- Profile > Security and privacy: **Privacy Policy**, **Terms of Service** and **Agreements and Guidelines** now slide up as a reader over the app (no browser, works offline). Close with the X, the Close button, a tap outside, or Esc.
+- The two links on the login screen (Terms of Service, Privacy Policy) open the same reader.
+- The text is a draft written for how BOFO really works (Google sign-in, location, owner ID + selfie, chats, PayMongo boosts, Data Privacy Act 2012). Have a Philippine lawyer review it before public release.
+
 # v1.9.13 - Chats offline: read every chat, write messages that send later
 
 - **Read offline:** the newest messages of your 20 latest chats are now saved on the device automatically whenever the chat list loads (before, only chats you had opened). A chat with nothing saved yet no longer shows a dead "No internet" screen: you see a short note and the message box still works.
