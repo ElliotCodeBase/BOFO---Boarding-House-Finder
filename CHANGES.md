@@ -1,4 +1,8 @@
-﻿# v1.12.6 - Better sitting and sleeping poses
+﻿# v1.12.7 - Thinking pose cleaned up
+
+- The raised arm no longer sticks out of the body like a lump: it is now a short straight arm with the hand under the chin (still taps).
+
+# v1.12.6 - Better sitting and sleeping poses
 
 - Sitting and sleeping no longer squash the body into a flat slab. BOFO keeps its normal body and face, sits a little lower with the feet stretched out in front, and the arms rest at the sides. Sleeping: eyes shut, small breathing mouth, head slowly drooping to the side with the hat tipping, z z z floating up.
 
