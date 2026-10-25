@@ -1,40 +1,24 @@
-# Handoff - v1.9.3 Directions stuck on "Finding the best way..." (2026-10-25)
-- **PR title:** `v1.9.3 - Directions: 12 s limit, offline estimate instead of a blank card`. Version in `config.properties`, `pom.xml` (versionCode 18), CHANGES.md.
-- **Cause (screenshot, BH -> campus, 3 km in Bacolod):** `TripPlanner.plan` makes several serial network calls (OSRM + Valhalla, 2 tries each, 12 s timeouts, for walk AND drive, plus Overpass 25 s); with slow/blocked servers that is minutes, so the skeleton never ended.
-- **Fix:** `TripPlanner.planWithin(from, to, 12)` (used by `DirectionsCard`, `PLAN_SECONDS`) returns `TripPlanner.quick(...)` (offline estimate, uses a cached road if there is one) after 12 s, with a note. The real plan keeps running in the background and fills `Router`/`TransitRoutes` caches, so tapping the tab again is fast.
-- Not compiled/run by Claude (no JavaFX/Maven). Parse-checked with javac. If it still shows estimates every time, check the console for `[Router] ...` lines: the OSRM/Valhalla hosts may be blocked on that network.
+# Handoff - v1.9.8 Splash mascot: two jumps per cycle (2026-10-25)
+- **PR title:** `v1.9.8 - Loading screen: two jumps per cycle`. Version in `config.properties`, `pom.xml` (versionCode 23), CHANGES.md.
+- `SplashView.addJump(...)` builds the key frames of one jump (1.1 s) at an offset; the timeline calls it twice (t0 = 0: apex -44, hat -34; t0 = 1100: apex -58, hat -44) plus a final 2200 ms frame. Same pose at both ends, so the loop is seamless. Tune the numbers in the two `addJump` calls.
+- Not compiled/run by Claude (no Maven, no javac). Check: two jumps, second one higher, hat leaves and lands each time, shadow touches the feet.
 
 ---
-# Handoff - v1.9.2 Directions: BH -> Campus fix + redesign (2026-10-25)
-- **PR title:** `v1.9.2 - Directions: BH to Campus tab fix, new Directions card design`. Version in `config.properties`, `pom.xml` (versionCode 17), CHANGES.md.
-- **Bug:** `DirectionsCard.select()` never cleared the map, so while the plan was loading (and for slow/failed networks) the previous tab's route (Me -> Campus, 123.8 km) stayed drawn under "Finding the best way...". Now `select()` calls `map.clearRoute()`, then `previewLine()` draws the saved road (`Router.peek`) or a straight guide line for THIS tab and moves the camera to it; the real plan replaces it when ready.
-- **Design:** `tripHeader` (From/To dots), `dir-hero` summary (icon, time, distance, fare), `note()` rows (ok/warn/bad symbols), `btn-tint` / `btn-link` buttons, skeleton placeholders while loading, map 250 px high. New CSS block "Directions card redesign (v1.9.2)" at the end of `bofo.css`.
-- Not compiled/run by Claude (no JavaFX or Maven access here); parse-checked with javac only. Please run on the phone: open a BH, tap each of the three tabs, check the line and layout.
-- Process: CLAUDE.md now says every change is delivered as a zip of CHANGED files only; old handoff entries moved to `docs/HANDOFF_ARCHIVE.md` (read it only when needed).
+
+# Handoff - v1.9.7 Splash mascot: shadow on the feet + hat drop (2026-10-25)
+- **PR title:** `v1.9.7 - Loading screen: shadow touches the feet, hat falls off at the top of the jump and lands back on`. Version in `config.properties`, `pom.xml` (versionCode 22), CHANGES.md.
+- **Cause of the gap:** `SplashView` centred the mascot in a 210 px box but put the shadow at the bottom (about 30 px apart), and `scaleY` squash pivoted on the body centre, lifting the feet. Now the mascot is bottom-aligned (`ground` = 12), the shadow is centred on that line, and a `Scale` with pivot at the soles (`mb.getMaxY()`) replaces `scaleX/scaleY`.
+- **Hat:** `Mascot.hat()` returns the hat as its own `Group` (chimney + roof + brim, drawn last). Timeline: 560 ms apex, pops to -34 / -14 deg by 680 ms, falls with an ease-in so it is back at 0 at 950 ms (landing), press +3 at 1010 ms, 0 at 1100 ms.
+- Not compiled/run by Claude (no Maven, no javac). Please run it: shadow should touch both feet on landing, hat should leave at the top and land with the feet. Tune: `-34` height, `-14` tilt, `ground`.
 
 ---
-# Handoff - v1.9.1 Directions tabs (2026-10-25)
-- **PR title:** `v1.9.1 - Directions tabs: current location to BH, current location to campus, BH to campus`. Version in `config.properties`, `pom.xml` (versionCode 16), CHANGES.md.
-- `DirectionsCard`: tab 2 is now BH -> campus (it was campus -> BH), labels "Me → BH", "Me → Campus", "BH → Campus" (one line each); start name reads "Current location". The far-away button reads "Show BH → Campus instead" (that tab does not need GPS). Jeepney direction matching therefore runs from the BH to the campus on tab 2.
-- Type-checked against OpenJFX (only Gluon symbols unresolved); not run on screen.
+
+# Handoff - v1.9.6 Map credit pill, New listing form redesign, owner chat title (2026-10-25)
+- **PR title:** `v1.9.6 - Neater map credit, redesigned New listing form, owner chat shows student name`. Version in `config.properties`, `pom.xml` (versionCode 21), CHANGES.md (v1.9.4, v1.9.5, v1.9.6 entries).
+- **Map credit (MapPane):** the OpenFreeMap / OpenMapTiles / OSM credit is a rounded `.map-attr` pill (wraps, stays clear of the find-me button). Text is kept visible on purpose (ODbL / CC-BY).
+- **ListingFormView (rewritten):** 7 numbered cards, `RoomRow` with - / + `Spinner` steppers (occupants capped at beds, remove room), `Ui.segmented` Per bed / Per room, photo thumbnails with remove, pin status box (green when set), bottom `.sticky-bar` with "x of 6 required details done" + Publish. CSS block "New listing form" in `bofo.css`.
+- **ChatsView:** owner opens a chat with the student's name as title (`c.otherName()`), students still get the BH name.
+- Not compiled/run by Claude (no Maven, no javac). Please run: Create tab (check steppers, previews, sticky bar), map credit on Home, owner chat header.
+- Old versionCode steps: 1.9.3 = 18, so 1.9.4 = 19, 1.9.5 = 20, 1.9.6 = 21.
 
 ---
-# Handoff - v1.9.0 offline jeepney cache, hand-made lines, options on the map card (2026-10-25)
-- **PR title:** `v1.9.0 - Directions: offline jeepney cache, local transit file, tricycle/jeepney options on map cards`. Version bumped in `config.properties` (Profile > About), `pom.xml` (`<version>`, `<versionName>`, `<versionCode>` 15), CHANGES.md.
-- **Disk cache** (`util/DiskCache`, `ui/AppStorage`): `TransitRoutes.around` = memory, then device copy younger than 14 days, then Overpass (writes the copy, keeps the newest 30), then, when offline, ANY older copy (`lastSource()` = online / saved / old / none). Files: `<private storage or ~/.bofo>/cache/transit-<bbox>.json`. A corrupt copy is ignored. `AppStorage.init()` is called from `MapPane` and `DirectionsCard` static blocks.
-- **Local lines** (`util/LocalTransit`, `local-transit.json`, `docs/LOCAL_TRANSIT.md`): hand-made lines from `stops` or `path`, optional checked `fareLow/fareHigh` and `note`, both directions by default, rank 20% better than OSM lines, bad entries skipped one by one. Two files are merged: the one in resources (ships empty ON PURPOSE: I had no verified Dumaguete/Bacolod routes or fares, nothing was invented) and `local-transit.json` in the device's BOFO folder. `pom.xml` Android `resourcesList` now includes `.*\.json$`.
-- `TransitMatch.Line` got `note, fareLow, fareHigh` (old 5-argument constructor kept); `Trip.jeepney(..., fareLow, fareHigh, note)`; `Trip.Option.summary()`.
-- **Map card (Home / Explore / owner map)**: after the walking route is drawn, `MapPane.planOptions` runs `TripPlanner.plan` in the background and shows the best option on the card ("Jeepney 20 min, P14-17, 3.0 km  +2 more, from <campus>"); if it is not a walk, its path replaces the walking line (far trips also move the camera). Tap the card for all options.
-- `TripPlanner`: if the first route call shows the route server is unreachable, drive and stop legs use estimates at once (offline plan 8.7 s to 2.8 s); notes from several causes are joined, not overwritten.
-- Tested by Claude (fake OSRM/Overpass server, separate JVMs): local-line parsing incl. broken entries, checked fare shown, disk cache online -> servers down (fresh copy), 20-day-old copy, corrupt copy, plus the full v1.8.0 suite. `dev/TripLogicCheck.java` extended. UI files type-check against OpenJFX except the Gluon parts; NOT run on screen: please tap a pin on Home and look at the card text.
-
----
-# Handoff - v1.8.0 directions: commuter data, mode options, layout fix (2026-10-25)
-- **PR title:** `v1.8.0 - Directions: walk/tricycle/jeepney options from public commuter data, card layout fix`. Version bumped in `config.properties` (Profile > About), `pom.xml` (`<version>`, `<versionName>`, `<versionCode>` 14), CHANGES.md.
-- New `DirectionsCard` (ui) replaces the old Location card on `BhDetailView`: tabs Me > Here / Me > Campus / Campus > Here (equal-width grid, may wrap, nothing has a min width bigger than the screen: that was what pushed the old card off the right edge), map, list of options, "Open in OpenStreetMap". The page's bottom padding is 96 so the last card scrolls above the floating mascot.
-- New util classes: `Trip` (records, LTFRB fares, time estimates, "best" pick; pure), `TransitMatch` (which mapped line really goes A to B in the right direction; pure), `TransitRoutes` (downloads jeepney/bus/share_taxi route relations from OpenStreetMap via Overpass; open data, ODbL), `TripPlanner` (puts it together). `Router.drive()` added (car profile, OSRM + Valhalla `auto`).
-- Over 25 km straight line = only "Bus or van" (no walk, no fare); `Router.walk` skips the foot server beyond 30 km (`Router.MAX_WALK_KM`) and `MapPane` no longer retries those 4 times. `MapPane.showPath()` draws a ready-made path with its own badge; `fitBounds` zooms out to 6 for far trips.
-- `Geo.fmtTime` ("1 h 5 min"), `Geo.walkText`, `Geo.pathKm`. "min walk" texts on BhCard / BhDetailView / MapPane / ListingFormView use them (over 3 km = "12 km away", no walking time).
-- `State.gpsApprox` (true when the fix came from a PC / `dev.location`): the card warns that PC locations can be off by km (this was the 105 km "walk" in the screenshot).
-- Data honesty: jeepney lines exist only where OSM volunteers mapped them. Where none are found the card says "Jeepney or multicab (estimate)" (fare from the LTFRB formula, ask the driver). Tricycle fares are the commonly paid Dumaguete range (city-set). Fares: traditional jeepney P14 first 4 km + P2/km, modern P17 + P2.40/km (LTFRB, effective 19 Mar 2026). Check `Trip` constants if LTFRB changes them.
-- Tested by Claude: `Trip`, `TransitMatch`, `TripPlanner`, `TransitRoutes.parse`, `Router` against a fake OSRM/Overpass server (including servers down), see `dev/TripLogicCheck.java`. UI files were type-checked against OpenJFX but NOT run (no Gluon Maps / display in Claude's environment): run the app and look at the Directions card on a BH page.

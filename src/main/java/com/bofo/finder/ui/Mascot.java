@@ -24,6 +24,7 @@ public final class Mascot extends Group {
 
     private final double size;
     private final Group art = new Group();
+    private Group hat = new Group();
     private RotateTransition tilt;
 
     public Mascot(Expression e, double size) { this(e, size, false); }
@@ -50,14 +51,14 @@ public final class Mascot extends Group {
 
         // feet
         art.getChildren().addAll(rr(60, 156, 30, 16, 8, DARK), rr(110, 156, 30, 16, 8, DARK));
-        // hat (behind the head): chimney + roof
+        // hat: chimney + roof + brim in ONE group so it can come off the head (see hat()); drawn last, the brim hides the roof's base
         Polygon roof = new Polygon(57, 48, 100, 16, 143, 48);
         roof.setFill(AMBER); roof.setStroke(AMBER); roof.setStrokeWidth(8); roof.setStrokeLineJoin(StrokeLineJoin.ROUND);
-        art.getChildren().addAll(rr(119, 18, 13, 24, 4, AMBER_DARK), roof);
-        // body, face screen, glass highlight, status light, brim
+        hat = new Group(rr(119, 18, 13, 24, 4, AMBER_DARK), roof, rr(38, 45, 124, 14, 7, AMBER_DARK));
+        // body, face screen, glass highlight, status light, hat
         Rectangle glass = rr(66, 77, 36, 5, 2.5, TINT);
         art.getChildren().addAll(rr(40, 50, 120, 112, 32, PURPLE), rr(56, 70, 88, 68, 22, WHITE), glass,
-                rr(86, 146, 28, 6, 3, AMBER), rr(38, 45, 124, 14, 7, AMBER_DARK));
+                rr(86, 146, 28, 6, 3, AMBER), hat);
 
         switch (e) {
             case THINKING -> {
@@ -76,6 +77,9 @@ public final class Mascot extends Group {
                     arc(86, 122, 100, 134, 114, 122, INK, 5));
         }
     }
+
+    /** The hat as its own node (units of the 200x200 art grid, before scaling): animate translateY / rotate to lift it off the head. */
+    public Group hat() { return hat; }
 
     /** Gentle idle bounce (splash screen, login, floating button). */
     public Mascot bob() {

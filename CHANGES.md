@@ -1,6 +1,37 @@
-# v1.9.3 - Directions never stays blank
+# v1.9.8 - Loading screen: two jumps per cycle
 
-- The Directions card no longer sits on "Finding the best way…" when the route servers are slow: after 12 seconds it shows an estimate (walk / tricycle / jeepney guess) with a note, and the exact roads are ready on the next try.
+- The mascot now does two jumps in a row before the loop restarts (about 2.2 s). The second jump is a bit higher and the hat is tossed higher; in both, the hat comes off at the top and lands back on with the feet. The shadow still touches the feet on landing.
+
+# v1.9.7 - Loading screen: shadow under the feet, hat drops off at the top of the jump
+
+- Fixed: the shadow did not touch the feet when the mascot landed. The feet now stand on a ground line with the shadow centred under them, and the squash / stretch pivots on the soles so the feet stay on the ground.
+- New: at the top of the jump the hat comes off, floats and tilts, then drops back onto the head exactly as the feet land (with a small press).
+
+# v1.9.6 - Owner chat shows the student's name
+
+- Owner side: the chat header now shows the student's name instead of the boarding house name. Students still see the boarding house name. The Chats list is unchanged.
+
+# v1.9.5 - New listing form redesign
+
+- The form is now seven numbered cards (Basics, Pin location, Monthly payment, Rooms, Amenities, Photos, Contact), each with a short hint.
+- Rooms: beds and "Occupied now" use clean - / + steppers; occupants can never be higher than beds; extra rooms can be removed.
+- Price: "Per bed / Per room" is now a switch under the price field.
+- Pin: the status under the map turns green once the pin is set (with distance from the nearest campus).
+- Photos: added photos show as small previews with an x to remove them; the label says "No photos yet", "1 photo", "2 photos".
+- The Publish button and a "x of 6 required details done" line stay at the bottom while you scroll; errors show in a red box above it.
+- Removed the emoji from the buttons (they showed as black glyphs on Windows).
+
+# v1.9.4 - Neater map credit
+
+- The credit under the map ("OpenFreeMap (c) OpenMapTiles, data from OpenStreetMap") is now a small rounded pill with a soft border and shadow, in the app's purple-grey text colour, instead of a plain grey strip.
+- It is wrapped so it never runs under the "find me" button on narrow phones, and sits slightly inside the map corner.
+- The credit text itself is unchanged and still visible (required by the OpenStreetMap and OpenMapTiles licences). Edit its look in `bofo.css` (`.map-attr`).
+
+# v1.9.3 - Home map overview + clearer map
+
+- Home opens zoomed out showing every boarding house and your location; the location button switches it off (go to me) and back on, and is highlighted while it is on. Searching or choosing a campus turns it off.
+- Clearer markers: purple dots, white numbered bubbles for groups, a red pin for the selected boarding house, orange campus dots.
+- Faster map: tiles are drawn one at a time, no buildings or alleys, fewer outlines; smoother zoom when tapping a boarding house.
 
 # v1.9.2 - Directions: BH → Campus fix and new look
 

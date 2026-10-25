@@ -2,6 +2,48 @@
 
 Only read this when you need old details. Newest entries are in ../HANDOFF.md.
 
+# Handoff - v1.9.2 Directions: BH -> Campus fix + redesign (2026-10-25)
+- **PR title:** `v1.9.2 - Directions: BH to Campus tab fix, new Directions card design`. Version in `config.properties`, `pom.xml` (versionCode 17), CHANGES.md.
+- **Bug:** `DirectionsCard.select()` never cleared the map, so while the plan was loading (and for slow/failed networks) the previous tab's route (Me -> Campus, 123.8 km) stayed drawn under "Finding the best way...". Now `select()` calls `map.clearRoute()`, then `previewLine()` draws the saved road (`Router.peek`) or a straight guide line for THIS tab and moves the camera to it; the real plan replaces it when ready.
+- **Design:** `tripHeader` (From/To dots), `dir-hero` summary (icon, time, distance, fare), `note()` rows (ok/warn/bad symbols), `btn-tint` / `btn-link` buttons, skeleton placeholders while loading, map 250 px high. New CSS block "Directions card redesign (v1.9.2)" at the end of `bofo.css`.
+- Not compiled/run by Claude (no JavaFX or Maven access here); parse-checked with javac only. Please run on the phone: open a BH, tap each of the three tabs, check the line and layout.
+- Process: CLAUDE.md now says every change is delivered as a zip of CHANGED files only; old handoff entries moved to `docs/HANDOFF_ARCHIVE.md` (read it only when needed).
+
+---
+
+---
+
+# Handoff - v1.9.1 Directions tabs (2026-10-25)
+- **PR title:** `v1.9.1 - Directions tabs: current location to BH, current location to campus, BH to campus`. Version in `config.properties`, `pom.xml` (versionCode 16), CHANGES.md.
+- `DirectionsCard`: tab 2 is now BH -> campus (it was campus -> BH), labels "Me → BH", "Me → Campus", "BH → Campus" (one line each); start name reads "Current location". The far-away button reads "Show BH → Campus instead" (that tab does not need GPS). Jeepney direction matching therefore runs from the BH to the campus on tab 2.
+- Type-checked against OpenJFX (only Gluon symbols unresolved); not run on screen.
+
+---
+
+---
+
+# Handoff - v1.9.0 offline jeepney cache, hand-made lines, options on the map card (2026-10-25)
+- **PR title:** `v1.9.0 - Directions: offline jeepney cache, local transit file, tricycle/jeepney options on map cards`. Version bumped in `config.properties` (Profile > About), `pom.xml` (`<version>`, `<versionName>`, `<versionCode>` 15), CHANGES.md.
+- **Disk cache** (`util/DiskCache`, `ui/AppStorage`): `TransitRoutes.around` = memory, then device copy younger than 14 days, then Overpass (writes the copy, keeps the newest 30), then, when offline, ANY older copy (`lastSource()` = online / saved / old / none). Files: `<private storage or ~/.bofo>/cache/transit-<bbox>.json`. A corrupt copy is ignored. `AppStorage.init()` is called from `MapPane` and `DirectionsCard` static blocks.
+- **Local lines** (`util/LocalTransit`, `local-transit.json`, `docs/LOCAL_TRANSIT.md`): hand-made lines from `stops` or `path`, optional checked `fareLow/fareHigh` and `note`, both directions by default, rank 20% better than OSM lines, bad entries skipped one by one. Two files are merged: the one in resources (ships empty ON PURPOSE: I had no verified Dumaguete/Bacolod routes or fares, nothing was invented) and `local-transit.json` in the device's BOFO folder. `pom.xml` Android `resourcesList` now includes `.*\.json$`.
+- `TransitMatch.Line` got `note, fareLow, fareHigh` (old 5-argument constructor kept); `Trip.jeepney(..., fareLow, fareHigh, note)`; `Trip.Option.summary()`.
+- **Map card (Home / Explore / owner map)**: after the walking route is drawn, `MapPane.planOptions` runs `TripPlanner.plan` in the background and shows the best option on the card ("Jeepney 20 min, P14-17, 3.0 km  +2 more, from <campus>"); if it is not a walk, its path replaces the walking line (far trips also move the camera). Tap the card for all options.
+- `TripPlanner`: if the first route call shows the route server is unreachable, drive and stop legs use estimates at once (offline plan 8.7 s to 2.8 s); notes from several causes are joined, not overwritten.
+- Tested by Claude (fake OSRM/Overpass server, separate JVMs): local-line parsing incl. broken entries, checked fare shown, disk cache online -> servers down (fresh copy), 20-day-old copy, corrupt copy, plus the full v1.8.0 suite. `dev/TripLogicCheck.java` extended. UI files type-check against OpenJFX except the Gluon parts; NOT run on screen: please tap a pin on Home and look at the card text.
+
+---
+# Handoff - v1.8.0 directions: commuter data, mode options, layout fix (2026-10-25)
+- **PR title:** `v1.8.0 - Directions: walk/tricycle/jeepney options from public commuter data, card layout fix`. Version bumped in `config.properties` (Profile > About), `pom.xml` (`<version>`, `<versionName>`, `<versionCode>` 14), CHANGES.md.
+- New `DirectionsCard` (ui) replaces the old Location card on `BhDetailView`: tabs Me > Here / Me > Campus / Campus > Here (equal-width grid, may wrap, nothing has a min width bigger than the screen: that was what pushed the old card off the right edge), map, list of options, "Open in OpenStreetMap". The page's bottom padding is 96 so the last card scrolls above the floating mascot.
+- New util classes: `Trip` (records, LTFRB fares, time estimates, "best" pick; pure), `TransitMatch` (which mapped line really goes A to B in the right direction; pure), `TransitRoutes` (downloads jeepney/bus/share_taxi route relations from OpenStreetMap via Overpass; open data, ODbL), `TripPlanner` (puts it together). `Router.drive()` added (car profile, OSRM + Valhalla `auto`).
+- Over 25 km straight line = only "Bus or van" (no walk, no fare); `Router.walk` skips the foot server beyond 30 km (`Router.MAX_WALK_KM`) and `MapPane` no longer retries those 4 times. `MapPane.showPath()` draws a ready-made path with its own badge; `fitBounds` zooms out to 6 for far trips.
+- `Geo.fmtTime` ("1 h 5 min"), `Geo.walkText`, `Geo.pathKm`. "min walk" texts on BhCard / BhDetailView / MapPane / ListingFormView use them (over 3 km = "12 km away", no walking time).
+- `State.gpsApprox` (true when the fix came from a PC / `dev.location`): the card warns that PC locations can be off by km (this was the 105 km "walk" in the screenshot).
+- Data honesty: jeepney lines exist only where OSM volunteers mapped them. Where none are found the card says "Jeepney or multicab (estimate)" (fare from the LTFRB formula, ask the driver). Tricycle fares are the commonly paid Dumaguete range (city-set). Fares: traditional jeepney P14 first 4 km + P2/km, modern P17 + P2.40/km (LTFRB, effective 19 Mar 2026). Check `Trip` constants if LTFRB changes them.
+- Tested by Claude: `Trip`, `TransitMatch`, `TripPlanner`, `TransitRoutes.parse`, `Router` against a fake OSRM/Overpass server (including servers down), see `dev/TripLogicCheck.java`. UI files were type-checked against OpenJFX but NOT run (no Gluon Maps / display in Claude's environment): run the app and look at the Directions card on a BH page.
+
+---
+
 ---
 # Handoff - v1.7.0 boarding house page redesign, Call button removed (2026-10-25)
 - `BhDetailView.render()` rewritten: photo hero (friendly placeholder when no photos), name + address with pin, big purple price + "/ month · per room", status pills (Verified, "N beds available" / "Fully booked", distance), 3 quick-fact tiles (beds free, rooms, rating), then white cards: Amenities, Rooms (per-room "N free"/"Full"), Location (rounded map + route), Reviews (+ review form for students). Bottom bar = only "Chat with owner".
