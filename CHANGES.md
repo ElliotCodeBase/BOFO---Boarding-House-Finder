@@ -1,3 +1,10 @@
+# v1.9.10 - Loading screen: hat pops off and pops back on
+
+- The hat now has a proper toss: it sits on the head while the body launches, **pops off** just after the top of the jump (stretches upward, tilts 9 degrees, a white ring and five sparks burst from the head), hovers, falls back stretched, then **pops on** at the landing (squashes onto the head, rebounds, second burst) and settles. The second jump tilts the hat the other way.
+- Hat tilt now pivots on the brim centre and the squash pivots on the underside of the brim, so it presses onto the head instead of wobbling around its own middle.
+- The loop is 2.4 s now (two jumps + a short rest); the mascot recovers from the landing squash and crouches again so the restart is smooth.
+- New `Mascot.fx()` overlay group (art-grid units) used for the sparks.
+
 # v1.9.9 - Loading screen: hat no longer looks like a flying plate, visible shadow, livelier dots
 
 - Fixed: when the hat came off it lifted far above the head and tilted 14 degrees, so the wide brim read as a flat tilted plate. It now lifts a short way (20 / 26 units) and tilts only 5 degrees (the second jump tilts the other way), so it still reads as a hat.

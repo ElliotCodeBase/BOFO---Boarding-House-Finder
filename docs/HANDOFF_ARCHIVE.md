@@ -2,6 +2,14 @@
 
 Only read this when you need old details. Newest entries are in ../HANDOFF.md.
 
+# Handoff - v1.9.7 Splash mascot: shadow on the feet + hat drop (2026-10-25)
+- **PR title:** `v1.9.7 - Loading screen: shadow touches the feet, hat falls off at the top of the jump and lands back on`. Version in `config.properties`, `pom.xml` (versionCode 22), CHANGES.md.
+- **Cause of the gap:** `SplashView` centred the mascot in a 210 px box but put the shadow at the bottom (about 30 px apart), and `scaleY` squash pivoted on the body centre, lifting the feet. Now the mascot is bottom-aligned (`ground` = 12), the shadow is centred on that line, and a `Scale` with pivot at the soles (`mb.getMaxY()`) replaces `scaleX/scaleY`.
+- **Hat:** `Mascot.hat()` returns the hat as its own `Group` (chimney + roof + brim, drawn last). Timeline: 560 ms apex, pops to -34 / -14 deg by 680 ms, falls with an ease-in so it is back at 0 at 950 ms (landing), press +3 at 1010 ms, 0 at 1100 ms.
+- Not compiled/run by Claude (no Maven, no javac). Please run it: shadow should touch both feet on landing, hat should leave at the top and land with the feet. Tune: `-34` height, `-14` tilt, `ground`.
+
+---
+
 # Handoff - v1.9.6 Map credit pill, New listing form redesign, owner chat title (2026-10-25)
 - **PR title:** `v1.9.6 - Neater map credit, redesigned New listing form, owner chat shows student name`. Version in `config.properties`, `pom.xml` (versionCode 21), CHANGES.md (v1.9.4, v1.9.5, v1.9.6 entries).
 - **Map credit (MapPane):** the OpenFreeMap / OpenMapTiles / OSM credit is a rounded `.map-attr` pill (wraps, stays clear of the find-me button). Text is kept visible on purpose (ODbL / CC-BY).

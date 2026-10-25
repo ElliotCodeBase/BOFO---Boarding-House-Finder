@@ -25,6 +25,7 @@ public final class Mascot extends Group {
     private final double size;
     private final Group art = new Group();
     private Group hat = new Group();
+    private final Group fx = new Group();   // effects layer (sparks etc.) in art-grid units, drawn above everything
     private RotateTransition tilt;
 
     public Mascot(Expression e, double size) { this(e, size, false); }
@@ -59,6 +60,7 @@ public final class Mascot extends Group {
         Rectangle glass = rr(66, 77, 36, 5, 2.5, TINT);
         art.getChildren().addAll(rr(40, 50, 120, 112, 32, PURPLE), rr(56, 70, 88, 68, 22, WHITE), glass,
                 rr(86, 146, 28, 6, 3, AMBER), hat);
+        art.getChildren().add(fx);
 
         switch (e) {
             case THINKING -> {
@@ -77,6 +79,9 @@ public final class Mascot extends Group {
                     arc(86, 122, 100, 134, 114, 122, INK, 5));
         }
     }
+
+    /** Empty overlay group in art-grid units (200x200), drawn on top of the mascot; survives set(). Used for pop sparks. */
+    public Group fx() { return fx; }
 
     /** The hat as its own node (units of the 200x200 art grid, before scaling): animate translateY / rotate to lift it off the head. */
     public Group hat() { return hat; }
