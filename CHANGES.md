@@ -1,8 +1,6 @@
-# v1.9.3 - Home map overview + clearer map
+# v1.9.3 - Directions never stays blank
 
-- Home opens zoomed out showing every boarding house and your location; the location button switches it off (go to me) and back on, and is highlighted while it is on. Searching or choosing a campus turns it off.
-- Clearer markers: purple dots, white numbered bubbles for groups, a red pin for the selected boarding house, orange campus dots.
-- Faster map: tiles are drawn one at a time, no buildings or alleys, fewer outlines; smoother zoom when tapping a boarding house.
+- The Directions card no longer sits on "Finding the best way…" when the route servers are slow: after 12 seconds it shows an estimate (walk / tricycle / jeepney guess) with a note, and the exact roads are ready on the next try.
 
 # v1.9.2 - Directions: BH → Campus fix and new look
 

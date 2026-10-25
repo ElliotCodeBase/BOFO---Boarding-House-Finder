@@ -106,9 +106,12 @@ public final class MapPane extends StackPane {
         setMinHeight(height); setPrefHeight(height); setMaxHeight(height);
         applyZoom(15); map.addLayer(layer);
         Label attr = new Label(AppConfig.mapAttribution());
-        attr.setStyle("-fx-font-size:9px;-fx-text-fill:#6B6580;-fx-background-color:rgba(255,255,255,0.7);-fx-padding:1 4;");
+        attr.getStyleClass().add("map-attr");                       // look lives in bofo.css (.map-attr)
+        attr.setWrapText(true);
+        attr.maxWidthProperty().bind(widthProperty().subtract(68)); // never run under the "find me" button
         attr.setMouseTransparent(true);
         StackPane.setAlignment(attr, Pos.BOTTOM_LEFT);
+        StackPane.setMargin(attr, new Insets(0, 0, 8, 8));
 
         locate.getStyleClass().add("map-fab");
         locate.setGraphic(Ui.strokeIcon(Glyphs.LOCATE, 22, BLUE));

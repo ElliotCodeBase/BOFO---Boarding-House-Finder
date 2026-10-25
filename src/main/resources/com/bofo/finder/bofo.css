@@ -245,6 +245,11 @@
   -fx-padding: 0; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.20), 8, 0, 0, 2); }
 .map-fab:hover { -fx-background-color: -bofo-primary-tint; }
 
+/* Map credit (OpenFreeMap / OpenMapTiles / OpenStreetMap). Must stay visible: small, soft pill in the brand colours. */
+.map-attr { -fx-background-color: rgba(255,255,255,0.82); -fx-background-radius: 999; -fx-border-color: rgba(91,59,240,0.14);
+  -fx-border-radius: 999; -fx-padding: 3 9 3 9; -fx-text-fill: -bofo-text-2; -fx-font-size: 9px; -fx-font-weight: bold;
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.10), 4, 0, 0, 1); }
+
 /* Map: preview card, follow-me button, distance badges */
 .map-card { -fx-background-color: white; -fx-background-radius: 20; -fx-padding: 10;
   -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.24), 16, 0, 0, 4); -fx-cursor: hand; }
@@ -255,6 +260,27 @@
   -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.25), 6, 0, 0, 2); }
 .map-origin-tag { -fx-background-color: rgba(255,255,255,0.92); -fx-background-radius: 8; -fx-padding: 1 6 1 6;
   -fx-text-fill: -bofo-primary-dark; -fx-font-size: 10px; -fx-font-weight: bold; }
+
+/* ---- New listing form (ListingFormView) ---- */
+.sec-num { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 999; -fx-text-fill: -bofo-primary-dark; -fx-font-size: 13px; -fx-font-weight: bold; }
+.room-card { -fx-background-color: -bofo-bg; -fx-background-radius: 16; -fx-padding: 12; }
+.room-title { -fx-font-weight: bold; -fx-font-size: 14px; }
+.room-remove { -fx-min-width: 30; -fx-min-height: 30; -fx-pref-width: 30; -fx-pref-height: 30; -fx-max-width: 30; -fx-max-height: 30; -fx-padding: 0; }
+/* - / + stepper (Spinner with split arrows) */
+.stepper { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999; }
+.stepper .text-field, .stepper .text-field:focused { -fx-background-color: transparent; -fx-border-width: 0; -fx-padding: 8 0; -fx-alignment: center; -fx-font-weight: bold; }
+.stepper .increment-arrow-button, .stepper .decrement-arrow-button { -fx-background-color: transparent; -fx-background-insets: 0; -fx-background-radius: 999; -fx-padding: 8 12; }
+.stepper .increment-arrow-button:hover, .stepper .decrement-arrow-button:hover { -fx-background-color: -bofo-primary-tint; }
+.stepper .increment-arrow, .stepper .decrement-arrow { -fx-background-color: -bofo-primary; }
+/* pin status under the map */
+.pin-status { -fx-background-color: -bofo-bg; -fx-background-radius: 14; -fx-padding: 8 12; -fx-text-fill: -bofo-text-2; -fx-font-size: 12px; }
+.pin-status-ok { -fx-background-color: #E1F4EA; -fx-text-fill: #17603F; }
+/* photo preview tiles */
+.thumb-x { -fx-background-color: rgba(23,20,42,0.62); -fx-background-radius: 999; -fx-min-width: 20; -fx-min-height: 20; -fx-pref-width: 20; -fx-pref-height: 20; -fx-max-width: 20; -fx-max-height: 20; -fx-padding: 0; -fx-cursor: hand; }
+.thumb-x:hover { -fx-background-color: -bofo-error; }
+/* bottom bar that stays visible while the form scrolls */
+.sticky-bar { -fx-background-color: white; -fx-border-color: -bofo-border transparent transparent transparent; -fx-border-width: 1 0 0 0; }
+.progress-done { -fx-text-fill: -bofo-success; -fx-font-weight: bold; }
 
 /* ---- Home: college row, floating radius pill, campus names on the map ---- */
 .near-btn { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999;

@@ -1,3 +1,10 @@
+# Handoff - v1.9.3 Directions stuck on "Finding the best way..." (2026-10-25)
+- **PR title:** `v1.9.3 - Directions: 12 s limit, offline estimate instead of a blank card`. Version in `config.properties`, `pom.xml` (versionCode 18), CHANGES.md.
+- **Cause (screenshot, BH -> campus, 3 km in Bacolod):** `TripPlanner.plan` makes several serial network calls (OSRM + Valhalla, 2 tries each, 12 s timeouts, for walk AND drive, plus Overpass 25 s); with slow/blocked servers that is minutes, so the skeleton never ended.
+- **Fix:** `TripPlanner.planWithin(from, to, 12)` (used by `DirectionsCard`, `PLAN_SECONDS`) returns `TripPlanner.quick(...)` (offline estimate, uses a cached road if there is one) after 12 s, with a note. The real plan keeps running in the background and fills `Router`/`TransitRoutes` caches, so tapping the tab again is fast.
+- Not compiled/run by Claude (no JavaFX/Maven). Parse-checked with javac. If it still shows estimates every time, check the console for `[Router] ...` lines: the OSRM/Valhalla hosts may be blocked on that network.
+
+---
 # Handoff - v1.9.2 Directions: BH -> Campus fix + redesign (2026-10-25)
 - **PR title:** `v1.9.2 - Directions: BH to Campus tab fix, new Directions card design`. Version in `config.properties`, `pom.xml` (versionCode 17), CHANGES.md.
 - **Bug:** `DirectionsCard.select()` never cleared the map, so while the plan was loading (and for slow/failed networks) the previous tab's route (Me -> Campus, 123.8 km) stayed drawn under "Finding the best way...". Now `select()` calls `map.clearRoute()`, then `previewLine()` draws the saved road (`Router.peek`) or a straight guide line for THIS tab and moves the camera to it; the real plan replaces it when ready.

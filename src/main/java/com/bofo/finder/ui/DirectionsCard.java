@@ -35,8 +35,8 @@ import java.util.Locale;
  * right edge): tabs share the width equally and may wrap, texts wrap, buttons take the full row.
  */
 final class DirectionsCard extends VBox {
-    private static final int[] TAB_COLUMN = {1, 2, 0};              // screen position of each tab (the tab numbers below stay the same)
     private static final String[] TABS = {"Me \u2192 BH", "Me \u2192 Campus", "BH \u2192 Campus"};   // short enough to stay on one line
+    private static final int PLAN_SECONDS = 12;                      // longest wait for the real plan; then an offline estimate is shown
     private static final double MOVE_REPLAN_KM = 0.08;               // re-plan when you walked this far (only trips that start at you)
 
     private final BoardingHouse bh;
@@ -81,7 +81,7 @@ final class DirectionsCard extends VBox {
             t.setMinWidth(0); t.setMaxWidth(Double.MAX_VALUE); t.setWrapText(true); t.setTextAlignment(TextAlignment.CENTER); t.setTextOverrun(OverrunStyle.CLIP);
             t.setOnAction(e -> select(idx));
             tabButtons[i] = t;
-            tabRow.add(t, TAB_COLUMN[i], 0);                           // on screen: BH to Campus first, then Me to BH, then Me to Campus
+            tabRow.add(t, i, 0);
         }
 
         map.hideLocateButton();
@@ -131,7 +131,7 @@ final class DirectionsCard extends VBox {
         planFrom = from;
         results.getChildren().setAll(tripHeader(t), loading());
         previewLine(t, from, to);                                      // draw this tab's trip right now; the real plan replaces it a moment later
-        Async.run(() -> TripPlanner.plan(from, to), p -> {
+        Async.run(() -> TripPlanner.planWithin(from, to, PLAN_SECONDS), p -> {
             if (my != token) return;
             planning = false; plan = p; chosen = p.best();
             render(t);
