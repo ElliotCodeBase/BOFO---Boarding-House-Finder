@@ -35,9 +35,11 @@ public final class BhService {
     private JSONArray cards(String query) throws Exception {
         try { return api.select("bh_cards", query); }
         catch (SupabaseClient.ApiException e) {
-            if (e.status == 400 && amenityCols && e.getMessage().contains("amenity")) {
+            if (e.status == 400 && e.getMessage().contains("amenity") && query.contains("amenity_names")) {
+                // No "amenityCols &&" check on purpose: two lists load at once, the first flips the flag and the second
+                // (its query already built with amenity_names) must still be allowed to retry instead of showing the error.
+                if (amenityCols) System.err.println("[BhService] bh_cards has no amenity columns yet. Run supabase/migrations/005_amenities.sql in Supabase.");
                 amenityCols = false; Cache.remove("list:");
-                System.err.println("[BhService] bh_cards has no amenity columns yet. Run supabase/migrations/005_amenities.sql in Supabase.");
                 return api.select("bh_cards", query.replace(",amenity_names", "").replaceAll("&amenity_ids=cs\\.%7B[^&]*%7D", ""));
             }
             throw e;

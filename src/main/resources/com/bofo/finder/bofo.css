@@ -522,3 +522,37 @@
 .card-compact .heart-fab, .card-compact .heart-fab-on { -fx-min-width: 30; -fx-min-height: 30; -fx-pref-width: 30; -fx-pref-height: 30; -fx-max-width: 30; -fx-max-height: 30; -fx-font-size: 15px; }
 .ad-card { -fx-background-color: #FBFAFF; -fx-border-color: #DCD6F6; }
 .ad-cta { -fx-text-fill: -bofo-primary; -fx-font-weight: bold; -fx-font-size: 12px; }
+
+/* ---- v1.14.3 Home header polish: branded avatar, floating bell, calmer search bar ---- */
+.greet-hello { -fx-font-size: 13px; -fx-text-fill: -bofo-text-2; }
+.page-header .greet-name { -fx-font-size: 26px; -fx-font-weight: bold; }
+.hdr-avatar { -fx-background-color: linear-gradient(to bottom right, #7C5CFF, #5B3BF0); -fx-text-fill: white; -fx-font-weight: bold;
+  -fx-border-color: white; -fx-border-width: 2; -fx-border-radius: 999;
+  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.30), 10, 0, 0, 3); }
+.hdr-btn { -fx-border-color: transparent; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.10), 10, 0, 0, 3); }
+.hdr-btn:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: transparent; }
+.college-box { -fx-min-height: 54; -fx-pref-height: 54; -fx-padding: 2 8 2 8; -fx-border-color: transparent; }
+.college-box-focus { -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
+.search-icon-wrap { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 999;
+  -fx-min-width: 38; -fx-min-height: 38; -fx-pref-width: 38; -fx-pref-height: 38; -fx-max-width: 38; -fx-max-height: 38; }
+.college-field, .college-field:focused { -fx-font-size: 15px; -fx-font-weight: normal; -fx-prompt-text-fill: #9A97B0; }
+.college-arrow { -fx-background-color: transparent; -fx-text-fill: -bofo-muted; -fx-font-size: 15px; }
+.college-arrow:hover { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
+
+/* ---- v1.14.3 Home: soft violet header band, borderless map, pill tabs with glow, airy cards ---- */
+.home-header { -fx-background-color: linear-gradient(to bottom, #E7E1FF 0%, #F0EDFF 55%, #F5F6FC 100%);
+  -fx-background-radius: 0 0 32 32; -fx-padding: 22 16 24 16; }
+.map-frame { -fx-border-color: transparent; }
+.home-chips { -fx-spacing: 10; }
+.home-chips .chip { -fx-background-color: white; -fx-border-color: transparent; -fx-padding: 9 18; -fx-font-size: 13.5px; -fx-text-fill: -bofo-text-2;
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.07), 8, 0, 0, 2); }
+.home-chips .chip:hover { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
+.home-chips .chip-selected { -fx-background-color: linear-gradient(to bottom right, #7C5CFF, #5B3BF0); -fx-border-color: transparent; -fx-padding: 9 18;
+  -fx-font-size: 13.5px; -fx-font-weight: bold; -fx-text-fill: white; -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.35), 12, 0, 0, 4); }
+.home-title { -fx-font-size: 20px; -fx-font-weight: bold; }
+.nearby-sub { -fx-font-size: 12.5px; -fx-text-fill: -bofo-muted; }
+.card-compact { -fx-border-color: transparent; -fx-border-radius: 22; -fx-background-radius: 22; }
+.card-compact:hover { -fx-border-color: #DCD6F6; }
+.card-compact .h2 { -fx-font-size: 14px; }
+.card-compact .price-big { -fx-font-size: 17px; }
+.card-compact .pill-green, .card-compact .pill-grey { -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.12), 6, 0, 0, 1); }

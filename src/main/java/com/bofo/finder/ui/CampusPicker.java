@@ -68,7 +68,9 @@ public final class CampusPicker extends VBox {
         });
         Button arrow = new Button("▾"); arrow.getStyleClass().add("college-arrow");
         arrow.setOnAction(e -> { if (list.isVisible()) close(); else refresh(""); });      // arrow = the whole campus list
-        box = new HBox(6, Ui.strokeIcon(Glyphs.SEARCH, 18, Color.web("#5B3BF0")), field, clear, arrow);
+        javafx.scene.layout.StackPane searchIcon = new javafx.scene.layout.StackPane(Ui.strokeIcon(Glyphs.SEARCH, 18, Color.web("#5B3BF0")));
+        searchIcon.getStyleClass().add("search-icon-wrap");
+        box = new HBox(8, searchIcon, field, clear, arrow);
         box.setAlignment(Pos.CENTER_LEFT); box.getStyleClass().add("college-box");
         field.focusedProperty().addListener((o, was, on) -> { box.getStyleClass().remove("college-box-focus"); if (on) box.getStyleClass().add("college-box-focus"); });
 

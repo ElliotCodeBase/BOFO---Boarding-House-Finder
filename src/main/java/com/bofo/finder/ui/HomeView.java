@@ -22,7 +22,7 @@ import java.util.HashSet;
 /** Default student home: greeting, college selector, map with radius, New/Hot/Best tabs sorted nearest-first. */
 public final class HomeView extends VBox {
     private final BhService bh = new BhService();
-    private final MapPane map = new MapPane(230);
+    private final MapPane map = new MapPane(360);
     private final CardGrid list = new CardGrid(10, 150, 2);          // 2 columns
     private java.util.Set<Integer> adSpots = java.util.Set.of();      // list positions that get an AdSlot (empty while ads are off)
     private final Slider radius = new Slider(0.5, 5, State.radiusKm.get());
@@ -32,7 +32,7 @@ public final class HomeView extends VBox {
     private static String entryUser;                                    // the user whose login already got its first Home
     private CampusPicker searchBar;
     private Button nearMe;
-    private final Label nearbySub = Ui.label("", "secondary");     // under the list title: what the list is sorted / limited by
+    private final Label nearbySub = Ui.label("", "secondary", "nearby-sub");     // under the list title: what the list is sorted / limited by
     private final Label countPill = Ui.label("", "count-pill");     // "12 places"
     // zoomed-out overview of every boarding house + me: on when the app opens and whenever the search bar is empty,
     // switched off by the location button and back on by pressing it again
@@ -56,8 +56,9 @@ public final class HomeView extends VBox {
 
         Button bell = new Button(); bell.getStyleClass().add("hdr-btn"); bell.setGraphic(Icons.icon(Icons.BELL, 20, Color.web("#17142A")));
         bell.setOnAction(e -> Nav.toast("No new notifications"));
-        HBox top = Ui.hbox(12, Ui.avatar(full, 40),
-                Ui.vbox(0, Ui.label(greeting(), "secondary"), Ui.label(name.isBlank() ? "there" : name, "greet-name")), Ui.grow(), bell);
+        Label avatar = Ui.avatar(full, 46); avatar.getStyleClass().add("hdr-avatar");
+        HBox top = Ui.hbox(12, avatar,
+                Ui.vbox(0, Ui.label(greeting().replace(",", ""), "greet-hello"), Ui.label(name.isBlank() ? "there" : name, "greet-name")), Ui.grow(), bell);
         top.setPadding(Insets.EMPTY);
 
         // ONE search bar (merged from the old search pill + college box): type or open the list to pick your campus; the map and list below
@@ -108,21 +109,22 @@ public final class HomeView extends VBox {
         radiusBar.managedProperty().bind(radiusBar.visibleProperty());
 
         HBox chips = Ui.chipRow(new String[]{"New", "Hot", "Best rated"}, 0, i -> { tab = BhService.Tab.values()[i]; reload(); });
-        chips.setPadding(new Insets(16, 16, 0, 16));
+        chips.setPadding(new Insets(18, 16, 0, 16)); chips.getStyleClass().add("home-chips");
         countPill.setMinWidth(Region.USE_PREF_SIZE); countPill.setVisible(false); countPill.managedProperty().bind(countPill.visibleProperty());
-        HBox nearby = new HBox(10, Ui.vbox(2, Ui.section("Nearby boarding houses"), nearbySub));
-        nearby.setAlignment(Pos.CENTER_LEFT); nearby.setPadding(new Insets(12, 16, 4, 16));
+        Label nearbyTitle = Ui.section("Nearby boarding houses"); nearbyTitle.getStyleClass().add("home-title");
+        HBox nearby = new HBox(10, Ui.vbox(2, nearbyTitle, nearbySub));
+        nearby.setAlignment(Pos.CENTER_LEFT); nearby.setPadding(new Insets(16, 16, 6, 16));
         list.setPadding(new Insets(4, 16, 72, 16));
 
         Region mapFrame = new Region(); mapFrame.getStyleClass().add("map-frame"); mapFrame.setMouseTransparent(true);   // thin rounded outline on top of the map
         StackPane mapWrap = new StackPane(map, mapFrame, radiusBar);
         StackPane.setAlignment(radiusBar, Pos.TOP_CENTER); StackPane.setMargin(radiusBar, new Insets(10, 12, 0, 12));
-        Rectangle mc = new Rectangle(); mc.setArcWidth(28); mc.setArcHeight(28);
+        Rectangle mc = new Rectangle(); mc.setArcWidth(44); mc.setArcHeight(44);
         mc.widthProperty().bind(mapWrap.widthProperty()); mc.heightProperty().bind(mapWrap.heightProperty());
         mapWrap.setClip(mc);
-        VBox.setMargin(mapWrap, new Insets(16, 16, 0, 16));
+        VBox.setMargin(mapWrap, new Insets(4, 16, 0, 16));
 
-        VBox header = new VBox(16, top, searchRow); header.getStyleClass().add("page-header"); header.setViewOrder(-1);   // greeting + search in one branded band
+        VBox header = new VBox(18, top, searchRow); header.getStyleClass().addAll("page-header", "home-header"); header.setViewOrder(-1);   // greeting + search in one branded band
         VBox.setMargin(locHint, new Insets(12, 16, 0, 16));
         VBox content = new VBox(0, header, locHint, mapWrap, chips, nearby, list);
         map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));

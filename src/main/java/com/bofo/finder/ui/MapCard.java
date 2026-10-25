@@ -17,43 +17,42 @@ final class MapCard extends HBox {
 
     /** @param details opens the BH page (null = no chevron, card is not tappable, e.g. for owners viewing their own listings) */
     MapCard(BoardingHouse b, Runnable details, Runnable close) {
-        super(12);
+        super(10);
         setAlignment(Pos.CENTER_LEFT);
         getStyleClass().add("map-card");
+        setStyle("-fx-padding:8 10 8 8;");                     // slim strip: the map stays visible above it
         setMaxWidth(440); setMaxHeight(Region.USE_PREF_SIZE);
 
-        StackPane photo = Ui.photoLoading(b.photoUrl(), 76, 76);
+        StackPane photo = Ui.photoLoading(b.photoUrl(), 48, 48);
 
         Label name = Ui.label(b.name(), "h2"); name.setWrapText(false); name.setMaxWidth(Double.MAX_VALUE);
         Label price = Ui.label("\u20B1" + String.format("%,.0f", b.price()) + "/mo", "price"); price.setWrapText(false);
         price.setStyle("-fx-font-size:13px;"); price.setMinWidth(Region.USE_PREF_SIZE);
-        HBox top = new HBox(8, name, price); top.setAlignment(Pos.CENTER_LEFT); HBox.setHgrow(name, Priority.ALWAYS);
 
         Node rating = b.reviewCount() > 0
                 ? Ui.hbox(6, Ui.label(Ui.stars(b.avgRating()), "stars"), Ui.label(String.format("%.1f (%d)", b.avgRating(), b.reviewCount()), "secondary"))
                 : Ui.label("No reviews yet", "secondary");
 
-        info.setWrapText(false); info.setMaxWidth(Double.MAX_VALUE);
-        FlowPane tags = new FlowPane(6, 4);
-        BhCard.addAmenityTags(tags, b, 3);
+        // name gets the full width; price and rating share the next line; the route line wraps instead of being cut off ("Bus or van 4 h 4 min ...")
+        HBox priceRow = new HBox(8, price, rating); priceRow.setAlignment(Pos.CENTER_LEFT);
+        info.setWrapText(true); info.setMaxWidth(Double.MAX_VALUE); info.setMinHeight(Region.USE_PREF_SIZE);
 
-        VBox text = new VBox(3, top, rating, info, tags);
+        VBox text = new VBox(2, name, priceRow);   // route line + tags live on the details page; the map already shows distance and time
+        text.setMinWidth(0);
         HBox.setHgrow(text, Priority.ALWAYS);
 
         Button x = new Button(); x.getStyleClass().add("search-clear");
-        x.setGraphic(Ui.strokeIcon(Glyphs.CLOSE, 14, Color.web("#8D8AA3")));
+        x.setGraphic(Ui.strokeIcon(Glyphs.CLOSE, 12, Color.web("#8D8AA3")));
         x.setOnAction(e -> close.run());
-        VBox side = new VBox(x);
-        side.setAlignment(Pos.TOP_RIGHT);
+        HBox side = new HBox(2, x);
+        side.setAlignment(Pos.CENTER_RIGHT);
         if (details != null) {
-            Region gap = new Region(); VBox.setVgrow(gap, Priority.ALWAYS);
-            side.getChildren().addAll(gap, Ui.strokeIcon(Glyphs.CHEVRON, 20, Color.web("#5B3BF0")));
-            side.setAlignment(Pos.TOP_RIGHT);
+            side.getChildren().add(Ui.strokeIcon(Glyphs.CHEVRON, 18, Color.web("#5B3BF0")));
             setOnMouseClicked(e -> {
                 for (Node t = e.getTarget() instanceof Node n ? n : null; t != null; t = t.getParent()) if (t == x) return;
                 e.consume(); details.run();
             });
-        } else setStyle("-fx-cursor:default;");
+        } else setStyle(getStyle() + "-fx-cursor:default;");
         getChildren().addAll(photo, text, side);
     }
 

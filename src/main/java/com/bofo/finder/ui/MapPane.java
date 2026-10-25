@@ -67,7 +67,7 @@ import java.util.function.Consumer;
 public final class MapPane extends StackPane {
     private static final Color PURPLE = Color.web("#5B3BF0"), PURPLE_DARK = Color.web("#3A22B8"), BLUE = Color.web("#2F6FED"), SELECTED = Color.web("#F43F5E");
     static { AppStorage.init(); }                              // so the jeepney-line cache has a home before the first trip is planned
-    private static final double CARD_SPACE = 104;                 // room the preview card takes at the bottom (px)
+    private static final double CARD_SPACE = 70;                 // room the preview card takes at the bottom (px)
 
     private final MapView map = new MapView();
     private final PinLayer layer = new PinLayer();
@@ -498,7 +498,7 @@ public final class MapPane extends StackPane {
         MapCard c = new MapCard(b, onDetails == null ? null : () -> onDetails.accept(b), this::deselect);
         card = c;
         StackPane.setAlignment(c, Pos.BOTTOM_CENTER);
-        StackPane.setMargin(c, new Insets(0, 10, 20, 10));
+        StackPane.setMargin(c, new Insets(0, 10, 12, 10));
         c.setOpacity(0); c.setTranslateY(46);
         getChildren().add(c);
         new Timeline(

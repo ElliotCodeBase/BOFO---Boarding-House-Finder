@@ -389,7 +389,7 @@ public final class VectorTileRetriever implements TileRetriever {
         for (Mvt.Feature f : l.features) {
             int r = rank(f.str("class"));
             if (r < 0) continue;
-            if (r <= 1) continue;                               // service roads, tracks, paths, pedestrian areas: not drawn (clutter + slow)
+            if (r <= 1 && z < 15) continue;                     // alleys, service roads, tracks and footpaths: only when zoomed in (the walking route uses them, so they must be visible there)
             if (f.type == Mvt.POLYGON) continue;
             if (f.type != Mvt.LINE) continue;
             if (r == 2 && z < 14) continue;                     // small streets only when zoomed in a bit
@@ -418,6 +418,7 @@ public final class VectorTileRetriever implements TileRetriever {
             g.setStroke(ROAD);
             for (int idx = 0; idx < 12; idx++) {                // 2) ... then all white road bodies
                 if (set[layer][idx] == null) continue;
+                g.setGlobalAlpha((idx / 2 <= 1 ? 0.85 : 1.0) * (layer == 0 ? 0.55 : 1.0));   // footpaths a little softer than streets
                 g.setLineWidth(width(idx, z) * DP);
                 stroke(g, set[layer][idx], t, 40);
             }
