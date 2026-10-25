@@ -1,4 +1,18 @@
-﻿# Handoff - v1.12.3 Idle effects leaked between poses (2026-10-25)
+﻿# Handoff - v1.12.5 Hop between poses (2026-10-25)
+- **PR title:** `v1.12.5 - BOFO chat head: hop animation between idle poses`. Version in `config.properties`, `pom.xml` (versionCode 40), CHANGES.md.
+- `Mascot.swap()` now plays crouch (90 ms) -> launch (130 ms, `art.translateY` up `size*0.22`, `pose` Scale stretch) -> runs the change at the top -> fall/impact/settle (380 ms). Latest request wins; no scene = immediate. `cancelSwap()` resets everything (used by public `set()`). `stopAnims()` leaves `pose` alone while a hop plays.
+- Tune the numbers in `swap()` if the hop is too big/small at 46 px. Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.12.4 Smooth pose changes (2026-10-25)
+- **PR title:** `v1.12.4 - BOFO chat head: smooth fade between idle poses`. Version in `config.properties`, `pom.xml` (versionCode 39), CHANGES.md.
+- `Mascot`: `swap(Runnable)` (fade `art` out 130 ms, run change, fade in 200 ms, latest request wins, no scene = immediate), `stopAnims()`, `idle()` and `endIdle()` go through `swap`; public `set()` is immediate and cancels any fade (BofoPanel uses it for the THINKING face while answering).
+- Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.12.3 Idle effects leaked between poses (2026-10-25)
 - **PR title:** `v1.12.3 - Fix idle effects (z's, speed lines) leaking into other poses`. Version in `config.properties`, `pom.xml` (versionCode 38), CHANGES.md.
 - Cause: `fx` (effects layer) survives `set()` by design (splash sparks), so `endIdle()` now clears `fx.getChildren()`. One line in `Mascot.endIdle()`.
 - Not compiled/run by Claude.

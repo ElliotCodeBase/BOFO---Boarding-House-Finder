@@ -74,7 +74,8 @@ public final class Mascot extends Group {
         set(e);
     }
 
-    public void set(Expression e) { build(e, null); }
+    /** Immediate change of face (cancels any pose fade in progress). */
+    public void set(Expression e) { cancelSwap(); stopAnims(); build(e, null); }
 
     /** Draws the mascot. p == null = the normal standing mascot (no arms); otherwise the drawing for that idle pose. */
     private void build(Expression e, Idle p) {
@@ -162,26 +163,72 @@ public final class Mascot extends Group {
 
     // ------------------------------------------------------------------ idle animations (floating chat head)
 
-    /** Starts one idle pose. Replaces any pose already playing; {@link #endIdle()} puts the mascot back to normal. */
-    public void idle(Idle a) {
-        endIdle();
-        switch (a) {
-            case THINKING -> idleThinking();
-            case SITTING -> idleSitting();
-            case RUNNING -> idleRunning();
-            case SLEEPING -> idleSleeping();
-        }
+    // ---- hand-over between poses: BOFO squashes, hops up, changes pose in the air and lands with a squash ----
+    private Timeline fade;          // the hop currently playing (name kept from the first version)
+    private Runnable pending;
+
+    private void cancelSwap() {
+        if (fade != null) { fade.stop(); fade = null; }
+        pending = null; art.setOpacity(1); art.setTranslateY(0); pose.setX(1); pose.setY(1);
     }
 
-    /** Stops every idle animation and returns to the normal happy face. */
-    public void endIdle() {
-        for (Animation x : idleAnims) x.stop();
+    /** Runs {@code change} at the top of a little hop. A newer request replaces one still waiting (latest wins). */
+    private void swap(Runnable change) {
+        pending = change;
+        if (fade != null) return;                       // already hopping; the newest change is picked up when it lands
+        if (getScene() == null) { Runnable c = pending; cancelSwap(); c.run(); return; }
+        final double h = -size * 0.22;
+        Interpolator both = Interpolator.EASE_BOTH;
+        fade = new Timeline(
+                new KeyFrame(Duration.ZERO, kv(pose.xProperty(), 1), kv(pose.yProperty(), 1), kv(art.translateYProperty(), 0)),
+                new KeyFrame(Duration.millis(90), kv(pose.xProperty(), 1.12, both), kv(pose.yProperty(), 0.80, both), kv(art.translateYProperty(), 0, both)),   // crouch
+                new KeyFrame(Duration.millis(220), kv(pose.xProperty(), 0.93, Interpolator.EASE_OUT), kv(pose.yProperty(), 1.10, Interpolator.EASE_OUT),
+                        kv(art.translateYProperty(), h, Interpolator.EASE_OUT)));                                                                                 // launch
+        fade.setOnFinished(e -> {
+            Runnable c = pending; pending = null;
+            if (c != null) c.run();                                                                                        // pose changes at the top of the hop
+            Timeline land = new Timeline(
+                    new KeyFrame(Duration.ZERO, kv(pose.xProperty(), 0.93), kv(pose.yProperty(), 1.10), kv(art.translateYProperty(), h)),
+                    new KeyFrame(Duration.millis(150), kv(pose.xProperty(), 0.97, Interpolator.EASE_IN), kv(pose.yProperty(), 1.05, Interpolator.EASE_IN),
+                            kv(art.translateYProperty(), 0, Interpolator.EASE_IN)),                                        // fall
+                    new KeyFrame(Duration.millis(210), kv(pose.xProperty(), 1.14, Interpolator.EASE_OUT), kv(pose.yProperty(), 0.80, Interpolator.EASE_OUT)),   // impact
+                    new KeyFrame(Duration.millis(380), kv(pose.xProperty(), 1, Interpolator.EASE_OUT), kv(pose.yProperty(), 1, Interpolator.EASE_OUT)));       // settle
+            fade = land;
+            land.setOnFinished(x -> {
+                fade = null;
+                if (pending != null) { Runnable n = pending; pending = null; swap(n); }
+            });
+            land.play();
+        });
+        fade.play();
+    }
+
+    private void stopAnims() {
         boolean was = !idleAnims.isEmpty();
+        for (Animation x : idleAnims) x.stop();
         idleAnims.clear();
         fx.getChildren().clear();     // z's / speed lines of the pose that just ended must not stay on screen
-        pose.setX(1); pose.setY(1);
-        setTranslateX(0); setTranslateY(0); setRotate(0);
-        if (was) set(Expression.HAPPY);
+        if (fade == null) { pose.setX(1); pose.setY(1); }
+        if (was) { setTranslateX(0); setTranslateY(0); setRotate(0); }
+    }
+
+    /** Starts one idle pose with a smooth cross-fade from whatever is showing. {@link #endIdle()} goes back to normal the same way. */
+    public void idle(Idle a) {
+        swap(() -> {
+            stopAnims();
+            switch (a) {
+                case THINKING -> idleThinking();
+                case SITTING -> idleSitting();
+                case RUNNING -> idleRunning();
+                case SLEEPING -> idleSleeping();
+            }
+        });
+    }
+
+    /** Stops the idle pose (cross-fade) and returns to the normal happy face. Does nothing if nothing is playing. */
+    public void endIdle() {
+        if (idleAnims.isEmpty() && fade == null && pending == null) return;
+        swap(() -> { stopAnims(); build(Expression.HAPPY, null); });
     }
 
     private <T extends Animation> T keep(T a) { idleAnims.add(a); a.play(); return a; }

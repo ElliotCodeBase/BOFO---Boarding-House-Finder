@@ -1,4 +1,12 @@
-﻿# v1.12.3 - Fix: effects of one idle pose stayed on screen in the next
+﻿# v1.12.5 - Poses change with a hop instead of a fade
+
+- Switching idle poses (or going back to normal after a tap) is now an animation: BOFO crouches, hops up, changes pose in the air, lands with a squash and settles (about 0.6 s). Replaces the fade of v1.12.4.
+
+# v1.12.4 - Smooth change between idle poses
+
+- Switching from one idle pose to the next (or back to normal after a tap) no longer snaps: the old pose keeps moving while it fades out (0.13 s), then the new pose fades in (0.2 s). A tap or question during a fade still wins at once.
+
+# v1.12.3 - Fix: effects of one idle pose stayed on screen in the next
 
 - The z z z (sleeping) and speed lines (running) were left on the mascot when the pose ended and showed up in the other poses. They are now cleared whenever a pose ends or a new one starts.
 
