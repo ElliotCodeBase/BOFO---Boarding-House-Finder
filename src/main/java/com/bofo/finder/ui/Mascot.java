@@ -163,31 +163,42 @@ public final class Mascot extends Group {
 
     // ------------------------------------------------------------------ idle animations (floating chat head)
 
-    // ---- smooth hand-over between poses: fade out (old pose keeps moving), swap, fade in ----
-    private Timeline fade;
+    // ---- hand-over between poses: BOFO squashes, hops up, changes pose in the air and lands with a squash ----
+    private Timeline fade;          // the hop currently playing (name kept from the first version)
     private Runnable pending;
 
     private void cancelSwap() {
         if (fade != null) { fade.stop(); fade = null; }
-        pending = null; art.setOpacity(1);
+        pending = null; art.setOpacity(1); art.setTranslateY(0); pose.setX(1); pose.setY(1);
     }
 
-    /** Runs {@code change} between a short fade-out and fade-in. A newer request replaces one still waiting (latest wins). */
+    /** Runs {@code change} at the top of a little hop. A newer request replaces one still waiting (latest wins). */
     private void swap(Runnable change) {
         pending = change;
-        if (fade != null) return;                       // already fading; the newest change is picked up when it ends
+        if (fade != null) return;                       // already hopping; the newest change is picked up when it lands
         if (getScene() == null) { Runnable c = pending; cancelSwap(); c.run(); return; }
-        fade = new Timeline(new KeyFrame(Duration.millis(130), kv(art.opacityProperty(), 0, Interpolator.EASE_IN)));
+        final double h = -size * 0.22;
+        Interpolator both = Interpolator.EASE_BOTH;
+        fade = new Timeline(
+                new KeyFrame(Duration.ZERO, kv(pose.xProperty(), 1), kv(pose.yProperty(), 1), kv(art.translateYProperty(), 0)),
+                new KeyFrame(Duration.millis(90), kv(pose.xProperty(), 1.12, both), kv(pose.yProperty(), 0.80, both), kv(art.translateYProperty(), 0, both)),   // crouch
+                new KeyFrame(Duration.millis(220), kv(pose.xProperty(), 0.93, Interpolator.EASE_OUT), kv(pose.yProperty(), 1.10, Interpolator.EASE_OUT),
+                        kv(art.translateYProperty(), h, Interpolator.EASE_OUT)));                                                                                 // launch
         fade.setOnFinished(e -> {
             Runnable c = pending; pending = null;
-            if (c != null) c.run();
-            Timeline in = new Timeline(new KeyFrame(Duration.millis(200), kv(art.opacityProperty(), 1, Interpolator.EASE_OUT)));
-            fade = in;
-            in.setOnFinished(x -> {
+            if (c != null) c.run();                                                                                        // pose changes at the top of the hop
+            Timeline land = new Timeline(
+                    new KeyFrame(Duration.ZERO, kv(pose.xProperty(), 0.93), kv(pose.yProperty(), 1.10), kv(art.translateYProperty(), h)),
+                    new KeyFrame(Duration.millis(150), kv(pose.xProperty(), 0.97, Interpolator.EASE_IN), kv(pose.yProperty(), 1.05, Interpolator.EASE_IN),
+                            kv(art.translateYProperty(), 0, Interpolator.EASE_IN)),                                        // fall
+                    new KeyFrame(Duration.millis(210), kv(pose.xProperty(), 1.14, Interpolator.EASE_OUT), kv(pose.yProperty(), 0.80, Interpolator.EASE_OUT)),   // impact
+                    new KeyFrame(Duration.millis(380), kv(pose.xProperty(), 1, Interpolator.EASE_OUT), kv(pose.yProperty(), 1, Interpolator.EASE_OUT)));       // settle
+            fade = land;
+            land.setOnFinished(x -> {
                 fade = null;
                 if (pending != null) { Runnable n = pending; pending = null; swap(n); }
             });
-            in.play();
+            land.play();
         });
         fade.play();
     }
@@ -197,7 +208,7 @@ public final class Mascot extends Group {
         for (Animation x : idleAnims) x.stop();
         idleAnims.clear();
         fx.getChildren().clear();     // z's / speed lines of the pose that just ended must not stay on screen
-        pose.setX(1); pose.setY(1);
+        if (fade == null) { pose.setX(1); pose.setY(1); }
         if (was) { setTranslateX(0); setTranslateY(0); setRotate(0); }
     }
 
