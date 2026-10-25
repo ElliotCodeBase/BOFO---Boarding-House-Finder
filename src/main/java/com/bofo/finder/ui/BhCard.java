@@ -22,16 +22,22 @@ import java.util.function.Consumer;
 /** Listing card: big rounded photo (heart + availability on top), name and price, distance, rating, tags. */
 public final class BhCard extends VBox {
     public BhCard(BoardingHouse b, boolean hot, boolean favorite, Consumer<BoardingHouse> open, BiConsumer<Boolean, Runnable> onFav) {
-        super(12); getStyleClass().add("card"); setPadding(new Insets(12));
+        this(b, hot, favorite, open, onFav, false);
+    }
+
+    /** compact = true for the 2-column grid: shorter photo, smaller text, "/mo", two tags at most. Fixed when the card is built (never switched later). */
+    public BhCard(BoardingHouse b, boolean hot, boolean favorite, Consumer<BoardingHouse> open, BiConsumer<Boolean, Runnable> onFav, boolean compact) {
+        super(compact ? 8 : 12); getStyleClass().add("card"); setPadding(new Insets(compact ? 8 : 12));
+        if (compact) getStyleClass().add("card-compact");
 
         // photo that follows the card width
         ImageView iv = Ui.coverPhoto(b.photoUrl(), 720);
-        iv.setFitHeight(190);
+        iv.setFitHeight(compact ? 120 : 190);
         iv.fitWidthProperty().bind(widthProperty().subtract(Bindings.createDoubleBinding(
                 () -> getPadding().getLeft() + getPadding().getRight(), paddingProperty())));   // uses the real (CSS) padding
         Region ph = new Region(); ph.getStyleClass().add("photo-placeholder");
-        ph.setMinHeight(190); ph.setPrefHeight(190); ph.setMaxHeight(190);
-        widthProperty().addListener((o, a, w) -> {                // taller photo on wide cards (tablet, single column)
+        double h0 = compact ? 120 : 190; ph.setMinHeight(h0); ph.setPrefHeight(h0); ph.setMaxHeight(h0);
+        if (!compact) widthProperty().addListener((o, a, w) -> {   // taller photo on wide cards (tablet, single column)
             double h = w.doubleValue() >= 640 ? 260 : w.doubleValue() >= 440 ? 220 : 190;
             iv.setFitHeight(h); ph.setMinHeight(h); ph.setPrefHeight(h); ph.setMaxHeight(h);
         });
@@ -56,25 +62,31 @@ public final class BhCard extends VBox {
         Label avail = Ui.label(b.availableBeds() > 0 ? b.availableBeds() + (b.availableBeds() == 1 ? " bed left" : " beds left") : "Full", b.availableBeds() > 0 ? "pill-green" : "pill-grey");
         avail.setMaxWidth(Region.USE_PREF_SIZE); avail.setWrapText(false);
         StackPane.setAlignment(avail, Pos.TOP_LEFT); StackPane.setMargin(avail, new Insets(12));
-        photoBox.getChildren().addAll(avail, heart);
+        if (!compact || b.availableBeds() <= 0) photoBox.getChildren().add(avail);   // compact card: only say so when it is full
+        photoBox.getChildren().add(heart);
 
         // text block: name, then a big price line, then rating + distance on one wrapping row, then tags
         Label name = Ui.label(b.name(), "h2");
-        name.setWrapText(true); name.setMaxWidth(Double.MAX_VALUE);
+        name.setWrapText(true); name.setMaxWidth(Double.MAX_VALUE); if (compact) name.setMaxHeight(40);
         Label price = Ui.label("\u20B1" + String.format("%,.0f", b.price()), "price-big");
-        Label unit = Ui.label("/ month", "price-unit");
+        Label unit = Ui.label(compact ? "/mo" : "/ month", "price-unit");
         price.setMinWidth(Region.USE_PREF_SIZE); unit.setMinWidth(Region.USE_PREF_SIZE);
         HBox priceRow = new HBox(5, price, unit); priceRow.setAlignment(Pos.BASELINE_LEFT);
         VBox head = new VBox(4, name, priceRow);
 
         FlowPane meta = new FlowPane(6, 2); meta.setAlignment(Pos.CENTER_LEFT);
-        if (b.reviewCount() > 0) {
+        if (compact) {                                                   // one short line: "\u2605 4.5 \u00B7 1.2 km" or just "1.2 km"
+            String km = b.distanceKm() > 0 ? String.format("%.1f km", b.distanceKm()) : "";
+            String rate = b.reviewCount() > 0 ? "\u2605 " + String.format("%.1f", b.avgRating()) : "";
+            String line = rate.isEmpty() ? km : km.isEmpty() ? rate : rate + " \u00B7 " + km;
+            if (!line.isEmpty()) meta.getChildren().add(Ui.label(line, "secondary"));
+        } else if (b.reviewCount() > 0) {
             meta.getChildren().addAll(Ui.label(Ui.stars(b.avgRating()), "stars"),
                     Ui.label(String.format("%.1f (%d)", b.avgRating(), b.reviewCount()), "secondary"));
         } else {
             meta.getChildren().add(Ui.label("New listing", "secondary"));
         }
-        meta.getChildren().addAll(Ui.label("\u00B7", "meta-dot"),
+        if (!compact) meta.getChildren().addAll(Ui.label("\u00B7", "meta-dot"),
                 Ui.label(b.distanceKm() > 0 ? Geo.walkText(b.distanceKm()) : b.address(), "secondary"));
 
         FlowPane tags = new FlowPane(6, 6);
@@ -83,7 +95,8 @@ public final class BhCard extends VBox {
         if (hot) tags.getChildren().add(Ui.label("Hot", "badge-hot"));
         addAmenityTags(tags, b, 3);
 
-        getChildren().addAll(photoBox, head, meta, tags);
+        getChildren().addAll(photoBox, head, meta);
+        if (!compact) getChildren().add(tags);                        // the 2-column card stays clean: details are on the detail page
         setOnMouseClicked(e -> {
             Node t = (Node) e.getTarget();
             while (t != null) { if (t == heart) return; t = t.getParent(); }

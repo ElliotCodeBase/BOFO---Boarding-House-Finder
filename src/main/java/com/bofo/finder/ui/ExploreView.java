@@ -37,7 +37,7 @@ public final class ExploreView extends StackPane {
     private final HBox quickRow = new HBox(8);
     private final ScrollPane quickScroll = new ScrollPane(quickRow);
     private final MapPane map = new MapPane(380);
-    private final CardGrid list = new CardGrid(10, 320);
+    private final CardGrid list = new CardGrid(10, 150, 2);          // 2 columns
     private final ScrollPane listScroll;
     private final StackPane content = new StackPane();
     private final Button filterBtn = new Button();
@@ -231,9 +231,14 @@ public final class ExploreView extends StackPane {
                     ? "Try removing a filter or raising the maximum price."
                     : "Try removing an amenity or raising the maximum price."));
             String uid = AuthService.get().userId();
-            for (BoardingHouse b : items) list.getChildren().add(new BhCard(b, false, favs.contains(b.id()),
-                    x -> Nav.show(new BhDetailView(x.id(), () -> Nav.show(new StudentShell(), true)), true),
-                    (on, undo) -> BhCard.saveFavorite(bh, uid, b.id(), on, undo)));
+            java.util.Set<Integer> adSpots = AdSlot.spots(items.size());      // empty while ads are off
+            for (int i = 0; i < items.size(); i++) {
+                BoardingHouse b = items.get(i);
+                if (adSpots.contains(i)) list.getChildren().add(AdSlot.placeholder());
+                list.getChildren().add(new BhCard(b, false, favs.contains(b.id()),
+                        x -> Nav.show(new BhDetailView(x.id(), () -> Nav.show(new StudentShell(), true)), true),
+                        (on, undo) -> BhCard.saveFavorite(bh, uid, b.id(), on, undo), true));
+            }
         }, e -> { System.err.println("[Explore] load failed: " + e); if (my == seq) list.getChildren().setAll(Ui.errorState(e, this::run)); });
     }
 }

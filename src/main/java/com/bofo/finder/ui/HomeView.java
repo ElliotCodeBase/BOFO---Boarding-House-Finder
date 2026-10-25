@@ -23,7 +23,8 @@ import java.util.HashSet;
 public final class HomeView extends VBox {
     private final BhService bh = new BhService();
     private final MapPane map = new MapPane(230);
-    private final CardGrid list = new CardGrid(10, 320);
+    private final CardGrid list = new CardGrid(10, 150, 2);          // 2 columns
+    private java.util.Set<Integer> adSpots = java.util.Set.of();      // list positions that get an AdSlot (empty while ads are off)
     private final Slider radius = new Slider(0.5, 5, State.radiusKm.get());
     private BhService.Tab tab = BhService.Tab.NEW;
     private Set<String> favs = new HashSet<>();
@@ -220,7 +221,7 @@ public final class HomeView extends VBox {
         Double rad = circle ? State.radiusKm.get() : null;
         Async.run(() -> bh.list(tab, ref == null ? null : ref[0], ref == null ? null : ref[1], rad, null), items -> {
             if (my != seq) return;                               // a newer request is in flight
-            current = items; shown = 0;
+            current = items; shown = 0; adSpots = AdSlot.spots(items.size());
             updateHeader(items.size(), ref);
             if (overviewActive()) {                              // zoomed out: all boarding houses + my location (the camera only moves when it needs to)
                 map.showOverview(items, State.gps.get(), ovFit ? 700 : -1);
@@ -240,9 +241,10 @@ public final class HomeView extends VBox {
         int end = Math.min(current.size(), shown + BATCH);
         for (int i = shown; i < end; i++) {
             BoardingHouse b = current.get(i);
+            if (adSpots.contains(i)) list.getChildren().add(AdSlot.placeholder());
             list.getChildren().add(new BhCard(b, tab == BhService.Tab.HOT, favs.contains(b.id()),
                     x -> Nav.show(new BhDetailView(x.id(), () -> Nav.show(new StudentShell(), true)), true),
-                    (on, undo) -> BhCard.saveFavorite(bh, uid, b.id(), on, undo)));
+                    (on, undo) -> BhCard.saveFavorite(bh, uid, b.id(), on, undo), true));
         }
         shown = end;
         if (shown < current.size()) list.getChildren().add(Ui.btn("Show more (" + (current.size() - shown) + ")", "btn-outline", this::renderMore));

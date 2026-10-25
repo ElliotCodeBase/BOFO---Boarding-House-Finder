@@ -507,3 +507,18 @@
 
 /* ---- v1.13.2 Home: calmer map credit ---- */
 .map-attr { -fx-padding: 2 8 2 8; -fx-font-size: 8px; -fx-font-weight: normal; -fx-background-color: rgba(255,255,255,0.75); }
+
+/* ---- v1.14.0 two-column list: compact card + ad cell ---- */
+.card-compact { -fx-border-radius: 16; -fx-background-radius: 16; }
+.card-compact .photo-placeholder { -fx-background-radius: 12; }
+.card-compact .h2 { -fx-font-size: 13.5px; }
+.card-compact .price-big { -fx-font-size: 16px; }
+.card-compact .price-unit { -fx-font-size: 11px; }
+.card-compact .secondary { -fx-font-size: 11px; }
+.card-compact .stars { -fx-font-size: 11px; }
+.card-compact .tag { -fx-font-size: 10px; -fx-padding: 1 6; }
+.card-compact .badge-verified, .card-compact .badge-hot { -fx-font-size: 10px; -fx-padding: 2 6; }
+.card-compact .pill-green, .card-compact .pill-grey { -fx-font-size: 10px; -fx-padding: 3 8; }
+.card-compact .heart-fab, .card-compact .heart-fab-on { -fx-min-width: 30; -fx-min-height: 30; -fx-pref-width: 30; -fx-pref-height: 30; -fx-max-width: 30; -fx-max-height: 30; -fx-font-size: 15px; }
+.ad-card { -fx-background-color: #FBFAFF; -fx-border-color: #DCD6F6; }
+.ad-cta { -fx-text-fill: -bofo-primary; -fx-font-weight: bold; -fx-font-size: 12px; }

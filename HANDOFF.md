@@ -1,4 +1,22 @@
-﻿# Handoff - v1.13.2 Home cleanup (2026-10-25)
+﻿# Handoff - v1.14.2 Cleaner compact card (2026-10-25)
+- **PR title:** `v1.14.2 - Two-column card: only photo, name, price and one line`. Version in `config.properties`, `pom.xml` (versionCode 50), CHANGES.md.
+- `BhCard` (compact only): no tags row, no beds pill unless Full, one `meta` line. Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.14.1 Unstyled 2-column cards (2026-10-25)
+- **PR title:** `v1.14.1 - Fix unstyled cards in the two-column list`. Version in `config.properties`, `pom.xml` (versionCode 49), CHANGES.md.
+- `BhCard` has a 6-arg constructor with `compact`; `setCompact` and the width-based switching are gone. `CardGrid` only lays out. Callers in HomeView, ExploreView, SavedView pass `true`. If cards are STILL unstyled the cause is elsewhere (check the console for CSS warnings). Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.14.0 Two-column list + ad slots (2026-10-25)
+- **PR title:** `v1.14.0 - Two-column listing grid with room for ads`. Version in `config.properties`, `pom.xml` (versionCode 48), CHANGES.md.
+- `CardGrid(gap, minCol, maxCols)` rewritten (row stretch, `AdSlot` cells, calls `BhCard.setCompact(colW < 280)`). `AdSlot` new: `ENABLED=false`, `placeholder()` is where the real ad goes, `fullWidth()` for a whole-row ad. Hooks: `HomeView.renderMore` (`adSpots`), `ExploreView` result loop. CSS block at end of bofo.css. Not compiled/run by Claude (uses no pattern-matching instanceof).
+
+---
+
+# Handoff - v1.13.2 Home cleanup (2026-10-25)
 - **PR title:** `v1.13.2 - Home: one location button, shorter map, count in subtitle, slim map credit`. Version in `config.properties`, `pom.xml` (versionCode 47), CHANGES.md.
 - `HomeView`: `nearMe` is no longer added to the layout (still used for the overview state; the map button is the only visible one), `MapPane(230)`, `updateHeader` appends the count to `nearbySub`, `countPill` not in the layout. `MapPane`: credit `setWrapText(false)`. CSS block at end of bofo.css. Not compiled/run by Claude.
 

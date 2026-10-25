@@ -1,4 +1,20 @@
-﻿# v1.13.2 - Home cleanup
+﻿# v1.14.2 - Cleaner two-column card
+
+- The compact card now shows only: photo with heart, name, price and one short line ("★ 4.5 · 1.2 km" or just the distance).
+- No tags, no Verified/Hot badges and no "beds left" pill on it (a "Full" pill still shows when there are no free beds). The full card (single column) is unchanged.
+
+# v1.14.1 - Fix: cards in the 2-column list lost their styling
+
+- Cause (most likely): `CardGrid` switched every card between normal and compact (style class, padding, photo height) while measuring and laying out, so the CSS never settled and the cards showed unstyled.
+- Now compact is fixed when the card is created (`new BhCard(..., true)` for Home, Explore and Saved). `CardGrid` no longer touches the cards.
+
+# v1.14.0 - Two-column list + ad slots
+
+- Home, Explore and Saved show listings in 2 columns (`CardGrid(10, 150, 2)`). Cards in a row share the same height.
+- Compact card in narrow columns: shorter photo, smaller text, "/mo", first two tags only (`BhCard.setCompact`).
+- New `AdSlot`: a grid cell that takes the place of one card (or a full row). Off by default (`AdSlot.ENABLED = false`); Home and Explore already insert it at random positions (`AdSlot.spots`) once it is switched on.
+
+# v1.13.2 - Home cleanup
 
 - One location button (the one on the map); the duplicate next to the search bar is gone, so the search bar is full width and its text is no longer cut off.
 - Map is shorter (230 px instead of 340) so the first listings show without scrolling.
