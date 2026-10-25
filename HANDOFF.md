@@ -1,4 +1,19 @@
-﻿# Handoff - v1.12.1 Idle moods easier to see (2026-10-25)
+﻿# Handoff - v1.12.3 Idle effects leaked between poses (2026-10-25)
+- **PR title:** `v1.12.3 - Fix idle effects (z's, speed lines) leaking into other poses`. Version in `config.properties`, `pom.xml` (versionCode 38), CHANGES.md.
+- Cause: `fx` (effects layer) survives `set()` by design (splash sparks), so `endIdle()` now clears `fx.getChildren()`. One line in `Mascot.endIdle()`.
+- Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.12.2 Idle poses redrawn + fixed-size chat head (2026-10-25)
+- **PR title:** `v1.12.2 - BOFO chat head: real idle poses (think/sit/run/sleep), no more layout shifts`. Version in `config.properties`, `pom.xml` (versionCode 37), CHANGES.md.
+- **`Mascot`:** `set()` now calls `build(Expression, Idle pose)`; each idle pose is its own drawing (arms via `arm(Rotate,...)`, `low` body for sit/sleep, feet in front when sitting, `torso` Group + `torsoRot` lean/nod, `rotL/rotR` arm swing, `hand` for the thinking chin arm, `mouth` for sleep). Running is IN PLACE (the old circle ran outside the button). The old squash `pose` Scale is always 1 now.
+- **`BofoPanel`:** mascot is wrapped in `faceBox` (fixed 46x46 Pane) and the fab is fixed 56x56, so z's / bubble / lean never change the button size or shift the UI.
+- Not compiled/run by Claude (no Maven/JavaFX in the sandbox; only a syntax check). Test: wait ~5-10 s on any screen and watch all four poses; tap mid-pose; ask BOFO a question. If a pose looks off at 46 px tune the numbers in `Mascot.build` / `idle*`.
+
+---
+
+# Handoff - v1.12.1 Idle moods easier to see (2026-10-25)
 - **PR title:** `v1.12.1 - BOFO chat head: idle moods start sooner and move more`. Version in `config.properties`, `pom.xml` (versionCode 36), CHANGES.md.
 - Checked by running the real `Mascot` and `BofoPanel` under JavaFX 21 + Xvfb (software render): all four moods draw and the scheduler starts/ends them. Only timing (`scheduleIdle`: 4-10 s) and amplitudes (Mascot idle methods) changed.
 
