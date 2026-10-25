@@ -129,14 +129,15 @@ public final class SplashView extends VBox {
         hatKey(k, t0,            0,      0,     1.00, 1.00, null);
         hatKey(k, t0 + 420,      2,      0,     1.04, 0.94, null);   // lag: the hat is pressed down while the body shoots up
         hatKey(k, t0 + 560,      0,      0,     1.00, 1.00, null);   // apex
-        hatKey(k, t0 + 650,      hatUp - 8,  tilt * 1.5,  0.80, 1.30, pop);     // POP: shoots off, stretched
-        hatKey(k, t0 + 770,      hatUp + 3, tilt * 0.4, 1.00, 1.00, out);   // hover at the top
+        hatKey(k, t0 + 610,      3,      0,     1.08, 0.88, null);   // wind-up: the hat dips onto the head right before it pops
+        hatKey(k, t0 + 680,      hatUp - 5, tilt * 1.2, 0.86, 1.24, pop);   // POP: shoots off, stretched, with a small overshoot
+        hatKey(k, t0 + 780,      hatUp + 2, tilt * 0.5, 1.00, 1.00, out);   // settles into the hover
         hatKey(k, t0 + 900,     -3,      0,     0.96, 1.08, in);     // falls back, stretched
-        hatKey(k, t0 + 950,      4,      0,     1.22, 0.74, in);     // lands on the head: squash (same moment as the feet)
-        hatKey(k, t0 + 1015,    -6,      0,     0.92, 1.14, out);    // rebound
+        hatKey(k, t0 + 950,      3,      0,     1.18, 0.80, in);     // lands on the head: squash (same moment as the feet)
+        hatKey(k, t0 + 1015,    -4,      0,     0.94, 1.10, out);    // rebound
         hatKey(k, t0 + 1070,     0,      0,     1.00, 1.00, out);    // settle
-        addBurst(k, t0 + 640, 380);    // pop off
-        addBurst(k, t0 + 950, 340);    // pop on
+        addBurst(k, t0 + 670, 270);    // pop off: ends (940) before the pop-on burst starts, so the sparks never get cut off
+        addBurst(k, t0 + 950, 240);    // pop on
     }
 
     private void hatKey(List<KeyFrame> k, double t, double y, double angle, double sx, double sy, Interpolator ip) {

@@ -448,3 +448,14 @@
 .bubble-them .bubble-text { -fx-text-fill: -bofo-text; }
 .bubble-meta { -fx-font-size: 10px; -fx-text-fill: -bofo-muted; }
 .bubble-me .bubble-meta { -fx-text-fill: rgba(255,255,255,0.75); }
+
+
+/* ---- Chats inbox (v1.10.3) ---- */
+.chat-row { -fx-padding: 14 14; -fx-background-radius: 22; -fx-border-radius: 22; }
+.chat-row-name { -fx-font-size: 15.5px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
+.chat-row-bh { -fx-font-size: 12px; -fx-text-fill: -bofo-primary; -fx-font-weight: bold; }
+.chat-row-preview { -fx-font-size: 13px; -fx-text-fill: -bofo-muted; }
+.chat-row-preview-on { -fx-font-size: 13px; -fx-text-fill: -bofo-text; -fx-font-weight: bold; }
+.chat-row-time { -fx-font-size: 11.5px; -fx-text-fill: -bofo-muted; }
+.chat-row-time-on { -fx-font-size: 11.5px; -fx-text-fill: -bofo-primary; -fx-font-weight: bold; }
+.chat-row-unread { -fx-background-color: #F6F3FF; -fx-border-color: #CFC4FF; -fx-border-width: 1; -fx-border-radius: 22; -fx-background-radius: 22; }
