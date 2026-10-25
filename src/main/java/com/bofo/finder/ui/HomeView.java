@@ -28,6 +28,15 @@ public final class HomeView extends VBox {
     private BhService.Tab tab = BhService.Tab.NEW;
     private Set<String> favs = new HashSet<>();
     private List<BoardingHouse> current = List.of();
+    private CampusPicker searchBar;
+    private Button nearMe;
+    // zoomed-out overview of every boarding house + me: on when the app opens and whenever the search bar is empty,
+    // switched off by the location button and back on by pressing it again
+    private boolean ovWanted = true;         // the user's choice (the location button)
+    private boolean ovFit = true;            // the camera still has to (re)frame the overview (first load, first GPS fix, switched back on)
+    private boolean ovShown;                 // was the overview on the last time we looked
+    private boolean wasSuppressed;           // was a campus / typed text in the search bar the last time we looked
+    private boolean holdOff;                 // true while the location button itself clears the campus (that must not switch the overview back on)
     private int seq = 0;                     // request id: ignore responses from outdated requests
     private int shown = 0;                   // cards rendered so far (lazy batches keep the UI light)
     private static final int BATCH = 15;
@@ -48,13 +57,16 @@ public final class HomeView extends VBox {
 
         // ONE search bar (merged from the old search pill + college box): type or open the list to pick your campus; the map and list below
         // follow it. Press Enter on text that is not a campus (a boarding house name or an area) to search for it in Explore.
-        CampusPicker searchBar = new CampusPicker("Search campus, name or area", true,
+        searchBar = new CampusPicker("Search campus, name or area", true,
                 c -> CampusPicker.remember(c),
                 text -> BofoPanel.filtersListener.accept(new JSONObject().put("text", text)), null);
-        Button nearMe = new Button(); nearMe.getStyleClass().add("near-btn");                       // round icon button: "show places near me"
+        nearMe = new Button(); nearMe.getStyleClass().add("near-btn");                       // round icon button: "show places near me"
         nearMe.setGraphic(Ui.strokeIcon(Glyphs.LOCATE, 20, Color.web("#2F6FED")));
         nearMe.setTooltip(new Tooltip("Near me"));
-        nearMe.setOnAction(e -> Locator.get().locate(p -> { if (State.college.get() != null) State.college.set(null); else reload(); }));
+        nearMe.setOnAction(e -> onLocateTap());
+        map.onLocate(this::onLocateTap);                                  // the round button on the map does the same thing
+        searchBar.field().textProperty().addListener((o, was, now) -> { suppressionChanged(); syncOverview(); });   // typing hides the overview, emptying the bar brings it back
+        paintOverviewButtons();
         HBox searchRow = new HBox(10, searchBar, nearMe); searchRow.setAlignment(Pos.TOP_LEFT); HBox.setHgrow(searchBar, Priority.ALWAYS);
         searchRow.setPadding(new Insets(14, 16, 0, 16)); searchRow.setFillHeight(false);
         searchRow.setViewOrder(-1);                                  // the campus dropdown floats above the map and list
@@ -109,7 +121,7 @@ public final class HomeView extends VBox {
         Async.run(bh::favoriteIds, f -> { favs = f; reload(); }, e -> reload());
         Async.run(bh::colleges, cs -> map.showColleges(cs), e -> {});   // every campus on the map
         startGps();
-        ChangeListener<College> l = (o, a, b) -> reload();
+        ChangeListener<College> l = (o, a, b) -> { suppressionChanged(); reload(); };
         State.college.addListener(l);
         sceneProperty().addListener((o, was, sc) -> { State.college.removeListener(l); if (sc != null) State.college.addListener(l); });
     }
@@ -122,12 +134,56 @@ public final class HomeView extends VBox {
         t.setStyle(String.format(java.util.Locale.ROOT, "-fx-background-color:linear-gradient(to right,#5B3BF0 %.1f%%,#E4E0F5 %.1f%%);", pct, pct));
     }
 
+    // ---------------------------------------------------------------- zoomed-out overview
+
+    /** The overview is showing when the user has not switched it off and the search bar is empty (no campus, no typed text). */
+    private boolean overviewActive() { return ovWanted && State.college.get() == null && searchBar.field().getText().isBlank(); }
+
+    /** A campus or some text in the search bar means "I am looking for something": the overview steps aside. Emptying the bar brings it back. */
+    private void suppressionChanged() {
+        boolean now = State.college.get() != null || !searchBar.field().getText().isBlank();
+        if (wasSuppressed && !now && !holdOff) { ovWanted = true; ovFit = true; }
+        wasSuppressed = now;
+    }
+
+    /** Highlights both location buttons while the overview is on. */
+    private void paintOverviewButtons() {
+        boolean on = overviewActive();
+        nearMe.getStyleClass().remove("near-btn-on");
+        if (on) nearMe.getStyleClass().add("near-btn-on");
+        map.setLocateActive(on);
+    }
+
+    /** Applies a change of the overview state to the map right away (search text typed or cleared, button pressed). */
+    private void syncOverview() {
+        boolean on = overviewActive();
+        if (on && (!ovShown || ovFit)) { map.showOverview(current, State.gps.get(), 650); ovFit = false; }
+        ovShown = on;
+        paintOverviewButtons();
+    }
+
+    /** The location buttons: overview on -> go to my location (overview off); overview off -> back to the overview. */
+    private void onLocateTap() {
+        if (overviewActive()) {
+            Locator.get().locate(p -> { ovWanted = false; ovShown = false; paintOverviewButtons(); map.goTo(p); });
+        } else if (State.college.get() == null && searchBar.field().getText().isBlank()) {
+            ovWanted = true; ovFit = true; syncOverview();
+        } else {                                                          // a campus is chosen (or text typed): show where I am instead
+            Locator.get().locate(p -> {
+                ovWanted = false;
+                holdOff = true;
+                try { if (State.college.get() != null) State.college.set(null); else reload(); } finally { holdOff = false; }
+                map.goTo(p);
+            });
+        }
+    }
+
     /** Asks for location (system dialog on Android). On the first fix the list reloads if it is sorted by "where I am". */
     private void startGps() {
         Locator.get().startWithPrompt();
         boolean[] first = {State.gps.get() == null};
         ChangeListener<double[]> l = (o, a, p) -> {
-            if (first[0] && p != null) { first[0] = false; if (State.college.get() == null) reload(); }
+            if (first[0] && p != null) { first[0] = false; ovFit = true; if (State.college.get() == null) reload(); }
         };
         State.gps.addListener(l);
         sceneProperty().addListener((o, was, sc) -> { if (sc == null) State.gps.removeListener(l); });
@@ -142,7 +198,11 @@ public final class HomeView extends VBox {
         Async.run(() -> bh.list(tab, ref == null ? null : ref[0], ref == null ? null : ref[1], rad, null), items -> {
             if (my != seq) return;                               // a newer request is in flight
             current = items; shown = 0;
-            map.show(ref, circle ? State.radiusKm.get() : 0, items, circle, null);
+            if (overviewActive()) {                              // zoomed out: all boarding houses + my location (the camera only moves when it needs to)
+                map.showOverview(items, State.gps.get(), ovFit ? 700 : -1);
+                ovFit = false;
+            } else map.show(ref, circle ? State.radiusKm.get() : 0, items, circle, null);
+            ovShown = overviewActive(); paintOverviewButtons();
             list.getChildren().clear();
             if (items.isEmpty()) list.getChildren().add(Ui.emptyState("Nothing nearby yet", ref == null ? "Allow location or choose your college to see nearby boarding houses." : "No boarding houses with free beds in this radius. Try a larger radius."));
             renderMore();

@@ -2,6 +2,8 @@ package com.bofo.finder.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Builds the list of ways to get from A to B: real road routes from {@link Router}, jeepney lines from public commuter
@@ -62,6 +64,34 @@ public final class TripPlanner {
             List<Trip.Option> one = List.of(Trip.walk(est.pts(), est.meters(), true));
             return new Trip.Plan(one, 0, straight, "Could not work out the route. Showing a straight-line estimate.");
         }
+    }
+
+
+    /**
+     * Like {@link #plan} but never makes the person wait longer than {@code seconds}: the route servers can take a minute
+     * of retries when they are slow or blocked (that was the card stuck on "Finding the best way..."). On timeout the
+     * answer is an offline estimate; the real work keeps running in the background and fills the caches, so the next try is fast.
+     */
+    public static Trip.Plan planWithin(double[] from, double[] to, int seconds) {
+        Future<Trip.Plan> f = com.bofo.finder.util.Async.pool().submit(() -> plan(from, to));
+        try { return f.get(seconds, TimeUnit.SECONDS); }
+        catch (Throwable t) { return quick(from, to, "The route servers are slow right now, so distances are rough estimates. Tap the tab again in a moment for exact roads."); }
+    }
+
+    /** Offline plan from straight-line estimates only (no network). Never throws. */
+    public static Trip.Plan quick(double[] from, double[] to, String note) {
+        double straight = Geo.km(from[0], from[1], to[0], to[1]);
+        Router.Route est = Router.estimate(from[0], from[1], to[0], to[1]);
+        if (straight > FAR_KM) return new Trip.Plan(List.of(Trip.far(est.pts(), est.meters(), true)), 0, straight, note);
+        Router.Route known = Router.peek(from[0], from[1], to[0], to[1]);                    // a road we already have beats a straight line
+        Router.Route w = known != null ? known : est;
+        double m = Math.max(w.meters(), straight * 1000);
+        List<Trip.Option> opts = new ArrayList<>();
+        if (m / 1000.0 <= 3.5 || m < 600) opts.add(Trip.walk(w.pts(), m, w.approximate()));
+        if (m >= 600 && m <= 6000) opts.add(Trip.tricycle(w.pts(), m, w.approximate()));
+        if (m >= 1500) opts.add(Trip.jeepneyGuess(w.pts(), m, w.approximate()));
+        if (opts.isEmpty()) opts.add(Trip.walk(w.pts(), m, w.approximate()));
+        return new Trip.Plan(opts, Trip.best(opts), straight, note);
     }
 
     private static void addNote(StringBuilder sb, String text) { if (sb.length() > 0) sb.append(' '); sb.append(text); }

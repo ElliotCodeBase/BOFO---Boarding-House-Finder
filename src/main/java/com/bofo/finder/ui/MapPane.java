@@ -40,6 +40,10 @@ import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +74,10 @@ public final class MapPane extends StackPane {
     private final Button locate = new Button();
     private Consumer<BoardingHouse> onPin = b -> {};
     private boolean centered;      // true once the map has been pointed at something (a college or the user's first GPS fix)
+    private Runnable locateTap;        // when set (Home), the round locate button calls this instead of the default "fly to me"
+    private boolean overviewOn;        // true while the zoomed-out "all boarding houses + me" view is showing
+    private List<BoardingHouse> ovPins = List.of();
+    private double[] ovMe;
 
     // camera
     private double camLat = Double.NaN, camLng = Double.NaN;
@@ -104,7 +112,10 @@ public final class MapPane extends StackPane {
 
         locate.getStyleClass().add("map-fab");
         locate.setGraphic(Ui.strokeIcon(Glyphs.LOCATE, 22, BLUE));
-        locate.setOnAction(e -> Locator.get().locate(p -> { setFollow(true); flyTo(p[0], p[1], 16, 700); }));
+        locate.setOnAction(e -> { if (locateTap != null) locateTap.run(); else Locator.get().locate(p -> goTo(p)); });
+        // if the map changes size after the overview was drawn (first layout, window resize), fit it again so it keeps filling ~90%
+        javafx.beans.value.ChangeListener<Number> resized = (o, a, b) -> { if (overviewOn && map.getWidth() > 0 && map.getHeight() > 0) fitOverview(0); };
+        map.widthProperty().addListener(resized); map.heightProperty().addListener(resized);
         StackPane.setAlignment(locate, Pos.BOTTOM_RIGHT);
         StackPane.setMargin(locate, new Insets(0, 10, 22, 0));
         getChildren().addAll(map, attr, locate);
@@ -164,6 +175,69 @@ public final class MapPane extends StackPane {
         return Math.max(11, Math.min(17, z));
     }
 
+    /** Home: the round locate button runs {@code r} instead of the default "fly to me"; its highlight is then set with {@link #setLocateActive}. */
+    public void onLocate(Runnable r) { this.locateTap = r; }
+
+    /** Highlights (or un-highlights) the round locate button. */
+    public void setLocateActive(boolean on) {
+        locate.getStyleClass().remove("map-fab-on");
+        if (on) locate.getStyleClass().add("map-fab-on");
+    }
+
+    /** Flies to the user's position at street level and keeps following it until the map is dragged. Ends the overview. */
+    public void goTo(double[] p) {
+        overviewOn = false;
+        setFollow(true);
+        flyTo(p[0], p[1], 16, 700);
+    }
+
+    /**
+     * Zoomed-out overview: every boarding house (pins) plus the user's blue dot, framed so they fill about 90% of the map.
+     * {@code ms} &lt; 0 only swaps the pins and leaves the camera alone; {@code ms} = 0 jumps; otherwise the camera glides there.
+     */
+    public void showOverview(List<BoardingHouse> pins, double[] me, int ms) {
+        if (selected != null) deselect();
+        overviewOn = true; centered = true; setFollow(false);
+        ovPins = pins == null ? List.of() : (pins.size() > 60 ? pins.subList(0, 60) : pins);
+        ovMe = me;
+        layer.set(null, 0, ovPins, false);
+        if (ms >= 0) fitOverview(ms);
+    }
+
+    /** Works out the zoom + centre that frame all pins and the user inside ~90% of the map (pin heads included) and moves there. */
+    private void fitOverview(int ms) {
+        double minX = 2, maxX = -1, minY = 2, maxY = -1;
+        int n = 0;
+        for (BoardingHouse b : ovPins) {
+            double[] w = merc(b.lat(), b.lng());
+            minX = Math.min(minX, w[0]); maxX = Math.max(maxX, w[0]); minY = Math.min(minY, w[1]); maxY = Math.max(maxY, w[1]); n++;
+        }
+        if (ovMe != null) {
+            double[] w = merc(ovMe[0], ovMe[1]);
+            minX = Math.min(minX, w[0]); maxX = Math.max(maxX, w[0]); minY = Math.min(minY, w[1]); maxY = Math.max(maxY, w[1]); n++;
+        }
+        if (n == 0) return;
+        final double pinH = 31;                                                    // a pin head sticks up this far above its spot
+        double w = Math.max(map.getWidth(), 280), h = Math.max(map.getHeight(), 220);
+        double availW = w * 0.90, availH = h * 0.90 - pinH;
+        double spanX = maxX - minX, spanY = maxY - minY;
+        double zx = spanX <= 1e-12 ? 99 : Math.log(availW / (spanX * 256)) / Math.log(2);
+        double zy = spanY <= 1e-12 ? 99 : Math.log(availH / (spanY * 256)) / Math.log(2);
+        double z = Math.max(5, Math.min(16, Math.min(zx, zy)));
+        double cx = (minX + maxX) / 2, cy = (minY + maxY) / 2 - (pinH / 2) / (256 * Math.pow(2, z));   // nudge so the pin heads sit inside the frame too
+        double lng = cx * 360 - 180;
+        double lat = Math.toDegrees(Math.atan(Math.sinh(Math.PI * (1 - 2 * cy))));
+        boolean live = getScene() != null && map.getWidth() > 0;
+        if (ms <= 0 || !live) { if (cam != null) cam.stop(); applyZoom(z); setCenterNow(lat, lng); }
+        else flyTo(lat, lng, z, ms);
+    }
+
+    /** Web-Mercator position in 0..1 (x east, y south). */
+    private static double[] merc(double lat, double lng) {
+        double s = Math.sin(Math.toRadians(Math.max(-85, Math.min(85, lat))));
+        return new double[]{(lng + 180) / 360, 0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)};
+    }
+
     /** Hides the round "find me" button (for small maps where it would be in the way). */
     public void hideLocateButton() { locate.setVisible(false); locate.setManaged(false); }
 
@@ -193,6 +267,7 @@ public final class MapPane extends StackPane {
      * is also given, a walking route from {@code center} to {@code routeTo} is drawn (BH detail screen).
      */
     public void show(double[] center, double radiusKm, List<BoardingHouse> pins, boolean showCircle, double[] routeTo) {
+        overviewOn = false;
         boolean live = getScene() != null && map.getWidth() > 0;
         boolean glide = live && centered && center != null && radiusKm > 0 && selected == null && routeTo == null;   // map already on screen: glide, do not jump
         if (center != null) { centered = true; if (!glide) setCenterNow(center[0], center[1]); }
@@ -318,6 +393,7 @@ public final class MapPane extends StackPane {
     private void setFollow(boolean on) {
         if (follow == on) return;
         follow = on;
+        if (locateTap != null) return;                      // Home paints the button for the overview instead (see setLocateActive)
         locate.getStyleClass().remove("map-fab-on");
         if (on) locate.getStyleClass().add("map-fab-on");
     }
@@ -456,6 +532,8 @@ public final class MapPane extends StackPane {
         private final Label radiusBadge = Ui.label("", "map-badge");
         // pins
         private final Group pinsGroup = new Group();
+        private final Group clusterGroup = new Group();                 // zoomed out: pins that are close together become one numbered bubble
+        private final List<Group> clusterPool = new ArrayList<>();
         private Map<String, Group> pinMap = new LinkedHashMap<>();
         // route
         private double[][] rpts; private double[] cum; private boolean routeFromCollege;
@@ -507,7 +585,7 @@ public final class MapPane extends StackPane {
                             new KeyValue(halo.opacityProperty(), 0.0, Interpolator.EASE_IN)));
             pulse.setCycleCount(Timeline.INDEFINITE);
 
-            getChildren().addAll(ring, radiusBadge, casing, line, originDot, destDot, originTag, collegeGroup, collegeDot, pinsGroup, routeBadge, me);
+            getChildren().addAll(ring, radiusBadge, casing, line, originDot, destDot, originTag, collegeGroup, collegeDot, pinsGroup, clusterGroup, routeBadge, me);
         }
 
         void refresh() { markDirty(); }
@@ -598,6 +676,27 @@ public final class MapPane extends StackPane {
             markDirty();
         }
 
+        /** The i-th numbered bubble (created on first use, then reused every frame). Tap = zoom in on that group. */
+        private Group clusterAt(int i) {
+            while (clusterPool.size() <= i) {
+                Group g = new Group();
+                Circle halo2 = new Circle(0, 0, 20, Color.web("#5B3BF0", 0.20)); halo2.setMouseTransparent(true);
+                Circle body = new Circle(0, 0, 14, PURPLE); body.setStroke(Color.WHITE); body.setStrokeWidth(2.5);
+                body.setEffect(new javafx.scene.effect.DropShadow(6, 0, 2, Color.web("#17142A", 0.28)));
+                Text t = new Text("0"); t.setFont(Font.font("System", FontWeight.BOLD, 13)); t.setFill(Color.WHITE); t.setMouseTransparent(true);
+                g.getChildren().addAll(halo2, body, t);
+                g.getProperties().put("halo", halo2); g.getProperties().put("body", body); g.getProperties().put("txt", t);
+                g.setOnMouseClicked(e -> {
+                    e.consume();
+                    double z0 = Double.isNaN(zoomVal) ? 12 : zoomVal;
+                    setFollow(false); overviewOn = false;
+                    flyTo((Double) g.getProperties().get("lat"), (Double) g.getProperties().get("lng"), Math.min(17, z0 + 2.2), 450);
+                });
+                clusterPool.add(g); clusterGroup.getChildren().add(g);
+            }
+            return clusterPool.get(i);
+        }
+
         private Group makePin(BoardingHouse b, int delayMs) {
             final Group g = new Group();
             Circle hit = new Circle(0, -16, 20, Color.TRANSPARENT);          // big invisible target: easy to tap
@@ -607,6 +706,8 @@ public final class MapPane extends StackPane {
             g.getChildren().addAll(hit, tail, head, dot);
             Scale sc = new Scale(0.001, 0.001, 0, 0);                        // pivot = the tip of the pin
             g.getTransforms().add(sc);
+            Scale zs = new Scale(1, 1, 0, 0);                                // zoom-dependent size (bigger when zoomed out), also pivoting on the tip
+            g.getTransforms().add(zs); g.getProperties().put("zs", zs);
             g.getProperties().put("sc", sc); g.getProperties().put("head", head); g.getProperties().put("tail", tail);
             g.setUserData(b);
             g.setOnMouseClicked(e -> { e.consume(); pinTapped((BoardingHouse) g.getUserData()); });
@@ -693,6 +794,8 @@ public final class MapPane extends StackPane {
             }
 
             double vw = map.getWidth(), vh = map.getHeight(), zNow = zoomNow();
+            boolean far = !Double.isNaN(zNow) && zNow < 15;
+            double k = Double.isNaN(zNow) ? 1 : Math.max(1, Math.min(1.7, 1 + (14.5 - zNow) * 0.13));   // markers grow as the map zooms out
             boolean names = Double.isNaN(zNow) || zNow >= 12.8;
             College chosen = State.college.get();
             for (Node n : collegeGroup.getChildren()) {
@@ -704,20 +807,50 @@ public final class MapPane extends StackPane {
                 n.setTranslateX(p.getX()); n.setTranslateY(p.getY());
                 boolean mine = chosen != null && java.util.Objects.equals(chosen.id(), c.id());
                 Circle dot = (Circle) n.getProperties().get("dot"); Label name = (Label) n.getProperties().get("name");
-                dot.setRadius(mine ? 7.5 : 5.5);
+                dot.setRadius((mine ? 7.5 : 5.5) * Math.min(k, 1.5));
                 name.setVisible(names || mine);
                 name.setStyle(mine ? "-fx-font-weight:bold;-fx-text-fill:#2A1690;" : "");
             }
 
             boolean meOn = !Double.isNaN(meLat);
-            me.setVisible(meOn);
+            me.setVisible(meOn); me.setScaleX(k); me.setScaleY(k);
             if (meOn) { Point2D u = getMapPoint(meLat, meLng); me.setTranslateX(u.getX()); me.setTranslateY(u.getY()); }
 
+            // pins: placed, sized for the zoom, and (zoomed out) grouped into numbered bubbles when they would overlap
+            final double cell = 46;
+            String selId = selected == null ? null : selected.id();
+            Map<Long, List<Group>> cells = new HashMap<>();
             for (Node n : pinsGroup.getChildren()) {
                 BoardingHouse b = (BoardingHouse) n.getUserData();
                 Point2D p = getMapPoint(b.lat(), b.lng());
                 n.setTranslateX(p.getX()); n.setTranslateY(p.getY());
+                Scale zs = (Scale) n.getProperties().get("zs");
+                if (zs != null) { zs.setX(k); zs.setY(k); }
+                n.setVisible(true);
+                boolean inView = p.getX() > -40 && p.getX() < vw + 40 && p.getY() > -60 && p.getY() < vh + 40;
+                if (far && inView && !b.id().equals(selId))
+                    cells.computeIfAbsent(((long) Math.floor(p.getX() / cell)) * 100000L + (long) Math.floor(p.getY() / cell), q -> new ArrayList<>()).add((Group) n);
             }
+            int used = 0;
+            for (List<Group> grp : cells.values()) {
+                if (grp.size() < 2) continue;
+                double sx = 0, sy = 0, la = 0, ln = 0;
+                for (Group g : grp) {
+                    BoardingHouse b = (BoardingHouse) g.getUserData();
+                    sx += g.getTranslateX(); sy += g.getTranslateY(); la += b.lat(); ln += b.lng(); g.setVisible(false);
+                }
+                int cnt = grp.size();
+                Group c = clusterAt(used++);
+                c.setVisible(true);
+                c.setTranslateX(sx / cnt); c.setTranslateY(sy / cnt - 12 * k);
+                c.getProperties().put("lat", la / cnt); c.getProperties().put("lng", ln / cnt);
+                Circle halo2 = (Circle) c.getProperties().get("halo"), body = (Circle) c.getProperties().get("body"); Text t = (Text) c.getProperties().get("txt");
+                double r = (13 + Math.min(9, Math.log(cnt) / Math.log(2) * 2.6)) * Math.min(k, 1.4);
+                body.setRadius(r); halo2.setRadius(r + 6);
+                t.setText(String.valueOf(cnt));
+                t.setTranslateX(-t.getLayoutBounds().getWidth() / 2); t.setTranslateY(t.getLayoutBounds().getHeight() * 0.27);
+            }
+            for (int i = used; i < clusterPool.size(); i++) clusterPool.get(i).setVisible(false);
 
             boolean hasRoute = rpts != null && rpts.length > 1;
             casing.setVisible(hasRoute); line.setVisible(hasRoute); destDot.setVisible(hasRoute);

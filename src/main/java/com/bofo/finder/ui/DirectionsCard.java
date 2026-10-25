@@ -36,6 +36,7 @@ import java.util.Locale;
  */
 final class DirectionsCard extends VBox {
     private static final String[] TABS = {"Me \u2192 BH", "Me \u2192 Campus", "BH \u2192 Campus"};   // short enough to stay on one line
+    private static final int PLAN_SECONDS = 12;                      // longest wait for the real plan; then an offline estimate is shown
     private static final double MOVE_REPLAN_KM = 0.08;               // re-plan when you walked this far (only trips that start at you)
 
     private final BoardingHouse bh;

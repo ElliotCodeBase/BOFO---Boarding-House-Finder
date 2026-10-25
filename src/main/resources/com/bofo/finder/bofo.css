@@ -260,6 +260,7 @@
 .near-btn { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999;
   -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-padding: 0; -fx-cursor: hand; }
 .near-btn:hover { -fx-background-color: -bofo-primary-tint; }
+.near-btn-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; }
 .radius-bar { -fx-background-color: rgba(255,255,255,0.96); -fx-background-radius: 999; -fx-padding: 5 6 5 16;
   -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.22), 12, 0, 0, 3); }
 .radius-pill { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-background-radius: 999;

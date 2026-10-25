@@ -86,8 +86,6 @@ public class Main extends Application {
     public static void route() {
         var p = AuthService.get().profile();
         if (p == null) { showLogin(null); return; }
-        if (p.defaultCollegeId() != null && State.college.get() == null)
-            Async.run(() -> new BhService().colleges(), cs -> cs.stream().filter(c -> c.id().equals(p.defaultCollegeId())).findFirst().ifPresent(State.college::set), e -> {});
         Nav.show(home(), true);
     }
 
