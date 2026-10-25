@@ -13,7 +13,7 @@ public final class DashboardView extends VBox {
     public DashboardView() {
         var p = AuthService.get().profile();
         VBox box = Ui.padded(12);
-        getChildren().addAll(Ui.appBar("Dashboard"), Ui.scroll(box));
+        getChildren().addAll(Ui.pageHeader("Dashboard", null), Ui.scroll(box));
         String vs = p.verificationStatus();
         String cls = switch (vs) { case "verified" -> "notice-ok"; case "rejected" -> "notice-bad"; default -> "notice-warn"; };
         Label status = Ui.label(switch (vs) {

@@ -1,4 +1,21 @@
-﻿# v1.12.9 - Listing card redesign
+﻿# v1.13.2 - Home cleanup
+
+- One location button (the one on the map); the duplicate next to the search bar is gone, so the search bar is full width and its text is no longer cut off.
+- Map is shorter (230 px instead of 340) so the first listings show without scrolling.
+- "6 places" moved into the list subtitle (the mascot covered the pill).
+- Map credit is one small line instead of a two-line box.
+
+# v1.13.1 - Top section: light and clean instead of the purple band
+
+- Removed the gradient band. Every main tab now opens with a big dark title, a quiet subtitle, white round buttons and a white search bar with a soft shadow.
+
+# v1.13.0 - Branded top section on every main tab
+
+- New `Ui.pageHeader`: indigo gradient band with rounded bottom (same family as Profile), white title + subtitle, round translucent buttons.
+- Home: avatar, greeting, bell and the single search bar + near-me button now sit together in the band.
+- Explore: title, subtitle and search + filter button in the band. Saved and Chats use the band too; owner/admin tabs (Dashboard, My listings, Payments, Verification queue, Reports) too.
+
+# v1.12.9 - Listing card redesign
 
 - Price is now its own big indigo line under the name (no more squeezing the name next to the price).
 - Rating and distance share one wrapping row ("No reviews yet" became "New listing").

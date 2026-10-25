@@ -16,7 +16,7 @@ public final class PaymentsView extends VBox {
 
     public PaymentsView() {
         rows.setPadding(new Insets(12, 16, 72, 16));
-        getChildren().addAll(Ui.appBar("Payments"), Ui.scroll(rows));
+        getChildren().addAll(Ui.pageHeader("Payments", null), Ui.scroll(rows));
         load();
     }
 

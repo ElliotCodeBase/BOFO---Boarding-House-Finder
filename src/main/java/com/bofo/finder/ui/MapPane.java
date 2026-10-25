@@ -107,7 +107,7 @@ public final class MapPane extends StackPane {
         applyZoom(15); map.addLayer(layer);
         Label attr = new Label(AppConfig.mapAttribution());
         attr.getStyleClass().add("map-attr");                       // look lives in bofo.css (.map-attr)
-        attr.setWrapText(true);
+        attr.setWrapText(false);
         attr.maxWidthProperty().bind(widthProperty().subtract(68)); // never run under the "find me" button
         attr.setMouseTransparent(true);
         StackPane.setAlignment(attr, Pos.BOTTOM_LEFT);
