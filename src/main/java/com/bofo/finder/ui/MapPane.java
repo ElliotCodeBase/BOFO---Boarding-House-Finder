@@ -65,7 +65,7 @@ import java.util.function.Consumer;
  * Attribution text comes from {@link AppConfig#mapAttribution()}.
  */
 public final class MapPane extends StackPane {
-    private static final Color PURPLE = Color.web("#5B3BF0"), PURPLE_DARK = Color.web("#3A22B8"), BLUE = Color.web("#2F6FED");
+    private static final Color PURPLE = Color.web("#5B3BF0"), PURPLE_DARK = Color.web("#3A22B8"), BLUE = Color.web("#2F6FED"), SELECTED = Color.web("#F43F5E");
     static { AppStorage.init(); }                              // so the jeepney-line cache has a home before the first trip is planned
     private static final double CARD_SPACE = 104;                 // room the preview card takes at the bottom (px)
 
@@ -593,7 +593,7 @@ public final class MapPane extends StackPane {
                             new KeyValue(halo.opacityProperty(), 0.0, Interpolator.EASE_IN)));
             pulse.setCycleCount(Timeline.INDEFINITE);
 
-            getChildren().addAll(ring, radiusBadge, casing, line, originDot, destDot, originTag, collegeGroup, collegeDot, pinsGroup, clusterGroup, routeBadge, me);
+            getChildren().addAll(ring, radiusBadge, casing, line, originDot, destDot, originTag, collegeGroup, collegeDot, clusterGroup, pinsGroup, routeBadge, me);
         }
 
         void refresh() { markDirty(); }
@@ -688,9 +688,9 @@ public final class MapPane extends StackPane {
         private Group clusterAt(int i) {
             while (clusterPool.size() <= i) {
                 Group g = new Group();
-                Circle halo2 = new Circle(0, 0, 20, Color.web("#5B3BF0", 0.20)); halo2.setMouseTransparent(true);
-                Circle body = new Circle(0, 0, 14, PURPLE); body.setStroke(Color.WHITE); body.setStrokeWidth(2.5);
-                Text t = new Text("0"); t.setFont(Font.font("System", FontWeight.BOLD, 13)); t.setFill(Color.WHITE); t.setMouseTransparent(true);
+                Circle halo2 = new Circle(0, 0, 20, Color.web("#5B3BF0", 0.16)); halo2.setMouseTransparent(true);
+                Circle body = new Circle(0, 0, 14, Color.WHITE); body.setStroke(PURPLE); body.setStrokeWidth(3.5);
+                Text t = new Text("0"); t.setFont(Font.font("System", FontWeight.BOLD, 14)); t.setFill(PURPLE); t.setMouseTransparent(true);
                 g.getChildren().addAll(halo2, body, t);
                 g.getProperties().put("halo", halo2); g.getProperties().put("body", body); g.getProperties().put("txt", t);
                 g.setOnMouseClicked(e -> {
@@ -736,7 +736,7 @@ public final class MapPane extends StackPane {
                 if (Boolean.TRUE.equals(g.getProperties().get("sel")) == on) continue;       // unchanged: no new animation (60 pins were animated on every tap)
                 g.getProperties().put("sel", on);
                 Scale sc = (Scale) g.getProperties().get("sc");
-                Color fill = on ? PURPLE_DARK : PURPLE;
+                Color fill = on ? SELECTED : PURPLE;
                 ((Circle) g.getProperties().get("head")).setFill(fill); ((Polygon) g.getProperties().get("tail")).setFill(fill);
                 double to = on ? 1.3 : 1.0;
                 new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(sc.xProperty(), sc.getX()), new KeyValue(sc.yProperty(), sc.getY())),
@@ -839,7 +839,7 @@ public final class MapPane extends StackPane {
                 g.setTranslateX(p.getX()); g.setTranslateY(p.getY());
                 boolean dotMode = far && !b.id().equals(selId);
                 Scale zs = (Scale) g.getProperties().get("zs");
-                double ks = dotMode ? Math.min(k, 1.25) : k;
+                double ks = dotMode ? Math.min(k, 1.0) : (b.id().equals(selId) ? Math.min(k, 1.15) : k);
                 if (zs != null) { zs.setX(ks); zs.setY(ks); }
                 ((Polygon) g.getProperties().get("tail")).setVisible(!dotMode);
                 double cyp = dotMode ? 0 : -21;

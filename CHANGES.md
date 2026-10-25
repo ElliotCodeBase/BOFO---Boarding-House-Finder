@@ -1,3 +1,9 @@
+# v1.9.3 - Home map overview + clearer map
+
+- Home opens zoomed out showing every boarding house and your location; the location button switches it off (go to me) and back on, and is highlighted while it is on. Searching or choosing a campus turns it off.
+- Clearer markers: purple dots, white numbered bubbles for groups, a red pin for the selected boarding house, orange campus dots.
+- Faster map: tiles are drawn one at a time, no buildings or alleys, fewer outlines; smoother zoom when tapping a boarding house.
+
 # v1.9.2 - Directions: BH → Campus fix and new look
 
 - Fixed: tapping "BH → Campus" (or any tab) left the previous tab's line on the map while it said "Finding the best way…". The old line is cleared at once and the new trip is drawn straight away (a guide line), then replaced by the real route.
