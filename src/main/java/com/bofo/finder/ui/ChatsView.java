@@ -30,7 +30,7 @@ public final class ChatsView extends VBox {
                 String other = c.studentId().equals(me) ? c.ownerId() : c.studentId();
                 // owners see the student's name in the chat header; students see the boarding house name
                 String title = c.ownerId().equals(me) && !c.otherName().isBlank() ? c.otherName() : c.bhName();
-                row.setOnMouseClicked(e -> Nav.show(new ChatView(c.id(), title, null, other, () -> Nav.show(Main.home(), true)), true));
+                row.setOnMouseClicked(e -> Nav.show(new ChatView(c.id(), title, null, other, () -> Nav.show(Main.home(), true)), false));
                 rows.getChildren().add(row);
             }
         });

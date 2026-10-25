@@ -14,7 +14,22 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
+import javafx.animation.FadeTransition;
+import javafx.animation.ScaleTransition;
+import javafx.collections.ListChangeListener;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.SVGPath;
+import javafx.scene.shape.StrokeLineCap;
+import javafx.scene.shape.StrokeLineJoin;
+import javafx.util.Duration;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -29,7 +44,10 @@ public final class ChatView extends VBox {
     private final boolean iAmOwner;
     private final HBox quickRow = new HBox(8);
     private final Button sendBtn = new Button("\u27A4");
-    private final VBox msgs = new VBox(6);
+    private final VBox msgs = new VBox(8);
+    private boolean regroupQueued;
+    private LocalDate lastDay;                                         // day of the newest message on screen (for the day dividers)
+    private javafx.scene.Node emptyNode;                               // "Say hello" placeholder, removed when the first message appears
     private final ScrollPane scroll = Ui.scroll(msgs);
     private final TextField input = new TextField();
     private String oldest, newest = "1970-01-01T00:00:00Z";
@@ -51,16 +69,23 @@ public final class ChatView extends VBox {
         this.convId = convId; this.otherUserId = otherUserId; this.me = AuthService.get().userId();
         this.iAmOwner = AuthService.get().profile() != null && AuthService.get().profile().role() == com.bofo.finder.model.Role.OWNER;
         Button back = Ui.btn("←", "heart", () -> { stop(); onBack.run(); });
-        back.getStyleClass().setAll("button", "icon-btn");
+        back.getStyleClass().setAll("button", "chat-icon-btn");
         Button more = Ui.btn("⋯", "heart", this::reportDialog);
-        more.getStyleClass().setAll("button", "icon-btn");
+        more.getStyleClass().setAll("button", "chat-icon-btn");
         Label who = Ui.label(bhName, "chat-name");
+        who.setWrapText(false); who.setMinWidth(0); who.setTextOverrun(OverrunStyle.ELLIPSIS); who.setMaxWidth(Double.MAX_VALUE);
         Label role = Ui.label(iAmOwner ? "Student" : "Boarding house owner", "chat-role");
-        VBox titleBox = new VBox(1, who, role); titleBox.setAlignment(Pos.CENTER_LEFT);
-        HBox bar = Ui.appBar("", more); bar.getChildren().setAll(back, Ui.avatar(bhName, 38), titleBox, Ui.grow(), more);
-        bar.setSpacing(10); bar.getStyleClass().add("chat-bar");
+        role.setWrapText(false); role.setMinWidth(0); role.setTextOverrun(OverrunStyle.ELLIPSIS);
+        VBox titleBox = new VBox(1, who, role); titleBox.setAlignment(Pos.CENTER_LEFT); titleBox.setMinWidth(0);
+        HBox.setHgrow(titleBox, Priority.ALWAYS);
+        HBox bar = Ui.appBar("", more); bar.getChildren().setAll(back, Ui.avatar(bhName, 40), titleBox, more);
+        bar.setSpacing(10); bar.setAlignment(Pos.CENTER_LEFT); bar.getStyleClass().add("chat-bar");
 
-        msgs.setPadding(new Insets(10));
+        msgs.setPadding(new Insets(12, 12, 16, 12));
+        msgs.getChildren().addListener((ListChangeListener<javafx.scene.Node>) c -> {      // re-group runs of messages from the same person after any change
+            if (regroupQueued) return;
+            regroupQueued = true; Platform.runLater(() -> { regroupQueued = false; regroup(); });
+        });
         VBox.setVgrow(scroll, Priority.ALWAYS);
         input.setPromptText("Write a message\u2026"); input.getStyleClass().add("chat-input"); HBox.setHgrow(input, Priority.ALWAYS);
         input.setOnAction(e -> send());
@@ -112,14 +137,28 @@ public final class ChatView extends VBox {
         if (first) msgs.getChildren().setAll(Skeleton.bubbles());          // skeleton while the history loads
         Async.run(() -> chat.page(convId, first ? null : oldest), page -> {
             if (first) msgs.getChildren().clear();
-            if (page.isEmpty()) { if (first) { msgs.getChildren().add(Ui.emptyState("Say hello", iAmOwner ? "Reply to the student to answer their questions." : "Ask the owner about price, rooms or a visit.")); restoreQueued(); } return; }
+            if (page.isEmpty()) { if (first) { emptyNode = Ui.emptyState("Say hello", iAmOwner ? "Reply to the student to answer their questions." : "Ask the owner about price, rooms or a visit."); msgs.getChildren().add(emptyNode); restoreQueued(); } return; }
             List<Message> asc = new ArrayList<>(page); Collections.reverse(asc);
             oldest = asc.get(0).createdAt();
             if (first) newest = asc.get(asc.size() - 1).createdAt();
             if (!first && !msgs.getChildren().isEmpty() && msgs.getChildren().get(0) instanceof Button) msgs.getChildren().remove(0);
             List<javafx.scene.Node> nodes = new ArrayList<>();
             if (page.size() == ChatService.PAGE) nodes.add(Ui.btn("Load older messages", "chip", () -> loadOlder(false)));
-            for (Message m : asc) { seen.add(m.id()); nodes.add(bubble(m)); }
+            LocalDate prev = null;
+            for (Message m : asc) {
+                seen.add(m.id());
+                LocalDate d = dayOf(m.createdAt());
+                if (d != null && !d.equals(prev)) { nodes.add(divider(d)); prev = d; }
+                nodes.add(bubble(m));
+            }
+            if (first) lastDay = prev;
+            else if (prev != null) {                                  // the older page ends on the day the shown history starts: keep one divider
+                for (int i = 0; i < msgs.getChildren().size(); i++) {
+                    javafx.scene.Node n = msgs.getChildren().get(i);
+                    if (n.getUserData() instanceof LocalDate ld) { if (ld.equals(prev)) msgs.getChildren().remove(i); break; }
+                    if (!(n instanceof Button)) break;
+                }
+            }
             msgs.getChildren().addAll(first ? msgs.getChildren().size() : 0, nodes);
             if (first) restoreQueued();
             if (first) Platform.runLater(() -> scroll.setVvalue(1.0));
@@ -141,7 +180,7 @@ public final class ChatView extends VBox {
             List<Message> fresh = chat.fetchNewer(convId, newest);
             if (fresh.isEmpty()) return false;
             Platform.runLater(() -> {
-                for (Message m : fresh) { newest = m.createdAt(); if (seen.add(m.id())) msgs.getChildren().add(bubble(m)); }
+                for (Message m : fresh) { newest = m.createdAt(); if (seen.add(m.id())) { clearEmpty(); addDay(dayOf(m.createdAt())); javafx.scene.Node nb = bubble(m); msgs.getChildren().add(nb); appear(nb); } }
                 scroll.setVvalue(1.0);
             });
             chat.markRead(convId);
@@ -152,13 +191,87 @@ public final class ChatView extends VBox {
 
     private javafx.scene.Node bubble(Message m) {
         boolean mine = m.senderId().equals(me);
-        Label l = new Label(m.body()); l.setWrapText(true); l.maxWidthProperty().bind(javafx.beans.binding.Bindings.max(180, scroll.widthProperty().multiply(0.74)));
-        StackPane b = new StackPane(l); b.getStyleClass().add(mine ? "bubble-me" : "bubble-them");
-        String t = m.createdAt() != null && m.createdAt().length() >= 16 ? m.createdAt().substring(11, 16) : "";
-        String status = mine ? (t + (t.isEmpty() ? "" : "  \u00B7  ") + (m.readAt() != null ? "\u2713\u2713 Read" : "\u2713 Sent")) : t;
-        VBox box = new VBox(2, b, Ui.label(status, "chat-time")); box.setAlignment(mine ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
-        HBox row = new HBox(box); row.setAlignment(mine ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT); return row;
+        Label l = new Label(m.body()); l.setWrapText(true); l.getStyleClass().add("bubble-text");
+        l.maxWidthProperty().bind(javafx.beans.binding.Bindings.max(180, scroll.widthProperty().multiply(0.74)));
+        Label time = new Label(clock(m.createdAt())); time.getStyleClass().add("bubble-meta");
+        HBox metaRow = new HBox(4, time); metaRow.setAlignment(Pos.CENTER_RIGHT);
+        if (mine) metaRow.getChildren().add(m.readAt() != null ? tickIcon(TICKS, Color.web("#9FE8FF")) : tickIcon(TICK, Color.web("#FFFFFF", 0.8)));   // one tick = sent, two blue ticks = read
+        VBox inner = new VBox(2, l, metaRow);
+        StackPane b = new StackPane(inner); b.getStyleClass().add(mine ? "bubble-me" : "bubble-them");
+        b.setOnContextMenuRequested(e -> copyMenu(b, m.body(), e.getScreenX(), e.getScreenY()));
+        HBox row = new HBox(b); row.setAlignment(mine ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
+        row.getProperties().put("sender", m.senderId()); row.getProperties().put("bubble", b);
+        return row;
     }
+
+    // drawn ticks (the text characters looked uneven on some phones): 1 tick = sent, 2 ticks = read
+    private static final String TICK = "M4 12.5l5 5L20 6.5";
+    private static final String TICKS = "M1.5 12.5l5 5L17 6.5M10 16.5l1.5 1.5L22.5 6.5";
+    private static javafx.scene.Node tickIcon(String path, Color c) {
+        SVGPath p = new SVGPath(); p.setContent(path); p.setFill(null); p.setStroke(c); p.setStrokeWidth(2.6);
+        p.setStrokeLineCap(StrokeLineCap.ROUND); p.setStrokeLineJoin(StrokeLineJoin.ROUND);
+        double k = 15 / 24.0; p.getTransforms().add(new javafx.scene.transform.Scale(k, k, 0, 0));
+        Pane box = new Pane(p); box.setMinSize(15, 11); box.setPrefSize(15, 11); box.setMaxSize(15, 11); box.setMouseTransparent(true);
+        return box;
+    }
+
+    /** Runs of messages from the same person: tighter gap, the round corner only on the first, the small tail only on the last. */
+    private void regroup() {
+        List<javafx.scene.Node> kids = msgs.getChildren();
+        for (int i = 0; i < kids.size(); i++) {
+            javafx.scene.Node n = kids.get(i);
+            Object sender = n.getProperties().get("sender"), bub = n.getProperties().get("bubble");
+            if (sender == null || !(bub instanceof StackPane b)) continue;
+            boolean prevSame = i > 0 && sender.equals(kids.get(i - 1).getProperties().get("sender"));
+            boolean nextSame = i + 1 < kids.size() && sender.equals(kids.get(i + 1).getProperties().get("sender"));
+            boolean mine = sender.equals(me);
+            String big = "20", mid = "7", tail = "4";
+            String near1 = prevSame ? mid : big, near2 = nextSame ? mid : tail;     // the side that faces the screen edge: top, then bottom
+            String r = mine ? big + " " + near1 + " " + near2 + " " + big            // TL TR BR BL
+                            : near1 + " " + big + " " + big + " " + near2;
+            String st = "-fx-background-radius:" + r + ";-fx-border-radius:" + r + ";";
+            b.setStyle(st);
+            VBox.setMargin(n, new Insets(prevSame ? -5 : 0, 0, 0, 0));
+        }
+    }
+
+    /** New messages pop in: a short fade and a small scale from 92%. */
+    private static void appear(javafx.scene.Node n) {
+        n.setOpacity(0); n.setScaleX(0.92); n.setScaleY(0.92);
+        FadeTransition f = new FadeTransition(Duration.millis(160), n); f.setToValue(1);
+        ScaleTransition sc = new ScaleTransition(Duration.millis(200), n); sc.setToX(1); sc.setToY(1);
+        f.play(); sc.play();
+    }
+
+    private void copyMenu(javafx.scene.Node anchor, String text, double x, double y) {
+        ContextMenu cm = new ContextMenu(); MenuItem copy = new MenuItem("Copy");
+        copy.setOnAction(e -> { ClipboardContent cc = new ClipboardContent(); cc.putString(text); Clipboard.getSystemClipboard().setContent(cc); Nav.toast("Copied"); });
+        cm.getItems().add(copy); cm.show(anchor, x, y);
+    }
+
+    // ---- time helpers: the server sends UTC, people read their own local time ----
+    private static String clock(String iso) {
+        try { return OffsetDateTime.parse(iso).atZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)); }
+        catch (Exception e) { return iso != null && iso.length() >= 16 ? iso.substring(11, 16) : ""; }
+    }
+    private static LocalDate dayOf(String iso) {
+        try { return OffsetDateTime.parse(iso).atZoneSameInstant(ZoneId.systemDefault()).toLocalDate(); } catch (Exception e) { return null; }
+    }
+    /** "Today", "Yesterday" or "Oct 25" centred in a small pill between messages of different days. */
+    private javafx.scene.Node divider(LocalDate d) {
+        LocalDate today = LocalDate.now();
+        String text = d.equals(today) ? "Today" : d.equals(today.minusDays(1)) ? "Yesterday"
+                : d.format(DateTimeFormatter.ofPattern(d.getYear() == today.getYear() ? "MMM d" : "MMM d, yyyy", Locale.ENGLISH));
+        Label pill = Ui.label(text, "chat-day");
+        HBox row = new HBox(pill); row.setAlignment(Pos.CENTER); row.setPadding(new Insets(6, 0, 2, 0));
+        row.setUserData(d);
+        return row;
+    }
+    private void addDay(LocalDate d) {
+        if (d == null || d.equals(lastDay)) return;
+        lastDay = d; msgs.getChildren().add(divider(d));
+    }
+    private void clearEmpty() { if (emptyNode != null) { msgs.getChildren().remove(emptyNode); emptyNode = null; } }
 
     private void send() {
         String t = input.getText(); if (t == null || t.isBlank()) return;
@@ -174,13 +287,15 @@ public final class ChatView extends VBox {
     private void addPending(JSONObject e) {
         String id = e.getString("id");
         Label l = new Label(e.getString("body")); l.setWrapText(true);
-        l.maxWidthProperty().bind(javafx.beans.binding.Bindings.max(180, scroll.widthProperty().multiply(0.74)));
+        l.maxWidthProperty().bind(javafx.beans.binding.Bindings.max(180, scroll.widthProperty().multiply(0.76)));
         StackPane b = new StackPane(l); b.getStyleClass().add("bubble-me"); b.setOpacity(0.6);
-        Label status = Ui.label(Connectivity.OFFLINE.get() ? WAITING : "Sending...", "secondary");
+        Label status = Ui.label(Connectivity.OFFLINE.get() ? WAITING : "Sending...", "chat-time");
         VBox box = new VBox(2, b, status); box.setAlignment(Pos.CENTER_RIGHT);
         HBox row = new HBox(box); row.setAlignment(Pos.CENTER_RIGHT);
+        row.getProperties().put("sender", me); row.getProperties().put("bubble", b);
         queued.put(id, new Pending(row, b, status));
-        msgs.getChildren().add(row); Platform.runLater(() -> scroll.setVvalue(1.0));
+        clearEmpty(); addDay(LocalDate.now());
+        msgs.getChildren().add(row); appear(row); Platform.runLater(() -> scroll.setVvalue(1.0));
     }
 
     /** After the history is (re)drawn, the queued bubbles go back at the bottom. */
