@@ -1,4 +1,4 @@
-# v1.12.1 - Idle moods start sooner and are easier to see
+﻿# v1.12.1 - Idle moods start sooner and are easier to see
 
 - The chat head now starts a mood after 4-10 s of quiet (was 8-18 s) and rests 4-10 s between moods.
 - Bigger movement on the small 46 px head: wider head tilt and eye movement when thinking, deeper sit with feet spread, bigger running circle, deeper sleep and larger z's.
@@ -84,14 +84,14 @@
 - Clearer markers: purple dots, white numbered bubbles for groups, a red pin for the selected boarding house, orange campus dots.
 - Faster map: tiles are drawn one at a time, no buildings or alleys, fewer outlines; smoother zoom when tapping a boarding house.
 
-# v1.9.2 - Directions: BH → Campus fix and new look
+# v1.9.2 - Directions: BH â†’ Campus fix and new look
 
-- Fixed: tapping "BH → Campus" (or any tab) left the previous tab's line on the map while it said "Finding the best way…". The old line is cleared at once and the new trip is drawn straight away (a guide line), then replaced by the real route.
+- Fixed: tapping "BH â†’ Campus" (or any tab) left the previous tab's line on the map while it said "Finding the best wayâ€¦". The old line is cleared at once and the new trip is drawn straight away (a guide line), then replaced by the real route.
 - New look: From/To card with dots, a big summary (time, distance, fare), tidy notes with small symbols, softer buttons, and loading placeholders instead of plain text.
 
 # v1.9.1 - Directions tabs
 
-- The three tabs now read Me → BH, Me → Campus and BH → Campus (current location to the boarding house, current location to the campus, boarding house to the campus). The labels fit on one line.
+- The three tabs now read Me â†’ BH, Me â†’ Campus and BH â†’ Campus (current location to the boarding house, current location to the campus, boarding house to the campus). The labels fit on one line.
 
 # v1.9.0 - Directions work offline, local routes, options on the map card
 
@@ -150,7 +150,7 @@
 - `BhCard.java`: sentence-case badges, "No reviews yet" instead of empty stars, house icon on photo placeholders.
 - Back/more buttons share the `.icon-btn` class (no inline styles). Bottom paddings reduced to match the new tab bar.
 
-# BOFO Finder — Redesign Changelog (purple / professional)
+# BOFO Finder â€” Redesign Changelog (purple / professional)
 
 > Note: these changes were written without compiling (no Java/Maven in the editing environment). Run the app once and use the troubleshooting guide below if anything misbehaves.
 
@@ -180,7 +180,7 @@
 - Status bar color (`Main.java`) set to `#3F2285` to match the splash.
 
 ## How to access
-- Desktop: `mvn javafx:run` — the splash appears first, then login (or home if a session exists).
+- Desktop: `mvn javafx:run` â€” the splash appears first, then login (or home if a session exists).
 - Android: `mvn -Pandroid gluonfx:build gluonfx:package` then `gluonfx:install gluonfx:nativerun`.
 - Edit colors in one place: `src/main/resources/com/bofo/finder/bofo.css` (top `.root` block).
 - Preview the splash alone: in `Main.start`, temporarily skip the `Async.run(...)` call and just keep `Nav.show(splash, false)`.
