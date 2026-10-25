@@ -28,6 +28,8 @@ public final class BofoPanel extends Pane {
 
     private final Button fab = new Button();
     private final Mascot face = new Mascot(Mascot.Expression.HAPPY, 46);
+    /** Fixed 46x46 box around the mascot: idle poses move and overflow (z's, bubble) WITHOUT resizing the button or shifting the UI. */
+    private final Pane faceBox = new Pane(face);
     private final VBox chat = new VBox(8);
     private final VBox messages = new VBox(8);
     private final TextField input = new TextField();
@@ -54,7 +56,9 @@ public final class BofoPanel extends Pane {
     public BofoPanel() {
         setPickOnBounds(false);
         fab.getStyleClass().add("bofo-fab");
-        fab.setGraphic(face); fab.setStyle("-fx-padding:4;");
+        faceBox.setMinSize(46, 46); faceBox.setPrefSize(46, 46); faceBox.setMaxSize(46, 46);
+        fab.setGraphic(faceBox); fab.setStyle("-fx-padding:5;");
+        fab.setMinSize(56, 56); fab.setPrefSize(56, 56); fab.setMaxSize(56, 56);   // never grows, whatever the mascot does
         widthProperty().addListener((o, a, w) -> fit());      // re-fit on rotate / resize / first layout
         heightProperty().addListener((o, a, h) -> fit());
         bob.setByY(-6); bob.setAutoReverse(true); bob.setCycleCount(Animation.INDEFINITE); bob.play();

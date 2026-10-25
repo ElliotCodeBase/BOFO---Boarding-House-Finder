@@ -1,4 +1,17 @@
-﻿# v1.12.1 - Idle moods start sooner and are easier to see
+﻿# v1.12.4 - Smooth change between idle poses
+
+- Switching from one idle pose to the next (or back to normal after a tap) no longer snaps: the old pose keeps moving while it fades out (0.13 s), then the new pose fades in (0.2 s). A tap or question during a fade still wins at once.
+
+# v1.12.3 - Fix: effects of one idle pose stayed on screen in the next
+
+- The z z z (sleeping) and speed lines (running) were left on the mascot when the pose ended and showed up in the other poses. They are now cleared whenever a pose ends or a new one starts.
+
+# v1.12.2 - Idle poses redrawn; the floating head no longer disturbs the UI
+
+- **Real poses, not squashed copies:** Thinking = one hand on the chin (tapping) and a foot tapping. Sitting = plops down, body low, feet out in front swinging, arms resting, blinks and glances. Running = leans forward, arms pump, feet stride, speed lines. Sleeping = slumped sit, eyes shut, mouth breathing, head nods with the hat drooping, z z z.
+- **Fixed:** the head used to resize and drift while animating (floating z's, the running circle, tilt changed the button size and bumped things around). The mascot now sits in a fixed 46 px box inside a fixed 56 px button, and running happens in place.
+
+# v1.12.1 - Idle moods start sooner and are easier to see
 
 - The chat head now starts a mood after 4-10 s of quiet (was 8-18 s) and rests 4-10 s between moods.
 - Bigger movement on the small 46 px head: wider head tilt and eye movement when thinking, deeper sit with feet spread, bigger running circle, deeper sleep and larger z's.
