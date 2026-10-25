@@ -313,7 +313,31 @@
 .pill-full { -fx-background-color: #FBE7E7; -fx-text-fill: -bofo-error; -fx-background-radius: 999; -fx-padding: 4 10; -fx-font-weight: bold; -fx-font-size: 12px; }
 
 /* ---- Directions card (v1.8.0) ---- */
-.seg-fit { -fx-font-size: 12px; -fx-padding: 7 2; }                      /* three tabs share the row: never wider than the screen */
-.dir-head { -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
+.seg-fit { -fx-font-size: 12px; -fx-padding: 9 2; }                      /* three tabs share the row: never wider than the screen */
+.dir-head { -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
 .dir-opt { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 10 12; }
 .dir-opt-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 10 12; }
+
+/* ---- Directions card redesign (v1.9.2) ---- */
+.dir-trip { -fx-background-color: -bofo-bg; -fx-background-radius: 16; -fx-padding: 12 14; }
+.dir-trip-what { -fx-text-fill: -bofo-muted; -fx-font-size: 11px; -fx-font-weight: bold; }
+.dir-trip-name { -fx-text-fill: -bofo-text; -fx-font-size: 13px; -fx-font-weight: bold; }
+.dir-hero { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 18; -fx-padding: 14; }
+.dir-hero-icon { -fx-background-color: white; -fx-background-radius: 14; -fx-font-size: 24px; }
+.dir-section { -fx-text-fill: -bofo-text-2; -fx-font-size: 12px; -fx-font-weight: bold; }
+.dir-src { -fx-text-fill: -bofo-muted; -fx-font-size: 11px; }
+.dir-opt-icon { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 12; -fx-font-size: 18px; }
+.dir-opt-title { -fx-text-fill: -bofo-text; -fx-font-size: 14px; -fx-font-weight: bold; }
+.dir-note { -fx-background-radius: 14; -fx-padding: 10 12; }
+.dir-note-text { -fx-font-size: 12.5px; }
+.dir-note-ok { -fx-background-color: #E9F7F0; }   .dir-note-ok .dir-note-text { -fx-text-fill: #17603F; }
+.dir-note-warn { -fx-background-color: #F4F1FF; } .dir-note-warn .dir-note-text { -fx-text-fill: -bofo-primary-dark; }
+.dir-note-bad { -fx-background-color: #FCEBEB; }  .dir-note-bad .dir-note-text { -fx-text-fill: #9A2B2B; }
+.dir-note-sym { -fx-background-radius: 999; -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: white; }
+.dir-note-sym-ok { -fx-background-color: -bofo-success; }
+.dir-note-sym-warn { -fx-background-color: -bofo-primary; }
+.dir-note-sym-bad { -fx-background-color: -bofo-error; }
+.btn-tint { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 12 24; }
+.btn-tint:hover { -fx-background-color: #DDD6FF; }
+.btn-link { -fx-background-color: transparent; -fx-text-fill: -bofo-primary; -fx-font-weight: bold; -fx-padding: 8 12; }
+.btn-link:hover { -fx-text-fill: -bofo-primary-dark; -fx-underline: true; }
