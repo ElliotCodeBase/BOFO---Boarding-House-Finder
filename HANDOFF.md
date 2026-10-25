@@ -1,3 +1,10 @@
+# Handoff - v1.11.0 In-app legal reader (2026-10-25)
+- **PR title:** `v1.11.0 - Privacy Policy, Terms and Agreements open in an in-app overlay`. Version in `config.properties`, `pom.xml` (versionCode 34), CHANGES.md.
+- **New `ui/LegalOverlay`** (bottom sheet in the style of `FilterSheet`; `LegalOverlay.open(Doc.PRIVACY|TERMS|AGREEMENTS)`) and **`ui/LegalText`** (the document text, edit there; `policy.*.version` shown in the header). `Nav.pushOverlay/popOverlay` add a layer above the mascot. Wired in `ProfileView` (3 rows) and `LoginView` (2 links). Optional `policy.contact` in config.properties.
+- Not compiled/run by Claude (no Maven, no javac). Test: Profile > tap each of the 3 rows, scroll, close with X / outside / Close / Esc; login screen links.
+
+---
+
 # Handoff - v1.9.13 Chat offline: saved history + outbox (2026-10-25)
 - **PR title:** `v1.9.13 - Chats offline: read saved chats, write messages that send when online`. Version in `config.properties`, `pom.xml` (versionCode 28), CHANGES.md.
 - **New `util/Outbox`:** `add(conv, body)` saves to `user_outbox.json` (DiskCache), `flushAsync()` sends oldest-first through `ChatService.send` (one flush at a time); network error = stays queued + `waiting` callbacks; other errors = dropped + `failed`. Flushed from `Main` on OFFLINE -> false, in `route()`, in `ChatView` constructor and every `tick()` while the queue is not empty.
