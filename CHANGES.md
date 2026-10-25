@@ -1,3 +1,25 @@
+# v1.7.0 - New boarding house page
+
+- Redesigned page: photo hero, price and status at the top, quick facts, and separate cards for amenities, rooms, location and reviews.
+- Removed the Call button; only "Chat with owner" is left.
+
+# v1.6.3 - Boarding house page opens again
+
+- A place now opens even if its amenities cannot be loaded.
+
+# v1.6.2 - Smarter amenity search, fixed search dropdown and List/Map switch
+
+- Typing in the amenity filter suggests matching amenities (also similar words and typos), only ones a boarding house really has; clear message when none does.
+- Campus dropdown on Explore/Home floats under the search bar and no longer gets cut off.
+- List | Map switch no longer turns into "..." buttons.
+
+# v1.6.0 - Amenities, one search bar on Home, new Explore filter
+
+- New shared amenity catalog (20 starters + anything owners add). Owners pick or create amenities when adding a listing; students filter by them in Explore (popular chips + search any amenity). Cards, map card and detail page show them.
+- Home has a single search bar (campus / name / area) instead of two.
+- Explore: nicer search bar, quick-filter row, bottom-sheet filter (price, sort, amenities). Search matches name or address.
+- Database: run `supabase/migrations/005_amenities.sql`.
+
 # v1.2.1 - Sharp vector map (OpenFreeMap), own style (not run on screen yet)
 
 - The map is now drawn inside the app from OpenFreeMap vector tiles (free, no key, commercial use allowed): `util/VectorTileRetriever` + `util/Mvt`. Lavender land, soft green parks, light-blue water, light buildings, white roads with a thin outline (main roads tinted brand purple). No place names, no shop icons. Rendered at 512 px per tile, so lines and edges stay crisp on phones.

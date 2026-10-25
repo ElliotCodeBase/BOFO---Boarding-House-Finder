@@ -21,5 +21,6 @@ final class Glyphs {
     static final String TRASH = "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6";
     static final String MAP = "M9 3L3 5.5v15L9 18l6 3 6-2.5v-15L15 6ZM9 3v15M15 6v15";
     static final String LOCATE = "M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8ZM12 2v3M12 19v3M2 12h3M19 12h3";
+    static final String PIN = "M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11ZM12 7.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 0 0 0-5Z";
     static final String LIST = "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01";
 }

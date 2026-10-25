@@ -247,11 +247,12 @@ public final class Ui {
 
     /** Pill-shaped segmented control, e.g. List | Map. */
     public static HBox segmented(String[] names, int selected, java.util.function.IntConsumer onPick) {
-        HBox wrap = new HBox(2); wrap.getStyleClass().add("seg-wrap"); wrap.setAlignment(Pos.CENTER);
+        HBox wrap = new HBox(2); wrap.getStyleClass().add("seg-wrap"); wrap.setAlignment(Pos.CENTER); wrap.setMinWidth(Region.USE_PREF_SIZE);
         Button[] bs = new Button[names.length];
         for (int i = 0; i < names.length; i++) {
             final int idx = i;
             bs[i] = new Button(names[i]); bs[i].getStyleClass().add(i == selected ? "seg-on" : "seg");
+            bs[i].setMinWidth(Region.USE_PREF_SIZE);                    // never shrink to "..." when the row is crowded
             bs[i].setOnAction(e -> {
                 for (int j = 0; j < bs.length; j++) { bs[j].getStyleClass().removeAll("seg", "seg-on"); bs[j].getStyleClass().add(j == idx ? "seg-on" : "seg"); }
                 onPick.accept(idx);

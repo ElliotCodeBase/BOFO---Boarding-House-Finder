@@ -45,6 +45,7 @@ public final class CampusPicker extends VBox {
     private final Consumer<String> onEnterText;     // Enter with text that matches no campus (may be null)
     private final Consumer<String> onType;          // the user typed or cleared text: use it as a name/area search (may be null)
     private final ChangeListener<College> stateListener;
+    private final HBox box;                          // the search bar itself; the dropdown floats right under it
     private List<College> all = List.of();
     private boolean settingText;                    // true while we fill the field ourselves (not the user typing)
 
@@ -67,19 +68,27 @@ public final class CampusPicker extends VBox {
         });
         Button arrow = new Button("▾"); arrow.getStyleClass().add("college-arrow");
         arrow.setOnAction(e -> { if (list.isVisible()) close(); else refresh(""); });      // arrow = the whole campus list
-        HBox box = new HBox(6, Ui.strokeIcon(Glyphs.SEARCH, 18, Color.web("#5B3BF0")), field, clear, arrow);
+        box = new HBox(6, Ui.strokeIcon(Glyphs.SEARCH, 18, Color.web("#5B3BF0")), field, clear, arrow);
         box.setAlignment(Pos.CENTER_LEFT); box.getStyleClass().add("college-box");
+        field.focusedProperty().addListener((o, was, on) -> { box.getStyleClass().remove("college-box-focus"); if (on) box.getStyleClass().add("college-box-focus"); });
 
         list.getStyleClass().add("college-list"); list.setFixedCellSize(ROW);
         list.setPlaceholder(Ui.label("No campus found", "secondary"));
         list.setCellFactory(lv -> new ListCell<>() {
+            { setPrefWidth(0); }                                        // a long name wraps instead of adding a sideways scrollbar
             @Override protected void updateItem(College c, boolean empty) {
                 super.updateItem(c, empty);
                 if (empty || c == null) { setText(null); setGraphic(null); return; }
-                setText(null); setGraphic(highlight(c.name(), field.getText()));
+                javafx.scene.Node g = highlight(c.name(), field.getText());
+                if (g instanceof javafx.scene.layout.Region) {
+                    javafx.scene.layout.Region r = (javafx.scene.layout.Region) g;
+                    r.prefWidthProperty().bind(list.widthProperty().subtract(44));
+                    r.maxWidthProperty().bind(list.widthProperty().subtract(44));
+                }
+                setText(null); setGraphic(g);
             }
         });
-        list.setVisible(false); list.setManaged(false);
+        list.setVisible(false); list.setManaged(false);                 // never managed: it floats over the content below (see layoutChildren)
         list.setOnMouseClicked(e -> { College c = list.getSelectionModel().getSelectedItem(); if (c != null) pick(c); });
 
         field.textProperty().addListener((o, was, now) -> { if (!settingText) { refresh(now); if (this.onType != null) this.onType.accept(now); } });
@@ -110,6 +119,15 @@ public final class CampusPicker extends VBox {
         sceneProperty().addListener((o, was, sc) -> { if (sc == null) State.college.removeListener(stateListener); else { State.college.removeListener(stateListener); State.college.addListener(stateListener); } });
         Async.run(() -> new BhService().colleges(), cs -> { all = cs; if (list.isVisible()) refresh(field.isFocused() ? field.getText() : ""); }, e -> {});
         if (sync && State.college.get() != null) setField(State.college.get().name());
+    }
+
+    /** The dropdown is not part of the layout (so it never squeezes or pushes the page): it is placed right under the bar. */
+    @Override protected void layoutChildren() {
+        super.layoutChildren();
+        if (list.isVisible()) {
+            double w = getWidth();
+            list.resizeRelocate(0, box.getLayoutY() + box.getHeight() + 6, w, list.prefHeight(w));
+        }
     }
 
     /** Saves the chosen campus as the user's default (same as the Home college box). Fire-and-forget. */
@@ -145,7 +163,7 @@ public final class CampusPicker extends VBox {
         getParent().requestFocus();
     }
 
-    private void close() { list.setVisible(false); list.setManaged(false); list.getSelectionModel().clearSelection(); }
+    private void close() { list.setVisible(false); list.getSelectionModel().clearSelection(); }
 
     private void refresh(String text) {
         List<College> out = match(all, text);
@@ -153,7 +171,7 @@ public final class CampusPicker extends VBox {
         list.getItems().setAll(out);
         list.getSelectionModel().clearSelection();
         list.setPrefHeight(Math.min(Math.max(out.size(), 1), MAX_ROWS) * ROW + 10);
-        list.setVisible(true); list.setManaged(true);
+        list.setVisible(true); requestLayout();
     }
 
     /** Own autocomplete (no web API; runs on the cached campus list): name starts with the text, then a word starts with it, then the name contains it, then initials match. Empty text = all. */

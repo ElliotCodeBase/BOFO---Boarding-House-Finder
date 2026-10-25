@@ -35,9 +35,7 @@ final class MapCard extends HBox {
 
         info.setWrapText(false); info.setMaxWidth(Double.MAX_VALUE);
         FlowPane tags = new FlowPane(6, 4);
-        if (b.water()) tags.getChildren().add(Ui.label("Water", "tag"));
-        if (b.electricity()) tags.getChildren().add(Ui.label("Power", "tag"));
-        if (b.wifi()) tags.getChildren().add(Ui.label("Wi-Fi", "tag"));
+        BhCard.addAmenityTags(tags, b, 3);
 
         VBox text = new VBox(3, top, rating, info, tags);
         HBox.setHgrow(text, Priority.ALWAYS);

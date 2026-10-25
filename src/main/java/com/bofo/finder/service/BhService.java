@@ -1,5 +1,6 @@
 package com.bofo.finder.service;
 
+import com.bofo.finder.model.Amenity;
 import com.bofo.finder.model.BoardingHouse;
 import com.bofo.finder.model.College;
 import com.bofo.finder.util.Geo;
@@ -17,13 +18,31 @@ public final class BhService {
 
     public static final class Filter {
         public Double maxPrice;
-        public boolean water, electricity, wifi;
+        /** Amenity ids the place must have (ALL of them). */
+        public final Set<String> amenityIds = new LinkedHashSet<>();
         public String text;
     }
 
     private final SupabaseClient api = SupabaseClient.get();
     /** Only the columns the cards need (smaller payloads than select=*). */
     private static final String COLS = "id,owner_id,name,address,lat,lng,price,price_mode,free_water,free_electricity,free_wifi,created_at,available_beds,avg_rating,review_count,photo_url,owner_verified,hot_score,is_featured";
+
+    /** False once the database turned out not to have 005_amenities.sql yet: lists then load without amenity data instead of failing. */
+    private static volatile boolean amenityCols = true;
+    private static String cols() { return amenityCols ? COLS + ",amenity_names" : COLS; }
+
+    /** Runs a bh_cards query. If the amenity column is missing (migration not run), retries once without it. */
+    private JSONArray cards(String query) throws Exception {
+        try { return api.select("bh_cards", query); }
+        catch (SupabaseClient.ApiException e) {
+            if (e.status == 400 && amenityCols && e.getMessage().contains("amenity")) {
+                amenityCols = false; Cache.remove("list:");
+                System.err.println("[BhService] bh_cards has no amenity columns yet. Run supabase/migrations/005_amenities.sql in Supabase.");
+                return api.select("bh_cards", query.replace(",amenity_names", "").replaceAll("&amenity_ids=cs\\.%7B[^&]*%7D", ""));
+            }
+            throw e;
+        }
+    }
 
     public List<College> colleges() throws Exception {
         return Cache.get("colleges", 3_600_000, () -> {            // colleges rarely change: cache 1 h
@@ -34,22 +53,49 @@ public final class BhService {
         });
     }
 
+    /* ---------- amenities ---------- */
+    /** The whole catalog, most-used first (curated "popular" ones break ties, then A-Z). Cached 10 min. */
+    public List<Amenity> amenities() throws Exception {
+        return Cache.get("amenities", 600_000, () -> {
+            List<Amenity> l = new ArrayList<>();
+            JSONArray a = api.select("amenities_v", "select=id,name,icon,is_popular,uses");
+            for (int i = 0; i < a.length(); i++) l.add(Amenity.from(a.getJSONObject(i)));
+            l.sort(Comparator.comparingInt(Amenity::uses).reversed()
+                    .thenComparing((Amenity x) -> !x.popular()).thenComparing(Amenity::name, String.CASE_INSENSITIVE_ORDER));
+            return l;
+        });
+    }
+
+    /** Verified owners: finds the amenity with this name (any letter case) or creates it. */
+    public Amenity getOrCreateAmenity(String name, String icon) throws Exception {
+        JSONObject r = api.rpc("get_or_create_amenity", new JSONObject().put("p_name", name).put("p_icon", icon == null ? JSONObject.NULL : icon));
+        Cache.remove("amenities");
+        return new Amenity(r.getString("id"), r.getString("name"), r.optString("icon", "\u2728"), false, 0);
+    }
+
     /** Only BHs with free beds and an active listing (also enforced by the bh_cards view + RLS). */
     /** At most this many featured listings are pinned to the top of a list, so ads never drown out real results. */
     public static final int MAX_PINNED = 3;
 
     public List<BoardingHouse> list(Tab tab, Double refLat, Double refLng, Double radiusKm, Filter f) throws Exception {
-        StringBuilder q = new StringBuilder("select=" + COLS + "&available_beds=gt.0");
+        StringBuilder q = new StringBuilder("select=" + cols() + "&available_beds=gt.0");
         if (radiusKm != null && refLat != null && refLng != null) {   // bounding box lets Postgres use the lat/lng index; exact radius is checked below
             double dLat = radiusKm / 111.32, dLng = radiusKm / (111.32 * Math.cos(Math.toRadians(refLat)));
             q.append(String.format(Locale.ROOT, "&lat=gte.%.6f&lat=lte.%.6f&lng=gte.%.6f&lng=lte.%.6f", refLat - dLat, refLat + dLat, refLng - dLng, refLng + dLng));
         }
+        List<String> amenityList = new ArrayList<>();
         if (f != null) {
             if (f.maxPrice != null) q.append("&price=lte.").append(f.maxPrice);
-            if (f.water) q.append("&free_water=is.true");
-            if (f.electricity) q.append("&free_electricity=is.true");
-            if (f.wifi) q.append("&free_wifi=is.true");
-            if (f.text != null && !f.text.isBlank()) q.append("&name=ilike.*").append(f.text.replaceAll("[^\\p{L}\\p{N} ]", "")).append("*");
+            for (String id : f.amenityIds)                       // one "has all of these" filter on the amenity_ids array
+                if (id != null && id.matches("[0-9a-fA-F-]{36}")) amenityList.add(id);
+            if (!amenityList.isEmpty()) q.append("&amenity_ids=cs.%7B").append(String.join(",", amenityList)).append("%7D");
+            if (f.text != null && !f.text.isBlank()) {          // name OR address (so "Dumaguete" or "Daro" finds places in that area)
+                String t = f.text.replaceAll("[^\\p{L}\\p{N} ]", "").trim();
+                if (!t.isEmpty()) {
+                    String enc = java.net.URLEncoder.encode("*" + t + "*", java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20");
+                    q.append("&or=(name.ilike.").append(enc).append(",address.ilike.").append(enc).append(")");
+                }
+            }
         }
         final String base = q.toString();
         String order = switch (tab) {
@@ -59,8 +105,8 @@ public final class BhService {
         };
         final String main = base + order + "&limit=60";
         final String featuredQ = base + "&is_featured=is.true&limit=10";           // featured listings are fetched separately so a top-60 cut never hides them
-        JSONArray a = Cache.get("list:" + main, 30_000, () -> api.select("bh_cards", main));
-        JSONArray fa = Cache.get("list:" + featuredQ, 30_000, () -> api.select("bh_cards", featuredQ));
+        JSONArray a = Cache.get("list:" + main, 30_000, () -> cards(main));
+        JSONArray fa = Cache.get("list:" + featuredQ, 30_000, () -> cards(featuredQ));
         Map<String, BoardingHouse> byId = new LinkedHashMap<>();
         for (JSONArray src : new JSONArray[]{fa, a})
             for (int i = 0; i < src.length(); i++) {
@@ -82,13 +128,15 @@ public final class BhService {
     public JSONObject detail(String id) throws Exception {
         // 4 independent requests run in parallel instead of one after another.
         var pool = Async.pool();
-        var card = CompletableFuture.supplyAsync(() -> call(() -> api.select("bh_cards", "id=eq." + id + "&select=" + COLS)), pool);
+        var card = CompletableFuture.supplyAsync(() -> call(() -> cards("id=eq." + id + "&select=" + cols())), pool);
         var photos = CompletableFuture.supplyAsync(() -> call(() -> api.select("photos", "boarding_house_id=eq." + id + "&order=sort_order.asc&select=url")), pool);
         var rooms = CompletableFuture.supplyAsync(() -> call(() -> api.select("rooms", "boarding_house_id=eq." + id + "&select=beds,occupants")), pool);
         var contact = CompletableFuture.supplyAsync(() -> call(() -> api.select("bh_contacts", "boarding_house_id=eq." + id + "&select=*")), pool);
+        var amen = CompletableFuture.supplyAsync(() -> call(() -> api.select("bh_amenities", "boarding_house_id=eq." + id + "&select=amenities(id,name,icon,is_popular)")), pool)
+                .exceptionally(ex -> new JSONArray());          // amenities are optional: a place must still open if that table is missing or fails
         try {
             JSONObject bh = card.get().getJSONObject(0);
-            bh.put("photos", photos.get()).put("rooms", rooms.get()).put("contact", contact.get());
+            bh.put("photos", photos.get()).put("rooms", rooms.get()).put("contact", contact.get()).put("amenity_list", amen.get());
             Async.bg(() -> { try { api.rpc("bump_view", new JSONObject().put("bh", id)); } catch (Exception ignored) {} });   // fire-and-forget
             return bh;
         } catch (java.util.concurrent.ExecutionException e) { throw e.getCause() instanceof Exception ex ? ex : e; }
@@ -110,7 +158,7 @@ public final class BhService {
     public List<BoardingHouse> favorites() throws Exception {
         Set<String> ids = favoriteIds();
         if (ids.isEmpty()) return List.of();
-        JSONArray a = api.select("bh_cards", "id=in.(" + String.join(",", ids) + ")&select=" + COLS);
+        JSONArray a = cards("id=in.(" + String.join(",", ids) + ")&select=" + cols());
         List<BoardingHouse> l = new ArrayList<>();
         for (int i = 0; i < a.length(); i++) l.add(BoardingHouse.from(a.getJSONObject(i)));
         return l;
@@ -128,7 +176,7 @@ public final class BhService {
 
     /* ---------- owner: listings ---------- */
     public List<BoardingHouse> myListings(String ownerId) throws Exception {
-        JSONArray a = api.select("bh_cards", "owner_id=eq." + ownerId + "&select=" + COLS + "&order=created_at.desc");
+        JSONArray a = cards("owner_id=eq." + ownerId + "&select=" + cols() + "&order=created_at.desc");
         List<BoardingHouse> l = new ArrayList<>();
         for (int i = 0; i < a.length(); i++) l.add(BoardingHouse.from(a.getJSONObject(i)));
         return l;
@@ -138,7 +186,8 @@ public final class BhService {
         public String name, address, phone, facebook, email;
         public Double lat, lng, price;
         public String priceMode = "per_bed"; // or per_room
-        public boolean water, electricity, wifi;
+        public boolean water, electricity, wifi;                 // kept in sync with the "Free water / electricity / Wi-Fi" amenities
+        public List<String> amenityIds = new ArrayList<>();
         public List<RoomDraft> rooms = new ArrayList<>();
         public List<byte[]> photos = new ArrayList<>();
     }
@@ -170,6 +219,7 @@ public final class BhService {
                 .put("status", "active");
         String id = api.insert("boarding_houses", bh).getJSONObject(0).getString("id");
         for (RoomDraft r : d.rooms) api.insert("rooms", new JSONObject().put("boarding_house_id", id).put("beds", r.beds()).put("occupants", r.occupants()));
+        for (String aid : d.amenityIds) api.insert("bh_amenities", new JSONObject().put("boarding_house_id", id).put("amenity_id", aid));
         api.insert("bh_contacts", new JSONObject().put("boarding_house_id", id).put("phone", d.phone).put("facebook", d.facebook).put("email", d.email));
         int n = 0;
         for (byte[] p : d.photos) {

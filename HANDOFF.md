@@ -1,3 +1,39 @@
+# Handoff - v1.7.0 boarding house page redesign, Call button removed (2026-10-25)
+- `BhDetailView.render()` rewritten: photo hero (friendly placeholder when no photos), name + address with pin, big purple price + "/ month · per room", status pills (Verified, "N beds available" / "Fully booked", distance), 3 quick-fact tiles (beds free, rooms, rating), then white cards: Amenities, Rooms (per-room "N free"/"Full"), Location (rounded map + route), Reviews (+ review form for students). Bottom bar = only "Chat with owner".
+- Call button removed on purpose (phone number is still stored in `bh_contacts`, just not shown on this page).
+- New CSS: `.hero-empty`, `.stat-tile`, `.pill-ok`, `.pill-full`; new glyph `Glyphs.PIN`.
+- Not compiled by Claude (no JavaFX here).
+
+---
+# Handoff - v1.6.3 boarding house page failed to open (2026-10-25)
+- Cause: `BhService.detail()` (v1.6.0) also loads `bh_amenities`; when `005_amenities.sql` was not run that request failed and took the whole detail page with it.
+- Fix: the amenities request is optional now (`exceptionally` -> empty list), so a place always opens; amenities simply show once the SQL is run.
+
+---
+# Handoff - v1.6.2 amenity autocomplete, floating search dropdown, List|Map fix (2026-10-24)
+- Amenity search in the filter is now smart and offline (`util/Fuzzy.java`, no API): word starts, words inside names ("wifi" -> Free Wi-Fi), nicknames ("aircon", "cr", "internet") and small typos ("laundy"). Results show how many boarding houses have each amenity. Students only see amenities that at least one ACTIVE listing has; if none: "No boarding house has ... yet. Try a similar word...". Owners still see the whole catalog + "Add".
+- `005_amenities.sql` changed slightly (usage counts only count active listings). It is safe to re-run. The filter says "Amenities aren't available right now" until this SQL has been run (console shows `[AmenityPicker] couldn't load ...`). After running it, restart the app (v1.6.1 fallback stays on for the session).
+- `CampusPicker` dropdown is now unmanaged and floats under the bar (`layoutChildren`), parents use `setViewOrder(-1)`; it no longer gets squeezed or pushes the page. Long campus names wrap (no sideways scrollbar).
+- `Ui.segmented` buttons never shrink to "..." (min width = pref); Explore count text shortens with an ellipsis instead.
+- Not compiled by Claude (no JavaFX here). `Fuzzy` was tested separately with plain javac.
+
+---
+# Handoff - v1.6.1 Explore "Something went wrong" fix (2026-10-24)
+- Cause: v1.6.0 asks `bh_cards` for the new `amenity_names` column; if `005_amenities.sql` was not run (or failed) Supabase answers HTTP 400 and every list showed the error screen.
+- Fix: `BhService.cards()` retries once without the amenity column/filter, so lists load either way (no amenity tags/filter until the migration is run). Explore also prints `[Explore] load failed: ...` to the console.
+- Still do: run `supabase/migrations/005_amenities.sql` (in one go, check it ends without a red error).
+
+---
+# Handoff - v1.6.0 amenities, merged Home search, new Explore filter (2026-10-24)
+- **RUN FIRST:** `supabase/migrations/005_amenities.sql` in the Supabase SQL editor (adds `amenities`, `bh_amenities`, `amenities_v`, `get_or_create_amenity()`, 20 starter amenities, backfills water/electricity/Wi-Fi of existing listings, and rebuilds `bh_cards` with `amenity_ids` + `amenity_names`). The app will get HTTP 400 on lists until it is run. Optional: redeploy `bofo-chat` (now knows `amenity_names` and an `amenities` filter).
+- Home: the two search bars are ONE `CampusPicker` (synced with `State.college`) + the round near-me button. Pick a campus = map and list below follow it; Enter on text that is not a campus = Explore search for that name/area.
+- Explore: search bar (shadow + purple focus ring), ONE scrolling quick-filter row (active price/sort chips, chosen amenities, top 6 popular amenities, "Clear all"), and a bottom-sheet filter `FilterSheet` (price chips + custom max, sort, amenities). Nothing reloads until "Show results". Text search now matches name OR address and URL-encodes spaces (multi-word searches used to break).
+- Amenities: `AmenityPicker` (new). Students: popular chips, search box finds ANY amenity in the catalog (incl. ones owners added); no match = just says so (students cannot create). Owners (`ListingFormView`): same picker with "+ Add ..." to create a new amenity (a leading emoji becomes its icon). Filter = `amenity_ids=cs.{...}` (place must have ALL chosen). Cards show up to 4 amenity tags, map card 3, detail page shows all with icons.
+- Old `free_water/electricity/wifi` columns are still written on publish (kept in sync from the three starter amenities) so nothing else breaks.
+- Not done: owners cannot edit amenities of an EXISTING listing yet (only when creating one). Amenity moderation = admin can delete rows in `amenities`; owners are limited to 30 custom amenities.
+- NOT compiled by Claude (no JavaFX/Maven here). If the build complains, check `FilterSheet`, `AmenityPicker`, `ExploreView` first.
+
+---
 # Handoff - v1.5.2 one search bar, solid road route, removable filters (2026-10-24)
 - Explore now has ONE search bar (`CampusPicker`): type a campus (autocomplete, arrow = full list, pick = list+map jump to it) or type a BH name/area (searches as you type; the dropdown hides when no campus matches). X on the campus name clears the campus; X on typed text clears the text. Fixed the pill-inside-a-pill look (`.college-field` border now transparent).
 - Filters: Free water / electricity / Wi-Fi toggles moved INTO the filter panel (Amenities). Under the search bar, only filters that are ON show, as dark pills with an x (tap = turn off). Max price shows too. Row is hidden when nothing is on.

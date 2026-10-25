@@ -71,9 +71,7 @@ public final class BhCard extends VBox {
                 : Ui.hbox(6, Ui.label("No reviews yet", "secondary"));
 
         FlowPane tags = new FlowPane(6, 6);
-        if (b.water()) tags.getChildren().add(Ui.label("Water", "tag"));
-        if (b.electricity()) tags.getChildren().add(Ui.label("Power", "tag"));
-        if (b.wifi()) tags.getChildren().add(Ui.label("Wi-Fi", "tag"));
+        addAmenityTags(tags, b, 4);
         if (b.featured()) tags.getChildren().add(Ui.label("Featured", "badge-hot"));
         if (hot) tags.getChildren().add(Ui.label("Hot", "badge-hot"));
         if (b.ownerVerified()) tags.getChildren().add(Ui.label("Verified owner", "badge-verified"));
@@ -84,6 +82,19 @@ public final class BhCard extends VBox {
             while (t != null) { if (t == heart) return; t = t.getParent(); }
             open.accept(b);
         });
+    }
+
+    /** First few amenity names as small tags, then "+N". Falls back to the old water / power / Wi-Fi flags if a place has no amenity rows yet. */
+    static void addAmenityTags(FlowPane tags, BoardingHouse b, int max) {
+        java.util.List<String> names = b.amenities();
+        if (names.isEmpty()) {
+            if (b.water()) tags.getChildren().add(Ui.label("Water", "tag"));
+            if (b.electricity()) tags.getChildren().add(Ui.label("Power", "tag"));
+            if (b.wifi()) tags.getChildren().add(Ui.label("Wi-Fi", "tag"));
+            return;
+        }
+        for (int i = 0; i < Math.min(max, names.size()); i++) tags.getChildren().add(Ui.label(names.get(i), "tag"));
+        if (names.size() > max) tags.getChildren().add(Ui.label("+" + (names.size() - max), "tag"));
     }
 
     /** Standard save / unsave handler: if it fails the heart is undone and the toast says why (offline or server). */

@@ -274,7 +274,9 @@
   -fx-text-fill: -bofo-primary-dark; -fx-font-size: 10px; -fx-font-weight: bold; }
 
 /* ---- Home: college search box + suggestion list ---- */
-.college-box { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-padding: 2 4 2 14; }
+.college-box { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-padding: 2 4 2 14;
+  -fx-min-height: 50; -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.10), 10, 0, 0, 2); }
+.college-box-focus { -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
 .college-field, .college-field:focused { -fx-background-color: transparent; -fx-background-insets: 0; -fx-background-radius: 0; -fx-padding: 8 4 8 4;
   -fx-border-color: transparent; -fx-border-width: 0; -fx-border-radius: 0;
   -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; -fx-prompt-text-fill: #8A84A0;
@@ -285,3 +287,27 @@
   -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.16), 12, 0, 0, 3); }
 .college-list .list-cell { -fx-background-color: transparent; -fx-padding: 0 14 0 14; -fx-font-size: 14px; -fx-text-fill: -bofo-text; }
 .college-list .list-cell:filled:hover, .college-list .list-cell:filled:selected { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 12; -fx-text-fill: -bofo-primary-dark; }
+
+
+/* ---- Amenities + filter sheet (v1.6.0) ---- */
+.amenity-chip { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-text-fill: -bofo-text; -fx-padding: 8 14; -fx-font-size: 13px; -fx-cursor: hand; }
+.amenity-chip:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
+.amenity-chip-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-text-fill: -bofo-primary-dark; -fx-font-weight: bold; -fx-padding: 8 14; -fx-font-size: 13px; -fx-cursor: hand; }
+.amenity-add { -fx-background-color: transparent; -fx-border-color: -bofo-primary; -fx-border-style: segments(6, 4); -fx-border-radius: 999;
+  -fx-background-radius: 999; -fx-text-fill: -bofo-primary; -fx-font-weight: bold; -fx-padding: 8 14; -fx-font-size: 13px; -fx-cursor: hand; }
+.amenity-add:hover { -fx-background-color: -bofo-primary-tint; }
+.amenity-pill { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-text-fill: -bofo-text; -fx-padding: 6 12; -fx-font-size: 13px; }
+.quick-row, .quick-row > .viewport { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; }
+.filter-sheet { -fx-background-color: white; -fx-background-radius: 28 28 0 0;
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.28), 24, 0, 0, -4); }
+.sheet-scroll, .sheet-scroll > .viewport { -fx-background-color: transparent; }
+.college-list .scroll-bar:horizontal { -fx-pref-height: 0; -fx-min-height: 0; -fx-max-height: 0; -fx-opacity: 0; }
+
+/* ---- Boarding house detail (v1.7.0) ---- */
+.hero-empty { -fx-background-color: linear-gradient(to bottom right, #ECE9FF, #DDD6FF); -fx-background-radius: 20; }
+.stat-tile { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 12 8; }
+.pill-ok { -fx-background-color: #E1F4EA; -fx-text-fill: -bofo-success; -fx-background-radius: 999; -fx-padding: 4 10; -fx-font-weight: bold; -fx-font-size: 12px; }
+.pill-full { -fx-background-color: #FBE7E7; -fx-text-fill: -bofo-error; -fx-background-radius: 999; -fx-padding: 4 10; -fx-font-weight: bold; -fx-font-size: 12px; }

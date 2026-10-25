@@ -15,7 +15,7 @@ public final class ListingFormView extends VBox {
     private final TextField name = new TextField(), address = new TextField(), price = new TextField(),
             phone = new TextField(), fb = new TextField(), email = new TextField();
     private final ComboBox<String> mode = new ComboBox<>();
-    private final CheckBox water = new CheckBox("💧 Free water"), elec = new CheckBox("⚡ Free electricity"), wifi = new CheckBox("📶 Free WiFi");
+    private final AmenityPicker amenities = new AmenityPicker(true, null);   // owners can pick from the catalog or add their own
     private final VBox roomRows = new VBox(6);
     private final Label pinLabel = Ui.label("No pin yet", "secondary"), photoLabel = Ui.label("0 photos", "secondary"), errors = Ui.label("", "error-text");
     private final MapPane map = new MapPane(220);
@@ -47,7 +47,8 @@ public final class ListingFormView extends VBox {
         VBox form = Ui.padded(10, name, address, Ui.label("Pin location", "h2"), map, setPin, pinLabel,
                 Ui.label("Monthly payment", "h2"), Ui.hbox(8, price, mode),
                 Ui.label("Rooms (beds / current occupants)", "h2"), roomRows, addRoomBtn,
-                Ui.label("Inclusions", "h2"), water, elec, wifi,
+                Ui.label("Amenities", "h2"),
+                Ui.label("Pick what your place offers. Not in the list? Type it and tap Add: students will be able to find it in the Explore filter.", "secondary"), amenities,
                 Ui.label("Photos", "h2"), Ui.hbox(8, cam, gal, photoLabel),
                 Ui.label("Contact (at least one)", "h2"), phone, fb, email, errors, publish);
         form.setPadding(new Insets(16, 16, 60, 16));
@@ -80,11 +81,16 @@ public final class ListingFormView extends VBox {
         roomRows.getChildren().add(Ui.hbox(8, Ui.label("Room " + (roomRows.getChildren().size() + 1), "label"), b, o));
     }
 
+    private boolean has(String amenityName) {
+        return amenities.selectedAmenities().stream().anyMatch(a -> a.name().equalsIgnoreCase(amenityName));
+    }
+
     private void submit() {
         d.name = name.getText(); d.address = address.getText(); d.phone = phone.getText(); d.facebook = fb.getText(); d.email = email.getText();
         d.priceMode = mode.getSelectionModel().getSelectedIndex() == 0 ? "per_bed" : "per_room";
         try { d.price = price.getText().isBlank() ? null : Double.parseDouble(price.getText().trim()); } catch (NumberFormatException e) { d.price = null; }
-        d.water = water.isSelected(); d.electricity = elec.isSelected(); d.wifi = wifi.isSelected();
+        d.amenityIds = amenities.selectedIds();
+        d.water = has("Free water"); d.electricity = has("Free electricity"); d.wifi = has("Free Wi-Fi");   // old columns stay in sync
         d.rooms.clear();
         for (var n : roomRows.getChildren()) {
             var h = (HBox) n; int beds = ((Spinner<Integer>) h.getChildren().get(1)).getValue(), occ = ((Spinner<Integer>) h.getChildren().get(2)).getValue();

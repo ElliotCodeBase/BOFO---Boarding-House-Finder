@@ -24,11 +24,6 @@ public final class HomeView extends VBox {
     private final BhService bh = new BhService();
     private final MapPane map = new MapPane(340);
     private final CardGrid list = new CardGrid(10, 320);
-    private final TextField collegeField = new TextField();       // type to search your college ...
-    private final ListView<College> suggestions = new ListView<>(); // ... or open the full list with the arrow
-    private List<College> allColleges = List.of();
-    private boolean settingText;                                  // true while we fill the field ourselves (not the user typing)
-    private final javafx.animation.PauseTransition closeLater = new javafx.animation.PauseTransition(javafx.util.Duration.millis(140));
     private final Slider radius = new Slider(0.5, 5, State.radiusKm.get());
     private BhService.Tab tab = BhService.Tab.NEW;
     private Set<String> favs = new HashSet<>();
@@ -51,49 +46,18 @@ public final class HomeView extends VBox {
                 Ui.vbox(0, Ui.label("Welcome back,", "secondary"), Ui.label(name.isBlank() ? "there" : name, "greet-name")), Ui.grow(), bell);
         top.setPadding(new Insets(14, 16, 0, 16));
 
-        // Search bar: type a campus (autocomplete) or open the dropdown; picking one opens Explore near that campus.
-        // Enter on text that is not a campus searches boarding houses by name in Explore.
-        CampusPicker searchPill = new CampusPicker("Find boarding houses near campus", false,
-                c -> { CampusPicker.remember(c); BofoPanel.filtersListener.accept(new JSONObject()); },
+        // ONE search bar (merged from the old search pill + college box): type or open the list to pick your campus; the map and list below
+        // follow it. Press Enter on text that is not a campus (a boarding house name or an area) to search for it in Explore.
+        CampusPicker searchBar = new CampusPicker("Search campus, name or area", true,
+                c -> CampusPicker.remember(c),
                 text -> BofoPanel.filtersListener.accept(new JSONObject().put("text", text)), null);
-        VBox.setMargin(searchPill, new Insets(14, 16, 0, 16));
-
-        // ---- college: search box with a dropdown arrow ----
-        collegeField.getStyleClass().add("college-field");
-        collegeField.setPromptText("Search your college");
-        HBox.setHgrow(collegeField, Priority.ALWAYS);
-        Button clearBtn = new Button(); clearBtn.getStyleClass().add("search-clear");
-        clearBtn.setGraphic(Ui.strokeIcon(Glyphs.CLOSE, 14, Color.web("#8D8AA3")));
-        clearBtn.visibleProperty().bind(collegeField.textProperty().isNotEmpty());
-        clearBtn.managedProperty().bind(clearBtn.visibleProperty());
-        clearBtn.setOnAction(e -> { setField(""); collegeField.requestFocus(); showSuggestions(""); });
-        Button arrow = new Button("\u25BE"); arrow.getStyleClass().add("college-arrow");
-        arrow.setOnAction(e -> { if (suggestions.isVisible()) closeSuggestions(); else showSuggestions(""); });   // arrow = the whole list
-        HBox collegeBox = new HBox(6, Icons.icon(Icons.PIN, 16, Color.web("#5B3BF0")), collegeField, clearBtn, arrow);
-        collegeBox.setAlignment(Pos.CENTER_LEFT); collegeBox.getStyleClass().add("college-box");
-        HBox.setHgrow(collegeBox, Priority.ALWAYS); collegeBox.setMaxWidth(Double.MAX_VALUE);
-        setCollegeText();
-
-        suggestions.getStyleClass().add("college-list");
-        suggestions.setFixedCellSize(44);
-        suggestions.setPlaceholder(Ui.label("No college found", "secondary"));
-        suggestions.setCellFactory(lv -> new ListCell<>() {
-            @Override protected void updateItem(College c, boolean empty) { super.updateItem(c, empty); setText(empty || c == null ? null : c.name()); }
-        });
-        suggestions.setVisible(false); suggestions.setManaged(false);
-        suggestions.setOnMouseClicked(e -> { College c = suggestions.getSelectionModel().getSelectedItem(); if (c != null) choose(c); });
-        collegeField.textProperty().addListener((o, was, now) -> { if (!settingText) showSuggestions(now); });
-        collegeField.setOnAction(e -> { if (!suggestions.getItems().isEmpty()) choose(suggestions.getItems().get(0)); });   // Enter = best match
-        collegeField.setOnKeyPressed(e -> { if (e.getCode() == javafx.scene.input.KeyCode.ESCAPE) { closeSuggestions(); setCollegeText(); } });
-        collegeField.focusedProperty().addListener((o, was, on) -> { if (on) { collegeField.selectAll(); showSuggestions(""); } else closeLater.playFromStart(); });
-        suggestions.focusedProperty().addListener((o, was, on) -> { if (!on) closeLater.playFromStart(); });
-        closeLater.setOnFinished(e -> { if (!collegeField.isFocused() && !suggestions.isFocused() && !suggestions.isHover()) { closeSuggestions(); setCollegeText(); } });
         Button nearMe = new Button(); nearMe.getStyleClass().add("near-btn");                       // round icon button: "show places near me"
         nearMe.setGraphic(Ui.strokeIcon(Glyphs.LOCATE, 20, Color.web("#2F6FED")));
         nearMe.setTooltip(new Tooltip("Near me"));
         nearMe.setOnAction(e -> Locator.get().locate(p -> { if (State.college.get() != null) State.college.set(null); else reload(); }));
-        HBox collegeRow = Ui.hbox(8, collegeBox, nearMe); collegeRow.setPadding(new Insets(12, 16, 0, 16));
-        VBox.setMargin(suggestions, new Insets(6, 16, 0, 16));
+        HBox searchRow = new HBox(10, searchBar, nearMe); searchRow.setAlignment(Pos.TOP_LEFT); HBox.setHgrow(searchBar, Priority.ALWAYS);
+        searchRow.setPadding(new Insets(14, 16, 0, 16)); searchRow.setFillHeight(false);
+        searchRow.setViewOrder(-1);                                  // the campus dropdown floats above the map and list
 
         Label hintText = Ui.label("Location is off, so we can't show places near you. Turn it on, or choose your college.", "secondary");
         HBox.setHgrow(hintText, Priority.ALWAYS);
@@ -138,15 +102,16 @@ public final class HomeView extends VBox {
         mapWrap.setClip(mc);
         VBox.setMargin(mapWrap, new Insets(12, 16, 0, 16));
 
-        VBox content = new VBox(0, top, searchPill, collegeRow, suggestions, locHint, mapWrap, chips, nearby, list);
+        VBox content = new VBox(0, top, searchRow, locHint, mapWrap, chips, nearby, list);
         map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
         ScrollPane sp = Ui.scroll(content); VBox.setVgrow(sp, Priority.ALWAYS);
         getChildren().add(sp);
         Async.run(bh::favoriteIds, f -> { favs = f; reload(); }, e -> reload());
-        Async.run(bh::colleges, cs -> { allColleges = cs; map.showColleges(cs); }, e -> {});   // search list + every campus on the map
+        Async.run(bh::colleges, cs -> map.showColleges(cs), e -> {});   // every campus on the map
         startGps();
-        ChangeListener<College> l = (o, a, b) -> { setCollegeText(); reload(); };
+        ChangeListener<College> l = (o, a, b) -> reload();
         State.college.addListener(l);
+        sceneProperty().addListener((o, was, sc) -> { State.college.removeListener(l); if (sc != null) State.college.addListener(l); });
     }
 
     /** Colors the filled part of the radius track purple (JavaFX has no built-in filled track). */
@@ -155,41 +120,6 @@ public final class HomeView extends VBox {
         if (t == null) return;
         double pct = (radius.getValue() - radius.getMin()) / (radius.getMax() - radius.getMin()) * 100;
         t.setStyle(String.format(java.util.Locale.ROOT, "-fx-background-color:linear-gradient(to right,#5B3BF0 %.1f%%,#E4E0F5 %.1f%%);", pct, pct));
-    }
-
-    /** Puts the chosen college's name in the search box (empty = none chosen). */
-    private void setCollegeText() { setField(State.college.get() == null ? "" : State.college.get().name()); }
-
-    private void setField(String t) { settingText = true; collegeField.setText(t); settingText = false; }
-
-    /** Fills the suggestion list: names that start with the text first, then names that contain it. Empty text = every college. */
-    private void showSuggestions(String text) {
-        String q = text == null ? "" : text.trim().toLowerCase();
-        College chosen = State.college.get();
-        if (chosen != null && q.equals(chosen.name().toLowerCase())) q = "";        // the box still shows the chosen name: offer the whole list
-        List<College> out = new java.util.ArrayList<>();
-        if (q.isEmpty()) out.addAll(allColleges);
-        else {
-            for (College c : allColleges) if (c.name().toLowerCase().startsWith(q)) out.add(c);
-            for (College c : allColleges) { String n = c.name().toLowerCase(); if (!n.startsWith(q) && n.contains(q)) out.add(c); }
-        }
-        suggestions.getItems().setAll(out);
-        suggestions.setPrefHeight(Math.min(Math.max(out.size(), 1), 6) * 44 + 10);
-        suggestions.setVisible(true); suggestions.setManaged(true);
-    }
-
-    private void closeSuggestions() { suggestions.setVisible(false); suggestions.setManaged(false); }
-
-    private void choose(College c) {
-        closeSuggestions();
-        State.college.set(c);                                  // the listener below updates the box and reloads
-        setCollegeText();
-        suggestions.getParent().requestFocus();
-        String uid = AuthService.get().userId();
-        Async.bg(() -> { try {
-            com.bofo.finder.service.SupabaseClient.get().update("users", "id=eq." + uid,
-                    new org.json.JSONObject().put("default_college_id", c.id()));
-        } catch (Exception ignored) {} });
     }
 
     /** Asks for location (system dialog on Android). On the first fix the list reloads if it is sorted by "where I am". */
