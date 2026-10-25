@@ -7,6 +7,8 @@ import com.bofo.finder.util.Async;
 import com.bofo.finder.util.Geo;
 import com.bofo.finder.util.Locator;
 import com.bofo.finder.util.Router;
+import com.bofo.finder.util.Trip;
+import com.bofo.finder.util.TripPlanner;
 import com.gluonhq.maps.MapLayer;
 import com.gluonhq.maps.MapPoint;
 import com.gluonhq.maps.MapView;
@@ -60,6 +62,7 @@ import java.util.function.Consumer;
  */
 public final class MapPane extends StackPane {
     private static final Color PURPLE = Color.web("#5B3BF0"), PURPLE_DARK = Color.web("#3A22B8"), BLUE = Color.web("#2F6FED");
+    static { AppStorage.init(); }                              // so the jeepney-line cache has a home before the first trip is planned
     private static final double CARD_SPACE = 104;                 // room the preview card takes at the bottom (px)
 
     private final MapView map = new MapView();
@@ -236,6 +239,40 @@ public final class MapPane extends StackPane {
 
     public void clearRoute() { routeToken++; curOrigin = null; layer.clearRoute(); }
 
+    /**
+     * Draws a path that is already worked out (a walk, a tricycle ride, walk + jeepney + walk) with its own text on the
+     * badge, e.g. {@code "2.4 km \u00B7 18 min"}. Used by the Directions card; nothing is fetched here.
+     */
+    public void showPath(double[][] pts, double meters, boolean approximate, String badge, String originLabel, boolean moveCamera) {
+        if (pts == null || pts.length < 2) { clearRoute(); return; }
+        selected = null; layer.markSelected(null); hideCard(); routeToken++;
+        drawPath(pts, meters, approximate, badge, originLabel, moveCamera);
+    }
+
+    /** Draws a path but leaves the selected pin, the preview card and the route token alone. */
+    private void drawPath(double[][] pts, double meters, boolean approximate, String badge, String originLabel, boolean moveCamera) {
+        curOrigin = pts[0];
+        Router.Route r = new Router.Route(pts, meters, approximate);
+        layer.setRoute(r, originLabel == null ? "" : originLabel, false);
+        layer.setBadgeText(badge);
+        if (moveCamera) fitBounds(r.bounds(), 17, 600);
+    }
+
+    /**
+     * After the plain walking route is on the map for a tapped pin: works out all the ways to get there (walk, tricycle,
+     * jeepney from commuter data, bus/van) in the background, then puts the best one on the card ("Jeepney 20 min, P14-17,
+     * 3.0 km") and, when it is not a walk, draws its path instead. Ignored if the selection changed meanwhile.
+     */
+    private void planOptions(int my, double[] from, double[] to, String label, boolean fromCollege) {
+        Async.run(() -> TripPlanner.plan(from, to), plan -> {
+            if (my != routeToken || card == null) return;
+            Trip.Option best = plan.options().get(plan.best());
+            int more = plan.options().size() - 1;
+            card.setRouteInfo(best.summary() + (more > 0 ? "  +" + more + " more" : "") + " \u00B7 from " + label);
+            if (best.mode() != Trip.Mode.WALK) drawPath(best.path(), best.meters(), best.approximate(), best.badge(), label, best.mode() == Trip.Mode.FAR);   // far: bring the whole path into view
+        }, e -> { });
+    }
+
     // ---------------------------------------------------------------- camera
 
     private void applyZoom(double z) { zoomVal = z; map.setZoom(z); }
@@ -272,7 +309,7 @@ public final class MapPane extends StackPane {
     private void fitBounds(double[] bb, int maxZoom, int ms) {
         double cardPx = card != null ? CARD_SPACE : 0;
         double w = Math.max(map.getWidth(), 280), h = Math.max(map.getHeight(), 220);
-        int z = Geo.fitZoom(bb[0], bb[1], bb[2], bb[3], w * 0.78, Math.max(80, (h - cardPx) * 0.66), 11, maxZoom);
+        int z = Geo.fitZoom(bb[0], bb[1], bb[2], bb[3], w * 0.78, Math.max(80, (h - cardPx) * 0.66), 6, maxZoom);   // down to zoom 6 so a far trip still fits
         double lat = (bb[0] + bb[2]) / 2, lng = (bb[1] + bb[3]) / 2;
         lat -= 360.0 / (256.0 * (1 << z)) * Math.cos(Math.toRadians(lat)) * cardPx / 2.0;     // shift up so the card does not cover the route
         if (ms <= 0) { applyZoom(z); setCenterNow(lat, lng); } else flyTo(lat, lng, z, ms);
@@ -323,7 +360,7 @@ public final class MapPane extends StackPane {
         if (known != null) {                                    // seen before: draw at once, no waiting
             layer.setRoute(known, label, fromCollege);
             if (moveCamera) fitBounds(known.bounds(), 17, 600);
-            if (card != null && forBh != null) card.setRouteInfo(routeText(known, label));
+            if (card != null && forBh != null) { card.setRouteInfo(routeText(known, label)); planOptions(my, from, to, label, fromCollege); }
             if (done != null) done.accept(known);
             return;
         }
@@ -331,7 +368,7 @@ public final class MapPane extends StackPane {
         Router.Route guess = Router.estimate(from[0], from[1], to[0], to[1]);
         double[] gb = guess.bounds();
         if (moveCamera) fitBounds(gb, 17, 600);
-        if (card != null && forBh != null) card.setRouteInfo("about " + Geo.fmt(guess.meters() / 1000.0) + " \u00B7 " + Math.max(1, Geo.walkMinutes(guess.meters() / 1000.0)) + " min walk (finding the exact route\u2026)");
+        if (card != null && forBh != null) card.setRouteInfo("about " + Geo.fmt(guess.meters() / 1000.0) + " \u00B7 " + Geo.fmtTime(Math.max(1, Geo.walkMinutes(guess.meters() / 1000.0))) + " walk (finding the exact route\u2026)");
         fetchRoute(my, 0, from, to, label, fromCollege, forBh, moveCamera, gb, done);
     }
 
@@ -339,7 +376,7 @@ public final class MapPane extends StackPane {
     private void fetchRoute(int my, int tries, double[] from, double[] to, String label, boolean fromCollege, BoardingHouse forBh, boolean moveCamera, double[] gb, Consumer<Router.Route> done) {
         Async.run(() -> Router.walk(from[0], from[1], to[0], to[1]), r -> {
             if (my != routeToken) return;                       // the selection changed while the route was loading
-            if (r.approximate() && tries < 4 && com.bofo.finder.config.AppConfig.routeOnline()) {
+            if (r.approximate() && tries < 4 && com.bofo.finder.config.AppConfig.routeOnline() && Geo.km(from[0], from[1], to[0], to[1]) <= Router.MAX_WALK_KM) {
                 if (tries == 0) {                               // show the straight guide only once; keep trying for the real roads
                     layer.setRoute(r, label, fromCollege);
                     if (card != null && forBh != null) card.setRouteInfo("Finding the road route\u2026 " + (Router.lastError().isEmpty() ? "" : "(" + Router.lastError() + ")"));
@@ -354,14 +391,14 @@ public final class MapPane extends StackPane {
             double padLat = (gb[2] - gb[0]) * 0.15 + 1e-4, padLng = (gb[3] - gb[1]) * 0.15 + 1e-4;
             boolean outside = rb[0] < gb[0] - padLat || rb[2] > gb[2] + padLat || rb[1] < gb[1] - padLng || rb[3] > gb[3] + padLng;
             if (moveCamera && outside) fitBounds(rb, 17, 600);  // the road wandered off the straight line: re-fit once; otherwise the camera is already right
-            if (card != null && forBh != null) card.setRouteInfo(routeText(r, label));
+            if (card != null && forBh != null) { card.setRouteInfo(routeText(r, label)); planOptions(my, from, to, label, fromCollege); }
             if (done != null) done.accept(r);
         }, e -> {});
     }
 
     private static String routeText(Router.Route r, String label) {
         double km = r.meters() / 1000.0;
-        return Geo.fmt(km) + " \u00B7 " + Math.max(1, Geo.walkMinutes(km)) + " min walk" + (r.approximate() ? " (straight line" + (Router.lastError().isEmpty() ? "" : ": " + Router.lastError()) + ")" : "") + " from " + label;
+        return Geo.fmt(km) + " \u00B7 " + Geo.fmtTime(Math.max(1, Geo.walkMinutes(km))) + " walk" + (r.approximate() ? " (straight line" + (Router.lastError().isEmpty() ? "" : ": " + Router.lastError()) + ")" : "") + " from " + label;
     }
 
     private void deselect() {
@@ -611,7 +648,7 @@ public final class MapPane extends StackPane {
             line.getStrokeDashArray().clear();
             originTag.setText(fromCollege ? label : "");
             double km = r.meters() / 1000.0;
-            routeBadge.setText(Geo.fmt(km) + " \u00B7 " + Math.max(1, Geo.walkMinutes(km)) + " min");
+            routeBadge.setText(Geo.fmt(km) + " \u00B7 " + Geo.fmtTime(Math.max(1, Geo.walkMinutes(km))));
             routeBadge.setOpacity(0);
             if (rAnim != null) rAnim.stop();
             rProg.set(0);
@@ -623,6 +660,8 @@ public final class MapPane extends StackPane {
             rAnim.play();
             markDirty();
         }
+
+        void setBadgeText(String text) { routeBadge.setText(text); }
 
         void clearRoute() {
             if (rAnim != null) rAnim.stop();

@@ -58,5 +58,5 @@ final class MapCard extends HBox {
     }
 
     /** Distance / walking time line; shown under the rating. */
-    void setRouteInfo(String s) { info.setText(s); }
+    void setRouteInfo(String s) { info.setText(s); info.setTooltip(new javafx.scene.control.Tooltip(s)); }
 }

@@ -65,7 +65,7 @@ public final class BhCard extends VBox {
         HBox top = new HBox(8, name, Ui.grow(), price); top.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(name, Priority.ALWAYS);
 
-        Label where = Ui.label(b.distanceKm() > 0 ? Geo.fmt(b.distanceKm()) + " \u00B7 " + Geo.walkMinutes(b.distanceKm()) + " min walk" : b.address(), "secondary");
+        Label where = Ui.label(b.distanceKm() > 0 ? Geo.walkText(b.distanceKm()) : b.address(), "secondary");
         HBox rating = b.reviewCount() > 0
                 ? Ui.hbox(6, Ui.label(Ui.stars(b.avgRating()), "stars"), Ui.label(String.format("%.1f (%d)", b.avgRating(), b.reviewCount()), "secondary"))
                 : Ui.hbox(6, Ui.label("No reviews yet", "secondary"));

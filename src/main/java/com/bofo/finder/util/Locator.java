@@ -54,6 +54,7 @@ public final class Locator {
     private final File prefFile;
     private PauseTransition timeout;
     private boolean listening;
+    private boolean nextFixApprox;               // the fix that is about to arrive comes from a PC, not from phone GPS
 
     private Locator() {
         File base = StorageService.create().flatMap(StorageService::getPrivateStorage)
@@ -130,11 +131,12 @@ public final class Locator {
         if (!enabled.get()) return;
         if (status.get() == Status.ON || status.get() == Status.REQUESTING) return;
         double[] dev = AppConfig.devLocation();
-        if (dev != null) { fix(dev); return; }
+        if (dev != null) { nextFixApprox = true; fix(dev); return; }
         status.set(Status.REQUESTING);
         try {
             Optional<PositionService> svc = PositionService.create();
-            if (svc.isEmpty()) { desktopFix(); return; }        // PC: ask Windows, else the browser
+            if (svc.isEmpty()) { nextFixApprox = true; desktopFix(); return; }        // PC: ask Windows, else the browser (coarse: Wi-Fi / IP based)
+            nextFixApprox = false;
             PositionService ps = svc.get();
             service = ps;
             if (!listening) {
@@ -264,6 +266,7 @@ public final class Locator {
     private void fix(double[] p) {
         Platform.runLater(() -> {
             if (timeout != null) timeout.stop();
+            State.gpsApprox.set(nextFixApprox);
             State.gps.set(p);
             status.set(Status.ON);
             List<Consumer<double[]>> todo = new ArrayList<>(waiting); waiting.clear();

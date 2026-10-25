@@ -11,14 +11,13 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** BH detail: photo hero, price + status, quick facts, amenities, rooms, map with the route from the college, reviews, chat. */
+/** BH detail: photo hero, price + status, quick facts, amenities, rooms, directions (map + ways to get there), reviews, chat. */
 public final class BhDetailView extends VBox {
     private final BhService bh = new BhService();
     private final VBox body = new VBox(14);
@@ -27,7 +26,7 @@ public final class BhDetailView extends VBox {
         Button back = Ui.btn("←", "heart", onBack); back.getStyleClass().setAll("button", "icon-btn");
         getChildren().addAll(Ui.appBar("Boarding house", back), Ui.scroll(body));
         VBox.setVgrow(getChildren().get(1), Priority.ALWAYS);
-        body.setPadding(new Insets(4, 0, 32, 0));
+        body.setPadding(new Insets(4, 0, 96, 0));           // the floating mascot sits over the bottom-right corner: let the last card scroll above it
         Ui.load(body, Skeleton::detail, () -> bh.detail(id), this::render);
     }
 
@@ -35,7 +34,6 @@ public final class BhDetailView extends VBox {
         BoardingHouse b = BoardingHouse.from(d);
         double[] ref = State.ref();
         double km = ref == null ? 0 : Geo.km(ref[0], ref[1], b.lat(), b.lng());
-        String from = State.college.get() != null ? State.college.get().name() : "you";
 
         /* ---- 1. hero: photos, or a friendly placeholder when the owner added none ---- */
         JSONArray photos = d.getJSONArray("photos");
@@ -73,7 +71,7 @@ public final class BhDetailView extends VBox {
         if (b.ownerVerified()) pills.getChildren().add(Ui.label("\u2713 Verified owner", "badge-verified"));
         int free = b.availableBeds();
         pills.getChildren().add(Ui.label(free > 0 ? free + (free == 1 ? " bed available" : " beds available") : "Fully booked", free > 0 ? "pill-ok" : "pill-full"));
-        if (ref != null) pills.getChildren().add(Ui.label(Geo.fmt(km) + " away \u00B7 " + Geo.walkMinutes(km) + " min walk", "tag"));
+        if (ref != null) pills.getChildren().add(Ui.label(Geo.walkText(km), "tag"));
         VBox head = new VBox(8, name, where, priceRow, pills);
         head.setPadding(new Insets(0, 16, 0, 16));
 
@@ -112,15 +110,9 @@ public final class BhDetailView extends VBox {
             roomRows.getChildren().add(row);
         }
 
-        /* ---- 6. location ---- */
-        MapPane map = new MapPane(210);
-        map.show(ref != null ? ref : new double[]{b.lat(), b.lng()}, 0, java.util.List.of(b), false, ref == null ? null : new double[]{b.lat(), b.lng()});
-        Rectangle clip = new Rectangle(); clip.setArcWidth(28); clip.setArcHeight(28);
-        clip.widthProperty().bind(map.widthProperty()); clip.heightProperty().bind(map.heightProperty());
-        map.setClip(clip);
-        VBox location = new VBox(10, Ui.section("Location"));
-        if (ref != null) location.getChildren().add(Ui.label(Geo.fmt(km) + " from " + from + " \u00B7 about " + Geo.walkMinutes(km) + " min walk", "secondary"));
-        location.getChildren().add(map);
+        /* ---- 6. directions: map + the real ways to get here (walk, tricycle, jeepney, bus/van) with time and fare ---- */
+        DirectionsCard directions = new DirectionsCard(b);
+        VBox.setMargin(directions, new Insets(0, 16, 0, 16));
 
         /* ---- 7. reviews ---- */
         VBox reviewList = new VBox(0);
@@ -144,7 +136,7 @@ public final class BhDetailView extends VBox {
         body.getChildren().addAll(hero, head, stats);
         if (!amenityPills.getChildren().isEmpty()) body.getChildren().add(card(Ui.section("Amenities"), amenityPills));
         if (rooms.length() > 0) body.getChildren().add(card(Ui.section("Rooms"), roomRows));
-        body.getChildren().addAll(card(location), card(reviews));
+        body.getChildren().addAll(directions, card(reviews));
 
         Button chatBtn = Ui.btn("Chat with owner", "btn-primary", () -> openChat(b));
         chatBtn.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(chatBtn, Priority.ALWAYS);
