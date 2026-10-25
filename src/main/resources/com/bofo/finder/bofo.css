@@ -480,3 +480,7 @@
 .settings-brand { -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
 .settings-ver { -fx-font-size: 12px; -fx-text-fill: -bofo-muted; }
 .btn-logout { -fx-border-width: 1.5; -fx-padding: 14 24; }
+
+/* ---- In-app legal reader (v1.11.0) ---- */
+.legal-h { -fx-text-fill: -bofo-ink; }
+.legal-p { -fx-text-fill: -bofo-text; -fx-font-size: 14px; }

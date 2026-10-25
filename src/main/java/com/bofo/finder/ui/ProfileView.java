@@ -62,9 +62,9 @@ public final class ProfileView extends VBox {
         // ---- Security & privacy ----
         VBox security = Ui.settingsGroup("Security and privacy",
                 Ui.settingsRow(Glyphs.USERS, "Switch Google account", null, Main::signOutToLogin),
-                Ui.settingsRow(Glyphs.LOCK, "Privacy Policy", null, () -> Nav.toast("Open Privacy URL")),
-                Ui.settingsRow(Glyphs.FILE, "Terms of Service", null, () -> Nav.toast("Open Terms URL")),
-                Ui.settingsRow(Glyphs.INFO, "Agreements and Guidelines", null, () -> Nav.toast("Open Owner Agreement / Community Guidelines")));
+                Ui.settingsRow(Glyphs.LOCK, "Privacy Policy", null, () -> LegalOverlay.open(LegalOverlay.Doc.PRIVACY)),
+                Ui.settingsRow(Glyphs.FILE, "Terms of Service", null, () -> LegalOverlay.open(LegalOverlay.Doc.TERMS)),
+                Ui.settingsRow(Glyphs.INFO, "Agreements and Guidelines", null, () -> LegalOverlay.open(LegalOverlay.Doc.AGREEMENTS)));
 
         // ---- About ----
         Label brand = Ui.label("BOFO Finder", "settings-brand");
