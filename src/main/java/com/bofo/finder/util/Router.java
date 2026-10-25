@@ -45,9 +45,13 @@ public final class Router {
     /** Same request already running (two taps, map + card)? Both callers wait for ONE server call. */
     private static final Map<String, CompletableFuture<Route>> INFLIGHT = new ConcurrentHashMap<>();
 
-    private static String key(double lat1, double lng1, double lat2, double lng2) {
-        return String.format(Locale.ROOT, "%.5f,%.5f>%.5f,%.5f", lat1, lng1, lat2, lng2);
+    private static String key(double lat1, double lng1, double lat2, double lng2) { return key("foot", lat1, lng1, lat2, lng2); }
+    private static String key(String profile, double lat1, double lng1, double lat2, double lng2) {
+        return String.format(Locale.ROOT, "%s:%.5f,%.5f>%.5f,%.5f", profile, lat1, lng1, lat2, lng2);
     }
+
+    /** Beyond this straight distance nobody walks, and the free foot server only returns odd paths: skip it. */
+    public static final double MAX_WALK_KM = 30;
 
     /** Already-known real route (no network, no waiting), or null. Call on the FX thread to draw it instantly. */
     public static Route peek(double lat1, double lng1, double lat2, double lng2) {
@@ -77,14 +81,21 @@ public final class Router {
         });
     }
 
-    public static Route walk(double lat1, double lng1, double lat2, double lng2) {
-        Route known = peek(lat1, lng1, lat2, lng2);
+    public static Route walk(double lat1, double lng1, double lat2, double lng2) { return route("foot", lat1, lng1, lat2, lng2); }
+
+    /** Road route for vehicles (tricycle, jeepney, van): follows one-way streets, so it can be longer than the walk. */
+    public static Route drive(double lat1, double lng1, double lat2, double lng2) { return route("drive", lat1, lng1, lat2, lng2); }
+
+    private static Route route(String profile, double lat1, double lng1, double lat2, double lng2) {
+        boolean foot = profile.equals("foot");
+        if (foot && Geo.km(lat1, lng1, lat2, lng2) > MAX_WALK_KM) return estimate(lat1, lng1, lat2, lng2);
+        Route known = foot ? peek(lat1, lng1, lat2, lng2) : CACHE.get(key(profile, lat1, lng1, lat2, lng2));
         if (known != null) return known;
-        String key = key(lat1, lng1, lat2, lng2);
+        String key = key(profile, lat1, lng1, lat2, lng2);
         CompletableFuture<Route> mine = new CompletableFuture<>();
         CompletableFuture<Route> other = INFLIGHT.putIfAbsent(key, mine);
         if (other != null) { try { return other.get(); } catch (Exception e) { return estimate(lat1, lng1, lat2, lng2); } }
-        try { Route r = fetch(key, lat1, lng1, lat2, lng2); mine.complete(r); return r; }
+        try { Route r = fetch(key, foot, lat1, lng1, lat2, lng2); mine.complete(r); return r; }
         finally { INFLIGHT.remove(key); mine.complete(estimate(lat1, lng1, lat2, lng2)); }   // no-op if already completed
     }
 
@@ -94,14 +105,14 @@ public final class Router {
 
     private static final String VALHALLA = "https://valhalla1.openstreetmap.de/route?json=";
 
-    private static Route fetch(String key, double lat1, double lng1, double lat2, double lng2) {
+    private static Route fetch(String key, boolean foot, double lat1, double lng1, double lat2, double lng2) {
         if (AppConfig.routeOnline()) {
             lastError = "";
             // 1) OSRM foot server (configurable), 2) Valhalla pedestrian server: two independent free services, so one being busy or blocked does not lose the road path
             for (int provider = 0; provider < 2; provider++) {
                 for (int attempt = 1; attempt <= 2; attempt++) {
                     try {
-                        Route r = provider == 0 ? osrm(lat1, lng1, lat2, lng2) : valhalla(lat1, lng1, lat2, lng2);
+                        Route r = provider == 0 ? osrm(foot, lat1, lng1, lat2, lng2) : valhalla(foot, lat1, lng1, lat2, lng2);
                         if (r != null) { CACHE.put(key, r); lastError = ""; return r; }
                         break;                                                                       // answered "no path": retrying will not help
                     } catch (Throwable e) {
@@ -118,15 +129,15 @@ public final class Router {
 
     private static HttpResponse<String> get(String url) throws Exception {
         HttpRequest req = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(12))
-                .header("User-Agent", "BOFO-Finder/1.5 (boarding house finder app)").GET().build();
+                .header("User-Agent", "BOFO-Finder/" + AppConfig.appVersion() + " (boarding house finder app)").GET().build();
         HttpResponse<String> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
         if (resp.statusCode() != 200) throw new java.io.IOException("HTTP " + resp.statusCode());
         return resp;
     }
 
     /** OSRM-style answer (GeoJSON line). Returns null when the server says there is no walking path. */
-    private static Route osrm(double lat1, double lng1, double lat2, double lng2) throws Exception {
-        String url = AppConfig.routeUrl()
+    private static Route osrm(boolean foot, double lat1, double lng1, double lat2, double lng2) throws Exception {
+        String url = (foot ? AppConfig.routeUrl() : AppConfig.driveUrl())
                 .replace("{lat1}", String.format(Locale.ROOT, "%.6f", lat1)).replace("{lng1}", String.format(Locale.ROOT, "%.6f", lng1))
                 .replace("{lat2}", String.format(Locale.ROOT, "%.6f", lat2)).replace("{lng2}", String.format(Locale.ROOT, "%.6f", lng2));
         JSONObject o = new JSONObject(get(url).body());
@@ -142,8 +153,8 @@ public final class Router {
     }
 
     /** Valhalla pedestrian route (shape is an encoded polyline with 6 decimals). */
-    private static Route valhalla(double lat1, double lng1, double lat2, double lng2) throws Exception {
-        JSONObject q = new JSONObject().put("costing", "pedestrian").put("locations", new JSONArray()
+    private static Route valhalla(boolean foot, double lat1, double lng1, double lat2, double lng2) throws Exception {
+        JSONObject q = new JSONObject().put("costing", foot ? "pedestrian" : "auto").put("locations", new JSONArray()
                 .put(new JSONObject().put("lat", lat1).put("lon", lng1)).put(new JSONObject().put("lat", lat2).put("lon", lng2)));
         String url = VALHALLA + java.net.URLEncoder.encode(q.toString(), java.nio.charset.StandardCharsets.UTF_8);
         JSONObject trip = new JSONObject(get(url).body()).getJSONObject("trip");

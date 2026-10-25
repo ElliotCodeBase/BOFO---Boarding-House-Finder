@@ -11,6 +11,22 @@ public final class Geo {
     }
     /** Rough walking time (5 km/h) in minutes. Use a routing API for real travel time. */
     public static int walkMinutes(double km) { return (int) Math.round(km / 5.0 * 60); }
+    /** 17 -> "17 min", 65 -> "1 h 5 min", 1266 -> "21 h 6 min". Never "1266 min". */
+    public static String fmtTime(int min) {
+        if (min < 60) return Math.max(1, min) + " min";
+        int h = min / 60, m = min % 60;
+        return m == 0 ? h + " h" : h + " h " + m + " min";
+    }
+    /** "850 m · 11 min walk" up to 3 km; farther than that just "12 km away" (nobody walks it, so we do not print hours of walking). */
+    public static String walkText(double km) {
+        return km <= 3 ? fmt(km) + " \u00B7 " + fmtTime(Math.max(1, walkMinutes(km))) + " walk" : fmt(km) + " away";
+    }
+    /** Length of a {lat,lng} path in km. */
+    public static double pathKm(double[][] pts) {
+        double km = 0;
+        for (int i = 1; i < pts.length; i++) km += km(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]);
+        return km;
+    }
     public static String fmt(double km) { return km < 1 ? Math.round(km * 1000) + " m" : String.format("%.1f km", km); }
 
     /** Compass direction from point 1 to point 2 in degrees (0 = north, 90 = east). Used for the "which way am I walking" arrow. */

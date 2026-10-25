@@ -1,3 +1,21 @@
+# v1.9.1 - Directions tabs
+
+- The three tabs now read Me → BH, Me → Campus and BH → Campus (current location to the boarding house, current location to the campus, boarding house to the campus). The labels fit on one line.
+
+# v1.9.0 - Directions work offline, local routes, options on the map card
+
+- Jeepney lines are saved on your phone after the first time, so directions still show them without internet (the card says when they come from an older copy).
+- Local lines: the team can add jeepney / multicab routes by hand (with a fare someone checked) for places OpenStreetMap does not cover. See docs/LOCAL_TRANSIT.md.
+- Tapping a pin on the Home or Explore map now shows the best way to get there (walk, tricycle, jeepney or bus/van) with time and fare, not just the walk.
+- Directions with no internet are ready in about 3 seconds instead of 9.
+
+# v1.8.0 - Better directions
+
+- The Directions card now fits the screen (the tabs and buttons no longer run off the right edge).
+- Shows the real ways to get there with time and fare: walk, tricycle, jeepney (from public jeepney route data) or bus/van when it is far.
+- No more silly times like "1266 min walk": long times read "21 h 6 min", and a place far away is a bus/van trip, not a walk.
+- Tells you when your location comes from a computer (it can be off by several km) and can show the route from the campus instead.
+
 # v1.7.0 - New boarding house page
 
 - Redesigned page: photo hero, price and status at the top, quick facts, and separate cards for amenities, rooms, location and reviews.

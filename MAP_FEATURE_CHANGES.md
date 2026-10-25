@@ -1,3 +1,47 @@
+# Release rule (applies to every pull request / merge)
+
+**Every pull request or merge bumps the app version.** Do all of this in the same PR:
+
+1. Raise the version shown in **Profile > About** (`app.version` in `src/main/resources/com/bofo/finder/config.properties`) and **everywhere the old version appears** (`pom.xml` `<version>`, `<versionName>`, `<versionCode>` +1, docs). Search the repo for the old number before finishing.
+2. Put the new version in the **PR title** (for example `v1.9.0 - short summary`).
+3. Add it to the **changelog**: top entry in `CHANGES.md` and `HANDOFF.md`.
+
+Patch (x.y.Z) for fixes, minor (x.Y.0) for new features. The v1.2.0 merge once left About showing v1.1.1: this rule exists so that never happens again.
+
+---
+
+# v1.9.1 - Directions tabs: Me → BH, Me → Campus, BH → Campus (2026-10-25)
+
+`ui/DirectionsCard.java` only (plus version, changelog).
+
+---
+
+# v1.9.0 - Offline jeepney cache, hand-made lines, options on the map card (2026-10-25)
+
+| What | Where |
+|---|---|
+| Jeepney lines saved on the device (fresh 14 days, older copy still used offline) | `util/DiskCache.java`, `util/TransitRoutes.java`, `ui/AppStorage.java` |
+| Hand-made lines with checked fares for places OpenStreetMap does not cover (file ships empty) | `util/LocalTransit.java`, `local-transit.json`, `docs/LOCAL_TRANSIT.md` |
+| Tap a pin on Home / Explore / owner map: the card shows the best way (walk, tricycle, jeepney, bus/van) with time and fare, and draws it | `ui/MapPane.java` (`planOptions`), `Trip.Option.summary()` |
+| Offline plans are quick: no waiting on a dead route server for every leg | `util/TripPlanner.java` |
+
+---
+
+# v1.8.0 - Directions card: commuter data and mode options (2026-10-25)
+
+| What | Where |
+|---|---|
+| Directions card fits the screen: tabs share the width, texts wrap, buttons take the full row | `ui/DirectionsCard.java`, `bofo.css` (`.seg-fit`, `.dir-*`) |
+| Options for each trip: walk, tricycle, jeepney (mapped lines), bus/van when far; time, fare, "Best for you" | `util/TripPlanner.java`, `util/Trip.java` |
+| Public commuter data: jeepney / multicab / bus lines from OpenStreetMap (Overpass API) matched to the trip, in the right direction | `util/TransitRoutes.java`, `util/TransitMatch.java` |
+| Official fares: LTFRB, effective 19 March 2026 (traditional P14 + P2/km after 4 km, modern P17 + P2.40/km) | `Trip.java` constants |
+| Far away = bus/van, never "1266 min walk"; long times read "21 h 6 min" | `Geo.fmtTime`, `Router.MAX_WALK_KM`, `TripPlanner.FAR_KM` |
+| PC locations are coarse: the card says so | `State.gpsApprox`, `Locator` |
+
+Settings (all optional): `route.drive.url`, `transit.online=false`, `transit.overpass`. Logic check: `dev/TripLogicCheck.java`.
+
+---
+
 # BOFO Finder: Map tracking + route feature (2026-10-24)
 
 Design reference: the blue map mockup (live location, radius circle, BH pins, bottom card, route line).

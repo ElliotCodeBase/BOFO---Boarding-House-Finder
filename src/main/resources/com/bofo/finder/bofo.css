@@ -311,3 +311,9 @@
 .stat-tile { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 12 8; }
 .pill-ok { -fx-background-color: #E1F4EA; -fx-text-fill: -bofo-success; -fx-background-radius: 999; -fx-padding: 4 10; -fx-font-weight: bold; -fx-font-size: 12px; }
 .pill-full { -fx-background-color: #FBE7E7; -fx-text-fill: -bofo-error; -fx-background-radius: 999; -fx-padding: 4 10; -fx-font-weight: bold; -fx-font-size: 12px; }
+
+/* ---- Directions card (v1.8.0) ---- */
+.seg-fit { -fx-font-size: 12px; -fx-padding: 7 2; }                      /* three tabs share the row: never wider than the screen */
+.dir-head { -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
+.dir-opt { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 10 12; }
+.dir-opt-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 10 12; }

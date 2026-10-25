@@ -53,5 +53,10 @@ public final class AppConfig {
     public static String routeUrl() { String u = get("route.url").trim(); return u.isEmpty() ? "https://routing.openstreetmap.de/routed-foot/route/v1/foot/{lng1},{lat1};{lng2},{lat2}?overview=full&geometries=geojson" : u; }
     /** route.online=false skips the routing service and always draws a straight line. */
     public static boolean routeOnline() { return !"false".equalsIgnoreCase(get("route.online").trim()); }
+    /** Road (car / tricycle / jeepney) route service, same OSRM format. Override with route.drive.url. */
+    public static String driveUrl() { String u = get("route.drive.url").trim(); return u.isEmpty() ? "https://routing.openstreetmap.de/routed-car/route/v1/driving/{lng1},{lat1};{lng2},{lat2}?overview=full&geometries=geojson" : u; }
+    /** Public transport lines from OpenStreetMap (Overpass API). transit.online=false turns the lookup off. */
+    public static String overpassUrl() { String u = get("transit.overpass").trim(); return u.isEmpty() ? "https://overpass-api.de/api/interpreter" : u; }
+    public static boolean transitOnline() { return !"false".equalsIgnoreCase(get("transit.online").trim()); }
     public static String redirectUri() { return isAndroid() ? get("auth.redirect.android") : get("auth.redirect.desktop"); }
 }

@@ -67,7 +67,7 @@ public final class ListingFormView extends VBox {
         map.showRoute(new double[]{college.lat(), college.lng()}, pin, college.name(), false, r -> {
             double km = r.meters() / 1000.0;
             pinLabel.setText(String.format("Pin: %.5f, %.5f", pin[0], pin[1]) + "  \u00B7  " + com.bofo.finder.util.Geo.fmt(km) + " from " + college.name()
-                    + " (about " + Math.max(1, com.bofo.finder.util.Geo.walkMinutes(km)) + " min walk)");
+                    + (km <= 3 ? " (about " + com.bofo.finder.util.Geo.fmtTime(Math.max(1, com.bofo.finder.util.Geo.walkMinutes(km))) + " walk)" : ""));
         });
     }
 
