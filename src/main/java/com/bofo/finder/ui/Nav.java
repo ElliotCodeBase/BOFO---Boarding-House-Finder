@@ -36,6 +36,10 @@ public final class Nav {
     public static void refreshMascot() { BOFO.setVisible(mascotAllowed && BofoPanel.enabled()); }
     public static BofoPanel bofo() { return BOFO; }
 
+    /** Puts a full-screen overlay (bottom sheet, reader) on top of the current screen and the mascot. */
+    public static void pushOverlay(Node overlay) { ROOT.getChildren().add(overlay); }
+    public static void popOverlay(Node overlay) { ROOT.getChildren().remove(overlay); }
+
     public static void toast(String msg) {
         Label l = new Label(msg);
         l.getStyleClass().add("toast");

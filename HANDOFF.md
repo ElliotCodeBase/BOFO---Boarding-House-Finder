@@ -1,11 +1,3 @@
-# Handoff - v1.12.0 Idle moods for the chat head (2026-10-25)
-- **PR title:** `v1.12.0 - BOFO chat head: thinking, sitting, running and sleeping idle animations`. Version in `config.properties`, `pom.xml` (versionCode 35), CHANGES.md.
-- **`Mascot`:** `enum Idle {THINKING, SITTING, RUNNING, SLEEPING}`, `idle(Idle)`, `endIdle()`. Pure vector: parts are kept in fields (`eyeL/eyeR/footL/footR/thought`), a `pose` Scale pivoting on the feet does the sit/sleep squash. `set()` rebuilds everything, so `endIdle()` resets by calling `set(HAPPY)`.
-- **`BofoPanel`:** `scheduleIdle()` (8-18 s quiet) -> `startIdle()` (random, not the last one) -> `stopIdle(true)` after 5-16 s. `bob` (the fab's up/down bob) is stopped during a mood. Interrupted by press/drag, chat open, a question (`busy`), mascot hidden or scene removed.
-- Not compiled/run by Claude (no Maven, no javac). Test: leave the floating head alone ~10 s and watch all four; tap it mid-mood; ask BOFO a question (thinking face, no idle); hide it in Profile > Show BOFO mascot. The head is only 46 px, so z's and the circle are small: tune `size * 0.34` (run radius) and the z font sizes if you want them bigger.
-
----
-
 # Handoff - v1.11.0 In-app legal reader (2026-10-25)
 - **PR title:** `v1.11.0 - Privacy Policy, Terms and Agreements open in an in-app overlay`. Version in `config.properties`, `pom.xml` (versionCode 34), CHANGES.md.
 - **New `ui/LegalOverlay`** (bottom sheet in the style of `FilterSheet`; `LegalOverlay.open(Doc.PRIVACY|TERMS|AGREEMENTS)`) and **`ui/LegalText`** (the document text, edit there; `policy.*.version` shown in the header). `Nav.pushOverlay/popOverlay` add a layer above the mascot. Wired in `ProfileView` (3 rows) and `LoginView` (2 links). Optional `policy.contact` in config.properties.
