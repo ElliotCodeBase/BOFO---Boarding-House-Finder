@@ -29,6 +29,12 @@ public class Main extends Application {
         window = stage;
         AuthService auth = AuthService.get();
         auth.init(host);
+        com.bofo.finder.util.Connectivity.OFFLINE.addListener((o, was, now) -> { if (!now) com.bofo.finder.util.Outbox.flushAsync(); });   // back online: send queued chat messages
+        com.bofo.finder.util.Outbox.LISTENERS.add(new com.bofo.finder.util.Outbox.Listener() {
+            @Override public void sent(String id, com.bofo.finder.model.Message m) {}
+            @Override public void waiting(String id) {}
+            @Override public void failed(String id, Throwable why) { Platform.runLater(() -> Nav.toast("A message written offline could not be sent")); }
+        });
         auth.onSessionLost(() -> Platform.runLater(() -> showLogin("Your session expired. Please sign in again.")));
 
         double w = 360, h = 720;                                     // phone-sized by default on desktop
@@ -88,6 +94,7 @@ public class Main extends Application {
     public static void route() {
         var p = AuthService.get().profile();
         if (p == null) { showLogin(null); return; }
+        com.bofo.finder.util.Outbox.flushAsync();                    // messages left in the queue from last time
         Nav.show(home(), true);
     }
 

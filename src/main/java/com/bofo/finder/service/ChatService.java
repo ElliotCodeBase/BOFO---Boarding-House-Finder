@@ -18,12 +18,28 @@ public final class ChatService {
     public static final int MAX_LEN = 1000;
     public static final int PAGE = 30;
     private final SupabaseClient api = SupabaseClient.get();
+    private static final java.util.Set<String> PREFETCHED = java.util.concurrent.ConcurrentHashMap.newKeySet(), INFLIGHT = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public List<Conversation> inbox() throws Exception {
         JSONArray a = com.bofo.finder.util.Offline.array("inbox", () -> api.select("inbox_v", "select=*&order=last_message_at.desc"));
         List<Conversation> l = new ArrayList<>();
         for (int i = 0; i < a.length(); i++) l.add(Conversation.from(a.getJSONObject(i)));
+        prefetch(l);
         return l;
+    }
+
+    /** Saves the newest messages of the 20 latest chats on the device (once per new message), so every chat opens offline - not only the ones opened before. */
+    private void prefetch(List<Conversation> l) {
+        int n = 0;
+        for (Conversation c : l) {
+            if (++n > 20) break;
+            String key = c.id() + "|" + c.lastAt();
+            if (PREFETCHED.contains(key) || !INFLIGHT.add(key)) continue;
+            com.bofo.finder.util.Async.bg(() -> {
+                try { page(c.id(), null); PREFETCHED.add(key); } catch (Exception ignored) { /* offline: tried again on the next inbox load */ }
+                finally { INFLIGHT.remove(key); }
+            });
+        }
     }
 
     public int totalUnread() throws Exception {

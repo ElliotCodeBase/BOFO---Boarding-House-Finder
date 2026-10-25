@@ -1,3 +1,13 @@
+# Handoff - v1.9.13 Chat offline: saved history + outbox (2026-10-25)
+- **PR title:** `v1.9.13 - Chats offline: read saved chats, write messages that send when online`. Version in `config.properties`, `pom.xml` (versionCode 28), CHANGES.md.
+- **New `util/Outbox`:** `add(conv, body)` saves to `user_outbox.json` (DiskCache), `flushAsync()` sends oldest-first through `ChatService.send` (one flush at a time); network error = stays queued + `waiting` callbacks; other errors = dropped + `failed`. Flushed from `Main` on OFFLINE -> false, in `route()`, in `ChatView` constructor and every `tick()` while the queue is not empty.
+- **`ChatView`:** `send()` = `Outbox.add` + `addPending` bubble (`queued` map, `Pending` record); listener `onSent/onFailed/waiting`; `restoreQueued()` re-adds bubbles after the history is drawn; history error while offline shows a note (`needsReload`, retried in `tick()`) instead of `errorState`. Removed the old in-memory `retries`/`backOnline`.
+- **`ChatService.inbox()`** prefetches page 1 of the 20 latest chats (`PREFETCHED`/`INFLIGHT` keyed by chat id + last_message_at), so every chat has a saved copy.
+- Known gap: if a send reaches the server but the reply is lost, the retry can post the message twice (messages have no client id yet).
+- Not compiled/run by Claude (no Maven, no javac). Test: open Chats online, Wi-Fi off, open a chat (history visible), send two messages (faded, "Waiting for internet"), close + reopen the app, Wi-Fi on -> both go out in order.
+
+---
+
 # Handoff - v1.9.12 Always open when signed in (2026-10-25)
 - **PR title:** `v1.9.12 - Open the app even with no internet when signed in`. Version in `config.properties`, `pom.xml` (versionCode 27), CHANGES.md.
 - **Cause (screenshot: `UnresolvedAddressException`):** v1.9.11 only opened offline when a profile had been saved by an earlier ONLINE start; a first start offline hit `showNoInternet()`. `AuthService.restore()` now always runs `restoreOnline()` with a 4 s cap and, on OFFLINE/timeout with no profile, uses the saved profile or falls back to `new Profile(userId, STUDENT, ...)` built from the session (role unknown offline, never written to disk). `Main.dispatch` OFFLINE branch then opens the app as before.
@@ -12,12 +22,5 @@
 - **`SupabaseClient.send`:** GET retried once after 500 ms; connect timeout 12 s. **`Ui.errorState`** shows the real cause in small text; **`Ui.load`** reloads once when OFFLINE flips to false after rendering offline.
 - Unverified guess for "won't connect while online": nothing in the code changed in v1.9.8-1.9.10 touches networking. Look at the grey reason line: `UnknownHostException` = wrong `supabase.url` or paused project; timeout = firewall/VPN/IPv6.
 - Not compiled/run by Claude (no Maven, no javac). Test: sign in online, open Chats + a chat + Saved + a place, close the app, turn Wi-Fi off, reopen.
-
----
-
-# Handoff - v1.9.10 Splash: hat pop off / pop on (2026-10-25)
-- **PR title:** `v1.9.10 - Loading screen: hat pops off and pops back on with sparks, squash and rebound`. Version in `config.properties`, `pom.xml` (versionCode 25), CHANGES.md.
-- **Why:** v1.9.9 hat (-20/-26 lift, 5 deg tilt, rotating around the middle of its bounds, sparse key frames) still looked off. Now `SplashView` has instance fields (`hat`, `hr` Rotate pivot 100,52, `hs` Scale pivot 100,59, `ring`, `sparks`) and `addJump(k, t0, height, hatUp, tilt, shadowMin)` -> `hatKey(...)` rows (lag 420, apex 560, POP 650, hover 770, fall 900, land 950, rebound 1015, settle 1070) + `addBurst(t, dur)` at t0+640 and t0+950. Jump 1 `-44,-28,-9`, jump 2 `-58,-34,+9`. `CYCLE` = 2400. Sparks live in `Mascot.fx()`.
-- Not compiled/run by Claude (no Maven, no javac). Check: hat leaves with a visible pop + ring/sparks, comes back with a squash + second burst, no leftover spark at the loop restart. Tune the `hatKey` rows and `d = 36` (spark distance).
 
 ---

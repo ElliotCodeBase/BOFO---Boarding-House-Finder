@@ -2,6 +2,13 @@
 
 Only read this when you need old details. Newest entries are in ../HANDOFF.md.
 
+# Handoff - v1.9.10 Splash: hat pop off / pop on (2026-10-25)
+- **PR title:** `v1.9.10 - Loading screen: hat pops off and pops back on with sparks, squash and rebound`. Version in `config.properties`, `pom.xml` (versionCode 25), CHANGES.md.
+- **Why:** v1.9.9 hat (-20/-26 lift, 5 deg tilt, rotating around the middle of its bounds, sparse key frames) still looked off. Now `SplashView` has instance fields (`hat`, `hr` Rotate pivot 100,52, `hs` Scale pivot 100,59, `ring`, `sparks`) and `addJump(k, t0, height, hatUp, tilt, shadowMin)` -> `hatKey(...)` rows (lag 420, apex 560, POP 650, hover 770, fall 900, land 950, rebound 1015, settle 1070) + `addBurst(t, dur)` at t0+640 and t0+950. Jump 1 `-44,-28,-9`, jump 2 `-58,-34,+9`. `CYCLE` = 2400. Sparks live in `Mascot.fx()`.
+- Not compiled/run by Claude (no Maven, no javac). Check: hat leaves with a visible pop + ring/sparks, comes back with a squash + second burst, no leftover spark at the loop restart. Tune the `hatKey` rows and `d = 36` (spark distance).
+
+---
+
 # Handoff - v1.9.9 Splash: hat tilt/lift, visible shadow, dots wave (2026-10-25)
 - **PR title:** `v1.9.9 - Loading screen: hat reads as a hat, visible shadow, bigger mascot and wave dots`. Version in `config.properties`, `pom.xml` (versionCode 24), CHANGES.md.
 - **Cause (from the screen recording):** hat toss was -34 / -44 units with -14 deg tilt, so the 124-wide brim looked like a flat plate far above the head; the shadow was `rgba(0,0,0,.22)` on `-bofo-ink` (#17142A) so it was invisible; dots were 3.5 px and kept animating off screen.

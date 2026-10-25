@@ -1,3 +1,10 @@
+# v1.9.13 - Chats offline: read every chat, write messages that send later
+
+- **Read offline:** the newest messages of your 20 latest chats are now saved on the device automatically whenever the chat list loads (before, only chats you had opened). A chat with nothing saved yet no longer shows a dead "No internet" screen: you see a short note and the message box still works.
+- **Write offline:** every message is saved in a queue on the device first. With no internet it shows as a faded bubble "Waiting for internet - sends automatically" and is sent in order by itself when the connection returns, even if you closed the app in between. Messages sent online show "Sending..." and turn normal as before.
+- If the server refuses a queued message (for example you are blocked) the bubble says "Not sent (tap to remove)" instead of retrying forever.
+- The saved copy of an open chat is refreshed after new or sent messages, so reopening it offline shows the latest.
+
 # v1.9.12 - Always open the app when signed in, even with no internet
 
 - Fixed: a signed-in user who started the app with no internet (and nothing saved yet) still got a dead "No internet connection" screen. Now the app always opens after a 4 s wait: with the saved profile if there is one, otherwise with a basic profile from the Google account (student view until the real role can be loaded). The offline banner shows and every section says "No internet connection" until the network is back.
