@@ -743,6 +743,7 @@ public final class MapPane extends StackPane {
                         new KeyFrame(Duration.millis(170), new KeyValue(sc.xProperty(), to, Interpolator.EASE_BOTH), new KeyValue(sc.yProperty(), to, Interpolator.EASE_BOTH))).play();
                 if (on) g.toFront();
             }
+            markDirty();
         }
 
         // ---- route ----
@@ -782,7 +783,8 @@ public final class MapPane extends StackPane {
         // ---- layout: every map move / animation frame lands here ----
 
         @Override protected void layoutLayer() {
-            boolean ringOn = circleOn && center != null;
+            boolean sel = selected != null;                               // a boarding house is selected: show only it, the route and my location
+            boolean ringOn = circleOn && center != null && !sel;
             ring.setVisible(ringOn); collegeDot.setVisible(ringOn);
             boolean badgeOn = ringOn && ringKm.get() > 0.01;
             radiusBadge.setVisible(badgeOn);
@@ -811,7 +813,7 @@ public final class MapPane extends StackPane {
             for (Node n : collegeGroup.getChildren()) {
                 College c = (College) n.getUserData();
                 Point2D p = getMapPoint(c.lat(), c.lng());
-                boolean vis = p.getX() > -80 && p.getX() < vw + 80 && p.getY() > -30 && p.getY() < vh + 30;
+                boolean vis = !sel && p.getX() > -80 && p.getX() < vw + 80 && p.getY() > -30 && p.getY() < vh + 30;
                 n.setVisible(vis);
                 if (!vis) continue;
                 n.setTranslateX(p.getX()); n.setTranslateY(p.getY());
@@ -845,9 +847,11 @@ public final class MapPane extends StackPane {
                 double cyp = dotMode ? 0 : -21;
                 ((Circle) g.getProperties().get("head")).setCenterY(cyp); ((Circle) g.getProperties().get("dotc")).setCenterY(cyp);
                 ((Circle) g.getProperties().get("hit")).setCenterY(dotMode ? 0 : -16);
-                g.setVisible(true);
-                if (dotMode && p.getX() > -40 && p.getX() < vw + 40 && p.getY() > -40 && p.getY() < vh + 40) cand.add(g);
+                boolean hideIt = selId != null && !b.id().equals(selId);          // a boarding house is selected: all the others disappear
+                g.setVisible(!hideIt);
+                if (!hideIt && dotMode && p.getX() > -40 && p.getX() < vw + 40 && p.getY() > -40 && p.getY() < vh + 40) cand.add(g);
             }
+            if (selId != null) cand.clear();                                    // a boarding house is selected: no number bubbles, the others stay as plain dots
             int used = 0;
             double reach = 34 * Math.min(k, 1.3);                               // dots closer than this (px) share a bubble
             boolean[] taken = new boolean[cand.size()];
