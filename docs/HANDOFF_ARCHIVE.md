@@ -2,6 +2,16 @@
 
 Only read this when you need old details. Newest entries are in ../HANDOFF.md.
 
+# Handoff - v1.9.6 Map credit pill, New listing form redesign, owner chat title (2026-10-25)
+- **PR title:** `v1.9.6 - Neater map credit, redesigned New listing form, owner chat shows student name`. Version in `config.properties`, `pom.xml` (versionCode 21), CHANGES.md (v1.9.4, v1.9.5, v1.9.6 entries).
+- **Map credit (MapPane):** the OpenFreeMap / OpenMapTiles / OSM credit is a rounded `.map-attr` pill (wraps, stays clear of the find-me button). Text is kept visible on purpose (ODbL / CC-BY).
+- **ListingFormView (rewritten):** 7 numbered cards, `RoomRow` with - / + `Spinner` steppers (occupants capped at beds, remove room), `Ui.segmented` Per bed / Per room, photo thumbnails with remove, pin status box (green when set), bottom `.sticky-bar` with "x of 6 required details done" + Publish. CSS block "New listing form" in `bofo.css`.
+- **ChatsView:** owner opens a chat with the student's name as title (`c.otherName()`), students still get the BH name.
+- Not compiled/run by Claude (no Maven, no javac). Please run: Create tab (check steppers, previews, sticky bar), map credit on Home, owner chat header.
+- Old versionCode steps: 1.9.3 = 18, so 1.9.4 = 19, 1.9.5 = 20, 1.9.6 = 21.
+
+---
+
 # Handoff - v1.9.2 Directions: BH -> Campus fix + redesign (2026-10-25)
 - **PR title:** `v1.9.2 - Directions: BH to Campus tab fix, new Directions card design`. Version in `config.properties`, `pom.xml` (versionCode 17), CHANGES.md.
 - **Bug:** `DirectionsCard.select()` never cleared the map, so while the plan was loading (and for slow/failed networks) the previous tab's route (Me -> Campus, 123.8 km) stayed drawn under "Finding the best way...". Now `select()` calls `map.clearRoute()`, then `previewLine()` draws the saved road (`Router.peek`) or a straight guide line for THIS tab and moves the camera to it; the real plan replaces it when ready.

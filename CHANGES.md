@@ -1,3 +1,10 @@
+# v1.9.9 - Loading screen: hat no longer looks like a flying plate, visible shadow, livelier dots
+
+- Fixed: when the hat came off it lifted far above the head and tilted 14 degrees, so the wide brim read as a flat tilted plate. It now lifts a short way (20 / 26 units) and tilts only 5 degrees (the second jump tilts the other way), so it still reads as a hat.
+- Fixed: the ground shadow was black on the dark background and could not be seen. It is now soft light purple, a little wider, so the mascot looks grounded.
+- The mascot is a bit bigger (172 px) with more room above it for the jump; the title, subtitle and status text are larger and brighter.
+- The three loading dots now rise and fade in a wave (bigger, 10 px apart) and stop when the screen is removed (before they kept running).
+
 # v1.9.8 - Loading screen: two jumps per cycle
 
 - The mascot now does two jumps in a row before the loop restarts (about 2.2 s). The second jump is a bit higher and the hat is tossed higher; in both, the hat comes off at the top and lands back on with the feet. The shadow still touches the feet on landing.
