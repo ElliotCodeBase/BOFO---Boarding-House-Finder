@@ -10,6 +10,12 @@ Patch (x.y.Z) for fixes, minor (x.Y.0) for new features. The v1.2.0 merge once l
 
 ---
 
+# v1.9.2 - Directions: BH → Campus fix + new look (2026-10-25)
+
+`ui/DirectionsCard.java`, `bofo.css` (plus version, changelog). The map is cleared and the new trip drawn at once when a tab is tapped.
+
+---
+
 # v1.9.1 - Directions tabs: Me → BH, Me → Campus, BH → Campus (2026-10-25)
 
 `ui/DirectionsCard.java` only (plus version, changelog).
