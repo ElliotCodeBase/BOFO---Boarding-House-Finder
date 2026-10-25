@@ -1,4 +1,11 @@
-﻿# Handoff - v1.12.2 Idle poses redrawn + fixed-size chat head (2026-10-25)
+﻿# Handoff - v1.12.3 Idle effects leaked between poses (2026-10-25)
+- **PR title:** `v1.12.3 - Fix idle effects (z's, speed lines) leaking into other poses`. Version in `config.properties`, `pom.xml` (versionCode 38), CHANGES.md.
+- Cause: `fx` (effects layer) survives `set()` by design (splash sparks), so `endIdle()` now clears `fx.getChildren()`. One line in `Mascot.endIdle()`.
+- Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.12.2 Idle poses redrawn + fixed-size chat head (2026-10-25)
 - **PR title:** `v1.12.2 - BOFO chat head: real idle poses (think/sit/run/sleep), no more layout shifts`. Version in `config.properties`, `pom.xml` (versionCode 37), CHANGES.md.
 - **`Mascot`:** `set()` now calls `build(Expression, Idle pose)`; each idle pose is its own drawing (arms via `arm(Rotate,...)`, `low` body for sit/sleep, feet in front when sitting, `torso` Group + `torsoRot` lean/nod, `rotL/rotR` arm swing, `hand` for the thinking chin arm, `mouth` for sleep). Running is IN PLACE (the old circle ran outside the button). The old squash `pose` Scale is always 1 now.
 - **`BofoPanel`:** mascot is wrapped in `faceBox` (fixed 46x46 Pane) and the fab is fixed 56x56, so z's / bubble / lean never change the button size or shift the UI.

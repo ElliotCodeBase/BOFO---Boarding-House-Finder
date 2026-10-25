@@ -178,6 +178,7 @@ public final class Mascot extends Group {
         for (Animation x : idleAnims) x.stop();
         boolean was = !idleAnims.isEmpty();
         idleAnims.clear();
+        fx.getChildren().clear();     // z's / speed lines of the pose that just ended must not stay on screen
         pose.setX(1); pose.setY(1);
         setTranslateX(0); setTranslateY(0); setRotate(0);
         if (was) set(Expression.HAPPY);
