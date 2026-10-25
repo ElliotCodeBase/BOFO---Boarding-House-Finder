@@ -109,12 +109,12 @@ public final class BofoPanel extends Pane {
     // ---- idle moods ----
     private boolean canIdle() { return isVisible() && getScene() != null && !chat.isVisible() && !busy && !pressing; }
 
-    /** Waits 8-18 s of quiet, then starts a mood. Safe to call any time; does nothing while the chat is open or BOFO is answering. */
+    /** Waits 4-10 s of quiet, then starts a mood. Safe to call any time; does nothing while the chat is open or BOFO is answering. */
     private void scheduleIdle() {
         if (idling) return;
         idleTimer.stop();
         if (!canIdle()) return;
-        idleTimer.setDuration(Duration.seconds(8 + rnd.nextDouble() * 10));
+        idleTimer.setDuration(Duration.seconds(4 + rnd.nextDouble() * 6));
         idleTimer.setOnFinished(e -> startIdle());
         idleTimer.playFromStart();
     }
