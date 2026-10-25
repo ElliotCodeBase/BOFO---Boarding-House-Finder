@@ -50,8 +50,8 @@ public final class LoginView extends ScrollPane {
         HBox devRow = Ui.hbox(8, fs, fo, fa); devRow.setAlignment(Pos.CENTER);
 
         Label legal = Ui.label("By continuing you agree to our", "secondary"); center(legal);
-        Button terms = Ui.btn("Terms of Service", "link", () -> Nav.toast("Open Terms (host the document, then HostServices.showDocument)"));
-        Button priv = Ui.btn("Privacy Policy", "link", () -> Nav.toast("Open Privacy Policy"));
+        Button terms = Ui.btn("Terms of Service", "link", () -> LegalOverlay.open(LegalOverlay.Doc.TERMS));
+        Button priv = Ui.btn("Privacy Policy", "link", () -> LegalOverlay.open(LegalOverlay.Doc.PRIVACY));
         HBox legalRow = Ui.hbox(2, terms, Ui.label("and", "secondary"), priv); legalRow.setAlignment(Pos.CENTER);
 
         col.getChildren().addAll(logo, title, tag, google, cancel, err, Ui.divider("Developer: test accounts (real sign-in)"), devRow, Ui.grow(), legal, legalRow);
