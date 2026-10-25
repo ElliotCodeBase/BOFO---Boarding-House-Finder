@@ -1,4 +1,10 @@
-﻿# Handoff - v1.12.8 Home polish (2026-10-25)
+﻿# Handoff - v1.12.9 Listing card redesign (2026-10-25)
+- **PR title:** `v1.12.9 - Listing card: big price line, one-row rating + distance, badges first`. Version in `config.properties`, `pom.xml` (versionCode 44), CHANGES.md.
+- `BhCard` text block rebuilt (`head` VBox, `meta` FlowPane, `tags`); CSS `.price-big`, `.price-unit`, `.meta-dot`, `.card:hover` appended to bofo.css. Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.12.8 Home polish (2026-10-25)
 - **PR title:** `v1.12.8 - Home: time-of-day greeting, list subtitle + count, map outline`. Version in `config.properties`, `pom.xml` (versionCode 43), CHANGES.md.
 - `HomeView`: `greeting()`, `nearbySub` + `countPill` (`updateHeader()` in `reload()`), `mapFrame` Region over the map; CSS `.count-pill`, `.map-frame` appended to bofo.css. Needs v1.12.6/v1.12.7 Mascot files too if not merged yet. Not compiled/run by Claude.
 

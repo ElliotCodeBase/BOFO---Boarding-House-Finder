@@ -488,3 +488,9 @@
 /* ---- Home polish: list count pill + thin outline around the map ---- */
 .count-pill { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-background-radius: 999; -fx-padding: 4 12; -fx-font-size: 12px; -fx-font-weight: bold; }
 .map-frame { -fx-background-color: transparent; -fx-border-color: -bofo-border; -fx-border-width: 1; -fx-border-radius: 14; }
+
+/* ---- v1.12.9 listing card: big price line, quieter meta row ---- */
+.price-big { -fx-text-fill: -bofo-primary; -fx-font-size: 20px; -fx-font-weight: bold; }
+.price-unit { -fx-text-fill: -bofo-text-2; -fx-font-size: 13px; }
+.meta-dot { -fx-text-fill: -bofo-muted; -fx-font-size: 12px; }
+.card:hover { -fx-border-color: #D9D4F7; }
