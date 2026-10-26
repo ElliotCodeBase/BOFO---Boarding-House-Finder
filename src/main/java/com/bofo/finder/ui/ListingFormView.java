@@ -38,6 +38,7 @@ public final class ListingFormView extends VBox {
     private final Label pinLabel = Ui.label("", "pin-status"), photoLabel = Ui.label("No photos yet", "secondary"),
             errors = Ui.label("", "notice-bad"), progress = Ui.label("", "secondary");
     private final MapPane map = new MapPane(220);
+    private final ProgressBar progressBar = new ProgressBar(0);         // fills as the 6 required details are completed
     private java.util.List<College> colleges = java.util.List.of();      // for "how far is this from campus"
     private final Runnable onDone;
 
@@ -103,14 +104,18 @@ public final class ListingFormView extends VBox {
 
         // ---- cards ----
         VBox cBasics = Ui.card(10, header(1, "Basics", "What students will see first."), name, address);
-        VBox cPin = Ui.card(10, header(2, "Pin location", "Students use this to see how far you are from campus."), map, setPin, pinLabel);
+        StackPane mapBox = new StackPane(map);                                  // rounded corners for the map
+        Rectangle mapClip = new Rectangle(); mapClip.setArcWidth(36); mapClip.setArcHeight(36);
+        mapClip.widthProperty().bind(mapBox.widthProperty()); mapClip.heightProperty().bind(mapBox.heightProperty()); mapBox.setClip(mapClip);
+        VBox cPin = Ui.card(10, header(2, "Pin location", "Students use this to see how far you are from campus."), mapBox, setPin, pinLabel);
         VBox cPrice = Ui.card(10, header(3, "Monthly payment", null), price, perRow);
         VBox cRooms = Ui.card(10, header(4, "Rooms", "Beds in each room and how many are taken now."), roomRows, addRoomBtn);
         VBox cAmen = Ui.card(10, header(5, "Amenities", "Pick what your place offers. Not in the list? Type it and tap Add: students will be able to find it in the Explore filter."), amenities);
         VBox cPhotos = Ui.card(10, header(6, "Photos", "Add at least one. Clear, bright photos get more chats."), Ui.hbox(8, cam, gal, photoLabel), thumbs);
         VBox cContact = Ui.card(10, header(7, "Contact", "Add at least one way for students to reach you."), phone, fb, email);
 
-        VBox form = Ui.padded(12, cBasics, cPin, cPrice, cRooms, cAmen, cPhotos, cContact);
+        for (VBox c : new VBox[]{cBasics, cPin, cPrice, cRooms, cAmen, cPhotos, cContact}) c.getStyleClass().add("form-card");
+        VBox form = Ui.padded(14, cBasics, cPin, cPrice, cRooms, cAmen, cPhotos, cContact);
         form.setPadding(new Insets(8, 16, 24, 16));
         ScrollPane scroll = Ui.scrollCentered(form, 560);
         VBox.setVgrow(scroll, Priority.ALWAYS);
@@ -119,7 +124,8 @@ public final class ListingFormView extends VBox {
         Button publish = Ui.btn("Publish listing", "btn-primary", this::submit);
         publish.setMaxWidth(Double.MAX_VALUE);
         setErrors("");
-        VBox barInner = new VBox(8, errors, progress, publish); barInner.setMaxWidth(560);
+        progressBar.getStyleClass().add("form-progress"); progressBar.setMaxWidth(Double.MAX_VALUE);
+        VBox barInner = new VBox(8, errors, new VBox(6, progress, progressBar), publish); barInner.setMaxWidth(560);
         StackPane barHolder = new StackPane(barInner); barHolder.getStyleClass().add("sticky-bar");
         barHolder.setPadding(new Insets(10, 16, 12, 16));
 
@@ -162,6 +168,9 @@ public final class ListingFormView extends VBox {
         progress.setText(done >= REQUIRED ? "All required details are filled in" : done + " of " + REQUIRED + " required details done");
         progress.getStyleClass().remove("progress-done");
         if (done >= REQUIRED) progress.getStyleClass().add("progress-done");
+        progressBar.setProgress(Math.min(1.0, done / (double) REQUIRED));
+        progressBar.getStyleClass().remove("form-progress-done");
+        if (done >= REQUIRED) progressBar.getStyleClass().add("form-progress-done");
     }
 
     /** Draws the walking route from the nearest college to the dropped pin and shows the distance under the map. */

@@ -572,3 +572,21 @@
 .chat-row-unread { -fx-background-color: #F0ECFF; -fx-border-color: -bofo-primary; -fx-border-width: 1.5; -fx-border-radius: 22; -fx-background-radius: 22;
   -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.18), 12, 0, 0, 3); }
 .chat-row-unread:hover { -fx-background-color: #E9E3FF; }
+
+/* ---- v1.14.3 New listing form: airy cards, soft inputs, gradient step numbers, progress bar ---- */
+.form-card { -fx-background-color: white; -fx-border-color: transparent; -fx-border-radius: 24; -fx-background-radius: 24; -fx-padding: 18;
+  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.09), 14, 0, 0, 4); }
+.form-card .h2 { -fx-font-size: 17px; }
+.form-card .sec-num { -fx-background-color: linear-gradient(to bottom right, #7C5CFF, #5B3BF0); -fx-text-fill: white; }
+.form-card > .text-field { -fx-background-color: #F6F5FC; -fx-border-color: transparent; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 14 16; -fx-font-size: 14.5px; }
+.form-card > .text-field:focused { -fx-background-color: white; -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
+.form-card .room-card { -fx-background-color: #F6F4FF; -fx-background-radius: 18; }
+.form-card .chip { -fx-background-color: -bofo-primary-tint; -fx-border-color: transparent; -fx-text-fill: -bofo-primary-dark; -fx-font-weight: bold; }
+.form-card .chip:hover { -fx-background-color: #DDD6FF; }
+.form-card .btn-outline { -fx-background-color: -bofo-primary-tint; -fx-border-color: transparent; -fx-text-fill: -bofo-primary-dark; -fx-font-weight: bold; }
+.form-card .btn-outline:hover { -fx-background-color: #DDD6FF; }
+.sticky-bar { -fx-border-color: transparent; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.10), 16, 0, 0, -4); }
+.form-progress { -fx-pref-height: 8; -fx-min-height: 8; -fx-max-height: 8; }
+.form-progress > .track { -fx-background-color: #ECEAF9; -fx-background-radius: 999; -fx-background-insets: 0; -fx-padding: 4; }
+.form-progress > .bar { -fx-background-color: linear-gradient(to right, #7C5CFF, #5B3BF0); -fx-background-radius: 999; -fx-background-insets: 0; -fx-padding: 4; }
+.form-progress-done > .bar { -fx-background-color: -bofo-success; }
