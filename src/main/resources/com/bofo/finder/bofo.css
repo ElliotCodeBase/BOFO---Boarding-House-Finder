@@ -590,3 +590,14 @@
 .form-progress > .track { -fx-background-color: #ECEAF9; -fx-background-radius: 999; -fx-background-insets: 0; -fx-padding: 4; }
 .form-progress > .bar { -fx-background-color: linear-gradient(to right, #7C5CFF, #5B3BF0); -fx-background-radius: 999; -fx-background-insets: 0; -fx-padding: 4; }
 .form-progress-done > .bar { -fx-background-color: -bofo-success; }
+
+/* ---- v1.15.0: raised blue Create button + step form ---- */
+.dock-create { -fx-background-color: linear-gradient(to bottom right, #3B82F6, #1D4ED8); -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(37,99,235,0.45), 16, 0.1, 0, 6); }
+.dock-btn:hover .dock-create { -fx-background-color: linear-gradient(to bottom right, #60A5FA, #2563EB); }
+.step-head { -fx-background-color: -bofo-bg; }
+.step-seg { -fx-background-color: #E3E0F6; -fx-background-radius: 999; -fx-pref-height: 6; -fx-min-height: 6; -fx-max-height: 6; }
+.step-seg-on { -fx-background-color: linear-gradient(to right, #7C5CFF, #5B3BF0); }
+.step-count { -fx-text-fill: -bofo-primary; -fx-font-size: 11px; -fx-font-weight: bold; }
+.step-title { -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
+.review-text { -fx-font-size: 14px; -fx-text-fill: -bofo-text; -fx-line-spacing: 3; }

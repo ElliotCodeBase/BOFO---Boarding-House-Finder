@@ -1,4 +1,10 @@
-﻿# Handoff - v1.14.2 Cleaner compact card (2026-10-25)
+﻿# Handoff - v1.15.0 Blue Create button + step-by-step New listing (2026-10-26)
+- **PR title:** `v1.15.0 - Raised blue Create button and a 4-step New listing form`. Version in `config.properties`, `pom.xml` (versionCode 51), CHANGES.md.
+- `Shell`: action tab (Create) is now a raised blue rounded square (`makeBulge`, `TOP=18` room above the bar; no highlight slide for it). `ListingFormView`: rewritten as 4 steps (Place & pin, Price & rooms, Amenities & photos, Contact & review) with a segment header, per-step checks, Back/Next/Publish and a review card; `submit()`/validation unchanged. CSS block at end of bofo.css. Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.14.2 Cleaner compact card (2026-10-25)
 - **PR title:** `v1.14.2 - Two-column card: only photo, name, price and one line`. Version in `config.properties`, `pom.xml` (versionCode 50), CHANGES.md.
 - `BhCard` (compact only): no tags row, no beds pill unless Full, one `meta` line. Not compiled/run by Claude.
 
