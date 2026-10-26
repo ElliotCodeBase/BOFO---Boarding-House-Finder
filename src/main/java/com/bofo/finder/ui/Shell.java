@@ -13,6 +13,8 @@ import javafx.scene.control.Label;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.SVGPath;
+import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 
@@ -31,7 +33,7 @@ public class Shell extends BorderPane {
 
     private static final Color IDLE = Color.web("#AAA3DC");
     private static final Color ACTIVE = Color.web("#5B3BF0");
-    private static final double BAR_H = 68, TAB_H = 54, PAD = 8, EDGE = 16, MIN_TAB = 54, MAX_TAB = 84, INSET = 3;
+    private static final double BAR_H = 68, TAB_H = 54, PAD = 8, EDGE = 16, MIN_TAB = 54, MAX_TAB = 84, INSET = 3, TOP = 18;   // TOP = room above the bar for the raised Create button
 
     protected final StackPane body = new StackPane();
     private final Pane dock = new Pane();                     // absolute layout: bar, highlight, tab row
@@ -54,6 +56,7 @@ public class Shell extends BorderPane {
         private final Text label = new Text();
         private final DoubleProperty progress = new SimpleDoubleProperty(0);
         private Timeline anim;
+        private boolean bulge;
 
         DockTab(String name, String[] def) {
             icon = new DockIcon(def, IDLE, ACTIVE);
@@ -64,7 +67,20 @@ public class Shell extends BorderPane {
             apply(0);
         }
 
+        /** Turns this tab into the raised blue square action button (Create). */
+        void makeBulge() {
+            bulge = true;
+            SVGPath plus = new SVGPath(); plus.setContent("M12 5v14M5 12h14"); plus.setFill(null); plus.setStroke(Color.WHITE);
+            plus.setStrokeWidth(2.6); plus.setStrokeLineCap(StrokeLineCap.ROUND); plus.setMouseTransparent(true);
+            Pane glyph = new Pane(plus); glyph.setMinSize(24, 24); glyph.setPrefSize(24, 24); glyph.setMaxSize(24, 24);
+            StackPane sq = new StackPane(glyph); sq.getStyleClass().add("dock-create");
+            sq.setMinSize(50, 50); sq.setPrefSize(50, 50); sq.setMaxSize(50, 50);
+            VBox v = new VBox(4, sq, label); v.setAlignment(Pos.CENTER); v.setMouseTransparent(true); v.setTranslateY(-14);
+            setGraphic(v); apply(1);
+        }
+
         private void apply(double p) {
+            if (bulge) { label.setStyle("-fx-fill:#2563EB;-fx-font-size:11px;-fx-font-weight:bold;"); return; }
             icon.setProgress(p);
             Color c = IDLE.interpolate(ACTIVE, p);
             label.setStyle("-fx-fill:" + Ui.hex(c) + ";-fx-font-size:11px;-fx-font-weight:" + (p > 0.5 ? "bold" : "normal") + ";");
@@ -106,7 +122,7 @@ public class Shell extends BorderPane {
         left.addListener((o, a, b) -> placeHighlight()); right.addListener((o, a, b) -> placeHighlight());
         dock.getChildren().addAll(bar, highlight, row);
 
-        StackPane wrap = new StackPane(dock); wrap.setPadding(new Insets(6, EDGE, 14, EDGE)); wrap.setPickOnBounds(false);
+        StackPane wrap = new StackPane(dock); wrap.setPadding(new Insets(0, EDGE, 14, EDGE)); wrap.setPickOnBounds(false);
         setTop(offline); setCenter(body); setBottom(wrap);
         relayout(lastAvail);
         // responsive: the bar re-fits whenever the available width changes (rotation, tablet, window resize)
@@ -127,7 +143,7 @@ public class Shell extends BorderPane {
     }
 
     /** Makes the tab at index an action tab (e.g. "Create"): pressing it runs r instead of switching content. */
-    protected final void setActionTab(int index, Runnable r) { actionIndex = index; action = r; }
+    protected final void setActionTab(int index, Runnable r) { actionIndex = index; action = r; tabs[index].makeBulge(); }
 
     /** Fits the bar into the available width: tabs between MIN_TAB and MAX_TAB wide, whole bar stays centred. */
     private void relayout(double avail) {
@@ -135,8 +151,8 @@ public class Shell extends BorderPane {
         int n = tabs.length;
         tabW = Math.max(MIN_TAB, Math.min(MAX_TAB, (avail - 2 * PAD) / n));
         double barW = 2 * PAD + n * tabW;
-        size(dock, barW, BAR_H); size(bar, barW, BAR_H);
-        row.setLayoutX(PAD); row.setLayoutY((BAR_H - TAB_H) / 2); size(row, n * tabW, TAB_H);
+        size(dock, barW, BAR_H + TOP); size(bar, barW, BAR_H); bar.setLayoutY(TOP);
+        row.setLayoutX(PAD); row.setLayoutY(TOP + (BAR_H - TAB_H) / 2); size(row, n * tabW, TAB_H);
         for (int i = 0; i < n; i++) { size(cells[i], tabW, TAB_H); size(tabs[i], tabW - 2 * INSET, TAB_H); }
         if (hlAnim != null) hlAnim.stop();
         int at = Math.max(current, 0);
@@ -146,11 +162,10 @@ public class Shell extends BorderPane {
 
     private double edgeL(int i) { return PAD + i * tabW + INSET; }
     private double edgeR(int i) { return PAD + (i + 1) * tabW - INSET; }
-    private void placeHighlight() { highlight.resizeRelocate(left.get(), (BAR_H - TAB_H) / 2, Math.max(0, right.get() - left.get()), TAB_H); }
+    private void placeHighlight() { highlight.resizeRelocate(left.get(), TOP + (BAR_H - TAB_H) / 2, Math.max(0, right.get() - left.get()), TAB_H); }
 
     public final void select(int i) {
         if (i == actionIndex) {                               // action tab: highlight slides over, then the action runs
-            moveHighlight(i, current >= 0);
             if (action != null) action.run();
             return;
         }

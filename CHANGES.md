@@ -1,4 +1,8 @@
-﻿# v1.14.2 - Cleaner two-column card
+﻿# v1.15.0 - Blue Create button + step-by-step New listing
+- Create in the bottom bar is a raised blue square.
+- New listing is a 4-step form with progress, per-step checks and a review page.
+
+# v1.14.2 - Cleaner two-column card
 
 - The compact card now shows only: photo with heart, name, price and one short line ("★ 4.5 · 1.2 km" or just the distance).
 - No tags, no Verified/Hot badges and no "beds left" pill on it (a "Full" pill still shows when there are no free beds). The full card (single column) is unchanged.

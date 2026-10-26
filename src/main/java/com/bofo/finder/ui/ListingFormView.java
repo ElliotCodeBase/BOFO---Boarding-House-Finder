@@ -71,12 +71,27 @@ public final class ListingFormView extends VBox {
         }
     }
 
+    private static final String[][] STEPS = {
+            {"Place & pin", "Name your place and drop a pin so students see the distance to campus."},
+            {"Price & rooms", "How much it costs and how many beds each room has."},
+            {"Amenities & photos", "Show what you offer. Clear, bright photos get more chats."},
+            {"Contact & review", "Tell students how to reach you, then check everything."}};
+    private final VBox[] pages = new VBox[4];
+    private final StackPane pageHost = new StackPane();
+    private final HBox segs = new HBox(6);
+    private final Label stepCount = Ui.label("", "step-count"), stepTitle = Ui.label("", "step-title"),
+            stepHint = Ui.label("", "secondary"), review = Ui.label("", "review-text");
+    private final Button backBtn, nextBtn;
+    private ScrollPane scroll;
+    private int step = 0;
+
     public ListingFormView(Runnable onDone) {
         this.onDone = onDone;
-        Button back = Ui.btn("←", "heart", onDone); back.getStyleClass().setAll("button", "icon-btn");
+        Button back = Ui.btn("\u2190", "heart", () -> { if (step > 0) go(step - 1); else onDone.run(); });
+        back.getStyleClass().setAll("button", "icon-btn");
         HBox bar = Ui.appBar("New listing"); bar.getChildren().add(0, back);
 
-        name.setPromptText("BH name"); address.setPromptText("Address (street, barangay, city)"); price.setPromptText("Monthly payment (₱)");
+        name.setPromptText("BH name"); address.setPromptText("Address (street, barangay, city)"); price.setPromptText("Monthly payment (\u20B1)");
         phone.setPromptText("Phone"); fb.setPromptText("Facebook / Messenger link"); email.setPromptText("Email");
 
         // ---- pin ----
@@ -91,57 +106,107 @@ public final class ListingFormView extends VBox {
         setPin.setGraphic(Ui.strokeIcon(Glyphs.PIN, 16, Color.web("#17142A"))); setPin.setGraphicTextGap(8);
         setPin.setMaxWidth(Double.MAX_VALUE);
 
-        // ---- price ----
         HBox perRow = Ui.hbox(10, Ui.label("Charged", "secondary"), Ui.segmented(new String[]{"Per bed", "Per room"}, 0, i -> modeIdx = i));
-
-        // ---- rooms ----
         addRoom(4, 0);
         Button addRoomBtn = Ui.btn("+ Add room", "chip", () -> addRoom(4, 0));
-
-        // ---- photos ----
         Button cam = Ui.btn("+ Camera", "chip", () -> Capture.camera().ifPresent(this::addPhoto));
         Button gal = Ui.btn("+ Gallery", "chip", () -> Capture.gallery().ifPresent(this::addPhoto));
 
-        // ---- cards ----
-        VBox cBasics = Ui.card(10, header(1, "Basics", "What students will see first."), name, address);
+        // ---- cards, grouped into 4 steps ----
         StackPane mapBox = new StackPane(map);                                  // rounded corners for the map
         Rectangle mapClip = new Rectangle(); mapClip.setArcWidth(36); mapClip.setArcHeight(36);
         mapClip.widthProperty().bind(mapBox.widthProperty()); mapClip.heightProperty().bind(mapBox.heightProperty()); mapBox.setClip(mapClip);
-        VBox cPin = Ui.card(10, header(2, "Pin location", "Students use this to see how far you are from campus."), mapBox, setPin, pinLabel);
-        VBox cPrice = Ui.card(10, header(3, "Monthly payment", null), price, perRow);
-        VBox cRooms = Ui.card(10, header(4, "Rooms", "Beds in each room and how many are taken now."), roomRows, addRoomBtn);
-        VBox cAmen = Ui.card(10, header(5, "Amenities", "Pick what your place offers. Not in the list? Type it and tap Add: students will be able to find it in the Explore filter."), amenities);
-        VBox cPhotos = Ui.card(10, header(6, "Photos", "Add at least one. Clear, bright photos get more chats."), Ui.hbox(8, cam, gal, photoLabel), thumbs);
-        VBox cContact = Ui.card(10, header(7, "Contact", "Add at least one way for students to reach you."), phone, fb, email);
-
-        for (VBox c : new VBox[]{cBasics, cPin, cPrice, cRooms, cAmen, cPhotos, cContact}) c.getStyleClass().add("form-card");
-        VBox form = Ui.padded(14, cBasics, cPin, cPrice, cRooms, cAmen, cPhotos, cContact);
-        form.setPadding(new Insets(8, 16, 24, 16));
-        ScrollPane scroll = Ui.scrollCentered(form, 560);
+        VBox cBasics = Ui.card(10, header("Basics", "What students will see first."), name, address);
+        VBox cPin = Ui.card(10, header("Pin location", "Move the map until the pin sits on your place."), mapBox, setPin, pinLabel);
+        VBox cPrice = Ui.card(10, header("Monthly payment", "Price students pay each month."), price, perRow);
+        VBox cRooms = Ui.card(10, header("Rooms", "Beds in each room and how many are taken now."), roomRows, addRoomBtn);
+        VBox cAmen = Ui.card(10, header("Amenities", "Not in the list? Type it and tap Add. Students can find it in the Explore filter."), amenities);
+        VBox cPhotos = Ui.card(10, header("Photos", "Add at least one."), Ui.hbox(8, cam, gal, photoLabel), thumbs);
+        VBox cContact = Ui.card(10, header("Contact", "Add at least one way for students to reach you."), phone, fb, email);
+        VBox cReview = Ui.card(8, header("Review", "This is what students will see."), review);
+        review.setWrapText(true);
+        for (VBox c : new VBox[]{cBasics, cPin, cPrice, cRooms, cAmen, cPhotos, cContact, cReview}) c.getStyleClass().add("form-card");
+        pages[0] = new VBox(14, cBasics, cPin); pages[1] = new VBox(14, cPrice, cRooms);
+        pages[2] = new VBox(14, cPhotos, cAmen); pages[3] = new VBox(14, cContact, cReview);
+        for (VBox pg : pages) pg.setPadding(new Insets(4, 16, 24, 16));
+        pageHost.setAlignment(Pos.TOP_CENTER);
+        scroll = Ui.scrollCentered(pageHost, 560);
         VBox.setVgrow(scroll, Priority.ALWAYS);
 
-        // ---- bottom bar (always visible) ----
-        Button publish = Ui.btn("Publish listing", "btn-primary", this::submit);
-        publish.setMaxWidth(Double.MAX_VALUE);
+        // ---- step header: 4 segments, "Step n of 4", title, hint ----
+        for (int i = 0; i < 4; i++) { Region s = new Region(); s.getStyleClass().add("step-seg"); HBox.setHgrow(s, Priority.ALWAYS); s.setMaxWidth(Double.MAX_VALUE); segs.getChildren().add(s); }
+        VBox stepHead = new VBox(6, segs, stepCount, stepTitle, stepHint); stepHead.setMaxWidth(560);
+        stepHead.setPadding(new Insets(10, 20, 10, 20));
+        StackPane headHolder = new StackPane(stepHead); headHolder.setAlignment(Pos.TOP_CENTER); headHolder.getStyleClass().add("step-head");
+
+        // ---- bottom bar (always visible): Back + Next / Publish ----
+        backBtn = Ui.btn("Back", "btn-outline", () -> go(step - 1));
+        nextBtn = Ui.btn("Next", "btn-primary", this::next);
+        nextBtn.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(nextBtn, Priority.ALWAYS);
+        HBox buttons = new HBox(10, backBtn, nextBtn); buttons.setAlignment(Pos.CENTER);
         setErrors("");
         progressBar.getStyleClass().add("form-progress"); progressBar.setMaxWidth(Double.MAX_VALUE);
-        VBox barInner = new VBox(8, errors, new VBox(6, progress, progressBar), publish); barInner.setMaxWidth(560);
+        VBox barInner = new VBox(8, errors, new VBox(6, progress, progressBar), buttons); barInner.setMaxWidth(560);
         StackPane barHolder = new StackPane(barInner); barHolder.getStyleClass().add("sticky-bar");
         barHolder.setPadding(new Insets(10, 16, 12, 16));
 
         for (TextField t : new TextField[]{name, address, price, phone, fb, email}) t.textProperty().addListener((o, a, b) -> refresh());
         refresh();
-
-        getChildren().addAll(bar, scroll, barHolder);
-        scroll.setVvalue(0);
+        getChildren().addAll(bar, headHolder, scroll, barHolder);
+        go(0);
     }
 
-    /** Numbered section title with an optional one-line hint. */
-    private static Node header(int n, String title, String hint) {
-        Label num = new Label(String.valueOf(n)); num.getStyleClass().add("sec-num");
-        num.setMinSize(26, 26); num.setPrefSize(26, 26); num.setMaxSize(26, 26); num.setAlignment(Pos.CENTER);
+    /** Shows one step: swaps the page, updates the header segments and the Back / Next buttons. */
+    private void go(int i) {
+        step = Math.max(0, Math.min(3, i));
+        setErrors("");
+        pageHost.getChildren().setAll(pages[step]);
+        for (int k = 0; k < segs.getChildren().size(); k++) {
+            Node s = segs.getChildren().get(k);
+            s.getStyleClass().removeAll("step-seg-on");
+            if (k <= step) s.getStyleClass().add("step-seg-on");
+        }
+        stepCount.setText("STEP " + (step + 1) + " OF 4");
+        stepTitle.setText(STEPS[step][0]); stepHint.setText(STEPS[step][1]);
+        backBtn.setVisible(step > 0); backBtn.setManaged(step > 0);
+        nextBtn.setText(step == 3 ? "Publish listing" : "Next");
+        if (step == 3) updateReview();
+        scroll.setVvalue(0);
+        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(180), pages[step]);
+        ft.setFromValue(0); ft.setToValue(1); ft.play();
+    }
+
+    /** Checks only what this step needs, then moves on (or publishes on the last step). */
+    private void next() {
+        String err = null;
+        if (step == 0) {
+            if (name.getText().isBlank()) err = "Enter the BH name.";
+            else if (address.getText().isBlank()) err = "Enter the address.";
+            else if (d.lat == null || d.lng == null) err = "Set the pin: move the map, then tap Set pin.";
+        } else if (step == 1) {
+            try { if (price.getText().isBlank() || Double.parseDouble(price.getText().trim()) <= 0) err = "Enter the monthly payment."; }
+            catch (NumberFormatException e) { err = "The monthly payment must be a number."; }
+        } else if (step == 2) {
+            if (d.photos.isEmpty()) err = "Add at least one photo.";
+        } else {
+            if (phone.getText().isBlank() && fb.getText().isBlank() && email.getText().isBlank()) err = "Add at least one way to contact you.";
+        }
+        if (err != null) { setErrors(err); return; }
+        if (step < 3) go(step + 1); else submit();
+    }
+
+    private void updateReview() {
+        int beds = 0; for (RoomRow r : rooms) beds += r.beds.getValue();
+        String per = modeIdx == 0 ? "per bed" : "per room";
+        review.setText(name.getText().trim() + "\n" + address.getText().trim() + "\n\n\u20B1" + price.getText().trim() + " " + per + " a month"
+                + "\n" + rooms.size() + (rooms.size() == 1 ? " room, " : " rooms, ") + beds + " beds"
+                + "\n" + amenities.selectedIds().size() + " amenities, " + d.photos.size() + (d.photos.size() == 1 ? " photo" : " photos"));
+    }
+
+    /** Section title with an optional one-line hint. */
+    private static Node header(String title, String hint) {
         VBox t = new VBox(2, Ui.label(title, "h2")); if (hint != null) t.getChildren().add(Ui.label(hint, "secondary"));
-        HBox h = new HBox(10, num, t); h.setAlignment(Pos.TOP_LEFT); return h;
+        return t;
     }
 
     private void setPinText(String s, boolean ok) {
