@@ -146,7 +146,8 @@ public final class ListingFormView extends VBox {
         HBox buttons = new HBox(10, backBtn, nextBtn); buttons.setAlignment(Pos.CENTER);
         setErrors("");
         progressBar.getStyleClass().add("form-progress"); progressBar.setMaxWidth(Double.MAX_VALUE);
-        VBox barInner = new VBox(8, errors, new VBox(6, progress, progressBar), buttons); barInner.setMaxWidth(560);
+        HBox prog = new HBox(10, progress, progressBar); prog.setAlignment(Pos.CENTER_LEFT); HBox.setHgrow(progressBar, Priority.ALWAYS);
+        VBox barInner = new VBox(8, errors, prog, buttons); barInner.setMaxWidth(560);
         StackPane barHolder = new StackPane(barInner); barHolder.getStyleClass().add("sticky-bar");
         barHolder.setPadding(new Insets(10, 16, 12, 16));
 

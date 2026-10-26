@@ -1,4 +1,7 @@
-﻿# v1.15.0 - Blue Create button + step-by-step New listing
+﻿# v1.15.1 - New listing polish
+- Blue map pin, mascot hidden on the form, slimmer bottom bar, soft card shadows.
+
+# v1.15.0 - Blue Create button + step-by-step New listing
 - Create in the bottom bar is a raised blue square.
 - New listing is a 4-step form with progress, per-step checks and a review page.
 
