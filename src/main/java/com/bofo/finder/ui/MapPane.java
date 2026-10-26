@@ -257,8 +257,15 @@ public final class MapPane extends StackPane {
 
     /** Adds a fixed crosshair pin in the middle of the map for pin-dropping. */
     public void enableCenterPin() {
-        Label pin = new Label("📍"); pin.setStyle("-fx-font-size:30px;"); pin.setMouseTransparent(true);
-        pin.setTranslateY(-16); getChildren().add(pin);
+        javafx.scene.shape.SVGPath shape = new javafx.scene.shape.SVGPath();     // blue teardrop pin, tip on the map centre
+        shape.setContent("M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z");
+        shape.setFillRule(javafx.scene.shape.FillRule.EVEN_ODD); shape.setFill(javafx.scene.paint.Color.web("#5B3BF0"));
+        shape.setStroke(javafx.scene.paint.Color.WHITE); shape.setStrokeWidth(0.8);
+        shape.setEffect(new javafx.scene.effect.DropShadow(4, 0, 1.5, javafx.scene.paint.Color.rgb(23, 20, 42, 0.35)));
+        javafx.scene.Group pin = new javafx.scene.Group(shape); pin.setScaleX(1.9); pin.setScaleY(1.9); pin.setMouseTransparent(true);
+        pin.setTranslateY(-19);
+        javafx.scene.shape.Ellipse dot = new javafx.scene.shape.Ellipse(5, 2); dot.setFill(javafx.scene.paint.Color.rgb(91, 59, 240, 0.28)); dot.setMouseTransparent(true);
+        getChildren().addAll(dot, pin);
     }
 
     /** The map inside a rounded frame (same look as the Home screen). */

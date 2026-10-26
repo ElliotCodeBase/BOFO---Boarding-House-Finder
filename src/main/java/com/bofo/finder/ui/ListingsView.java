@@ -13,7 +13,7 @@ public final class ListingsView extends VBox {
     private final VBox rows = new VBox(10);
 
     public ListingsView() {
-        Button add = Ui.btn("+ Add listing", "btn-cta", () -> Nav.show(new ListingFormView(() -> Nav.show(new OwnerShell(), true)), true));
+        Button add = Ui.btn("+ Add listing", "btn-cta", () -> Nav.show(new ListingFormView(() -> Nav.show(new OwnerShell(), true)), false));
         rows.setPadding(new Insets(12, 16, 72, 16));
         getChildren().addAll(Ui.pageHeader("My listings", null, add), Ui.scroll(rows));
         load();

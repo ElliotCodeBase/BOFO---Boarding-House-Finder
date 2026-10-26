@@ -8,6 +8,6 @@ public final class OwnerShell extends Shell {
         super(new String[]{"Dashboard", "Listings", "Create", "Chats", "Profile"},
                 () -> new DashboardView(), () -> new ListingsView(), () -> new Region(), () -> new ChatsView(), () -> new ProfileView());
         refreshBadge(new ChatService());
-        setActionTab(2, () -> Nav.show(new ListingFormView(() -> Nav.show(new OwnerShell(), true)), true));   // "Create" = add listing
+        setActionTab(2, () -> Nav.show(new ListingFormView(() -> Nav.show(new OwnerShell(), true)), false));   // "Create" = add listing
     }
 }
