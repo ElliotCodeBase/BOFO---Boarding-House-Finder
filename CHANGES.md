@@ -1,4 +1,7 @@
-﻿# v1.15.1 - New listing polish
+﻿# v1.15.2 - Camera and Gallery fix
+- PC: Camera and Gallery open a file picker. Phone: errors are caught; storage/media permissions added to the manifest.
+
+# v1.15.1 - New listing polish
 - Blue map pin, mascot hidden on the form, slimmer bottom bar, soft card shadows.
 
 # v1.15.0 - Blue Create button + step-by-step New listing

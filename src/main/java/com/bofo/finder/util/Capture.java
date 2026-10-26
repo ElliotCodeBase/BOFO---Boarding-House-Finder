@@ -15,11 +15,34 @@ import java.util.zip.DeflaterOutputStream;
 public final class Capture {
     private Capture() {}
 
+    /** Phone: opens the camera. PC (no Attach service, no webcam support in JavaFX): opens a file picker instead. */
     public static Optional<Image> camera() {
-        return PicturesService.create().flatMap(s -> s.takePhoto(false));
+        try {
+            Optional<PicturesService> svc = PicturesService.create();
+            if (svc.isPresent()) return svc.get().takePhoto(false);
+        } catch (Throwable t) { System.err.println("Camera failed: " + t); return Optional.empty(); }
+        return pickFile("Choose a photo");
     }
+
+    /** Phone: opens the gallery. PC: opens a file picker. */
     public static Optional<Image> gallery() {
-        return PicturesService.create().flatMap(PicturesService::loadImageFromGallery);
+        try {
+            Optional<PicturesService> svc = PicturesService.create();
+            if (svc.isPresent()) return svc.get().loadImageFromGallery();
+        } catch (Throwable t) { System.err.println("Gallery failed: " + t); return Optional.empty(); }
+        return pickFile("Choose a photo");
+    }
+
+    private static Optional<Image> pickFile(String title) {
+        try {
+            javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+            fc.setTitle(title);
+            fc.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("Images", "*.jpg", "*.jpeg", "*.png", "*.gif", "*.bmp", "*.webp"));
+            java.io.File f = fc.showOpenDialog(null);
+            if (f == null) return Optional.empty();
+            Image img = new Image(f.toURI().toString(), 1600, 1600, true, true);        // smooth, capped size to save memory
+            return img.isError() || img.getWidth() < 1 ? Optional.empty() : Optional.of(img);
+        } catch (Throwable t) { System.err.println("File picker failed: " + t); return Optional.empty(); }
     }
 
     public static byte[] png(Image img, int maxWidth) {
