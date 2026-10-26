@@ -540,8 +540,11 @@
 .college-arrow:hover { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
 
 /* ---- v1.14.3 Home: soft violet header band, borderless map, pill tabs with glow, airy cards ---- */
-.home-header { -fx-background-color: linear-gradient(to bottom, #E7E1FF 0%, #F0EDFF 55%, #F5F6FC 100%);
-  -fx-background-radius: 0 0 32 32; -fx-padding: 22 16 24 16; }
+.home-header { -fx-background-color:
+    radial-gradient(center 100% 0%, radius 60%, rgba(124,92,255,0.34), rgba(124,92,255,0)),
+    radial-gradient(center 0% 100%, radius 50%, rgba(255,186,230,0.30), rgba(255,186,230,0)),
+    linear-gradient(to bottom, #E7E1FF 0%, #F0EDFF 55%, #F5F6FC 100%);
+  -fx-background-radius: 0 0 32 32, 0 0 32 32, 0 0 32 32; -fx-padding: 22 16 24 16; }
 .map-frame { -fx-border-color: transparent; }
 .home-chips { -fx-spacing: 10; }
 .home-chips .chip { -fx-background-color: white; -fx-border-color: transparent; -fx-padding: 9 18; -fx-font-size: 13.5px; -fx-text-fill: -bofo-text-2;
@@ -556,3 +559,16 @@
 .card-compact .h2 { -fx-font-size: 14px; }
 .card-compact .price-big { -fx-font-size: 17px; }
 .card-compact .pill-green, .card-compact .pill-grey { -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.12), 6, 0, 0, 1); }
+
+/* ---- v1.14.3 Home extras: floating map chip, "See all" pill, price accent ---- */
+.map-chip { -fx-background-color: rgba(255,255,255,0.94); -fx-background-radius: 999; -fx-padding: 6 12; -fx-text-fill: -bofo-primary-dark;
+  -fx-font-size: 12px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.18), 8, 0, 0, 2); }
+.see-all { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 999; -fx-text-fill: -bofo-primary-dark; -fx-font-weight: bold;
+  -fx-font-size: 12.5px; -fx-padding: 7 14; -fx-cursor: hand; }
+.see-all:hover { -fx-background-color: #DDD6FF; }
+.card-compact .price-big { -fx-text-fill: -bofo-primary-dark; }
+
+/* ---- v1.14.3 Chats list: unread conversations stand out ---- */
+.chat-row-unread { -fx-background-color: #F0ECFF; -fx-border-color: -bofo-primary; -fx-border-width: 1.5; -fx-border-radius: 22; -fx-background-radius: 22;
+  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.18), 12, 0, 0, 3); }
+.chat-row-unread:hover { -fx-background-color: #E9E3FF; }

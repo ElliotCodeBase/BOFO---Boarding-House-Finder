@@ -52,6 +52,8 @@ public final class ChatView extends VBox {
     private final TextField input = new TextField();
     private String oldest, newest = "1970-01-01T00:00:00Z";
     private ScheduledExecutorService poll;
+    private boolean stickBottom;                                       // true for a moment after new content: keeps the view glued to the newest message while it is laid out
+    private final Set<String> unreadMine = java.util.concurrent.ConcurrentHashMap.newKeySet();   // ids of my messages still showing one tick (not read yet)
     private volatile boolean active = true;
     private int idleTicks = 0;
     private final Set<String> seen = new HashSet<>();                 // message ids already on screen (no duplicates)
@@ -111,6 +113,7 @@ public final class ChatView extends VBox {
         quickScroll.visibleProperty().bind(javafx.beans.binding.Bindings.size(msgs.getChildren()).lessThanOrEqualTo(1));
         getChildren().addAll(bar, scroll, quickScroll, composer);
 
+        msgs.heightProperty().addListener((o, a, b) -> { if (stickBottom) scroll.setVvalue(1.0); });
         Outbox.LISTENERS.add(outboxListener);
         for (JSONObject e : Outbox.pending(convId)) addPending(e);     // messages written offline in an earlier visit are still here
         loadOlder(true);
@@ -124,12 +127,14 @@ public final class ChatView extends VBox {
     /** Adaptive polling: 3 s while the chat is active, backing off to 12 s when quiet; resets on any new message. */
     private void tick() {
         if (!active) return;
-        if (Outbox.hasPending()) Outbox.flushAsync();                    // queued messages go out as soon as the network is back
         boolean got = false;
-        if (needsReload) { if (!Connectivity.OFFLINE.get()) { needsReload = false; Platform.runLater(() -> loadOlder(true)); } }
-        else got = pollNew();
+        try {                                                            // any error here must never stop the polling for good
+            if (Outbox.hasPending()) Outbox.flushAsync();                // queued messages go out as soon as the network is back
+            if (needsReload) { if (!Connectivity.OFFLINE.get()) { needsReload = false; Platform.runLater(() -> loadOlder(true)); } }
+            else { got = pollNew(); refreshReads(); }
+        } catch (Exception e) { System.err.println("[ChatView] poll error: " + e); }
         idleTicks = got ? 0 : idleTicks + 1;
-        long delay = idleTicks < 5 ? 3 : idleTicks < 20 ? 6 : 12;
+        long delay = idleTicks < 5 || !unreadMine.isEmpty() ? 3 : idleTicks < 20 ? 6 : 12;   // stay fast while waiting for a "read"
         if (active) poll.schedule(this::tick, delay, TimeUnit.SECONDS);
     }
 
@@ -161,7 +166,7 @@ public final class ChatView extends VBox {
             }
             msgs.getChildren().addAll(first ? msgs.getChildren().size() : 0, nodes);
             if (first) restoreQueued();
-            if (first) Platform.runLater(() -> scroll.setVvalue(1.0));
+            if (first) Platform.runLater(this::toBottom);
             Async.bg(() -> { try { chat.markRead(convId); } catch (Exception ignored) {} });
         }, e -> {
             if (!first) { Nav.toast(Connectivity.isNetworkError(e) ? "No internet connection. Older messages need internet." : "Could not load messages"); return; }
@@ -181,12 +186,39 @@ public final class ChatView extends VBox {
             if (fresh.isEmpty()) return false;
             Platform.runLater(() -> {
                 for (Message m : fresh) { newest = m.createdAt(); if (seen.add(m.id())) { clearEmpty(); addDay(dayOf(m.createdAt())); javafx.scene.Node nb = bubble(m); msgs.getChildren().add(nb); appear(nb); } }
-                scroll.setVvalue(1.0);
+                toBottom();
             });
             chat.markRead(convId);
             refreshSavedCopy();
             return true;
-        } catch (Exception ignored) { return false; /* offline: next tick retries */ }
+        } catch (Exception e) { System.err.println("[ChatView] could not fetch new messages: " + e); return false; /* offline: next tick retries */ }
+    }
+
+    /** Scrolls to the newest message. The content is laid out a moment later, so the view stays glued to the bottom for a short time. */
+    private void toBottom() {
+        stickBottom = true;
+        scroll.setVvalue(1.0);
+        Platform.runLater(() -> { scroll.layout(); scroll.setVvalue(1.0); });
+        javafx.animation.PauseTransition t = new javafx.animation.PauseTransition(javafx.util.Duration.millis(700));
+        t.setOnFinished(e -> { scroll.setVvalue(1.0); stickBottom = false; });
+        t.play();
+    }
+
+    /** The other person read some of my messages: swap the one grey tick for two blue ticks without reopening the chat. */
+    private void refreshReads() {
+        if (unreadMine.isEmpty()) return;
+        try {
+            List<Message> read = chat.fetchMyRead(convId, me);
+            if (read.isEmpty()) return;
+            Platform.runLater(() -> {
+                for (Message m : read) {
+                    if (!unreadMine.contains(m.id())) continue;
+                    for (int i = 0; i < msgs.getChildren().size(); i++) {
+                        if (m.id().equals(msgs.getChildren().get(i).getProperties().get("id"))) { msgs.getChildren().set(i, bubble(m)); break; }
+                    }
+                }
+            });
+        } catch (Exception e) { System.err.println("[ChatView] could not refresh read ticks: " + e); }
     }
 
     private javafx.scene.Node bubble(Message m) {
@@ -200,7 +232,8 @@ public final class ChatView extends VBox {
         StackPane b = new StackPane(inner); b.getStyleClass().add(mine ? "bubble-me" : "bubble-them");
         b.setOnContextMenuRequested(e -> copyMenu(b, m.body(), e.getScreenX(), e.getScreenY()));
         HBox row = new HBox(b); row.setAlignment(mine ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
-        row.getProperties().put("sender", m.senderId()); row.getProperties().put("bubble", b);
+        row.getProperties().put("sender", m.senderId()); row.getProperties().put("bubble", b); row.getProperties().put("id", m.id());
+        if (mine && m.readAt() == null) unreadMine.add(m.id()); else unreadMine.remove(m.id());
         return row;
     }
 
@@ -295,7 +328,7 @@ public final class ChatView extends VBox {
         row.getProperties().put("sender", me); row.getProperties().put("bubble", b);
         queued.put(id, new Pending(row, b, status));
         clearEmpty(); addDay(LocalDate.now());
-        msgs.getChildren().add(row); appear(row); Platform.runLater(() -> scroll.setVvalue(1.0));
+        msgs.getChildren().add(row); appear(row); Platform.runLater(this::toBottom);
     }
 
     /** After the history is (re)drawn, the queued bubbles go back at the bottom. */
@@ -309,7 +342,7 @@ public final class ChatView extends VBox {
         if (seen.add(m.id())) { if (i >= 0) msgs.getChildren().set(i, bubble(m)); else msgs.getChildren().add(bubble(m)); }
         else msgs.getChildren().remove(q.row());                       // the poll already showed it
         if (m.createdAt().compareTo(newest) > 0) newest = m.createdAt();
-        scroll.setVvalue(1.0);
+        toBottom();
         Async.bg(this::refreshSavedCopy);
     }
 

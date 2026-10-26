@@ -64,7 +64,16 @@ public final class ChatService {
     }
 
     public List<Message> fetchNewer(String conversationId, String after) throws Exception {
-        JSONArray a = api.select("messages", "conversation_id=eq." + conversationId + "&created_at=gt." + after + "&select=*&order=created_at.asc");
+        JSONArray a = api.select("messages", "conversation_id=eq." + conversationId + "&created_at=gt." + java.net.URLEncoder.encode(after, java.nio.charset.StandardCharsets.UTF_8) + "&select=*&order=created_at.asc");
+        List<Message> l = new ArrayList<>();
+        for (int i = 0; i < a.length(); i++) l.add(Message.from(a.getJSONObject(i)));
+        return l;
+    }
+
+    /** My own messages in this chat that the other person has already read (newest 30): used to turn one tick into two blue ticks live. */
+    public List<Message> fetchMyRead(String conversationId, String me) throws Exception {
+        JSONArray a = api.select("messages", "conversation_id=eq." + conversationId + "&sender_id=eq." + java.net.URLEncoder.encode(me, java.nio.charset.StandardCharsets.UTF_8)
+                + "&read_at=not.is.null&select=*&order=created_at.desc&limit=30");
         List<Message> l = new ArrayList<>();
         for (int i = 0; i < a.length(); i++) l.add(Message.from(a.getJSONObject(i)));
         return l;

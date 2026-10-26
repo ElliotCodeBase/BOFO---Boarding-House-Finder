@@ -15,7 +15,11 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 import javafx.scene.layout.*;
 
 /** Inbox: every conversation sorted by latest message, with BH name, preview, local time and unread count. */
@@ -24,7 +28,35 @@ public final class ChatsView extends VBox {
         ChatService chat = new ChatService();
         VBox rows = new VBox(10); rows.setPadding(new Insets(6, 16, 96, 16));
         getChildren().addAll(Ui.pageHeader("Chats", "Your conversations with owners and students"), Ui.scroll(rows));
-        Ui.load(rows, () -> Skeleton.rows(5), chat::inbox, list -> {
+        Ui.load(rows, () -> Skeleton.rows(5), chat::inbox, list -> { lastSig = signature(list); render(rows, list); });
+
+        // live inbox: while this screen is shown, check every 4 seconds and redraw only when something changed (new message, unread count, time)
+        Timeline live = new Timeline(new KeyFrame(Duration.seconds(4), e -> {
+            if (busy) return;
+            busy = true;
+            Async.run(chat::inbox, list -> {
+                busy = false;
+                String sig = signature(list);
+                if (!sig.equals(lastSig)) { lastSig = sig; render(rows, list); }
+            }, err -> busy = false);
+        }));
+        live.setCycleCount(Timeline.INDEFINITE);
+        sceneProperty().addListener((o, was, sc) -> { if (sc == null) live.stop(); else live.play(); });
+    }
+
+    private boolean busy;
+    private String lastSig = "";
+
+    private static String signature(List<Conversation> list) {
+        StringBuilder sb = new StringBuilder();
+        for (Conversation c : list) sb.append(c.id()).append('|').append(c.lastAt()).append('|').append(c.unread()).append('|').append(c.lastMessage()).append(';');
+        return sb.toString();
+    }
+
+    private void render(VBox rows, List<Conversation> list) {
+        {
+            rows.getChildren().clear();
+            ChatService chat = new ChatService();
             if (list.isEmpty()) rows.getChildren().add(Ui.emptyState("No conversations yet", "Open a boarding house and tap Chat with owner."));
             String me = AuthService.get().userId();
             for (Conversation c : list) {
@@ -49,7 +81,7 @@ public final class ChatsView extends VBox {
                 row.setOnMouseClicked(e -> Nav.show(new ChatView(c.id(), title, null, other, () -> Nav.show(Main.home(), true)), false));
                 rows.getChildren().add(row);
             }
-        });
+        }
     }
 
     /** The server sends UTC: show local time today, "Yesterday", or the date. */
