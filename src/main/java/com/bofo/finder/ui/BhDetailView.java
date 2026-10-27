@@ -173,7 +173,7 @@ public final class BhDetailView extends VBox {
 
     private void openChat(BoardingHouse b) {
         Async.run(() -> new ChatService().openConversation(b.id()), cid ->
-                Nav.show(new ChatView(cid, b.name(), b.photoUrl(), b.ownerId(), () -> Nav.show(new StudentShell(), true)), false),
+                Nav.show(new ChatView(cid, b.name(), b.photoUrl(), b.ownerId(), false, () -> Nav.show(new StudentShell(), true)), false),
                 e -> Ui.failToast(e, "Chat unavailable (owner may not be verified)"));
     }
 }

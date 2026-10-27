@@ -1,5 +1,15 @@
-﻿# v1.16.1 - Fix: chat menus looked huge and ran off the window
-- Popup menus (message menu, chat three-dots menu, chat card menu) are separate windows that did not get the app style: big bold text, default blue highlight. They now use the BOFO look (white rounded card, 14 px text, soft purple highlight, red Delete). The three-dots menu is aligned to the button so it stays inside the window.
+﻿# v1.16.3 - Chat header follows the chat
+- Fix: the chat header said "Boarding house owner" or "Student" from your account's current role, so it could be wrong (for example after Switch mode). It now follows who is in that chat. Quick replies and the empty-chat hint follow too.
+- Testing on PC: a second window can use its own login. In PowerShell: `$env:BOFO_PROFILE="owner"; mvn javafx:run` (any name). Without it the app behaves as before.
+- Includes v1.16.1 and v1.16.2 (pop-ups, action sheets, chat delete).
+
+# v1.16.2 - Menus match the pop-ups
+- Press-and-hold / right-click on a message, the three dots in a chat, and a chat card in Chats now open a rounded bottom sheet (Copy, Delete, Report / block) instead of the grey Windows-style menu. Tap outside or Esc closes it.
+- Includes everything from v1.16.1 (chat delete fix and the new pop-ups).
+
+# v1.16.1 - Chat delete works + new pop-ups
+- Fix: "Could not delete the chat". The database part of chat delete had not been installed on Supabase; it is now. Deleting a chat or a message works.
+- New look: every question / warning / error box in the app (delete chat, delete message, delete listing, delete account, report, refund, reject, location permission) is now one rounded in-app pop-up with an icon, soft text and pill buttons instead of the grey Windows-style window. Tap outside or press Esc to cancel.
 
 # v1.16.0 - Delete messages and chats
 - Press and hold (phone) or right-click (PC) a message: Copy, Delete for me, and for your own messages Delete for everyone. The other person's screen drops a message deleted for everyone within a few seconds.

@@ -82,15 +82,8 @@ public final class Locator {
     /** Shows a yes/no dialog without blocking (showAndWait can throw while a screen is still being laid out). */
     private void ask(String title, String header, String text, String yesLabel, String noLabel, Consumer<Boolean> answer) {
         Platform.runLater(() -> {
-            try {
-                ButtonType yes = new ButtonType(yesLabel, ButtonBar.ButtonData.OK_DONE);
-                ButtonType no = new ButtonType(noLabel, ButtonBar.ButtonData.CANCEL_CLOSE);
-                Alert a = new Alert(Alert.AlertType.CONFIRMATION, text, yes, no);
-                a.setTitle(title); a.setHeaderText(header);
-                try { com.bofo.finder.ui.Ui.style(a); } catch (Throwable ignored) { }
-                a.resultProperty().addListener((o, was, r) -> answer.accept(r == yes));
-                a.show();
-            } catch (Throwable dialogFailed) { answer.accept(true); }
+            try { com.bofo.finder.ui.Popup.ask(com.bofo.finder.ui.Popup.Kind.QUESTION, header, text, yesLabel, noLabel, answer); }
+            catch (Throwable dialogFailed) { answer.accept(true); }
         });
     }
 

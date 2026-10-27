@@ -69,9 +69,10 @@ public final class ChatView extends VBox {
         @Override public void waiting(String id) { Platform.runLater(() -> { Pending q = queued.get(id); if (q != null) q.status().setText(WAITING); }); }
     };
 
-    public ChatView(String convId, String bhName, String bhPhoto, String otherUserId, Runnable onBack) {
+    /** @param iAmOwner true when I am the owner side of THIS chat (the other person is the student). Comes from the chat, not from my account's current role. */
+    public ChatView(String convId, String bhName, String bhPhoto, String otherUserId, boolean iAmOwner, Runnable onBack) {
         this.convId = convId; this.otherUserId = otherUserId; this.onBack = onBack; this.me = AuthService.get().userId();
-        this.iAmOwner = AuthService.get().profile() != null && AuthService.get().profile().role() == com.bofo.finder.model.Role.OWNER;
+        this.iAmOwner = iAmOwner;
         Button back = Ui.btn("←", "heart", () -> { stop(); onBack.run(); });
         back.getStyleClass().setAll("button", "chat-icon-btn");
         Button more = Ui.btn("⋯", "heart", () -> {});
@@ -282,20 +283,17 @@ public final class ChatView extends VBox {
 
     /** Right-click (PC) or press and hold (phone) on a message: copy, delete for me, and for my own messages delete for everyone. */
     private void messageMenu(javafx.scene.Node anchor, Message m, boolean mine, double x, double y) {
-        ContextMenu cm = Ui.menu(); MenuItem copy = new MenuItem("Copy");
-        copy.setOnAction(e -> { ClipboardContent cc = new ClipboardContent(); cc.putString(m.body()); Clipboard.getSystemClipboard().setContent(cc); Nav.toast("Copied"); });
-        MenuItem forMe = new MenuItem("Delete for me"); forMe.getStyleClass().add("danger");
-        forMe.setOnAction(e -> confirmDeleteMessage(m, false));
-        cm.getItems().addAll(copy, forMe);
-        if (mine) { MenuItem all = new MenuItem("Delete for everyone"); all.getStyleClass().add("danger"); all.setOnAction(e -> confirmDeleteMessage(m, true)); cm.getItems().add(all); }
-        cm.show(anchor, x, y);
+        java.util.List<Popup.Action> acts = new java.util.ArrayList<>();
+        acts.add(new Popup.Action("Copy", () -> { ClipboardContent cc = new ClipboardContent(); cc.putString(m.body()); Clipboard.getSystemClipboard().setContent(cc); Nav.toast("Copied"); }));
+        acts.add(new Popup.Action("Delete for me", true, () -> confirmDeleteMessage(m, false)));
+        if (mine) acts.add(new Popup.Action("Delete for everyone", true, () -> confirmDeleteMessage(m, true)));
+        Popup.menu("Message", acts.toArray(new Popup.Action[0]));
     }
 
     private void confirmDeleteMessage(Message m, boolean everyone) {
-        Alert a = new Alert(Alert.AlertType.CONFIRMATION, everyone ? "This message will be removed for you and for the other person."
-                : "This message will be removed for you only. The other person still sees it.", ButtonType.CANCEL, ButtonType.OK);
-        Ui.style(a); a.setTitle("Delete message"); a.setHeaderText(everyone ? "Delete for everyone?" : "Delete for you?");
-        a.showAndWait().filter(x -> x == ButtonType.OK).ifPresent(x ->
+        Popup.confirm(Popup.Kind.DANGER, everyone ? "Delete for everyone?" : "Delete for you?",
+                everyone ? "This message will be removed for you and for the other person."
+                : "This message will be removed for you only. The other person still sees it.", "Delete", () ->
                 Async.run(() -> { chat.deleteMessage(convId, m.id(), everyone); return true; },
                         ok -> removeMessages(List.of(m.id())), e -> Ui.failToast(e, "Could not delete the message")));
     }
@@ -340,20 +338,13 @@ public final class ChatView extends VBox {
 
     /** The three dots in the top bar. */
     private void chatMenu(javafx.scene.Node anchor) {
-        ContextMenu cm = Ui.menu();
-        MenuItem del = new MenuItem("Delete chat"); del.getStyleClass().add("danger"); del.setOnAction(e -> confirmDeleteChat());
-        MenuItem rep = new MenuItem("Report / block"); rep.setOnAction(e -> reportDialog());
-        cm.getItems().addAll(del, rep);
-        javafx.geometry.Bounds b = anchor.localToScreen(anchor.getBoundsInLocal());
-        if (b == null) { cm.show(anchor, 0, 0); return; }
-        cm.show(anchor, b.getMaxX() - 190, b.getMaxY());                       // right edge of the menu lines up with the button: it never runs off the window
-        Platform.runLater(() -> cm.setX(b.getMaxX() - cm.getWidth()));
+        Popup.menu("Chat options",
+                new Popup.Action("Report / block", true, this::reportDialog),
+                new Popup.Action("Delete chat", true, this::confirmDeleteChat));
     }
 
     private void confirmDeleteChat() {
-        Alert a = new Alert(Alert.AlertType.CONFIRMATION, "The chat and its messages are removed for you. The other person keeps their copy. If they write again, the chat comes back with only the new messages.", ButtonType.CANCEL, ButtonType.OK);
-        Ui.style(a); a.setTitle("Delete chat"); a.setHeaderText("Delete this chat?");
-        a.showAndWait().filter(x -> x == ButtonType.OK).ifPresent(x ->
+        Popup.confirm(Popup.Kind.DANGER, "Delete this chat?", "The chat and its messages are removed for you. The other person keeps their copy. If they write again, the chat comes back with only the new messages.", "Delete", () ->
                 Async.run(() -> { chat.deleteConversation(convId); return true; },
                         ok -> { Nav.toast("Chat deleted"); stop(); onBack.run(); }, e -> Ui.failToast(e, "Could not delete the chat")));
     }
@@ -434,8 +425,7 @@ public final class ChatView extends VBox {
     private void refreshSavedCopy() { try { chat.page(convId, null); } catch (Exception ignored) { } }
 
     private void reportDialog() {
-        TextInputDialog d = new TextInputDialog(); d.setTitle("Report / block"); d.setHeaderText("Tell us what happened. This also blocks the user.");
-        d.showAndWait().ifPresent(reason -> Async.run(() -> { chat.block(me, otherUserId, reason); return true; },
+        Popup.input("Report / block", "Tell us what happened. This also blocks the user.", "Write what happened...", "Report", reason -> Async.run(() -> { chat.block(me, otherUserId, reason); return true; },
                 ok -> Nav.toast("User reported and blocked"), e -> Ui.failToast(e, "Could not submit")));
     }
 }
