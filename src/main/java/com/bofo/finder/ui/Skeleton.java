@@ -45,16 +45,18 @@ public final class Skeleton {
 
     private static Region spacer() { Region s = new Region(); HBox.setHgrow(s, Priority.ALWAYS); return s; }
 
+    private static Card plainCard() {
+        Card c = new Card(); c.getStyleClass().add("card");
+        HBox top = new HBox(8, block(150, 16, 8), spacer(), block(64, 16, 8)); top.setAlignment(Pos.CENTER_LEFT);
+        HBox tags = new HBox(6, block(54, 22, 8), block(54, 22, 8), block(54, 22, 8));
+        c.getChildren().addAll(block(0, 190, 16), top, block(120, 12, 6), block(90, 12, 6), tags);
+        return c;
+    }
+
     /** Looks like a BhCard: photo, name + price, distance, rating, tags. */
     public static List<Node> cards(int n) {
         List<Node> out = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
-            Card c = new Card(); c.getStyleClass().add("card");
-            HBox top = new HBox(8, block(150, 16, 8), spacer(), block(64, 16, 8)); top.setAlignment(Pos.CENTER_LEFT);
-            HBox tags = new HBox(6, block(54, 22, 8), block(54, 22, 8), block(54, 22, 8));
-            c.getChildren().addAll(block(0, 190, 16), top, block(120, 12, 6), block(90, 12, 6), tags);
-            out.add(pulse(c));
-        }
+        for (int i = 0; i < n; i++) out.add(pulse(plainCard()));
         return out;
     }
 
@@ -70,14 +72,24 @@ public final class Skeleton {
         return out;
     }
 
-    /** n headline-number tiles in a row (owner dashboard). */
-    public static List<Node> stats(int n) {
+    private static HBox statRow(int n) {
         HBox row = new HBox(10);
         for (int i = 0; i < n; i++) {
             VBox t = new VBox(8, block(40, 26, 8), block(70, 12, 6)); t.getStyleClass().add("card");
             t.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(t, Priority.ALWAYS); row.getChildren().add(t);
         }
-        return List.of(pulse(row));
+        return row;
+    }
+
+    /** n headline-number tiles in a row (owner dashboard). */
+    public static List<Node> stats(int n) { return List.of(pulse(statRow(n))); }
+
+    /** Whole owner dashboard below the status banner: Overview tiles, map, and two listing cards. One pulse for the group. */
+    public static List<Node> dashboard() {
+        CardGrid grid = new CardGrid(10, 150, 1);
+        for (int i = 0; i < 2; i++) grid.getChildren().add(plainCard());
+        VBox all = new VBox(12, block(90, 14, 7), statRow(3), block(150, 14, 7), block(0, 300, 16), block(120, 14, 7), grid);
+        return List.of(pulse(all));
     }
 
     /** Boarding-house detail page: photo strip, title lines, price, tags, map. */

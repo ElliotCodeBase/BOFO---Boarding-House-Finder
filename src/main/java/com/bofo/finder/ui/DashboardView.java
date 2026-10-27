@@ -38,7 +38,7 @@ public final class DashboardView extends VBox {
         listBox.setVisible(false); listBox.setManaged(false);
         box.getChildren().add(listBox);
         Async.run(() -> new BhService().colleges(), map::setColleges, e -> {});
-        Ui.load(statsBox, () -> Skeleton.stats(3), () -> new BhService().myListings(p.id()), l -> {
+        Ui.load(statsBox, Skeleton::dashboard, () -> new BhService().myListings(p.id()), l -> {
             int beds = l.stream().mapToInt(b -> b.availableBeds()).sum();
             double avg = l.stream().filter(b -> b.reviewCount() > 0).mapToDouble(b -> b.avgRating()).average().orElse(0);
             HBox stats = new HBox(10, Ui.statCard(String.valueOf(l.size()), "Listings"), Ui.statCard(String.valueOf(beds), "Beds available"),
