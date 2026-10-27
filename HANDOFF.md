@@ -1,3 +1,9 @@
+# Handoff - v1.16.12 Locate button reliability (2026-10-27)
+- **PR title:** `v1.16.12 - Fix round locate button sometimes not responding (touch slop, late fix, stale timers)`. Version in `config.properties`, `pom.xml` (versionCode 69), CHANGES.md.
+- `MapPane`: locate fires on `MOUSE_RELEASED` within 14 px slack (no ACTION handler); `MOUSE_DRAGGED` filter ignores drags that start on the button; busy pulse limited to 12 cycles then `endBusy()`. `Locator`: `start()`/`browserFix()` stop the previous `timeout`; `locate()` keeps only the newest waiting callback; `fail()` no longer clears `waiting` (a late fix still runs it; `stop()` clears). Not compiled/run by Claude.
+
+---
+
 # Handoff - v1.16.11 Locate button smooth (2026-10-27)
 - **PR title:** `v1.16.11 - Smooth round locate button (no camera/dot fight, press + busy feedback)`. Version in `config.properties`, `pom.xml` (versionCode 68), CHANGES.md.
 - `MapPane`: `meT` listener (follow mode) skips `setCenterNow` while `cam` is RUNNING (it fought `flyTo` every frame). New `tapLocate()` / `startBusy()` / `endBusy()`: ignores taps while a fix is pending, pulses the icon until `Locator.status` leaves REQUESTING (also stopped when the map leaves the scene). `bofo.css`: `.map-fab:pressed` scale 0.9. Not compiled/run by Claude.

@@ -126,6 +126,7 @@ public final class Locator {
         double[] dev = AppConfig.devLocation();
         if (dev != null) { nextFixApprox = true; fix(dev); return; }
         status.set(Status.REQUESTING);
+        if (timeout != null) timeout.stop();                 // an old timer must never fail a newer request
         try {
             Optional<PositionService> svc = PositionService.create();
             if (svc.isEmpty()) { nextFixApprox = true; desktopFix(); return; }        // PC: ask Windows, else the browser (coarse: Wi-Fi / IP based)
@@ -188,6 +189,7 @@ public final class Locator {
 
     /** Opens a one-time page in the default browser that calls navigator.geolocation and sends the result back to a tiny local server. */
     private void browserFix() {
+        if (timeout != null) timeout.stop();
         timeout = new PauseTransition(Duration.seconds(60));          // the user needs time to click Allow
         timeout.setOnFinished(e -> { if (status.get() == Status.REQUESTING) { stopGeo(); why = "The browser tab never answered. Click Allow in the tab that opened, then try again."; fail(); } });
         timeout.play();
@@ -254,6 +256,7 @@ public final class Locator {
             if (status.get() != Status.ON) start();          // and refresh quietly in the background
             return;
         }
+        waiting.clear();                                     // only the newest tap counts (old ones used to fly the map several times)
         waiting.add(then);
         Nav.toast("Finding your location...");
         if (status.get() == Status.UNAVAILABLE) status.set(Status.IDLE);
@@ -273,8 +276,7 @@ public final class Locator {
 
     private void fail() {
         status.set(Status.UNAVAILABLE);
-        if (!waiting.isEmpty()) {
-            waiting.clear();
+        if (!waiting.isEmpty()) {                            // keep the tap: if the fix arrives late (permission dialog) the map still flies there
             Nav.toast(why != null ? why : "Can't find you. Turn on Location and allow BOFO in your phone settings.");
             why = null;
         }
