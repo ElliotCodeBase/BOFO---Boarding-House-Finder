@@ -104,6 +104,7 @@ public final class MapPane extends StackPane {
 
     public MapPane(double height) {
         setMinHeight(height); setPrefHeight(height); setMaxHeight(height);
+        setMinWidth(0);                                              // the map shrinks with the screen, it never forces it wider
         applyZoom(15); map.addLayer(layer);
         Label attr = new Label(AppConfig.mapAttribution());
         attr.getStyleClass().add("map-attr");                       // look lives in bofo.css (.map-attr)

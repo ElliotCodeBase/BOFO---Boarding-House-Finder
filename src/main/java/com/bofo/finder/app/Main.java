@@ -56,7 +56,19 @@ public class Main extends Application {
         stage.show();
         try { StatusBarService.create().ifPresent(s -> s.setColor(Color.web("#17142A"))); } catch (Throwable ignored) {}
 
+        if (getParameters().getRaw().contains("--debug-layout")) {      // dev aid: lists every control that is wider than the window
+            javafx.animation.PauseTransition t = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(3));
+            t.setOnFinished(e -> dumpWide(Nav.root(), scene.getWidth(), ""));
+            t.play();
+        }
         boot();
+    }
+
+    private static void dumpWide(Node n, double limit, String path) {
+        if (n instanceof javafx.scene.layout.Region r && (r.getWidth() > limit + 1 || r.minWidth(-1) > limit + 1))
+            System.out.println("WIDE " + path + "/" + n.getClass().getSimpleName() + " " + n.getStyleClass() + " width=" + Math.round(r.getWidth()) + " minWidth=" + Math.round(r.minWidth(-1)));
+        if (n instanceof javafx.scene.Parent p)
+            for (Node c : p.getChildrenUnmodifiable()) dumpWide(c, limit, path + "/" + n.getClass().getSimpleName());
     }
 
     /** Splash + session restore. Also what "Try again" runs on the no-internet screen. */

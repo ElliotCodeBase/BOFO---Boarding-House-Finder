@@ -11,7 +11,7 @@ import javafx.util.Duration;
 /** Screen host: one active screen + floating BOFO mascot + toast overlay. */
 public final class Nav {
     private static final StackPane ROOT = new StackPane();
-    private static final StackPane SCREEN = new StackPane();
+    private static final StackPane SCREEN = new FitPane();
     private static final BofoPanel BOFO = new BofoPanel();
     private static boolean mascotAllowed = false;
     /** Widest the app column gets; on tablets / landscape / desktop the column is centred and the sides stay page-colour. */
@@ -25,6 +25,7 @@ public final class Nav {
     /** @param withMascot the floating BOFO stays on top of every logged-in screen */
     public static void show(Node screen, boolean withMascot) {
         SCREEN.setMaxWidth(screen instanceof SplashView ? Double.MAX_VALUE : MAX_COLUMN);
+        if (screen instanceof javafx.scene.layout.Region r) r.setMinWidth(0);   // never wider than the window (320 px phones)
         SCREEN.getChildren().setAll(screen);
         if (!(screen instanceof SplashView)) {                       // soft fade-in for every real screen
             screen.setOpacity(0);

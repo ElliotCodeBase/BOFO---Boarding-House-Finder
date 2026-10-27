@@ -70,7 +70,9 @@ public final class CampusPicker extends VBox {
         arrow.setOnAction(e -> { if (list.isVisible()) close(); else refresh(""); });      // arrow = the whole campus list
         javafx.scene.layout.StackPane searchIcon = new javafx.scene.layout.StackPane(Ui.strokeIcon(Glyphs.SEARCH, 18, Color.web("#5B3BF0")));
         searchIcon.getStyleClass().add("search-icon-wrap");
+        field.setMinWidth(0); field.setPrefColumnCount(1);              // a text field wants ~12 characters by default: that alone made the screen wider than a small phone
         box = new HBox(8, searchIcon, field, clear, arrow);
+        box.setMinWidth(0);
         box.setAlignment(Pos.CENTER_LEFT); box.getStyleClass().add("college-box");
         field.focusedProperty().addListener((o, was, on) -> { box.getStyleClass().remove("college-box-focus"); if (on) box.getStyleClass().add("college-box-focus"); });
 

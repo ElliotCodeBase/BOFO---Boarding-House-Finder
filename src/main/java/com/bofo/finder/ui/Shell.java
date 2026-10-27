@@ -35,7 +35,7 @@ public class Shell extends BorderPane {
     private static final Color ACTIVE = Color.web("#5B3BF0");
     private static final double BAR_H = 68, TAB_H = 54, PAD = 8, EDGE = 16, MIN_TAB = 54, MAX_TAB = 84, INSET = 3, TOP = 18;   // TOP = room above the bar for the raised Create button
 
-    protected final StackPane body = new StackPane();
+    protected final StackPane body = new FitPane();
     private final Pane dock = new Pane();                     // absolute layout: bar, highlight, tab row
     private final Region bar = new Region(), highlight = new Region();
     private final HBox row = new HBox();
@@ -96,6 +96,7 @@ public class Shell extends BorderPane {
 
     @SafeVarargs
     protected Shell(String[] labels, Supplier<Node>... pages) {
+        setMinWidth(0); body.setMinWidth(0);                  // a screen may never be wider than the window
         factories = pages; tabs = new DockTab[labels.length]; cells = new StackPane[labels.length];
         Label offline = Ui.label("No internet connection - showing saved data", "secondary");
         offline.getStyleClass().add("offline-banner"); offline.setMaxWidth(Double.MAX_VALUE);
@@ -152,6 +153,7 @@ public class Shell extends BorderPane {
         tabW = Math.max(MIN_TAB, Math.min(MAX_TAB, (avail - 2 * PAD) / n));
         double barW = 2 * PAD + n * tabW;
         size(dock, barW, BAR_H + TOP); size(bar, barW, BAR_H); bar.setLayoutY(TOP);
+        dock.setMinWidth(0);                                  // the bar may shrink with the window; a fixed minimum made the whole screen wider than a 320 px phone
         row.setLayoutX(PAD); row.setLayoutY(TOP + (BAR_H - TAB_H) / 2); size(row, n * tabW, TAB_H);
         for (int i = 0; i < n; i++) { size(cells[i], tabW, TAB_H); size(tabs[i], tabW - 2 * INSET, TAB_H); }
         if (hlAnim != null) hlAnim.stop();

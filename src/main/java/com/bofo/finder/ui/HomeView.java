@@ -130,6 +130,8 @@ public final class HomeView extends VBox {
         map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
         ScrollPane sp = Ui.scroll(content); VBox.setVgrow(sp, Priority.ALWAYS);
         getChildren().add(sp);
+        setMinWidth(0); content.setMinWidth(0); header.setMinWidth(0); top.setMinWidth(0); searchRow.setMinWidth(0);
+        searchBar.setMinWidth(0); mapWrap.setMinWidth(0); chips.setMinWidth(0); nearby.setMinWidth(0); sp.setMinWidth(0);
         fitMapHeight(720);                                                // until the first layout: a normal phone
         heightProperty().addListener((o, was, h) -> fitMapHeight(h.doubleValue()));
         Async.run(bh::favoriteIds, f -> { favs = f; reload(); }, e -> reload());
