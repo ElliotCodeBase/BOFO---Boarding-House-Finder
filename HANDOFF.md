@@ -1,3 +1,9 @@
+# Handoff - v1.16.8 Owner map dots/bubbles + locate button (2026-10-27)
+- **PR title:** `v1.16.8 - Owner map shows dots and number bubbles; locate button works`. Version in `config.properties`, `pom.xml` (versionCode 65), CHANGES.md.
+- `MapPane.PinLayer.zoomNow()` falls back to `map.getZoom()` when `zoomVal` is NaN (scroll/pinch/page-scroll set it NaN, so `far` was false and pins stayed full-size, no bubbles). `MapPane.goTo` null-safe, closes an open card, draws the blue dot first. `Locator.locate` uses a known `State.gps` immediately whatever the status (was waiting for status ON, so nothing moved) and restarts tracking quietly. Not compiled/run by Claude.
+
+---
+
 # Handoff - v1.16.7 Dashboard listing list + map names on zoom (2026-10-27)
 - **PR title:** `v1.16.7 - Dashboard lists created listings; campus names only when zoomed in`. Version in `config.properties`, `pom.xml` (versionCode 64), CHANGES.md.
 - `DashboardView`: added "Your listings" section with `BhCard` per `myListings` result (was only stats + map). `MapPane` label pass: names need `map.getZoom() >= 14.5` (real zoom, also after pinch) and are hidden when they would overlap; the chosen-campus exception was removed. Not compiled/run by Claude.

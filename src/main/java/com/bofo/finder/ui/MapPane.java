@@ -116,7 +116,7 @@ public final class MapPane extends StackPane {
 
         locate.getStyleClass().add("map-fab");
         locate.setGraphic(Ui.strokeIcon(Glyphs.LOCATE, 22, BLUE));
-        locate.setOnAction(e -> { if (locateTap != null) locateTap.run(); else Locator.get().locate(p -> goTo(p)); });
+        locate.setOnAction(e -> { if (locateTap != null) locateTap.run(); else Locator.get().locate(p -> javafx.application.Platform.runLater(() -> goTo(p))); });
         // if the map changes size after the overview was drawn (first layout, window resize), fit it again so it keeps filling ~90%
         javafx.beans.value.ChangeListener<Number> resized = (o, a, b) -> { if (overviewOn && map.getWidth() > 0 && map.getHeight() > 0) fitOverview(0); };
         map.widthProperty().addListener(resized); map.heightProperty().addListener(resized);
@@ -187,7 +187,10 @@ public final class MapPane extends StackPane {
 
     /** Flies to the user's position at street level and keeps following it until the map is dragged. Ends the overview. */
     public void goTo(double[] p) {
+        if (p == null) return;
         overviewOn = false;
+        if (selected != null) deselect();                    // an open pin card would hide the blue dot's surroundings
+        layer.moveMe(p);                                     // make sure the blue dot is on the map before flying to it
         setFollow(true);
         flyTo(p[0], p[1], 16, 700);
     }
@@ -610,7 +613,7 @@ public final class MapPane extends StackPane {
         }
 
         /** Zoom we last set (NaN when unknown). */
-        double zoomNow() { return zoomVal; }
+        double zoomNow() { return Double.isNaN(zoomVal) ? map.getZoom() : zoomVal; }
 
         void animateRing(double want, int ms) {
             if (ringAnim != null) ringAnim.stop();
