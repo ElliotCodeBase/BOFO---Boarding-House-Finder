@@ -155,9 +155,11 @@ public final class Ui {
     /** Branded top section of a main tab: indigo gradient band with rounded bottom, title (+ subtitle) and optional round buttons on the right.
      *  Extra rows (a search bar, a filter row) can be added to the returned box with getChildren().add(...). */
     public static VBox pageHeader(String title, String sub, Node... right) {
-        VBox t = new VBox(2, label(title, "page-title")); t.setMinWidth(0);
+        VBox t = new VBox(2, label(title, "page-title")); t.setMinWidth(0); t.setMaxWidth(Double.MAX_VALUE);
         if (sub != null && !sub.isBlank()) t.getChildren().add(label(sub, "page-sub"));
-        HBox row = new HBox(10, t, grow()); row.setAlignment(Pos.CENTER_LEFT); row.getChildren().addAll(right);
+        HBox.setHgrow(t, Priority.ALWAYS);                              // the title gets every free pixel (wraps at a space, never "My ...")
+        HBox row = new HBox(10, t); row.setAlignment(Pos.CENTER_LEFT); row.getChildren().addAll(right);
+        for (Node n : right) if (n instanceof Region rg) rg.setMinWidth(Region.USE_PREF_SIZE);   // header buttons never shrink
         VBox h = new VBox(14, row); h.getStyleClass().add("page-header");
         h.setViewOrder(-1);                                          // dropdowns inside the header float above the page below
         return h;
@@ -326,9 +328,17 @@ public final class Ui {
     }
 
     public static HBox settingsRow(String glyph, String title, String value, Runnable r) {
-        Label t = label(title, "row-label"); t.setMinWidth(0);
-        HBox row = new HBox(14, iconTile(glyph, false), t, grow());
-        if (value != null && !value.isBlank()) { Label v = label(value, "settings-value"); v.setWrapText(false); v.setMinWidth(Region.USE_PREF_SIZE); row.getChildren().add(v); }
+        // Title (and value as a grey line under it) take ALL the room left of the icon and chevron: no spacer, so a title
+        // is never squeezed into "Verificatio / n" on a 320 px screen.
+        Label t = label(title, "row-label"); t.setMinWidth(0); t.setMaxWidth(Double.MAX_VALUE);
+        VBox text = new VBox(1, t); text.setMinWidth(0); text.setAlignment(Pos.CENTER_LEFT);
+        if (value != null && !value.isBlank()) {
+            Label v = label(value, "settings-sub"); v.setMinWidth(0);
+            if ("Verified".equals(value)) v.getStyleClass().add("settings-ok");
+            text.getChildren().add(v);
+        }
+        HBox.setHgrow(text, Priority.ALWAYS);
+        HBox row = new HBox(12, iconTile(glyph, false), text);
         if (r != null) row.getChildren().add(strokeIcon(Glyphs.CHEVRON, 18, Color.web("#A39DB8")));
         row.setAlignment(Pos.CENTER_LEFT); row.getStyleClass().add("settings-row");
         if (r != null) { row.setCursor(javafx.scene.Cursor.HAND); row.setOnMouseClicked(e -> r.run()); }
@@ -343,10 +353,10 @@ public final class Ui {
     /** Same, with a short grey line under the title that says what the switch does. */
     public static HBox settingsToggle(String glyph, String title, String sub, boolean on, Consumer<Boolean> change) {
         Label t = label(title, "row-label"); t.setMinWidth(0);
-        VBox text = new VBox(1, t); text.setMinWidth(0);
+        VBox text = new VBox(1, t); text.setMinWidth(0); text.setAlignment(Pos.CENTER_LEFT);
         if (sub != null && !sub.isBlank()) { Label s2 = label(sub, "settings-sub"); s2.setMinWidth(0); s2.setWrapText(true); text.getChildren().add(s2); }
         HBox.setHgrow(text, Priority.ALWAYS);
-        HBox row = new HBox(14, iconTile(glyph, false), text, switchControl(on, change));
+        HBox row = new HBox(12, iconTile(glyph, false), text, switchControl(on, change));
         row.setAlignment(Pos.CENTER_LEFT); row.getStyleClass().add("settings-row");
         return row;
     }
@@ -355,7 +365,7 @@ public final class Ui {
     public static VBox settingsGroup(String heading, Node... rows) {
         VBox card = new VBox(); card.getStyleClass().add("settings-card");
         for (int i = 0; i < rows.length; i++) {
-            if (i > 0) { Region line = new Region(); line.getStyleClass().add("hline"); VBox.setMargin(line, new Insets(0, 16, 0, 68)); card.getChildren().add(line); }
+            if (i > 0) { Region line = new Region(); line.getStyleClass().add("hline"); VBox.setMargin(line, new Insets(0, 14, 0, 64)); card.getChildren().add(line); }
             card.getChildren().add(rows[i]);
         }
         Label h = label(heading, "settings-heading");

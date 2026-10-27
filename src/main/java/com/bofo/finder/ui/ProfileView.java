@@ -77,7 +77,7 @@ public final class ProfileView extends VBox {
         delete.setMaxWidth(Double.MAX_VALUE);
 
         VBox body = new VBox(18, account, prefs, security, logout, delete);
-        body.setPadding(new Insets(16, 16, 24, 16)); body.setAlignment(Pos.TOP_CENTER);
+        body.setPadding(new Insets(16, 16, 110, 16));   // room to scroll the last rows clear of the tab bar and the mascot body.setAlignment(Pos.TOP_CENTER);
         VBox.setMargin(logout, new Insets(4, 0, 0, 0));
         body.getChildren().remove(about); body.getChildren().add(about);
         VBox page = new VBox(header, body);
@@ -85,7 +85,7 @@ public final class ProfileView extends VBox {
     }
 
     private static void addRow(VBox card, Node row) {
-        Region line = new Region(); line.getStyleClass().add("hline"); VBox.setMargin(line, new Insets(0, 16, 0, 68));
+        Region line = new Region(); line.getStyleClass().add("hline"); VBox.setMargin(line, new Insets(0, 14, 0, 64));
         card.getChildren().addAll(line, row);
     }
 

@@ -1,3 +1,9 @@
+# v1.16.9 - Narrow-screen UI fixes (Profile, My listings)
+- Fix: Profile rows no longer break words ("Verificatio / n") - the value (phone, Verified, Pending) is now a grey line under the title, and rows are tighter. "Verified" is green.
+- Fix: My listings header showed "My ..." and "+ Add lis..." - the title now gets all free width and "Add listing" is a compact round "+" button.
+- Fix: Boost / Unlist / Delete buttons were cut to "Bo... / Un... / Del..." - compact buttons that never clip their label, grouped with their own card. No favourite heart on your own listings.
+- Profile: extra bottom space so Log out / Delete can scroll clear of the tab bar and the mascot.
+
 # v1.16.8 - Owner map: dots + number bubbles again; locate button works
 - Fix: on the owner Dashboard the pins turned into big full pins after the page was scrolled/pinched over the map (no dots, no number bubble). The map now always uses its real zoom.
 - Fix: the round locate button did nothing when your position was already known but the GPS status was not "on". It now flies to your blue dot right away.

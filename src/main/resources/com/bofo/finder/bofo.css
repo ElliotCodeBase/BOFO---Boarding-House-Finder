@@ -640,3 +640,13 @@
 .popup-sheet-row:hover, .popup-sheet-row:pressed { -fx-background-color: #F6F5FC; }
 .popup-sheet-row-danger { -fx-text-fill: -bofo-error; }
 .popup-sheet-row-danger:hover, .popup-sheet-row-danger:pressed { -fx-background-color: #FCEFEF; }
+
+/* ---- v1.16.9 narrow-screen fixes (320 px): settings rows, header button, listing action buttons ---- */
+.settings-row { -fx-padding: 13 14; }
+.settings-ok { -fx-text-fill: -bofo-success; -fx-font-weight: bold; }
+.btn-sm { -fx-padding: 9 12; -fx-font-size: 13px; }
+.hdr-btn-cta { -fx-background-color: -bofo-ink; -fx-background-radius: 999; -fx-padding: 0; -fx-cursor: hand;
+  -fx-min-width: 44; -fx-min-height: 44; -fx-pref-width: 44; -fx-pref-height: 44; -fx-max-width: 44; -fx-max-height: 44;
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.22), 10, 0, 0, 3); }
+.hdr-btn-cta:hover { -fx-background-color: #2C2750; }
+.hdr-btn-cta:pressed { -fx-background-color: #3A3466; }
