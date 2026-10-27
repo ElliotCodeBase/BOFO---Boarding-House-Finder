@@ -39,13 +39,21 @@ public class Main extends Application {
         });
         auth.onSessionLost(() -> Platform.runLater(() -> showLogin("Your session expired. Please sign in again.")));
 
-        double w = 360, h = 720;                                     // phone-sized by default on desktop
-        for (String a : getParameters().getRaw())                    // preview other devices: --size=820x1180
-            if (a.startsWith("--size=")) try { String[] p = a.substring(7).toLowerCase().split("x"); w = Double.parseDouble(p[0]); h = Double.parseDouble(p[1]); } catch (Exception ignored) {}
+        double w = 360, h = 720, px = Double.NaN, py = Double.NaN;   // phone-sized by default on desktop
+        boolean sized = false;
+        for (String a : getParameters().getRaw())                    // preview other devices: --size=820x1180 or --size=820x1180@40,20 (window position)
+            if (a.startsWith("--size=")) try {
+                String v = a.substring(7).toLowerCase(), at = "";
+                if (v.contains("@")) { at = v.substring(v.indexOf('@') + 1); v = v.substring(0, v.indexOf('@')); }
+                String[] p = v.split("x"); w = Double.parseDouble(p[0]); h = Double.parseDouble(p[1]); sized = true;
+                if (!at.isEmpty()) { String[] q = at.split(","); px = Double.parseDouble(q[0]); py = Double.parseDouble(q[1]); }
+            } catch (Exception ignored) {}
         Scene scene = new Scene(Nav.root(), w, h);
         stage.setMinWidth(320); stage.setMinHeight(480);
         scene.getStylesheets().add(getClass().getResource("/com/bofo/finder/bofo.css").toExternalForm());
-        stage.setScene(scene); stage.setTitle("BOFO Finder"); stage.show();
+        stage.setScene(scene); stage.setTitle(sized ? "BOFO Finder " + (int) w + "x" + (int) h : "BOFO Finder");
+        if (!Double.isNaN(px)) { stage.setX(px); stage.setY(py); }
+        stage.show();
         try { StatusBarService.create().ifPresent(s -> s.setColor(Color.web("#17142A"))); } catch (Throwable ignored) {}
 
         boot();

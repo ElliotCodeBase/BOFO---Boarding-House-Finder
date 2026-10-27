@@ -1,15 +1,5 @@
-new      src/main/java/com/bofo/finder/ui/Popup.java
-changed  src/main/java/com/bofo/finder/ui/ChatView.java
-changed  src/main/java/com/bofo/finder/ui/ChatsView.java
-changed  src/main/java/com/bofo/finder/ui/BhDetailView.java
-changed  src/main/java/com/bofo/finder/ui/ListingsView.java
-changed  src/main/java/com/bofo/finder/ui/ProfileView.java
-changed  src/main/java/com/bofo/finder/ui/PaymentsView.java
-changed  src/main/java/com/bofo/finder/ui/QueueView.java
-changed  src/main/java/com/bofo/finder/util/Locator.java
-changed  src/main/java/com/bofo/finder/util/DiskCache.java
-changed  src/main/java/com/bofo/finder/service/SessionStore.java
-changed  src/main/resources/com/bofo/finder/bofo.css
+changed  src/main/java/com/bofo/finder/app/Main.java
+new      dev/preview-sizes.ps1
 changed  src/main/resources/com/bofo/finder/config.properties
 changed  pom.xml
 changed  CHANGES.md

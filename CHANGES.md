@@ -1,4 +1,16 @@
-﻿# v1.16.3 - Chat header follows the chat
+﻿# v1.16.6 - Preview 4 screen sizes at once (developers)
+- New `dev/preview-sizes.ps1` opens the app in a small phone, a normal phone, a big phone and a tablet window side by side. Run: `powershell -ExecutionPolicy Bypass -File dev\preview-sizes.ps1`.
+- `--size=WxH@X,Y` can now also set where the window opens.
+
+# v1.16.5 - Map: number bubble really zooms in with one tap
+- Fix: tapping a numbered bubble now zooms until its houses are apart (no new smaller bubbles), so one tap shows the pins.
+- Houses packed very close together still take two taps: the first goes part way, the second finishes.
+
+# v1.16.4 - Map: number bubble zooms in with one tap
+- Tapping a numbered bubble now zooms straight to a view that shows all the boarding houses inside it (before it took up to 3 taps).
+- If the houses are packed close together in a small area, it takes two taps: the first goes half way, the second finishes.
+
+# v1.16.3 - Chat header follows the chat
 - Fix: the chat header said "Boarding house owner" or "Student" from your account's current role, so it could be wrong (for example after Switch mode). It now follows who is in that chat. Quick replies and the empty-chat hint follow too.
 - Testing on PC: a second window can use its own login. In PowerShell: `$env:BOFO_PROFILE="owner"; mvn javafx:run` (any name). Without it the app behaves as before.
 - Includes v1.16.1 and v1.16.2 (pop-ups, action sheets, chat delete).
