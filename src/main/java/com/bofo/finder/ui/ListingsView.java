@@ -4,8 +4,11 @@ import com.bofo.finder.model.BoardingHouse;
 import com.bofo.finder.service.AuthService;
 import com.bofo.finder.service.BhService;
 import com.bofo.finder.util.Async;
+import com.bofo.finder.util.ErrorText;
 import javafx.geometry.Insets;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.layout.VBox;
 
 public final class ListingsView extends VBox {
@@ -24,11 +27,27 @@ public final class ListingsView extends VBox {
             if (l.isEmpty()) rows.getChildren().add(Ui.label("No listings yet.", "secondary"));
             for (BoardingHouse b : l) {
                 BhCard c = new BhCard(b, false, false, x -> {}, (on, undo) -> {});
-                Button unlist = Ui.btn("Unlist", "btn-outline", () -> Async.run(() -> { bh.setStatus(b.id(), "unlisted"); return true; }, ok -> load(), e -> Ui.failToast(e, "Failed")));
-                Button del = Ui.btn("Delete", "btn-danger", () -> Async.run(() -> { bh.deleteListing(b.id()); return true; }, ok -> load(), e -> Ui.failToast(e, "Failed")));
+                Button unlist = Ui.btn("Unlist", "btn-outline", () -> Async.run(() -> { bh.setStatus(b.id(), "unlisted"); return true; }, ok -> load(), e -> showError("Unlist failed", e)));
+                Button del = Ui.btn("Delete", "btn-danger", () -> confirmDelete(b));
                 Button boost = Ui.btn(b.featured() ? "Extend boost" : "Boost", "btn-cta", () -> Nav.show(new BoostView(b, () -> Nav.show(new OwnerShell(), true)), true));
                 rows.getChildren().addAll(c, Ui.hbox(8, boost, unlist, del));
             }
         });
+    }
+
+    private void confirmDelete(BoardingHouse b) {
+        Alert a = new Alert(Alert.AlertType.CONFIRMATION, "\"" + b.name() + "\" and its rooms, photos, reviews and chats will be removed. This cannot be undone.", ButtonType.CANCEL, ButtonType.OK);
+        Ui.style(a); a.setTitle("Delete listing"); a.setHeaderText("Delete this listing?");
+        a.showAndWait().filter(x -> x == ButtonType.OK).ifPresent(x ->
+                Async.run(() -> { bh.deleteListing(b.id()); return true; }, ok -> { Nav.toast("Listing deleted"); load(); }, e -> showError("Delete failed", e)));
+    }
+
+    /** Full, selectable error text in a dialog (a toast vanishes before you can read it). */
+    private void showError(String headline, Throwable e) {
+        e.printStackTrace();
+        Alert a = new Alert(Alert.AlertType.ERROR, ErrorText.full(headline, e), ButtonType.OK);
+        Ui.style(a); a.setTitle(headline); a.setHeaderText(headline);
+        a.getDialogPane().setMinWidth(420);
+        a.show();
     }
 }
