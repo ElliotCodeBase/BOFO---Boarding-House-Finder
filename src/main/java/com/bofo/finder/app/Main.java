@@ -18,6 +18,8 @@ import javafx.stage.Stage;
 public class Main extends Application {
     private static HostServices host;
     private static Stage window;
+    /** Shortest time the splash stays on screen (was 2.2 s): the app opens as soon as the session check is done after this. */
+    private static final long SPLASH_MIN_MS = 1200;
     public static HostServices host() { return host; }
     /** Brings the app window back to the front (after signing in through the browser on a PC). */
     public static void focusApp() { if (window != null) { window.setIconified(false); window.toFront(); window.requestFocus(); } }
@@ -56,9 +58,11 @@ public class Main extends Application {
         Nav.show(splash, false);
         long t0 = System.currentTimeMillis();
         Async.run(auth::restore, result -> {
-            long wait = Math.max(0, 2200 - (System.currentTimeMillis() - t0));   // splash shows at least ~2.2 s so the mascot jump is seen
-            new Thread(() -> { try { Thread.sleep(wait); } catch (InterruptedException ignored) {}
-                Platform.runLater(() -> dispatch(result, splash)); }).start();
+            long wait = Math.max(0, SPLASH_MIN_MS - (System.currentTimeMillis() - t0));   // splash shows at least this long so the mascot jump is seen
+            if (wait == 0) { dispatch(result, splash); return; }
+            javafx.animation.PauseTransition hold = new javafx.animation.PauseTransition(javafx.util.Duration.millis(wait));
+            hold.setOnFinished(done -> dispatch(result, splash));
+            hold.play();
         }, e -> {
             if (com.bofo.finder.util.Connectivity.isNetworkError(e)) showNoInternet(e); else showLogin(null);
         });

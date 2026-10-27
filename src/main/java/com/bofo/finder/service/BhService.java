@@ -107,8 +107,15 @@ public final class BhService {
         };
         final String main = base + order + "&limit=60";
         final String featuredQ = base + "&is_featured=is.true&limit=10";           // featured listings are fetched separately so a top-60 cut never hides them
+        // The two queries are independent: the featured one runs on another thread while this one loads the main list.
+        var featuredJob = CompletableFuture.supplyAsync(() -> {
+            try { return Cache.get("list:" + featuredQ, 30_000, () -> com.bofo.finder.util.Offline.array("list_" + Integer.toHexString(featuredQ.hashCode()), () -> cards(featuredQ))); }
+            catch (Exception e) { throw new java.util.concurrent.CompletionException(e); }
+        }, Async.pool());
         JSONArray a = Cache.get("list:" + main, 30_000, () -> com.bofo.finder.util.Offline.array("list_" + Integer.toHexString(main.hashCode()), () -> cards(main)));
-        JSONArray fa = Cache.get("list:" + featuredQ, 30_000, () -> com.bofo.finder.util.Offline.array("list_" + Integer.toHexString(featuredQ.hashCode()), () -> cards(featuredQ)));
+        JSONArray fa;
+        try { fa = featuredJob.get(); }
+        catch (java.util.concurrent.ExecutionException e) { Throwable c = e.getCause(); throw c instanceof Exception ex ? ex : e; }
         Map<String, BoardingHouse> byId = new LinkedHashMap<>();
         for (JSONArray src : new JSONArray[]{fa, a})
             for (int i = 0; i < src.length(); i++) {
@@ -234,19 +241,43 @@ public final class BhService {
                     .put("status", "active");
             id = api.insert("boarding_houses", bh).getJSONObject(0).getString("id");
             step = "saving the rooms";
-            for (RoomDraft r : d.rooms) api.insert("rooms", new JSONObject().put("boarding_house_id", id).put("beds", r.beds()).put("occupants", r.occupants()));
+            JSONArray roomRows = new JSONArray();                       // one request for all rooms, not one per room
+            for (RoomDraft r : d.rooms) roomRows.put(new JSONObject().put("boarding_house_id", id).put("beds", r.beds()).put("occupants", r.occupants()));
+            api.insert("rooms", roomRows);
             step = "saving the amenities";
-            for (String aid : d.amenityIds) api.insert("bh_amenities", new JSONObject().put("boarding_house_id", id).put("amenity_id", aid));
+            if (!d.amenityIds.isEmpty()) {
+                JSONArray amenityRows = new JSONArray();
+                for (String aid : d.amenityIds) amenityRows.put(new JSONObject().put("boarding_house_id", id).put("amenity_id", aid));
+                api.insert("bh_amenities", amenityRows);
+            }
             step = "saving the contact details";
             api.insert("bh_contacts", new JSONObject().put("boarding_house_id", id).put("phone", d.phone).put("facebook", d.facebook).put("email", d.email));
-            int n = 0;
-            for (byte[] p : d.photos) {
-                step = "uploading photo " + (n + 1) + " of " + d.photos.size() + " (" + (p.length / 1024) + " KB)";
-                String path = ownerId + "/" + id + "/" + (n++) + ".png";
-                api.upload("bh-photos", path, p, "image/png");
-                step = "saving photo " + n + " of " + d.photos.size();
-                api.insert("photos", new JSONObject().put("boarding_house_id", id).put("url", api.publicUrl("bh-photos", path)).put("sort_order", n));
+            // Photos upload side by side (they are the slow part), then their rows are saved in one request, in the original order.
+            final String listingId = id;
+            final int total = d.photos.size();
+            step = "uploading " + total + " photo" + (total == 1 ? "" : "s");
+            List<CompletableFuture<String>> uploads = new ArrayList<>();
+            for (int k = 0; k < total; k++) {
+                final int idx = k; final byte[] p = d.photos.get(k);
+                uploads.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        String path = ownerId + "/" + listingId + "/" + idx + ".png";
+                        api.upload("bh-photos", path, p, "image/png");
+                        return api.publicUrl("bh-photos", path);
+                    } catch (Exception e) { throw new java.util.concurrent.CompletionException(e); }
+                }, Async.pool()));
             }
+            JSONArray photoRows = new JSONArray();
+            for (int k = 0; k < total; k++) {
+                try { photoRows.put(new JSONObject().put("boarding_house_id", id).put("url", uploads.get(k).get()).put("sort_order", k + 1)); }
+                catch (java.util.concurrent.ExecutionException e) {
+                    step = "uploading photo " + (k + 1) + " of " + total + " (" + (d.photos.get(k).length / 1024) + " KB)";
+                    Throwable c = e.getCause();
+                    throw c instanceof Exception ex ? ex : e;
+                }
+            }
+            step = "saving the photos";
+            if (total > 0) api.insert("photos", photoRows);
             Cache.remove("list:");
             return id;
         } catch (Exception ex) {

@@ -147,9 +147,6 @@ public final class MapPane extends StackPane {
         });
     }
 
-    /** Plain tap on a pin (used when no preview card is wanted). */
-    public void onPinTap(Consumer<BoardingHouse> c) { this.onPin = c; }
-
     /**
      * Tap a pin to see a card and the walking route to it. {@code details} runs when the card is tapped
      * (null = no details page, e.g. an owner looking at their own listings).
@@ -368,11 +365,6 @@ public final class MapPane extends StackPane {
     private void applyZoom(double z) { zoomVal = z; map.setZoom(z); }
 
     private void setCenterNow(double lat, double lng) { camLat = lat; camLng = lng; centerKnown = true; map.setCenter(lat, lng); }
-
-    private double[] currentCenter() {
-        try { if (getScene() != null && map.getWidth() > 0) return center(); } catch (Throwable ignored) { }
-        return Double.isNaN(camLat) ? null : new double[]{camLat, camLng};
-    }
 
     /** Glides the camera to a point and zoom together (zoom <= 0 keeps the current zoom). The centre is set after the zoom on every frame, so it never drifts. */
     private void flyTo(double lat, double lng, double zoom, int ms) {

@@ -22,3 +22,7 @@ KEYS.local.md
 /bofo/
 /BOFO---Boarding-House-Finder-main/
 out-check/
+
+# Python caches
+__pycache__/
+*.pyc

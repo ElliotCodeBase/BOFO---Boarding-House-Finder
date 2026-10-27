@@ -78,18 +78,4 @@ public final class Icons {
         }
     }
 
-    public static String forLabel(String label) {
-        String s = label.toLowerCase();
-        if (s.startsWith("home")) return HOME;
-        if (s.startsWith("explore")) return EXPLORE;
-        if (s.startsWith("saved")) return HEART;
-        if (s.startsWith("chats")) return CHAT;
-        if (s.startsWith("profile")) return PERSON;
-        if (s.startsWith("dashboard")) return DASH;
-        if (s.startsWith("listings")) return LIST;
-        if (s.startsWith("verify") || s.startsWith("queue")) return SHIELD;
-        if (s.startsWith("payments")) return WALLET;
-        if (s.startsWith("reports")) return FLAG;
-        return LIST;
-    }
 }

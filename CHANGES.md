@@ -1,4 +1,10 @@
-﻿# v1.15.2 - Camera and Gallery fix
+﻿# v1.15.3 - Cleanup + faster loading
+- Removed code nobody called: `SpriteView`, 6 unused mascot PNGs bundled in the app (about 320 KB), `Geo.pathKm`, `Ui.menuRow`, `FilterSheet.isOpen`, `MapPane.onPinTap/currentCenter`, `Icons.forLabel`, `Switch.setOn`, `AppConfig.devBypass/devRole`, `AuthService.devForce/signedIn`, and the dead `dev.bypassLogin` / `dev.role` settings.
+- Network: server answers are gzip-compressed (much less data on slow connections); reads give up after 15 s instead of 30 s; the main list and the featured list now load at the same time.
+- Publishing a listing: rooms, amenities and photo rows are saved in one request each, and photos upload side by side. Photos are encoded smaller (1024 px wide, PNG Sub filter).
+- Start-up: splash holds 1.2 s (was 2.2 s) and no longer starts its own thread.
+
+# v1.15.2 - Camera and Gallery fix
 - PC: Camera and Gallery open a file picker. Phone: errors are caught; storage/media permissions added to the manifest.
 
 # v1.15.1 - New listing polish

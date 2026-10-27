@@ -9,9 +9,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.function.Supplier;
+import java.util.zip.GZIPInputStream;
 
 /** Thin REST client for Supabase (PostgREST, Auth, Storage, Edge Functions). Uses ONLY the anon key + user JWT. */
 public final class SupabaseClient {
@@ -34,28 +36,39 @@ public final class SupabaseClient {
         HttpRequest.Builder b = HttpRequest.newBuilder(URI.create(AppConfig.supabaseUrl() + path))
                 .timeout(Duration.ofSeconds(30))
                 .header("apikey", AppConfig.anonKey())
+                .header("Accept-Encoding", "gzip")                    // JSON lists shrink about 5-10x on the wire (slow mobile data)
                 .header("Authorization", "Bearer " + (bearer != null ? bearer : AppConfig.anonKey()));
         return b;
     }
 
     private String send(HttpRequest req) throws Exception {
-        HttpResponse<String> r;
-        try { r = HTTP.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)); }
+        HttpResponse<byte[]> r;
+        try { r = HTTP.send(req, HttpResponse.BodyHandlers.ofByteArray()); }
         catch (java.io.IOException first) {
             // One quiet retry for reads: a single dropped connection (Wi-Fi hiccup, stale keep-alive) must not flip the whole app offline.
             if (!"GET".equals(req.method())) { Connectivity.report(false); throw first; }
-            try { Thread.sleep(500); r = HTTP.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)); }
+            try { Thread.sleep(500); r = HTTP.send(req, HttpResponse.BodyHandlers.ofByteArray()); }
             catch (java.io.IOException noNetwork) { Connectivity.report(false); throw noNetwork; }   // drives the offline banner + screens
         }
         Connectivity.report(true);                                                               // server answered (any status) = online
-        if (r.statusCode() >= 300) throw new ApiException(r.statusCode(), r.body());
-        return r.body();
+        String text = decode(r);
+        if (r.statusCode() >= 300) throw new ApiException(r.statusCode(), text);
+        return text;
+    }
+
+    /** Body as text; unzips it when the server sent it gzip-compressed. */
+    private static String decode(HttpResponse<byte[]> r) throws java.io.IOException {
+        byte[] b = r.body();
+        if (b == null || b.length == 0) return "";
+        if ("gzip".equalsIgnoreCase(r.headers().firstValue("Content-Encoding").orElse("")))
+            try (GZIPInputStream z = new GZIPInputStream(new ByteArrayInputStream(b))) { b = z.readAllBytes(); }
+        return new String(b, StandardCharsets.UTF_8);
     }
 
     /* ---------- PostgREST ---------- */
     public JSONArray select(String table, String query) throws Exception {
         String body = send(base("/rest/v1/" + table + (query == null || query.isEmpty() ? "" : "?" + query), true)
-                .header("Accept", "application/json").GET().build());
+                .timeout(Duration.ofSeconds(15)).header("Accept", "application/json").GET().build());   // reads fail fast; the 30 s limit stays for uploads
         return new JSONArray(body);
     }
 
@@ -63,6 +76,14 @@ public final class SupabaseClient {
         String body = send(base("/rest/v1/" + table, true).header("Content-Type", "application/json")
                 .header("Prefer", "return=representation")
                 .POST(HttpRequest.BodyPublishers.ofString(row.toString())).build());
+        return new JSONArray(body);
+    }
+
+    /** Inserts many rows in ONE request (instead of one request per row). All rows must have the same keys. */
+    public JSONArray insert(String table, JSONArray rows) throws Exception {
+        String body = send(base("/rest/v1/" + table, true).header("Content-Type", "application/json")
+                .header("Prefer", "return=representation")
+                .POST(HttpRequest.BodyPublishers.ofString(rows.toString())).build());
         return new JSONArray(body);
     }
 

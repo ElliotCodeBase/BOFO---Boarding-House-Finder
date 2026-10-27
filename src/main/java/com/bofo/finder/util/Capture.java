@@ -52,12 +52,14 @@ public final class Capture {
             int w = Math.max(1, (int) (sw * scale)), h = Math.max(1, (int) (sh * scale));
             PixelReader pr = img.getPixelReader();
             ByteArrayOutputStream raw = new ByteArrayOutputStream(w * h * 3 + h);
+            byte[] row = new byte[w * 3];
             for (int y = 0; y < h; y++) {
-                raw.write(0);
                 for (int x = 0; x < w; x++) {
                     int p = pr.getArgb((int) (x / scale), (int) (y / scale));
-                    raw.write((p >> 16) & 255); raw.write((p >> 8) & 255); raw.write(p & 255);
+                    row[x * 3] = (byte) (p >> 16); row[x * 3 + 1] = (byte) (p >> 8); row[x * 3 + 2] = (byte) p;
                 }
+                raw.write(1);                                              // PNG "Sub" filter: each byte minus the one to its left; photos compress noticeably better
+                for (int i = 0; i < row.length; i++) raw.write(row[i] - (i >= 3 ? row[i - 3] : 0));
             }
             ByteArrayOutputStream z = new ByteArrayOutputStream();
             try (DeflaterOutputStream d = new DeflaterOutputStream(z, new Deflater(6))) { d.write(raw.toByteArray()); }

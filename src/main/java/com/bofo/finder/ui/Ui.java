@@ -397,16 +397,6 @@ public final class Ui {
         public void set(boolean v) { on.set(v); }
     }
 
-    /** Settings-style row: round icon, label, chevron. */
-    public static HBox menuRow(String iconPath, String text, Runnable r) {
-        StackPane circle = new StackPane(Icons.icon(iconPath, 18, Color.web("#5B3BF0")));
-        circle.getStyleClass().add("icon-circle");
-        circle.setMinSize(36, 36); circle.setPrefSize(36, 36); circle.setMaxSize(36, 36);
-        HBox row = new HBox(12, circle, label(text, "row-label"), grow(), Icons.icon(Icons.CHEVRON, 18, Color.web("#A39DB8")));
-        row.setAlignment(Pos.CENTER_LEFT); row.getStyleClass().add("menu-row");
-        row.setOnMouseClicked(e -> r.run());
-        return row;
-    }
     /** "---- Or ----" style divider. */
     public static HBox divider(String text) {
         Region l = new Region(), r = new Region();

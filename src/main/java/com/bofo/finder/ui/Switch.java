@@ -40,5 +40,4 @@ public final class Switch extends StackPane {
 
     public BooleanProperty onProperty() { return on; }
     public boolean isOn() { return on.get(); }
-    public void setOn(boolean v) { on.set(v); }
 }
