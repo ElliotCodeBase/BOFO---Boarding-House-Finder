@@ -31,6 +31,12 @@ public final class DashboardView extends VBox {
         VBox mapBox = new VBox(8, Ui.section("Your listings on the map"), MapPane.framed(map));
         mapBox.setVisible(false); mapBox.setManaged(false);                       // appears once there is a listing to show
         box.getChildren().add(mapBox);
+
+        // the owner's created listings, one card each (same cards as My listings); tap a card to open it
+        CardGrid listRows = new CardGrid(10, 150, 1);
+        VBox listBox = new VBox(8, Ui.section("Your listings"), listRows);
+        listBox.setVisible(false); listBox.setManaged(false);
+        box.getChildren().add(listBox);
         Async.run(() -> new BhService().colleges(), map::setColleges, e -> {});
         Ui.load(statsBox, () -> Skeleton.stats(3), () -> new BhService().myListings(p.id()), l -> {
             int beds = l.stream().mapToInt(b -> b.availableBeds()).sum();
@@ -43,6 +49,8 @@ public final class DashboardView extends VBox {
                 mapBox.setManaged(true); mapBox.setVisible(true);
                 map.show(new double[]{lat, lng}, 0, l, false, null);
                 map.fitPins(l);
+                for (var b : l) listRows.getChildren().add(new BhCard(b, false, false, x -> {}, (on, undo) -> {}));
+                listBox.setManaged(true); listBox.setVisible(true);
             }
         });
     }

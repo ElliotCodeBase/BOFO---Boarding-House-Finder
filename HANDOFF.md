@@ -1,4 +1,10 @@
-﻿# Handoff - v1.16.6 Preview 4 screen sizes at once (2026-10-27)
+# Handoff - v1.16.7 Dashboard listing list + map names on zoom (2026-10-27)
+- **PR title:** `v1.16.7 - Dashboard lists created listings; campus names only when zoomed in`. Version in `config.properties`, `pom.xml` (versionCode 64), CHANGES.md.
+- `DashboardView`: added "Your listings" section with `BhCard` per `myListings` result (was only stats + map). `MapPane` label pass: names need `map.getZoom() >= 14.5` (real zoom, also after pinch) and are hidden when they would overlap; the chosen-campus exception was removed. Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.16.6 Preview 4 screen sizes at once (2026-10-27)
 - **PR title:** `v1.16.6 - Dev script that opens the app in 4 screen sizes`. Version in `config.properties`, `pom.xml` (versionCode 63), CHANGES.md.
 - `Main` accepts `--size=WxH@X,Y` (position optional; title shows the size). New `dev/preview-sizes.ps1`: `mvn -q compile` once, then 4 `mvn javafx:run -Djavafx.args=--size=...` processes, 8 s apart (separate JVMs: `Nav`/`AuthService` are singletons, so one JVM cannot show 4 windows). Run: `powershell -ExecutionPolicy Bypass -File dev\preview-sizes.ps1`. Edit the `$sizes` list for other sizes. All windows share one saved login; for different accounts set `BOFO_PROFILE` per window. Not compiled/run by Claude.
 
