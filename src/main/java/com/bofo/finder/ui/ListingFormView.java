@@ -102,6 +102,7 @@ public final class ListingFormView extends VBox {
         // ---- pin ----
         double[] ref = State.ref(); map.show(ref != null ? ref : new double[]{14.5995, 120.9842}, 0, java.util.List.of(), false, null);
         map.enableCenterPin();
+        com.bofo.finder.util.Locator.get().startWithPrompt();                     // like the student Home: the locate button flies to you at once
         Async.run(() -> new BhService().colleges(), cs -> colleges = cs, e -> {});
         pinLabel.setText("No pin yet. Move the map so the pin sits on your place, then tap Set pin.");
         Button setPin = Ui.btn("Set pin at map center", "btn-outline", () -> {
