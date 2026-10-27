@@ -66,7 +66,7 @@ public final class BofoPanel extends Pane {
 
         fab.setOnMousePressed(e -> { pressing = true; stopIdle(false); dx = e.getSceneX() - fab.getLayoutX(); dy = e.getSceneY() - fab.getLayoutY(); dragged = false; });
         fab.setOnMouseDragged(e -> {
-            dragged = true;
+            dragged = true; userMoved = true;
             fab.setLayoutX(clamp(e.getSceneX() - dx, 0, getWidth() - 56));
             fab.setLayoutY(clamp(e.getSceneY() - dy, 40, getHeight() - 140));
         });
@@ -98,12 +98,14 @@ public final class BofoPanel extends Pane {
         });
     }
 
-    private boolean placed;
+    private boolean placed, userMoved;
     /** Keeps the mascot on screen and sizes the chat panel to the screen (phone, tablet, landscape). */
     private void fit() {
         double w = getWidth(), h = getHeight();
         if (w <= 0 || h <= 0) return;
-        if (!placed) { fab.setLayoutX(w - 62); fab.setLayoutY(Math.max(40, h - 200)); placed = true; }
+        double s = w < 400 ? 0.82 : 1;                         // smaller on small phones so it covers less
+        fab.setScaleX(s); fab.setScaleY(s);
+        if (!placed || !userMoved) { fab.setLayoutX(w - 62); fab.setLayoutY(Math.max(40, h - 166)); placed = true; }   // right above the tab bar
         else { fab.setLayoutX(clamp(fab.getLayoutX(), 0, w - 56)); fab.setLayoutY(clamp(fab.getLayoutY(), 40, Math.max(40, h - 140))); }
         double cw = Math.min(380, w - 24), ch = Math.max(220, Math.min(500, h - 230));
         chat.setMinSize(cw, ch); chat.setPrefSize(cw, ch); chat.setMaxSize(cw, ch);

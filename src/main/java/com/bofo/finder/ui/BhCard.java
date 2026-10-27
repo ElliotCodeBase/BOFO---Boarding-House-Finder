@@ -41,6 +41,10 @@ public final class BhCard extends VBox {
             double h = w.doubleValue() >= 640 ? 260 : w.doubleValue() >= 440 ? 220 : 190;
             iv.setFitHeight(h); ph.setMinHeight(h); ph.setPrefHeight(h); ph.setMaxHeight(h);
         });
+        if (compact) widthProperty().addListener((o, a, w) -> {    // photo height follows the card width (narrow phone -> short, wide column -> taller)
+            double h = Math.max(100, Math.min(170, (w.doubleValue() - 16) * 0.75));
+            iv.setFitHeight(h); ph.setMinHeight(h); ph.setPrefHeight(h); ph.setMaxHeight(h);
+        });
         ph.setStyle("-fx-background-radius:16;");
         Node homeIcon = Icons.icon(Icons.HOME, 44, Color.web("#C9BEFA"));
         StackPane photoBox = new StackPane(ph, homeIcon, iv);

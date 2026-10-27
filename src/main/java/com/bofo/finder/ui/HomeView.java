@@ -23,7 +23,7 @@ import java.util.HashSet;
 public final class HomeView extends VBox {
     private final BhService bh = new BhService();
     private final MapPane map = new MapPane(360);
-    private final CardGrid list = new CardGrid(10, 150, 2);          // 2 columns
+    private final CardGrid list = new CardGrid(10, 136, 2).wide();          // 2 columns on phones, 3-4 on wide windows
     private java.util.Set<Integer> adSpots = java.util.Set.of();      // list positions that get an AdSlot (empty while ads are off)
     private final Slider radius = new Slider(0.5, 5, State.radiusKm.get());
     private BhService.Tab tab = BhService.Tab.NEW;
@@ -114,7 +114,7 @@ public final class HomeView extends VBox {
         Label nearbyTitle = Ui.section("Nearby boarding houses"); nearbyTitle.getStyleClass().add("home-title");
         HBox nearby = new HBox(10, Ui.vbox(2, nearbyTitle, nearbySub));
         nearby.setAlignment(Pos.CENTER_LEFT); nearby.setPadding(new Insets(16, 16, 6, 16));
-        list.setPadding(new Insets(4, 16, 72, 16));
+        list.setPadding(new Insets(4, 16, 130, 16));   // the floating tab bar is ~100 px tall
 
         Region mapFrame = new Region(); mapFrame.getStyleClass().add("map-frame"); mapFrame.setMouseTransparent(true);   // thin rounded outline on top of the map
         StackPane mapWrap = new StackPane(map, mapFrame, radiusBar);
@@ -130,12 +130,20 @@ public final class HomeView extends VBox {
         map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
         ScrollPane sp = Ui.scroll(content); VBox.setVgrow(sp, Priority.ALWAYS);
         getChildren().add(sp);
+        fitMapHeight(720);                                                // until the first layout: a normal phone
+        heightProperty().addListener((o, was, h) -> fitMapHeight(h.doubleValue()));
         Async.run(bh::favoriteIds, f -> { favs = f; reload(); }, e -> reload());
         Async.run(bh::colleges, cs -> map.showColleges(cs), e -> {});   // every campus on the map
         startGps();
         ChangeListener<College> l = (o, a, b) -> { suppressionChanged(); reload(); };
         State.college.addListener(l);
         sceneProperty().addListener((o, was, sc) -> { State.college.removeListener(l); if (sc != null) State.college.addListener(l); });
+    }
+
+    /** Map takes ~42% of the window height (200-440 px): a small phone still sees the list under it, a tall window does not get a giant map. */
+    private void fitMapHeight(double windowH) {
+        if (windowH <= 0) return;
+        map.setHeightPx(Math.max(200, Math.min(440, Math.round(windowH * 0.42))));
     }
 
     private static String greeting() {
