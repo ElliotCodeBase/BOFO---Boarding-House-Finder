@@ -86,6 +86,25 @@ public final class ChatService {
         return Message.from(row);
     }
 
+    /** Deletes one message. everyone=true removes it for both people (only the sender may); false hides it only for me. */
+    public void deleteMessage(String conversationId, String messageId, boolean everyone) throws Exception {
+        api.rpc("delete_message", new JSONObject().put("msg", messageId).put("everyone", everyone));
+        forgetSavedCopies(conversationId);
+    }
+
+    /** Removes the chat card from MY inbox and hides its old messages from me. The other person keeps their copy. */
+    public void deleteConversation(String conversationId) throws Exception {
+        api.rpc("delete_conversation", new JSONObject().put("conv", conversationId));
+        forgetSavedCopies(conversationId);
+    }
+
+    /** The copies kept on the device for offline use must not bring a deleted message or chat back. */
+    private static void forgetSavedCopies(String conversationId) {
+        com.bofo.finder.util.DiskCache.deletePrefix("user_msgs_" + conversationId);
+        com.bofo.finder.util.DiskCache.deletePrefix("user_inbox");
+        PREFETCHED.removeIf(k -> k.startsWith(conversationId + "|"));
+    }
+
     public void markRead(String conversationId) throws Exception { api.rpc("mark_read", new JSONObject().put("conv", conversationId)); }
 
     public void block(String reporterId, String userId, String reason) throws Exception {

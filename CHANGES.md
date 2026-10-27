@@ -1,4 +1,9 @@
-﻿# v1.15.5 - My listings: card with a photo no longer wider than the screen
+﻿# v1.16.0 - Delete messages and chats
+- Press and hold (phone) or right-click (PC) a message: Copy, Delete for me, and for your own messages Delete for everyone. The other person's screen drops a message deleted for everyone within a few seconds.
+- Press and hold / right-click a chat card in Chats: Delete chat. It leaves your list and its old messages are hidden for you; the other person keeps their copy. If they write again the chat comes back with only the new messages. The three dots inside a chat also have Delete chat.
+- Works for students and owners. **Run `supabase/migrations/008_delete_chat.sql` once in Supabase before using it.**
+
+# v1.15.5 - My listings: card with a photo no longer wider than the screen
 - Cause: in a one-column list a card was sized with its own minimum width, which a loaded photo makes large, so it ran past the right edge. `CardGrid` now gives a card exactly the column width.
 
 # v1.15.4 - My listings fits the screen

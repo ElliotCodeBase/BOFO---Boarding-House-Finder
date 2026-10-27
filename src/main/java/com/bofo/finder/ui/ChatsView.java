@@ -8,7 +8,11 @@ import com.bofo.finder.util.Async;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.OverrunStyle;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -27,7 +31,7 @@ public final class ChatsView extends VBox {
     public ChatsView() {
         ChatService chat = new ChatService();
         VBox rows = new VBox(10); rows.setPadding(new Insets(6, 16, 96, 16));
-        getChildren().addAll(Ui.pageHeader("Chats", "Your conversations with owners and students"), Ui.scroll(rows));
+        getChildren().addAll(Ui.pageHeader("Chats", "Press and hold a chat (or right-click) to delete it"), Ui.scroll(rows));
         Ui.load(rows, () -> Skeleton.rows(5), chat::inbox, list -> { lastSig = signature(list); render(rows, list); });
 
         // live inbox: while this screen is shown, check every 4 seconds and redraw only when something changed (new message, unread count, time)
@@ -79,9 +83,23 @@ public final class ChatsView extends VBox {
                 // owners see the student's name in the chat header; students see the boarding house name
                 String title = c.ownerId().equals(me) && !c.otherName().isBlank() ? c.otherName() : c.bhName();
                 row.setOnMouseClicked(e -> Nav.show(new ChatView(c.id(), title, null, other, () -> Nav.show(Main.home(), true)), false));
+                row.setOnContextMenuRequested(e -> {                         // press and hold on a phone, right-click on a PC
+                    ContextMenu cm = new ContextMenu(); MenuItem del = new MenuItem("Delete chat");
+                    del.setOnAction(x -> confirmDelete(c, rows));
+                    cm.getItems().add(del); cm.show(row, e.getScreenX(), e.getScreenY()); e.consume();
+                });
                 rows.getChildren().add(row);
             }
         }
+    }
+
+    private void confirmDelete(Conversation c, VBox rows) {
+        Alert a = new Alert(Alert.AlertType.CONFIRMATION, "The chat and its messages are removed for you. The other person keeps their copy. If they write again, the chat comes back with only the new messages.", ButtonType.CANCEL, ButtonType.OK);
+        Ui.style(a); a.setTitle("Delete chat"); a.setHeaderText("Delete this chat?");
+        a.showAndWait().filter(x -> x == ButtonType.OK).ifPresent(x ->
+                Async.run(() -> { new ChatService().deleteConversation(c.id()); return true; },
+                        ok -> { Nav.toast("Chat deleted"); Async.run(() -> new ChatService().inbox(), list -> { lastSig = signature(list); render(rows, list); }, err -> {}); },
+                        e -> Ui.failToast(e, "Could not delete the chat")));
     }
 
     /** The server sends UTC: show local time today, "Yesterday", or the date. */

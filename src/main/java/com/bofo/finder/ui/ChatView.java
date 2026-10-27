@@ -42,6 +42,7 @@ public final class ChatView extends VBox {
     private final ChatService chat = new ChatService();
     private final String convId, me, otherUserId;
     private final boolean iAmOwner;
+    private final Runnable onBack;
     private final HBox quickRow = new HBox(8);
     private final Button sendBtn = new Button("\u27A4");
     private final VBox msgs = new VBox(8);
@@ -55,6 +56,7 @@ public final class ChatView extends VBox {
     private boolean stickBottom;                                       // true for a moment after new content: keeps the view glued to the newest message while it is laid out
     private final Set<String> unreadMine = java.util.concurrent.ConcurrentHashMap.newKeySet();   // ids of my messages still showing one tick (not read yet)
     private volatile boolean active = true;
+    private int reconTick = 0;
     private int idleTicks = 0;
     private final Set<String> seen = new HashSet<>();                 // message ids already on screen (no duplicates)
     private record Pending(HBox row, StackPane bubble, Label status) {}
@@ -68,11 +70,12 @@ public final class ChatView extends VBox {
     };
 
     public ChatView(String convId, String bhName, String bhPhoto, String otherUserId, Runnable onBack) {
-        this.convId = convId; this.otherUserId = otherUserId; this.me = AuthService.get().userId();
+        this.convId = convId; this.otherUserId = otherUserId; this.onBack = onBack; this.me = AuthService.get().userId();
         this.iAmOwner = AuthService.get().profile() != null && AuthService.get().profile().role() == com.bofo.finder.model.Role.OWNER;
         Button back = Ui.btn("←", "heart", () -> { stop(); onBack.run(); });
         back.getStyleClass().setAll("button", "chat-icon-btn");
-        Button more = Ui.btn("⋯", "heart", this::reportDialog);
+        Button more = Ui.btn("⋯", "heart", () -> {});
+        more.setOnAction(e -> chatMenu(more));
         more.getStyleClass().setAll("button", "chat-icon-btn");
         Label who = Ui.label(bhName, "chat-name");
         who.setWrapText(false); who.setMinWidth(0); who.setTextOverrun(OverrunStyle.ELLIPSIS); who.setMaxWidth(Double.MAX_VALUE);
@@ -131,7 +134,7 @@ public final class ChatView extends VBox {
         try {                                                            // any error here must never stop the polling for good
             if (Outbox.hasPending()) Outbox.flushAsync();                // queued messages go out as soon as the network is back
             if (needsReload) { if (!Connectivity.OFFLINE.get()) { needsReload = false; Platform.runLater(() -> loadOlder(true)); } }
-            else { got = pollNew(); refreshReads(); }
+            else { got = pollNew(); refreshReads(); if (++reconTick % 3 == 0) dropDeletedByOther(); }
         } catch (Exception e) { System.err.println("[ChatView] poll error: " + e); }
         idleTicks = got ? 0 : idleTicks + 1;
         long delay = idleTicks < 5 || !unreadMine.isEmpty() ? 3 : idleTicks < 20 ? 6 : 12;   // stay fast while waiting for a "read"
@@ -230,9 +233,10 @@ public final class ChatView extends VBox {
         if (mine) metaRow.getChildren().add(m.readAt() != null ? tickIcon(TICKS, Color.web("#9FE8FF")) : tickIcon(TICK, Color.web("#FFFFFF", 0.8)));   // one tick = sent, two blue ticks = read
         VBox inner = new VBox(2, l, metaRow);
         StackPane b = new StackPane(inner); b.getStyleClass().add(mine ? "bubble-me" : "bubble-them");
-        b.setOnContextMenuRequested(e -> copyMenu(b, m.body(), e.getScreenX(), e.getScreenY()));
+        b.setOnContextMenuRequested(e -> { messageMenu(b, m, mine, e.getScreenX(), e.getScreenY()); e.consume(); });
         HBox row = new HBox(b); row.setAlignment(mine ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
         row.getProperties().put("sender", m.senderId()); row.getProperties().put("bubble", b); row.getProperties().put("id", m.id());
+        row.getProperties().put("created", m.createdAt()); row.getProperties().put("shownAt", System.currentTimeMillis());
         if (mine && m.readAt() == null) unreadMine.add(m.id()); else unreadMine.remove(m.id());
         return row;
     }
@@ -276,10 +280,80 @@ public final class ChatView extends VBox {
         f.play(); sc.play();
     }
 
-    private void copyMenu(javafx.scene.Node anchor, String text, double x, double y) {
+    /** Right-click (PC) or press and hold (phone) on a message: copy, delete for me, and for my own messages delete for everyone. */
+    private void messageMenu(javafx.scene.Node anchor, Message m, boolean mine, double x, double y) {
         ContextMenu cm = new ContextMenu(); MenuItem copy = new MenuItem("Copy");
-        copy.setOnAction(e -> { ClipboardContent cc = new ClipboardContent(); cc.putString(text); Clipboard.getSystemClipboard().setContent(cc); Nav.toast("Copied"); });
-        cm.getItems().add(copy); cm.show(anchor, x, y);
+        copy.setOnAction(e -> { ClipboardContent cc = new ClipboardContent(); cc.putString(m.body()); Clipboard.getSystemClipboard().setContent(cc); Nav.toast("Copied"); });
+        MenuItem forMe = new MenuItem("Delete for me");
+        forMe.setOnAction(e -> confirmDeleteMessage(m, false));
+        cm.getItems().addAll(copy, forMe);
+        if (mine) { MenuItem all = new MenuItem("Delete for everyone"); all.setOnAction(e -> confirmDeleteMessage(m, true)); cm.getItems().add(all); }
+        cm.show(anchor, x, y);
+    }
+
+    private void confirmDeleteMessage(Message m, boolean everyone) {
+        Alert a = new Alert(Alert.AlertType.CONFIRMATION, everyone ? "This message will be removed for you and for the other person."
+                : "This message will be removed for you only. The other person still sees it.", ButtonType.CANCEL, ButtonType.OK);
+        Ui.style(a); a.setTitle("Delete message"); a.setHeaderText(everyone ? "Delete for everyone?" : "Delete for you?");
+        a.showAndWait().filter(x -> x == ButtonType.OK).ifPresent(x ->
+                Async.run(() -> { chat.deleteMessage(convId, m.id(), everyone); return true; },
+                        ok -> removeMessages(List.of(m.id())), e -> Ui.failToast(e, "Could not delete the message")));
+    }
+
+    /** Takes the bubbles off the screen, then cleans up: a day pill with no message under it goes too, and an empty chat says hello again. */
+    private void removeMessages(List<String> ids) {
+        for (String id : ids) { msgs.getChildren().removeIf(n -> id.equals(n.getProperties().get("id"))); unreadMine.remove(id); }
+        List<javafx.scene.Node> kids = msgs.getChildren();
+        for (int i = kids.size() - 1; i >= 0; i--) {
+            if (!(kids.get(i).getUserData() instanceof LocalDate)) continue;
+            boolean hasMessage = i + 1 < kids.size() && !(kids.get(i + 1).getUserData() instanceof LocalDate);
+            if (!hasMessage) kids.remove(i);
+        }
+        lastDay = null;
+        for (javafx.scene.Node n : kids) if (n.getUserData() instanceof LocalDate d) lastDay = d;
+        boolean any = kids.stream().anyMatch(n -> n.getProperties().containsKey("sender") || n instanceof Button);
+        if (!any && emptyNode == null) { emptyNode = Ui.emptyState("Say hello", iAmOwner ? "Reply to the student to answer their questions." : "Ask the owner about price, rooms or a visit."); kids.add(emptyNode); }
+    }
+
+    /** The other person deleted a message for everyone: it disappears here too (checked every few polls against the newest page). */
+    private void dropDeletedByOther() {
+        long started = System.currentTimeMillis();
+        try {
+            List<Message> page = chat.page(convId, null);
+            Set<String> ids = new HashSet<>();
+            for (Message m : page) ids.add(m.id());
+            String cutoff = page.size() == ChatService.PAGE ? page.get(page.size() - 1).createdAt() : null;   // newest first: the last one is the oldest on this page
+            Platform.runLater(() -> {
+                if (Connectivity.OFFLINE.get()) return;                      // offline the saved copy is served and can be older than the screen
+                List<String> gone = new ArrayList<>();
+                for (javafx.scene.Node n : msgs.getChildren()) {
+                    Object id = n.getProperties().get("id"), created = n.getProperties().get("created"), shown = n.getProperties().get("shownAt");
+                    if (id == null || created == null || ids.contains(id.toString())) continue;
+                    if (shown instanceof Long t && t > started - 2000) continue;               // just arrived: the page may be older than it
+                    if (cutoff != null && created.toString().compareTo(cutoff) < 0) continue;  // older than this page: cannot tell
+                    gone.add(id.toString());
+                }
+                if (!gone.isEmpty()) removeMessages(gone);
+            });
+        } catch (Exception ignored) { /* next time */ }
+    }
+
+    /** The three dots in the top bar. */
+    private void chatMenu(javafx.scene.Node anchor) {
+        ContextMenu cm = new ContextMenu();
+        MenuItem del = new MenuItem("Delete chat"); del.setOnAction(e -> confirmDeleteChat());
+        MenuItem rep = new MenuItem("Report / block"); rep.setOnAction(e -> reportDialog());
+        cm.getItems().addAll(del, rep);
+        javafx.geometry.Bounds b = anchor.localToScreen(anchor.getBoundsInLocal());
+        if (b != null) cm.show(anchor, b.getMinX(), b.getMaxY()); else cm.show(anchor, 0, 0);
+    }
+
+    private void confirmDeleteChat() {
+        Alert a = new Alert(Alert.AlertType.CONFIRMATION, "The chat and its messages are removed for you. The other person keeps their copy. If they write again, the chat comes back with only the new messages.", ButtonType.CANCEL, ButtonType.OK);
+        Ui.style(a); a.setTitle("Delete chat"); a.setHeaderText("Delete this chat?");
+        a.showAndWait().filter(x -> x == ButtonType.OK).ifPresent(x ->
+                Async.run(() -> { chat.deleteConversation(convId); return true; },
+                        ok -> { Nav.toast("Chat deleted"); stop(); onBack.run(); }, e -> Ui.failToast(e, "Could not delete the chat")));
     }
 
     // ---- time helpers: the server sends UTC, people read their own local time ----
