@@ -1,3 +1,9 @@
+# Handoff - v1.16.13 Owner locate button like student (2026-10-27)
+- **PR title:** `v1.16.13 - Owner maps start location like student Home (locate button + blue dot)`. Version in `config.properties`, `pom.xml` (versionCode 70), CHANGES.md.
+- `DashboardView` and `ListingFormView` now call `Locator.get().startWithPrompt()` after creating their `MapPane` (only student `HomeView.startGps()` did before, so owner maps had no GPS fix). Not compiled/run by Claude.
+
+---
+
 # Handoff - v1.16.12 Locate button reliability (2026-10-27)
 - **PR title:** `v1.16.12 - Fix round locate button sometimes not responding (touch slop, late fix, stale timers)`. Version in `config.properties`, `pom.xml` (versionCode 69), CHANGES.md.
 - `MapPane`: locate fires on `MOUSE_RELEASED` within 14 px slack (no ACTION handler); `MOUSE_DRAGGED` filter ignores drags that start on the button; busy pulse limited to 12 cycles then `endBusy()`. `Locator`: `start()`/`browserFix()` stop the previous `timeout`; `locate()` keeps only the newest waiting callback; `fail()` no longer clears `waiting` (a late fix still runs it; `stop()` clears). Not compiled/run by Claude.

@@ -28,6 +28,7 @@ public final class DashboardView extends VBox {
         // map of the owner's listings; tap a pin to see the walking route from the nearest campus
         MapPane map = new MapPane(300);
         map.enablePreview(null);
+        com.bofo.finder.util.Locator.get().startWithPrompt();                     // like the student Home: ask once, then the blue dot and the locate button are ready
         VBox mapBox = new VBox(8, Ui.section("Your listings on the map"), MapPane.framed(map));
         mapBox.setVisible(false); mapBox.setManaged(false);                       // appears once there is a listing to show
         box.getChildren().add(mapBox);

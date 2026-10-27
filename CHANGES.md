@@ -1,3 +1,6 @@
+# v1.16.13 - Owner locate button works like the student one
+- Fix: on the owner Dashboard map and the New/Edit listing map the app never asked for your location, so the blue dot was missing and the round locate button had to wait (or did nothing). They now ask once (same "Use your location" question as the student Home) and start tracking, so the button flies to you right away.
+
 # v1.16.12 - Locate button no longer "sometimes does nothing"
 - Fix: on a phone, a tap with a tiny finger wobble was cancelled by the button. It now fires on release with some slack, and dragging that starts on the button no longer switches off "follow me".
 - Fix: the first time (Android permission dialog) the 12 s timer could run out and throw your tap away; if the position arrives late the map now still flies to you.
