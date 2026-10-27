@@ -84,7 +84,7 @@ public final class ChatsView extends VBox {
                 String title = c.ownerId().equals(me) && !c.otherName().isBlank() ? c.otherName() : c.bhName();
                 row.setOnMouseClicked(e -> Nav.show(new ChatView(c.id(), title, null, other, () -> Nav.show(Main.home(), true)), false));
                 row.setOnContextMenuRequested(e -> {                         // press and hold on a phone, right-click on a PC
-                    ContextMenu cm = new ContextMenu(); MenuItem del = new MenuItem("Delete chat");
+                    ContextMenu cm = Ui.menu(); MenuItem del = new MenuItem("Delete chat"); del.getStyleClass().add("danger");
                     del.setOnAction(x -> confirmDelete(c, rows));
                     cm.getItems().add(del); cm.show(row, e.getScreenX(), e.getScreenY()); e.consume();
                 });

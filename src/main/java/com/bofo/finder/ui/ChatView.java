@@ -282,12 +282,12 @@ public final class ChatView extends VBox {
 
     /** Right-click (PC) or press and hold (phone) on a message: copy, delete for me, and for my own messages delete for everyone. */
     private void messageMenu(javafx.scene.Node anchor, Message m, boolean mine, double x, double y) {
-        ContextMenu cm = new ContextMenu(); MenuItem copy = new MenuItem("Copy");
+        ContextMenu cm = Ui.menu(); MenuItem copy = new MenuItem("Copy");
         copy.setOnAction(e -> { ClipboardContent cc = new ClipboardContent(); cc.putString(m.body()); Clipboard.getSystemClipboard().setContent(cc); Nav.toast("Copied"); });
-        MenuItem forMe = new MenuItem("Delete for me");
+        MenuItem forMe = new MenuItem("Delete for me"); forMe.getStyleClass().add("danger");
         forMe.setOnAction(e -> confirmDeleteMessage(m, false));
         cm.getItems().addAll(copy, forMe);
-        if (mine) { MenuItem all = new MenuItem("Delete for everyone"); all.setOnAction(e -> confirmDeleteMessage(m, true)); cm.getItems().add(all); }
+        if (mine) { MenuItem all = new MenuItem("Delete for everyone"); all.getStyleClass().add("danger"); all.setOnAction(e -> confirmDeleteMessage(m, true)); cm.getItems().add(all); }
         cm.show(anchor, x, y);
     }
 
@@ -340,12 +340,14 @@ public final class ChatView extends VBox {
 
     /** The three dots in the top bar. */
     private void chatMenu(javafx.scene.Node anchor) {
-        ContextMenu cm = new ContextMenu();
-        MenuItem del = new MenuItem("Delete chat"); del.setOnAction(e -> confirmDeleteChat());
+        ContextMenu cm = Ui.menu();
+        MenuItem del = new MenuItem("Delete chat"); del.getStyleClass().add("danger"); del.setOnAction(e -> confirmDeleteChat());
         MenuItem rep = new MenuItem("Report / block"); rep.setOnAction(e -> reportDialog());
         cm.getItems().addAll(del, rep);
         javafx.geometry.Bounds b = anchor.localToScreen(anchor.getBoundsInLocal());
-        if (b != null) cm.show(anchor, b.getMinX(), b.getMaxY()); else cm.show(anchor, 0, 0);
+        if (b == null) { cm.show(anchor, 0, 0); return; }
+        cm.show(anchor, b.getMaxX() - 190, b.getMaxY());                       // right edge of the menu lines up with the button: it never runs off the window
+        Platform.runLater(() -> cm.setX(b.getMaxX() - cm.getWidth()));
     }
 
     private void confirmDeleteChat() {

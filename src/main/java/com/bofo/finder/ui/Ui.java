@@ -366,6 +366,18 @@ public final class Ui {
         var css = Ui.class.getResource("/com/bofo/finder/bofo.css");
         if (css != null) d.getDialogPane().getStylesheets().add(css.toExternalForm());
     }
+    /** A context menu in the BOFO look (popups are separate windows: they do not inherit the stylesheet, so it is added here). */
+    public static javafx.scene.control.ContextMenu menu() {
+        javafx.scene.control.ContextMenu cm = new javafx.scene.control.ContextMenu();
+        var css = Ui.class.getResource("/com/bofo/finder/bofo.css");
+        Runnable apply = () -> {
+            if (css == null || cm.getScene() == null) return;
+            String u = css.toExternalForm();
+            if (!cm.getScene().getStylesheets().contains(u)) cm.getScene().getStylesheets().add(u);
+        };
+        cm.setOnShowing(e -> apply.run()); cm.setOnShown(e -> apply.run());
+        return cm;
+    }
     public static VBox card(double gap, Node... n) {
         VBox v = new VBox(gap, n); v.getStyleClass().add("card"); v.setPadding(new Insets(14)); return v;
     }
