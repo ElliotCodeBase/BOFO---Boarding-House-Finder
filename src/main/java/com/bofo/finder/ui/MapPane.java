@@ -116,7 +116,13 @@ public final class MapPane extends StackPane {
 
         locate.getStyleClass().add("map-fab");
         locate.setGraphic(Ui.strokeIcon(Glyphs.LOCATE, 22, BLUE));
-        locate.setOnAction(e -> tapLocate());
+        // fire on release (with some slack) instead of ACTION: a finger that wobbles a few pixels on a phone cancels a normal button press
+        locate.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
+            if (e.getButton() != javafx.scene.input.MouseButton.PRIMARY) return;
+            javafx.geometry.Bounds b = locate.getLayoutBounds();
+            double slop = 14;
+            if (e.getX() >= -slop && e.getY() >= -slop && e.getX() <= b.getWidth() + slop && e.getY() <= b.getHeight() + slop) { tapLocate(); e.consume(); }
+        });
         // if the map changes size after the overview was drawn (first layout, window resize), fit it again so it keeps filling ~90%
         javafx.beans.value.ChangeListener<Number> resized = (o, a, b) -> { if (overviewOn && map.getWidth() > 0 && map.getHeight() > 0) fitOverview(0); };
         map.widthProperty().addListener(resized); map.heightProperty().addListener(resized);
@@ -126,7 +132,7 @@ public final class MapPane extends StackPane {
 
         // touching the map stops a running camera move; dragging or zooming it ends "follow me"
         addEventFilter(MouseEvent.MOUSE_PRESSED, e -> { if (cam != null) cam.stop(); });
-        addEventFilter(MouseEvent.MOUSE_DRAGGED, e -> { setFollow(false); centerKnown = false; });
+        addEventFilter(MouseEvent.MOUSE_DRAGGED, e -> { if (inside(e.getTarget(), locate)) return; setFollow(false); centerKnown = false; });
         addEventFilter(ScrollEvent.SCROLL, e -> { setFollow(false); zoomVal = Double.NaN; centerKnown = false; });
         addEventFilter(javafx.scene.input.ZoomEvent.ANY, e -> { zoomVal = Double.NaN; centerKnown = false; });
         addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {              // tap on empty map = close the card
@@ -196,7 +202,9 @@ public final class MapPane extends StackPane {
         if (g == null) return;
         locBusy = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(g.opacityProperty(), 1.0)),
                 new KeyFrame(Duration.millis(650), new KeyValue(g.opacityProperty(), 0.3, Interpolator.EASE_BOTH)));
-        locBusy.setAutoReverse(true); locBusy.setCycleCount(Timeline.INDEFINITE); locBusy.play();
+        locBusy.setAutoReverse(true); locBusy.setCycleCount(12);          // ~15 s at most, so the button can never stay dead
+        locBusy.setOnFinished(e -> endBusy());
+        locBusy.play();
         locDone = (o, was, now) -> { if (now != Locator.Status.REQUESTING) endBusy(); };      // found you, failed, or switched off
         Locator.get().status.addListener(locDone);
     }
