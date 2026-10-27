@@ -54,7 +54,9 @@ public final class CardGrid extends Pane {
                 if (row.size() == cols) { y = placeRow(row, y, colW, in, apply) + gap; row.clear(); }
             } else {
                 if (!row.isEmpty()) { y = placeRow(row, y, colW, in, apply) + gap; row.clear(); }   // close a half-filled card row first
-                double nw = Math.max(n.minWidth(-1), Math.min(w, n.maxWidth(-1)));
+                // A card alone in a single column takes exactly the column width. Its own minimum width (a loaded photo makes it
+                // large) must not make it wider than the screen; other rows (buttons, messages) still respect their minimum.
+                double nw = isCell(n) ? Math.min(w, n.maxWidth(-1)) : Math.max(n.minWidth(-1), Math.min(w, n.maxWidth(-1)));
                 double h = n.prefHeight(nw);
                 if (apply) n.resizeRelocate(in.getLeft(), y, nw, h);
                 y += h + gap;

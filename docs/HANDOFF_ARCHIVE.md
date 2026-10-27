@@ -1,3 +1,15 @@
+# Handoff - v1.15.2 Camera and Gallery fix (2026-10-26)
+- **PR title:** `v1.15.2 - Fix Camera and Gallery buttons on PC and phone`. Version in `config.properties`, `pom.xml` (versionCode 53), CHANGES.md.
+- Cause: `Capture` used only Gluon Attach `PicturesService`, which does not exist on desktop, so the buttons did nothing on PC. Now `Capture.camera()/gallery()` fall back to a JavaFX `FileChooser` on PC (no webcam in JavaFX) and catch errors. `AndroidManifest.xml`: added READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE (max SDK 28), READ_MEDIA_IMAGES. Phone path still uses Attach and is untested: if it fails, check `adb logcat` for "Camera failed"/"Gallery failed" and the Attach pictures runtime permission. Same fix covers the verification ID/selfie photo. Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.15.1 New listing polish (2026-10-26)
+- **PR title:** `v1.15.1 - New listing: blue vector pin, no mascot on the form, compact bottom bar`. Version in `config.properties`, `pom.xml` (versionCode 52), CHANGES.md.
+- `MapPane.enableCenterPin`: drawn blue pin + ground dot instead of the emoji. `ListingFormView`: progress label and bar on one row. Mascot hidden on the form (`Nav.show(..., false)` in OwnerShell, ListingsView). CSS block at end of bofo.css. Not compiled/run by Claude.
+
+---
+
 # Handoff - v1.15.0 Blue Create button + step-by-step New listing (2026-10-26)
 - **PR title:** `v1.15.0 - Raised blue Create button and a 4-step New listing form`. Version in `config.properties`, `pom.xml` (versionCode 51), CHANGES.md.
 - `Shell`: action tab (Create) is now a raised blue rounded square (`makeBulge`, `TOP=18` room above the bar; no highlight slide for it). `ListingFormView`: rewritten as 4 steps (Place & pin, Price & rooms, Amenities & photos, Contact & review) with a segment header, per-step checks, Back/Next/Publish and a review card; `submit()`/validation unchanged. CSS block at end of bofo.css. Not compiled/run by Claude.

@@ -9,11 +9,14 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public final class ListingsView extends VBox {
     private final BhService bh = new BhService();
-    private final VBox rows = new VBox(10);
+    /** One column, sized by the screen width like Home / Explore, so a card never grows wider than the screen. */
+    private final CardGrid rows = new CardGrid(10, 150, 1);
 
     public ListingsView() {
         Button add = Ui.btn("+ Add listing", "btn-cta", () -> Nav.show(new ListingFormView(() -> Nav.show(new OwnerShell(), true)), false));
@@ -30,7 +33,10 @@ public final class ListingsView extends VBox {
                 Button unlist = Ui.btn("Unlist", "btn-outline", () -> Async.run(() -> { bh.setStatus(b.id(), "unlisted"); return true; }, ok -> load(), e -> showError("Unlist failed", e)));
                 Button del = Ui.btn("Delete", "btn-danger", () -> confirmDelete(b));
                 Button boost = Ui.btn(b.featured() ? "Extend boost" : "Boost", "btn-cta", () -> Nav.show(new BoostView(b, () -> Nav.show(new OwnerShell(), true)), true));
-                rows.getChildren().addAll(c, Ui.hbox(8, boost, unlist, del));
+                HBox actions = Ui.hbox(8, boost, unlist, del);                 // three equal buttons that share the card width
+                for (Button x : new Button[]{boost, unlist, del}) { x.setMinWidth(0); x.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(x, Priority.ALWAYS); }
+                actions.setPadding(new Insets(0, 0, 8, 0));
+                rows.getChildren().addAll(c, actions);
             }
         });
     }
