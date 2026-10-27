@@ -244,6 +244,7 @@
   -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; -fx-max-width: 42; -fx-max-height: 42;
   -fx-padding: 0; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.20), 8, 0, 0, 2); }
 .map-fab:hover { -fx-background-color: -bofo-primary-tint; }
+.map-fab:pressed { -fx-scale-x: 0.9; -fx-scale-y: 0.9; }
 
 /* Map credit (OpenFreeMap / OpenMapTiles / OpenStreetMap). Must stay visible: small, soft pill in the brand colours. */
 .map-attr { -fx-background-color: rgba(255,255,255,0.82); -fx-background-radius: 999; -fx-border-color: rgba(91,59,240,0.14);

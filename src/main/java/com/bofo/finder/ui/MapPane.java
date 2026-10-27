@@ -116,7 +116,7 @@ public final class MapPane extends StackPane {
 
         locate.getStyleClass().add("map-fab");
         locate.setGraphic(Ui.strokeIcon(Glyphs.LOCATE, 22, BLUE));
-        locate.setOnAction(e -> { if (locateTap != null) locateTap.run(); else Locator.get().locate(p -> javafx.application.Platform.runLater(() -> goTo(p))); });
+        locate.setOnAction(e -> tapLocate());
         // if the map changes size after the overview was drawn (first layout, window resize), fit it again so it keeps filling ~90%
         javafx.beans.value.ChangeListener<Number> resized = (o, a, b) -> { if (overviewOn && map.getWidth() > 0 && map.getHeight() > 0) fitOverview(0); };
         map.widthProperty().addListener(resized); map.heightProperty().addListener(resized);
@@ -143,6 +143,7 @@ public final class MapPane extends StackPane {
             } else {
                 State.gps.removeListener(gpsMoved);
                 layer.setActive(false);
+                endBusy();
                 if (cam != null) cam.stop();
             }
         });
@@ -178,6 +179,33 @@ public final class MapPane extends StackPane {
 
     /** Home: the round locate button runs {@code r} instead of the default "fly to me"; its highlight is then set with {@link #setLocateActive}. */
     public void onLocate(Runnable r) { this.locateTap = r; }
+
+    private Timeline locBusy;
+    private javafx.beans.value.ChangeListener<Locator.Status> locDone;
+
+    /** Round locate button tapped. While the phone is still finding you the icon pulses and extra taps are ignored (they used to queue duplicate flights and toasts). */
+    private void tapLocate() {
+        if (locBusy != null) return;
+        if (locateTap != null) locateTap.run();
+        else Locator.get().locate(p -> javafx.application.Platform.runLater(() -> goTo(p)));
+        if (State.gps.get() == null && Locator.get().status.get() == Locator.Status.REQUESTING) startBusy();
+    }
+
+    private void startBusy() {
+        Node g = locate.getGraphic();
+        if (g == null) return;
+        locBusy = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(g.opacityProperty(), 1.0)),
+                new KeyFrame(Duration.millis(650), new KeyValue(g.opacityProperty(), 0.3, Interpolator.EASE_BOTH)));
+        locBusy.setAutoReverse(true); locBusy.setCycleCount(Timeline.INDEFINITE); locBusy.play();
+        locDone = (o, was, now) -> { if (now != Locator.Status.REQUESTING) endBusy(); };      // found you, failed, or switched off
+        Locator.get().status.addListener(locDone);
+    }
+
+    private void endBusy() {
+        if (locDone != null) { Locator.get().status.removeListener(locDone); locDone = null; }
+        if (locBusy != null) { locBusy.stop(); locBusy = null; }
+        if (locate.getGraphic() != null) locate.getGraphic().setOpacity(1);
+    }
 
     /** Highlights (or un-highlights) the round locate button. */
     public void setLocateActive(boolean on) {
@@ -592,7 +620,7 @@ public final class MapPane extends StackPane {
             meT.addListener((o, a, v) -> {                              // glide between two GPS fixes
                 double t = v.doubleValue();
                 meLat = fromLat + (toLat - fromLat) * t; meLng = fromLng + (toLng - fromLng) * t;
-                if (follow) setCenterNow(meLat, meLng);                 // "follow me" mode keeps the camera on the glide
+                if (follow && (cam == null || cam.getStatus() != javafx.animation.Animation.Status.RUNNING)) setCenterNow(meLat, meLng);   // "follow me" keeps the camera on the glide, but never fights a flight in progress
                 markDirty();
             });
             pulse = new Timeline(
