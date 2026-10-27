@@ -1,3 +1,6 @@
+# v1.16.10 - Dashboard loading skeleton
+- The owner Dashboard now shows a placeholder for the whole page while it loads: the three Overview tiles, the map and two listing cards pulse in grey, then are replaced by the real content (before, only the tiles had a placeholder and the map and listings popped in later, pushing the page down).
+
 # v1.16.9 - Narrow-screen UI fixes (Profile, My listings)
 - Fix: Profile rows no longer break words ("Verificatio / n") - the value (phone, Verified, Pending) is now a grey line under the title, and rows are tighter. "Verified" is green.
 - Fix: My listings header showed "My ..." and "+ Add lis..." - the title now gets all free width and "Add listing" is a compact round "+" button.
