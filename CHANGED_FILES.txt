@@ -1,7 +1,6 @@
-changed  src/main/java/com/bofo/finder/ui/DashboardView.java
 changed  src/main/java/com/bofo/finder/ui/MapPane.java
+changed  src/main/java/com/bofo/finder/util/Locator.java
 changed  src/main/resources/com/bofo/finder/config.properties
 changed  pom.xml
 changed  CHANGES.md
 changed  HANDOFF.md
-new      CHANGELOG_v1.16.7.md

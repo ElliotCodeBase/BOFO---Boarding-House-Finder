@@ -249,7 +249,11 @@ public final class Locator {
             return;
         }
         double[] now = State.gps.get();
-        if (now != null && status.get() == Status.ON) { then.accept(now); return; }
+        if (now != null) {                                   // we already know where the user is: use it right away, never wait for a new fix
+            then.accept(now);
+            if (status.get() != Status.ON) start();          // and refresh quietly in the background
+            return;
+        }
         waiting.add(then);
         Nav.toast("Finding your location...");
         if (status.get() == Status.UNAVAILABLE) status.set(Status.IDLE);

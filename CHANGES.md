@@ -1,3 +1,7 @@
+# v1.16.8 - Owner map: dots + number bubbles again; locate button works
+- Fix: on the owner Dashboard the pins turned into big full pins after the page was scrolled/pinched over the map (no dots, no number bubble). The map now always uses its real zoom.
+- Fix: the round locate button did nothing when your position was already known but the GPS status was not "on". It now flies to your blue dot right away.
+
 # v1.16.7 - Dashboard shows your listings; map names only when zoomed in
 - Owner Dashboard now lists every listing you created (card list under the map).
 - Campus names on the map only appear when zoomed in (zoom 14.5+), and never overlap.
