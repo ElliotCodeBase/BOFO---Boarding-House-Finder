@@ -154,8 +154,6 @@ public final class FilterSheet extends StackPane {
         TranslateTransition t = new TranslateTransition(Duration.millis(240), sheet); t.setToY(0); t.play();
     }
 
-    public boolean isOpen() { return isVisible(); }
-
     public void close() {
         if (!isVisible()) return;
         FadeTransition f = new FadeTransition(Duration.millis(140), scrim); f.setToValue(0); f.play();

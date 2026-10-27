@@ -10,6 +10,12 @@ Patch (x.y.Z) for fixes, minor (x.Y.0) for new features. The v1.2.0 merge once l
 
 ---
 
+# v1.15.3 - Cleanup + faster loading (2026-10-27)
+
+Unused code and bundled mascot images removed; gzip + parallel list loading in `SupabaseClient` / `BhService`; batched, parallel listing publish; shorter splash. Details: `CHANGES.md`.
+
+---
+
 # v1.9.2 - Directions: BH → Campus fix + new look (2026-10-25)
 
 `ui/DirectionsCard.java`, `bofo.css` (plus version, changelog). The map is cleared and the new trip drawn at once when a tab is tapped.

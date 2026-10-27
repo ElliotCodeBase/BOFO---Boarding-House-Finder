@@ -21,12 +21,6 @@ public final class Geo {
     public static String walkText(double km) {
         return km <= 3 ? fmt(km) + " \u00B7 " + fmtTime(Math.max(1, walkMinutes(km))) + " walk" : fmt(km) + " away";
     }
-    /** Length of a {lat,lng} path in km. */
-    public static double pathKm(double[][] pts) {
-        double km = 0;
-        for (int i = 1; i < pts.length; i++) km += km(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]);
-        return km;
-    }
     public static String fmt(double km) { return km < 1 ? Math.round(km * 1000) + " m" : String.format("%.1f km", km); }
 
     /** Compass direction from point 1 to point 2 in degrees (0 = north, 90 = east). Used for the "which way am I walking" arrow. */

@@ -269,7 +269,7 @@ public final class ListingFormView extends VBox {
     }
 
     private void addPhoto(Image img) {
-        byte[] png = Capture.png(img, 1280);
+        byte[] png = Capture.png(img, 1024);
         d.photos.add(png);
         thumbs.getChildren().add(thumb(img, png));
         photosChanged();

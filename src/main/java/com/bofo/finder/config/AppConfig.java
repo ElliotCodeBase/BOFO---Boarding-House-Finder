@@ -19,8 +19,6 @@ public final class AppConfig {
     public static String appVersion() { String v = get("app.version").trim(); return v.isEmpty() ? "dev" : v; }
     public static String supabaseUrl() { return get("supabase.url"); }
     public static String anonKey() { return get("supabase.anonKey"); }
-    public static boolean devBypass() { return "true".equalsIgnoreCase(get("dev.bypassLogin").trim()); }
-    public static String devRole() { String r = get("dev.role").trim(); return r.isEmpty() ? "student" : r; }
     /** DEV: email / password of the real Supabase test account for a role ("student" | "owner" | "admin"), or "" if not configured. */
     public static String devEmail(String role) { return get("dev." + role + ".email").trim(); }
     public static String devPassword(String role) { return get("dev." + role + ".password").trim(); }
