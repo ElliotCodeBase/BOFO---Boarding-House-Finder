@@ -1,4 +1,7 @@
-﻿# v1.15.4 - My listings fits the screen
+﻿# v1.15.5 - My listings: card with a photo no longer wider than the screen
+- Cause: in a one-column list a card was sized with its own minimum width, which a loaded photo makes large, so it ran past the right edge. `CardGrid` now gives a card exactly the column width.
+
+# v1.15.4 - My listings fits the screen
 - Fix: the My listings cards were wider than the screen (photo cut off on the right) and the Boost / Unlist / Delete buttons covered the card text. Now the list is one column sized by the screen width, and the three buttons share the width equally.
 
 # v1.15.3 - Cleanup + faster loading

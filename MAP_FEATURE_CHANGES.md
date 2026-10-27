@@ -10,6 +10,12 @@ Patch (x.y.Z) for fixes, minor (x.Y.0) for new features. The v1.2.0 merge once l
 
 ---
 
+# v1.15.5 - Card wider than the screen (2026-10-27)
+
+`ui/CardGrid.java`: a single-column card gets exactly the column width. Details: `CHANGES.md`.
+
+---
+
 # v1.15.4 - My listings fits the screen (2026-10-27)
 
 `ui/ListingsView.java`: one-column `CardGrid` instead of a VBox; equal-width Boost / Unlist / Delete buttons. Details: `CHANGES.md`.
