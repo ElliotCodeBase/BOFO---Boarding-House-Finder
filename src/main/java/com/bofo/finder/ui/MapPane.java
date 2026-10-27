@@ -813,7 +813,8 @@ public final class MapPane extends StackPane {
             double vw = map.getWidth(), vh = map.getHeight(), zNow = zoomNow();
             boolean far = !Double.isNaN(zNow) && zNow < 15;
             double k = Double.isNaN(zNow) ? 1 : Math.max(1, Math.min(1.7, 1 + (14.5 - zNow) * 0.13));   // markers grow as the map zooms out
-            boolean names = Double.isNaN(zNow) || zNow >= 12.8;
+            double zReal = map.getZoom();                                   // the real zoom (also after a pinch / scroll)
+            boolean names = zReal >= 14.5;                                   // campus names only when zoomed in, so they never pile up
             College chosen = State.college.get();
             // campus labels: short (ellipsis), kept inside the map, and a label that would land on another one is hidden
             // (the chosen campus always wins); zooming in makes room, so more names appear
@@ -840,7 +841,7 @@ public final class MapPane extends StackPane {
                 double lx = p.getX() + name.getLayoutX(), ly = p.getY() - 9, lh = 17;
                 boolean clash = false;
                 for (double[] r : labelBoxes) if (lx < r[0] + r[2] + 2 && lx + nw + 2 > r[0] && ly < r[1] + r[3] && ly + lh > r[1]) { clash = true; break; }
-                boolean showName = (names || mine) && (mine || !clash);
+                boolean showName = names && !clash;
                 name.setVisible(showName);
                 if (showName) labelBoxes.add(new double[]{lx, ly, nw, lh});
                 if (!Boolean.valueOf(mine).equals(n.getProperties().get("mine"))) {          // CSS restyle is slow: only when it really changes

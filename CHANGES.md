@@ -1,4 +1,8 @@
-﻿# v1.16.6 - Preview 4 screen sizes at once (developers)
+# v1.16.7 - Dashboard shows your listings; map names only when zoomed in
+- Owner Dashboard now lists every listing you created (card list under the map).
+- Campus names on the map only appear when zoomed in (zoom 14.5+), and never overlap.
+
+# v1.16.6 - Preview 4 screen sizes at once (developers)
 - New `dev/preview-sizes.ps1` opens the app in a small phone, a normal phone, a big phone and a tablet window side by side. Run: `powershell -ExecutionPolicy Bypass -File dev\preview-sizes.ps1`.
 - `--size=WxH@X,Y` can now also set where the window opens.
 
