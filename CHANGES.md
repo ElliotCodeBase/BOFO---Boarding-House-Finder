@@ -1,3 +1,8 @@
+# v1.16.11 - Locate button works smoothly
+- Fix: tapping the round location button while you were far from the map no longer stutters: the camera flight and the blue dot's glide were both moving the map at once. The dot now waits until the flight is done.
+- The button gives feedback: it shrinks slightly when pressed, and its icon pulses while the phone is still finding you.
+- Tapping it again while it is still finding you is ignored (before, every tap added another flight and another "Finding your location..." message).
+
 # v1.16.10 - Dashboard loading skeleton
 - The owner Dashboard now shows a placeholder for the whole page while it loads: the three Overview tiles, the map and two listing cards pulse in grey, then are replaced by the real content (before, only the tiles had a placeholder and the map and listings popped in later, pushing the page down).
 
