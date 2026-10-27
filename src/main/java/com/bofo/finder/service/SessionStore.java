@@ -24,7 +24,7 @@ public final class SessionStore {
     public SessionStore() {
         File d = StorageService.create().flatMap(StorageService::getPrivateStorage)
                 .orElse(new File(System.getProperty("user.home"), ".bofo"));
-        this.dir = new File(d, "session");
+        this.dir = new File(d, "session" + com.bofo.finder.util.DiskCache.slot());
         dir.mkdirs();
         dataFile = new File(dir, "s.bin");
         keyFile = new File(dir, "k.bin");

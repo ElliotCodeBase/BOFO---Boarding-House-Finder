@@ -607,12 +607,36 @@
 .pin-status { -fx-background-radius: 999; -fx-padding: 9 14; }
 .form-progress { -fx-pref-width: 120; }
 
-/* ---- v1.16.1 context menus (message / chat menus) ---- */
-.context-menu { -fx-background-color: white; -fx-background-radius: 14; -fx-border-color: #E4DFF3; -fx-border-radius: 14; -fx-padding: 6; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.18), 18, 0, 0, 4); }
-.context-menu .menu-item { -fx-background-color: transparent; -fx-background-radius: 10; -fx-padding: 9 18 9 14; -fx-cursor: hand; }
-.context-menu .menu-item .label { -fx-font-size: 14px; -fx-font-weight: normal; -fx-text-fill: #17142A; }
-.context-menu .menu-item:focused { -fx-background-color: #EFEBFF; }
-.context-menu .menu-item:focused .label { -fx-text-fill: #5B3BF0; }
-.context-menu .menu-item.danger .label { -fx-text-fill: #D93A3A; }
-.context-menu .menu-item.danger:focused { -fx-background-color: #FDECEC; }
-.context-menu .menu-item.danger:focused .label { -fx-text-fill: #D93A3A; }
+/* ---- Popup (v-popup): the one in-app pop-up used for every confirm / alert / ask ---- */
+.popup-scrim { -fx-background-color: rgba(23,20,42,0.50); }
+.popup-card { -fx-background-color: white; -fx-background-radius: 28;
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.30), 36, 0.12, 0, 12); }
+.popup-icon { -fx-background-radius: 999; -fx-font-size: 26px; -fx-font-weight: bold; }
+.popup-icon-info { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
+.popup-icon-danger { -fx-background-color: #FCEBEB; -fx-text-fill: -bofo-error; }
+.popup-icon-ok { -fx-background-color: #E3F6EA; -fx-text-fill: #1E8E4E; }
+.popup-title { -fx-font-size: 19px; -fx-font-weight: bold; -fx-text-fill: -bofo-ink; }
+.popup-message { -fx-font-size: 13.5px; -fx-text-fill: -bofo-text-2; -fx-line-spacing: 2; }
+.popup-input { -fx-background-color: #F6F5FC; -fx-border-color: transparent; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 13 16; -fx-font-size: 14px; }
+.popup-input:focused { -fx-background-color: white; -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
+.popup-text-area, .popup-text-area .content { -fx-background-color: #F6F5FC; -fx-background-radius: 16; -fx-font-size: 12.5px; }
+.popup-text-area { -fx-border-color: transparent; -fx-border-radius: 16; }
+.popup-btn { -fx-background-radius: 999; -fx-font-weight: bold; -fx-font-size: 14.5px; -fx-padding: 13 18; -fx-cursor: hand; -fx-min-width: 110; }
+.popup-btn-primary { -fx-background-color: -bofo-primary; -fx-text-fill: white; }
+.popup-btn-primary:hover { -fx-background-color: #6D52F5; }
+.popup-btn-danger { -fx-background-color: -bofo-error; -fx-text-fill: white; }
+.popup-btn-danger:hover { -fx-background-color: #C93A3A; }
+.popup-btn-ghost { -fx-background-color: #F1EFFA; -fx-text-fill: -bofo-text; }
+.popup-btn-ghost:hover { -fx-background-color: #E6E2F6; }
+.popup-btn:disabled { -fx-opacity: 0.45; }
+
+/* ---- Action sheet (Popup.menu): replaces the grey right-click / long-press menus ---- */
+.popup-sheet { -fx-background-color: white; -fx-background-radius: 26; -fx-padding: 10 14 14 14;
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.30), 36, 0.12, 0, 8); }
+.popup-handle { -fx-background-color: #D9D6EA; -fx-background-radius: 999; }
+.popup-sheet-title { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: -bofo-text-2; -fx-padding: 2 8 8 8; }
+.popup-sheet-row { -fx-background-color: transparent; -fx-background-radius: 16; -fx-text-fill: -bofo-ink; -fx-font-size: 15.5px;
+  -fx-font-weight: bold; -fx-padding: 15 14; -fx-cursor: hand; }
+.popup-sheet-row:hover, .popup-sheet-row:pressed { -fx-background-color: #F6F5FC; }
+.popup-sheet-row-danger { -fx-text-fill: -bofo-error; }
+.popup-sheet-row-danger:hover, .popup-sheet-row-danger:pressed { -fx-background-color: #FCEFEF; }

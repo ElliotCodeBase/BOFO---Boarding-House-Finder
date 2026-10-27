@@ -82,11 +82,9 @@ public final class ChatsView extends VBox {
                 String other = c.studentId().equals(me) ? c.ownerId() : c.studentId();
                 // owners see the student's name in the chat header; students see the boarding house name
                 String title = c.ownerId().equals(me) && !c.otherName().isBlank() ? c.otherName() : c.bhName();
-                row.setOnMouseClicked(e -> Nav.show(new ChatView(c.id(), title, null, other, () -> Nav.show(Main.home(), true)), false));
+                row.setOnMouseClicked(e -> Nav.show(new ChatView(c.id(), title, null, other, c.ownerId().equals(me), () -> Nav.show(Main.home(), true)), false));
                 row.setOnContextMenuRequested(e -> {                         // press and hold on a phone, right-click on a PC
-                    ContextMenu cm = Ui.menu(); MenuItem del = new MenuItem("Delete chat"); del.getStyleClass().add("danger");
-                    del.setOnAction(x -> confirmDelete(c, rows));
-                    cm.getItems().add(del); cm.show(row, e.getScreenX(), e.getScreenY()); e.consume();
+                    Popup.menu(title, new Popup.Action("Delete chat", true, () -> confirmDelete(c, rows))); e.consume();
                 });
                 rows.getChildren().add(row);
             }
@@ -94,9 +92,7 @@ public final class ChatsView extends VBox {
     }
 
     private void confirmDelete(Conversation c, VBox rows) {
-        Alert a = new Alert(Alert.AlertType.CONFIRMATION, "The chat and its messages are removed for you. The other person keeps their copy. If they write again, the chat comes back with only the new messages.", ButtonType.CANCEL, ButtonType.OK);
-        Ui.style(a); a.setTitle("Delete chat"); a.setHeaderText("Delete this chat?");
-        a.showAndWait().filter(x -> x == ButtonType.OK).ifPresent(x ->
+        Popup.confirm(Popup.Kind.DANGER, "Delete this chat?", "The chat and its messages are removed for you. The other person keeps their copy. If they write again, the chat comes back with only the new messages.", "Delete", () ->
                 Async.run(() -> { new ChatService().deleteConversation(c.id()); return true; },
                         ok -> { Nav.toast("Chat deleted"); Async.run(() -> new ChatService().inbox(), list -> { lastSig = signature(list); render(rows, list); }, err -> {}); },
                         e -> Ui.failToast(e, "Could not delete the chat")));

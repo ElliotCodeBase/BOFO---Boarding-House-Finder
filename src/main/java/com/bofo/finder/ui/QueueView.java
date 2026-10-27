@@ -42,8 +42,7 @@ public final class QueueView extends VBox {
             rows.getChildren().addAll(Ui.label("ID front  |  Selfie", "h2"), side, Ui.label("ID back", "h2"), back);
             Button ok = Ui.btn("Approve", "btn-primary", () -> decide(v, true, null));
             Button no = Ui.btn("Reject", "btn-danger", () -> {
-                TextInputDialog d = new TextInputDialog(); d.setHeaderText("Reason for rejection (shown to the owner)");
-                d.showAndWait().ifPresent(r -> { if (!r.isBlank()) decide(v, false, r); });
+                Popup.input("Reject this verification?", "Reason for rejection (shown to the owner)", "Write the reason...", "Reject", r -> { if (!r.isBlank()) decide(v, false, r); });
             });
             rows.getChildren().addAll(Ui.hbox(10, ok, no), Ui.btn("← Back to queue", "chip", this::load));
         });

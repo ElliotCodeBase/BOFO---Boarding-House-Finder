@@ -31,8 +31,7 @@ public final class PaymentsView extends VBox {
                         Ui.label(p.getString("reference_number") + " · " + p.getString("created_at").substring(0, 16).replace('T', ' '), "secondary"));
                 if ("paid".equals(p.getString("status"))) {
                     c.getChildren().add(Ui.btn("Mark refunded", "btn-outline", () -> {
-                        TextInputDialog d = new TextInputDialog(); d.setHeaderText("Refund reason (logged)");
-                        d.showAndWait().ifPresent(r -> { if (!r.isBlank()) Async.run(() -> { svc.refund(p.getString("id"), r); return true; }, ok -> load(), e -> Ui.failToast(e, "Failed")); });
+                        Popup.input("Mark as refunded", "Refund reason (logged)", "Write the reason...", "Refund", r -> { if (!r.isBlank()) Async.run(() -> { svc.refund(p.getString("id"), r); return true; }, ok -> load(), e -> Ui.failToast(e, "Failed")); });
                     }));
                 }
                 c.getStyleClass().add("card"); rows.getChildren().add(c);

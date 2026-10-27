@@ -22,7 +22,12 @@ public final class DiskCache {
     /** The folder the user can drop local-transit.json into (the cache folder's parent). */
     public static File root() { return base != null ? base : new File(System.getProperty("user.home"), ".bofo"); }
 
-    private static File dir() { File d = new File(root(), "cache"); d.mkdirs(); return d; }
+    /** PC testing: start a second window with its own login and cache by setting the BOFO_PROFILE environment variable (e.g. "owner"). Empty = normal. */
+    public static String slot() {
+        String v = System.getenv("BOFO_PROFILE"); if (v == null || v.isBlank()) v = System.getProperty("bofo.profile");
+        return v == null || v.isBlank() ? "" : "-" + v.replaceAll("[^A-Za-z0-9_]", "");
+    }
+    private static File dir() { File d = new File(root(), "cache" + slot()); d.mkdirs(); return d; }
 
     private static File file(String name) { return new File(dir(), name.replaceAll("[^A-Za-z0-9._-]", "_")); }
 

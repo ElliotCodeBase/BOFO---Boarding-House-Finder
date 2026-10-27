@@ -42,18 +42,13 @@ public final class ListingsView extends VBox {
     }
 
     private void confirmDelete(BoardingHouse b) {
-        Alert a = new Alert(Alert.AlertType.CONFIRMATION, "\"" + b.name() + "\" and its rooms, photos, reviews and chats will be removed. This cannot be undone.", ButtonType.CANCEL, ButtonType.OK);
-        Ui.style(a); a.setTitle("Delete listing"); a.setHeaderText("Delete this listing?");
-        a.showAndWait().filter(x -> x == ButtonType.OK).ifPresent(x ->
+        Popup.confirm(Popup.Kind.DANGER, "Delete this listing?", "\"" + b.name() + "\" and its rooms, photos, reviews and chats will be removed. This cannot be undone.", "Delete", () ->
                 Async.run(() -> { bh.deleteListing(b.id()); return true; }, ok -> { Nav.toast("Listing deleted"); load(); }, e -> showError("Delete failed", e)));
     }
 
     /** Full, selectable error text in a dialog (a toast vanishes before you can read it). */
     private void showError(String headline, Throwable e) {
         e.printStackTrace();
-        Alert a = new Alert(Alert.AlertType.ERROR, ErrorText.full(headline, e), ButtonType.OK);
-        Ui.style(a); a.setTitle(headline); a.setHeaderText(headline);
-        a.getDialogPane().setMinWidth(420);
-        a.show();
+        Popup.alert(Popup.Kind.ERROR, headline, ErrorText.full(headline, e));
     }
 }
