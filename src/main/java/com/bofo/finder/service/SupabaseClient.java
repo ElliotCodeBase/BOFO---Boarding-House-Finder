@@ -25,7 +25,8 @@ public final class SupabaseClient {
 
     public static class ApiException extends RuntimeException {
         public final int status;
-        public ApiException(int status, String body) { super("HTTP " + status + ": " + body); this.status = status; }
+        public final String body;
+        public ApiException(int status, String body) { super("HTTP " + status + ": " + body); this.status = status; this.body = body == null ? "" : body; }
     }
 
     private HttpRequest.Builder base(String path, boolean authed) {
@@ -70,6 +71,13 @@ public final class SupabaseClient {
                 .header("Prefer", "return=representation")
                 .method("PATCH", HttpRequest.BodyPublishers.ofString(patch.toString())).build());
         return new JSONArray(body);
+    }
+
+    /** DELETE that returns the rows it removed. PostgREST answers 204 even when RLS hid the row (0 rows), so callers can check. */
+    public JSONArray deleteReturning(String table, String filter) throws Exception {
+        String body = send(base("/rest/v1/" + table + "?" + filter, true).header("Prefer", "return=representation")
+                .header("Accept", "application/json").DELETE().build());
+        return body == null || body.isBlank() ? new JSONArray() : new JSONArray(body);
     }
 
     public void delete(String table, String filter) throws Exception {

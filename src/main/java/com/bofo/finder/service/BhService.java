@@ -218,29 +218,52 @@ public final class BhService {
     }
 
     /** Publishing is also blocked server-side by RLS unless users.is_verified = true. */
+    /** Thrown by publish() so the screen can say WHICH part failed (listing, rooms, amenities, contact, photo N). */
+    public static class PublishException extends Exception {
+        public final String step;
+        public PublishException(String step, Throwable cause) { super("Failed while " + step, cause); this.step = step; }
+    }
+
     public String publish(String ownerId, Draft d) throws Exception {
-        JSONObject bh = new JSONObject().put("owner_id", ownerId).put("name", d.name).put("address", d.address)
-                .put("lat", d.lat).put("lng", d.lng).put("price", d.price).put("price_mode", d.priceMode)
-                .put("free_water", d.water).put("free_electricity", d.electricity).put("free_wifi", d.wifi)
-                .put("status", "active");
-        String id = api.insert("boarding_houses", bh).getJSONObject(0).getString("id");
-        for (RoomDraft r : d.rooms) api.insert("rooms", new JSONObject().put("boarding_house_id", id).put("beds", r.beds()).put("occupants", r.occupants()));
-        for (String aid : d.amenityIds) api.insert("bh_amenities", new JSONObject().put("boarding_house_id", id).put("amenity_id", aid));
-        api.insert("bh_contacts", new JSONObject().put("boarding_house_id", id).put("phone", d.phone).put("facebook", d.facebook).put("email", d.email));
-        int n = 0;
-        for (byte[] p : d.photos) {
-            String path = ownerId + "/" + id + "/" + (n++) + ".png";
-            api.upload("bh-photos", path, p, "image/png");
-            api.insert("photos", new JSONObject().put("boarding_house_id", id).put("url", api.publicUrl("bh-photos", path)).put("sort_order", n));
+        String step = "creating the listing";
+        String id = null;
+        try {
+            JSONObject bh = new JSONObject().put("owner_id", ownerId).put("name", d.name).put("address", d.address)
+                    .put("lat", d.lat).put("lng", d.lng).put("price", d.price).put("price_mode", d.priceMode)
+                    .put("free_water", d.water).put("free_electricity", d.electricity).put("free_wifi", d.wifi)
+                    .put("status", "active");
+            id = api.insert("boarding_houses", bh).getJSONObject(0).getString("id");
+            step = "saving the rooms";
+            for (RoomDraft r : d.rooms) api.insert("rooms", new JSONObject().put("boarding_house_id", id).put("beds", r.beds()).put("occupants", r.occupants()));
+            step = "saving the amenities";
+            for (String aid : d.amenityIds) api.insert("bh_amenities", new JSONObject().put("boarding_house_id", id).put("amenity_id", aid));
+            step = "saving the contact details";
+            api.insert("bh_contacts", new JSONObject().put("boarding_house_id", id).put("phone", d.phone).put("facebook", d.facebook).put("email", d.email));
+            int n = 0;
+            for (byte[] p : d.photos) {
+                step = "uploading photo " + (n + 1) + " of " + d.photos.size() + " (" + (p.length / 1024) + " KB)";
+                String path = ownerId + "/" + id + "/" + (n++) + ".png";
+                api.upload("bh-photos", path, p, "image/png");
+                step = "saving photo " + n + " of " + d.photos.size();
+                api.insert("photos", new JSONObject().put("boarding_house_id", id).put("url", api.publicUrl("bh-photos", path)).put("sort_order", n));
+            }
+            Cache.remove("list:");
+            return id;
+        } catch (Exception ex) {
+            // Don't leave a half-built listing live: remove it (rooms/amenities/contacts/photos cascade).
+            if (id != null) { try { api.delete("boarding_houses", "id=eq." + id); } catch (Exception ignored) {} }
+            throw new PublishException(step, ex);
         }
-        Cache.remove("list:");
-        return id;
     }
 
     public void setStatus(String bhId, String status) throws Exception {
         api.update("boarding_houses", "id=eq." + bhId, new JSONObject().put("status", status)); Cache.remove("list:");
     }
-    public void deleteListing(String bhId) throws Exception { api.delete("boarding_houses", "id=eq." + bhId); }
+    public void deleteListing(String bhId) throws Exception {
+        if (api.deleteReturning("boarding_houses", "id=eq." + bhId).length() == 0)
+            throw new IllegalStateException("Nothing was deleted. The listing is already gone, or the database did not allow this account to delete it.");
+        Cache.remove("list:");                                   // the home list must not keep showing it
+    }
 
     public static List<String> names(List<BoardingHouse> l) { return l.stream().map(BoardingHouse::name).collect(Collectors.toList()); }
 }

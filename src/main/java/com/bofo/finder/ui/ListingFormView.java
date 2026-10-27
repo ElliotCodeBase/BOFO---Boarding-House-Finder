@@ -4,13 +4,17 @@ import com.bofo.finder.model.College;
 import com.bofo.finder.service.AuthService;
 import com.bofo.finder.service.BhService;
 import com.bofo.finder.util.Async;
+import com.bofo.finder.model.Role;
 import com.bofo.finder.util.Capture;
+import com.bofo.finder.util.ErrorText;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -40,6 +44,7 @@ public final class ListingFormView extends VBox {
     private final MapPane map = new MapPane(220);
     private final ProgressBar progressBar = new ProgressBar(0);         // fills as the 6 required details are completed
     private java.util.List<College> colleges = java.util.List.of();      // for "how far is this from campus"
+    private VBox errorBox;                                                // scrollable error text + Copy button
     private final Runnable onDone;
 
     /** One room: beds + current occupants as − / + steppers, and a remove button when there is more than one room. */
@@ -147,7 +152,17 @@ public final class ListingFormView extends VBox {
         setErrors("");
         progressBar.getStyleClass().add("form-progress"); progressBar.setMaxWidth(Double.MAX_VALUE);
         HBox prog = new HBox(10, progress, progressBar); prog.setAlignment(Pos.CENTER_LEFT); HBox.setHgrow(progressBar, Priority.ALWAYS);
-        VBox barInner = new VBox(8, errors, prog, buttons); barInner.setMaxWidth(560);
+        // Errors can be long (server message, code, hint): wrap, never cut with "...", scroll if very long, and allow copying.
+        errors.setWrapText(true); errors.setMinHeight(Region.USE_PREF_SIZE); errors.setMaxWidth(Double.MAX_VALUE); errors.setTextOverrun(OverrunStyle.CLIP);
+        ScrollPane errScroll = new ScrollPane(errors); errScroll.setFitToWidth(true); errScroll.setMaxHeight(190);
+        errScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); errScroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        Button copyErr = Ui.btn("Copy error details", "btn-outline", () -> {
+            try { ClipboardContent cc = new ClipboardContent(); cc.putString(errors.getText()); Clipboard.getSystemClipboard().setContent(cc); Nav.toast("Error copied"); }
+            catch (Throwable t) { Nav.toast("Couldn't copy. Select the text from the log instead."); }
+        });
+        errorBox = new VBox(6, errScroll, copyErr);
+        setErrors(errors.getText());
+        VBox barInner = new VBox(8, errorBox, prog, buttons); barInner.setMaxWidth(560);
         StackPane barHolder = new StackPane(barInner); barHolder.getStyleClass().add("sticky-bar");
         barHolder.setPadding(new Insets(10, 16, 12, 16));
 
@@ -220,6 +235,7 @@ public final class ListingFormView extends VBox {
         errors.setText(s);
         boolean show = s != null && !s.isBlank();
         errors.setVisible(show); errors.setManaged(show);
+        if (errorBox != null) { errorBox.setVisible(show); errorBox.setManaged(show); }
     }
 
     /** Counts the required parts that are done and shows it above the Publish button. */
@@ -309,9 +325,10 @@ public final class ListingFormView extends VBox {
         for (RoomRow r : rooms) d.rooms.add(new BhService.RoomDraft(r.beds.getValue(), r.occ.getValue()));
         var errs = BhService.validate(d);
         if (!errs.isEmpty()) { setErrors("• " + String.join("\n• ", errs)); return; }
-        if (!AuthService.get().profile().verified()) { setErrors("Only verified owners can publish. Complete verification first."); return; }
+        var me = AuthService.get().profile();
+        if (!me.verified() && me.role() != Role.ADMIN) { setErrors("Only verified owners can publish. Complete verification first."); return; }
         setErrors("");
         Async.run(() -> new BhService().publish(AuthService.get().userId(), d), id -> { Nav.toast("Listing published!"); onDone.run(); },
-                e -> setErrors("Publish failed. Make sure you are verified and online."));
+                e -> { e.printStackTrace(); setErrors(ErrorText.full("Publish failed", e)); });
     }
 }
