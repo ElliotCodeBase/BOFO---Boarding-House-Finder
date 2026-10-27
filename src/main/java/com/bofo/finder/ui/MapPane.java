@@ -247,6 +247,8 @@ public final class MapPane extends StackPane {
     public void hideLocateButton() { locate.setVisible(false); locate.setManaged(false); }
 
     /** Let the map grow to fill the space it is given (full-screen map mode), with a sensible minimum. */
+    /** Fixed map height that follows the screen (Home sets it from the window height so small phones keep room for the list). */
+    public void setHeightPx(double h) { setMinHeight(h); setPrefHeight(h); setMaxHeight(h); }
     public void fillAvailable(double minHeight) { setMinHeight(minHeight); setPrefHeight(javafx.scene.layout.Region.USE_COMPUTED_SIZE); setMaxHeight(Double.MAX_VALUE); }
 
     /** Current map center {lat, lng}. Used for the owner's "drop pin" (a fixed crosshair sits over the center). */
@@ -812,7 +814,15 @@ public final class MapPane extends StackPane {
             double k = Double.isNaN(zNow) ? 1 : Math.max(1, Math.min(1.7, 1 + (14.5 - zNow) * 0.13));   // markers grow as the map zooms out
             boolean names = Double.isNaN(zNow) || zNow >= 12.8;
             College chosen = State.college.get();
-            for (Node n : collegeGroup.getChildren()) {
+            // campus labels: short (ellipsis), kept inside the map, and a label that would land on another one is hidden
+            // (the chosen campus always wins); zooming in makes room, so more names appear
+            double labelMax = vw < 420 ? 118 : 160;
+            List<double[]> labelBoxes = new ArrayList<>();
+            List<Node> order = new ArrayList<>(collegeGroup.getChildren());
+            if (chosen != null) order.sort((a, b) -> Boolean.compare(
+                    !java.util.Objects.equals(chosen.id(), ((College) a.getUserData()).id()),
+                    !java.util.Objects.equals(chosen.id(), ((College) b.getUserData()).id())));
+            for (Node n : order) {
                 College c = (College) n.getUserData();
                 Point2D p = getMapPoint(c.lat(), c.lng());
                 boolean vis = !sel && p.getX() > -80 && p.getX() < vw + 80 && p.getY() > -30 && p.getY() < vh + 30;
@@ -822,7 +832,16 @@ public final class MapPane extends StackPane {
                 boolean mine = chosen != null && java.util.Objects.equals(chosen.id(), c.id());
                 Circle dot = (Circle) n.getProperties().get("dot"); Label name = (Label) n.getProperties().get("name");
                 dot.setRadius((mine ? 7.5 : 5.5) * Math.min(k, 1.5));
-                name.setVisible(names || mine);
+                if (name.getMaxWidth() != labelMax) name.setMaxWidth(labelMax);
+                double nw = Math.min(labelMax, name.getWidth() > 0 ? name.getWidth() : name.prefWidth(-1));
+                boolean onRight = p.getX() + 9 + nw <= vw - 4;                    // no room on the right: put the name on the left of the dot
+                name.setLayoutX(onRight ? 9 : -9 - nw);
+                double lx = p.getX() + name.getLayoutX(), ly = p.getY() - 9, lh = 17;
+                boolean clash = false;
+                for (double[] r : labelBoxes) if (lx < r[0] + r[2] + 2 && lx + nw + 2 > r[0] && ly < r[1] + r[3] && ly + lh > r[1]) { clash = true; break; }
+                boolean showName = (names || mine) && (mine || !clash);
+                name.setVisible(showName);
+                if (showName) labelBoxes.add(new double[]{lx, ly, nw, lh});
                 if (!Boolean.valueOf(mine).equals(n.getProperties().get("mine"))) {          // CSS restyle is slow: only when it really changes
                     n.getProperties().put("mine", mine);
                     name.setStyle(mine ? "-fx-font-weight:bold;-fx-text-fill:#2A1690;" : "");

@@ -37,7 +37,7 @@ public final class ExploreView extends StackPane {
     private final HBox quickRow = new HBox(8);
     private final ScrollPane quickScroll = new ScrollPane(quickRow);
     private final MapPane map = new MapPane(380);
-    private final CardGrid list = new CardGrid(10, 150, 2);          // 2 columns
+    private final CardGrid list = new CardGrid(10, 136, 2).wide();          // 2 columns on phones, 3-4 on wide windows
     private final ScrollPane listScroll;
     private final StackPane content = new StackPane();
     private final Button filterBtn = new Button();
@@ -102,7 +102,7 @@ public final class ExploreView extends StackPane {
         HBox head = new HBox(8, count, seg); head.setAlignment(Pos.CENTER_LEFT); head.setPadding(new Insets(8, 16, 6, 16));
 
         // ---- content: list (scrolls) or map (fills) ----
-        list.setPadding(new Insets(4, 16, 24, 16));
+        list.setPadding(new Insets(4, 16, 130, 16));
         listScroll = Ui.scroll(list);
         map.fillAvailable(260);
         map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));

@@ -18,13 +18,20 @@ import java.util.List;
 public final class CardGrid extends Pane {
     private final double gap, minCol;
     private final int maxCols;
+    private boolean wide;                                  // true: 3 columns from ~540 px, 4 from ~740 px (tablet / desktop window)
 
     public CardGrid(double gap, double minCol) { this(gap, minCol, Integer.MAX_VALUE); }
     public CardGrid(double gap, double minCol, int maxCols) { this.gap = gap; this.minCol = minCol; this.maxCols = maxCols; }
 
+    /** Lets the grid use 3 and 4 columns on wide windows (phones keep maxCols). */
+    public CardGrid wide() { this.wide = true; return this; }
+
     @Override public Orientation getContentBias() { return Orientation.HORIZONTAL; }   // height depends on width
 
-    private int columns(double w) { return Math.min(maxCols, Math.max(1, (int) Math.floor((w + gap) / (minCol + gap)))); }
+    private int columns(double w) {
+        int cap = wide && maxCols > 1 ? (w >= 740 ? Math.max(maxCols, 4) : w >= 540 ? Math.max(maxCols, 3) : maxCols) : maxCols;
+        return Math.min(cap, Math.max(1, (int) Math.floor((w + gap) / (minCol + gap))));
+    }
 
     private static boolean isCell(Node n) {
         return n instanceof BhCard || n instanceof Skeleton.Card || (n instanceof AdSlot && !((AdSlot) n).fullWidth());
