@@ -1,4 +1,7 @@
-﻿# v1.16.0 - Delete messages and chats
+﻿# v1.16.1 - Fix: chat menus looked huge and ran off the window
+- Popup menus (message menu, chat three-dots menu, chat card menu) are separate windows that did not get the app style: big bold text, default blue highlight. They now use the BOFO look (white rounded card, 14 px text, soft purple highlight, red Delete). The three-dots menu is aligned to the button so it stays inside the window.
+
+# v1.16.0 - Delete messages and chats
 - Press and hold (phone) or right-click (PC) a message: Copy, Delete for me, and for your own messages Delete for everyone. The other person's screen drops a message deleted for everyone within a few seconds.
 - Press and hold / right-click a chat card in Chats: Delete chat. It leaves your list and its old messages are hidden for you; the other person keeps their copy. If they write again the chat comes back with only the new messages. The three dots inside a chat also have Delete chat.
 - Works for students and owners. **Run `supabase/migrations/008_delete_chat.sql` once in Supabase before using it.**

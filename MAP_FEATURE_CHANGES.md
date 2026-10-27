@@ -10,6 +10,12 @@ Patch (x.y.Z) for fixes, minor (x.Y.0) for new features. The v1.2.0 merge once l
 
 ---
 
+# v1.16.1 - Chat menu UI (2026-10-27)
+
+`Ui.menu()`, `bofo.css` (`.context-menu`), `ChatView`, `ChatsView`. Details: `CHANGES.md`.
+
+---
+
 # v1.16.0 - Delete messages and chats (2026-10-27)
 
 `ChatService`, `ui/ChatView.java`, `ui/ChatsView.java`, `supabase/migrations/008_delete_chat.sql` (run it in Supabase). Details: `CHANGES.md`.

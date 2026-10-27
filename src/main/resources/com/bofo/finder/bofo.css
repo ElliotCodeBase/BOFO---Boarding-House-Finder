@@ -606,3 +606,13 @@
 .form-card { -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.07), 14, 0, 0, 3); }
 .pin-status { -fx-background-radius: 999; -fx-padding: 9 14; }
 .form-progress { -fx-pref-width: 120; }
+
+/* ---- v1.16.1 context menus (message / chat menus) ---- */
+.context-menu { -fx-background-color: white; -fx-background-radius: 14; -fx-border-color: #E4DFF3; -fx-border-radius: 14; -fx-padding: 6; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.18), 18, 0, 0, 4); }
+.context-menu .menu-item { -fx-background-color: transparent; -fx-background-radius: 10; -fx-padding: 9 18 9 14; -fx-cursor: hand; }
+.context-menu .menu-item .label { -fx-font-size: 14px; -fx-font-weight: normal; -fx-text-fill: #17142A; }
+.context-menu .menu-item:focused { -fx-background-color: #EFEBFF; }
+.context-menu .menu-item:focused .label { -fx-text-fill: #5B3BF0; }
+.context-menu .menu-item.danger .label { -fx-text-fill: #D93A3A; }
+.context-menu .menu-item.danger:focused { -fx-background-color: #FDECEC; }
+.context-menu .menu-item.danger:focused .label { -fx-text-fill: #D93A3A; }
