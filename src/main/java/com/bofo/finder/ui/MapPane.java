@@ -135,6 +135,27 @@ public final class MapPane extends StackPane {
         addEventFilter(MouseEvent.MOUSE_DRAGGED, e -> { if (inside(e.getTarget(), locate)) return; setFollow(false); centerKnown = false; });
         addEventFilter(ScrollEvent.SCROLL, e -> { setFollow(false); zoomVal = Double.NaN; centerKnown = false; });
         addEventFilter(javafx.scene.input.ZoomEvent.ANY, e -> { zoomVal = Double.NaN; centerKnown = false; });
+        // press and hold on empty map = "I am here": fixes a wrong PC / network location
+        final double[] holdAt = new double[2];
+        final javafx.animation.PauseTransition hold = new javafx.animation.PauseTransition(Duration.millis(700));
+        hold.setOnFinished(e -> {
+            if (map.getWidth() <= 0) return;
+            MapPoint mp = map.getMapPosition(holdAt[0], holdAt[1]);
+            if (mp == null) return;
+            final double lat = mp.getLatitude(), lng = mp.getLongitude();
+            Popup.ask(Popup.Kind.QUESTION, "Set your location here?",
+                    "The blue dot will move to the spot you pressed. Use this if the app shows you in the wrong place (a PC can only guess). Turn location off and on in Settings to go back to automatic.",
+                    "Set here", "Cancel", yes -> { if (yes) Locator.get().setManual(lat, lng); });
+        });
+        addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
+            hold.stop();
+            if (e.getButton() != javafx.scene.input.MouseButton.PRIMARY || inside(e.getTarget(), locate) || inside(e.getTarget(), card)
+                    || inside(e.getTarget(), layer.pinsGroup) || inside(e.getTarget(), layer.clusterGroup)) return;
+            holdAt[0] = e.getSceneX(); holdAt[1] = e.getSceneY(); hold.playFromStart();
+        });
+        addEventFilter(MouseEvent.MOUSE_DRAGGED, e -> { if (Math.hypot(e.getSceneX() - holdAt[0], e.getSceneY() - holdAt[1]) > 10) hold.stop(); });
+        addEventFilter(MouseEvent.MOUSE_RELEASED, e -> hold.stop());
+        addEventFilter(ScrollEvent.SCROLL, e -> hold.stop());
         addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {              // tap on empty map = close the card
             if (selected != null && e.isStillSincePress() && !inside(e.getTarget(), locate) && !inside(e.getTarget(), card)) deselect();
         });
@@ -754,7 +775,9 @@ public final class MapPane extends StackPane {
             Polygon tail = new Polygon(0.0, 0.0, -6.5, -15.0, 6.5, -15.0); tail.setFill(PURPLE);
             Circle head = new Circle(0, -21, 10, PURPLE); head.setStroke(Color.WHITE); head.setStrokeWidth(2.5);
             Circle dot = new Circle(0, -21, 3.4, Color.WHITE);
-            g.getChildren().addAll(hit, tail, head, dot);
+            Label tag = Ui.label(b.name() == null ? "" : b.name(), "map-pin-tag"); tag.setWrapText(false); tag.setMouseTransparent(true); tag.setVisible(false);
+            g.getChildren().addAll(hit, tail, head, dot, tag);
+            g.getProperties().put("tag", tag);
             Scale sc = new Scale(0.001, 0.001, 0, 0);                        // pivot = the tip of the pin
             g.getTransforms().add(sc);
             Scale zs = new Scale(1, 1, 0, 0);                                // zoom-dependent size (bigger when zoomed out), also pivoting on the tip
@@ -945,6 +968,33 @@ public final class MapPane extends StackPane {
                 t.setTranslateX(-t.getLayoutBounds().getWidth() / 2); t.setTranslateY(t.getLayoutBounds().getHeight() * 0.27);
             }
             for (int i = used; i < clusterPool.size(); i++) clusterPool.get(i).setVisible(false);
+
+            // boarding house names: zoomed in, every pin shows its name (kept inside the map; a name that would land on another label is skipped)
+            List<Group> named = new ArrayList<>();
+            for (Node n : pinsGroup.getChildren()) { Group g = (Group) n; if (selId != null && ((BoardingHouse) g.getUserData()).id().equals(selId)) named.add(0, g); else named.add(g); }
+            for (Group g : named) {
+                Label tag = (Label) g.getProperties().get("tag");
+                if (tag == null) continue;
+                BoardingHouse b = (BoardingHouse) g.getUserData();
+                boolean dm = far && !b.id().equals(selId);
+                double tx = g.getTranslateX(), ty = g.getTranslateY();
+                boolean show = zReal >= 12 && g.isVisible() && tx > -20 && tx < vw + 20 && ty > -20 && ty < vh + 40;
+                if (!show) { if (tag.isVisible()) tag.setVisible(false); continue; }
+                Scale zs = (Scale) g.getProperties().get("zs");
+                double ks = zs == null ? 1 : zs.getX();
+                double off = dm ? 9 : 14, offY = dm ? -9 : -30;
+                if (tag.getMaxWidth() != labelMax) tag.setMaxWidth(labelMax);
+                double nw = Math.min(labelMax, tag.getWidth() > 0 ? tag.getWidth() : tag.prefWidth(-1));
+                boolean right = tx + ks * (off + nw) <= vw - 4;
+                double lxOff = right ? off : -off - nw;
+                double lx = tx + ks * lxOff, ly = ty + ks * offY, lw = nw * ks, lh = 17 * ks;
+                boolean clash = false;
+                for (double[] r : labelBoxes) if (lx < r[0] + r[2] + 2 && lx + lw + 2 > r[0] && ly < r[1] + r[3] && ly + lh > r[1]) { clash = true; break; }
+                tag.setVisible(!clash);
+                if (clash) continue;
+                tag.setLayoutX(lxOff); tag.setLayoutY(offY);
+                labelBoxes.add(new double[]{lx, ly, lw, lh});
+            }
 
             boolean hasRoute = rpts != null && rpts.length > 1;
             casing.setVisible(hasRoute); line.setVisible(hasRoute); destDot.setVisible(hasRoute);
