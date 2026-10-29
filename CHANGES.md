@@ -1,3 +1,8 @@
+# v1.18.0 - New live location marker + Home / map redesign
+- **Blue dot redesigned** (new `ui/LiveDot`): glossy blue-indigo core in a white ring with a soft shadow, two staggered ripple rings, and a fading **view cone** that turns the way you move (replaces the tiny arrow). First fix settles in from 82% size; pressing the locate button ends with a "found you" ring + pop on the dot.
+- **Home / map**: softer framed map (28 px corners, white frame), glass **Live / Finding you... / Approximate / Location off** chip on the map (hidden while a campus is chosen, the radius bar uses that spot), 46 px locate button with a clearer "on" state, lighter map colours (land, greens, water, buildings), press feedback on buttons, chips and cards, and a short staggered entrance on the first Home of a login only.
+- Motion follows the ui-animation skill: only transform + opacity animate, enter curve `cubic-bezier(0.22,1,0.36,1)`, never from scale 0, interruptible, ripples pause when the map is off screen.
+
 # v1.17.3 - PC: an old pinned spot can no longer hide your real location
 - Fix: the spot you pinned by pressing and holding the map was saved on the PC and used on every start instead of your real location (easy to trigger by accident). It is now kept for the current session only, and turning "Use my location" off and on again clears it.
 - The console now prints where each location came from, e.g. `[location] wifi service -> 9.37, 122.80` (sources: phone GPS, wifi service, windows, browser, pinned spot, dev.location).
