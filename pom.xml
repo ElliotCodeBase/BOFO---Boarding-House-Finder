@@ -67,6 +67,10 @@
             <packageType>apk</packageType>
             <versionCode>80</versionCode>
             <versionName>1.20.0</versionName>
+          <providedKeyStorePath>${env.BOFO_KS_PATH}</providedKeyStorePath>
+            <providedKeyStorePassword>${env.BOFO_KS_PASS}</providedKeyStorePassword>
+            <providedKeyAlias>bofo</providedKeyAlias>
+            <providedKeyAliasPassword>${env.BOFO_KS_PASS}</providedKeyAliasPassword>
           </releaseConfiguration>
         </configuration>
       </plugin>
