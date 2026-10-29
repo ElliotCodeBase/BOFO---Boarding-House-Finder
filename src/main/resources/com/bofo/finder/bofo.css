@@ -300,8 +300,8 @@
 .radius-slider:focused > .thumb { -fx-background-insets: 0; }
 .map-bh-tag { -fx-background-color: rgba(255,255,255,0.92); -fx-background-radius: 6; -fx-padding: 1 5 1 5;
   -fx-text-fill: #3A22B8; -fx-font-size: 10px; -fx-font-weight: bold; }
-.map-college-tag { -fx-background-color: rgba(255,255,255,0.88); -fx-background-radius: 6; -fx-padding: 1 5 1 5;
-  -fx-text-fill: -bofo-primary-dark; -fx-font-size: 10px; -fx-font-weight: bold; }
+.map-college-tag { -fx-background-color: rgba(255,255,255,0.72); -fx-background-radius: 5; -fx-padding: 0 4 0 4;
+  -fx-text-fill: #6B6486; -fx-font-size: 9px; -fx-font-weight: normal; }
 
 /* ---- Home: college search box + suggestion list ---- */
 .college-box { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-padding: 2 4 2 14;
