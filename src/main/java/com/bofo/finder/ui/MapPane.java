@@ -488,15 +488,26 @@ public final class MapPane extends StackPane {
         if (b == null) return;
         if (preview) pinTapped(b); else flyTo(b.lat(), b.lng(), 16, 650);
     }
+    private double[] glowBackC; private double glowBackZ;     // where the camera was before a price chip zoomed in, so turning the light off can zoom back out
     /**
-     * Lights up the circle (single pin, dot or numbered bubble) where {@code b} is, without selecting it or hiding the others.
-     * Used by the Lowest / Middle / Highest price chips. {@code null} clears it. If the place is off screen the map glides to it.
+     * Lights up the circle (single pin, dot or numbered bubble) where {@code b} is, without selecting it or hiding the others,
+     * and zooms in on it so a bubble opens up into its separate circles. Used by the Lowest / Middle / Highest prices.
+     * {@code null} clears the light and zooms back to where the map was.
      */
     public void glow(BoardingHouse b) {
         if (selected != null) deselect();
         layer.markGlow(b == null ? null : b.id());
-        if (b != null && !layer.onScreen(b.lat(), b.lng())) flyTo(b.lat(), b.lng(), Double.isNaN(zoomVal) ? map.getZoom() : zoomVal, 450);
+        if (b != null) {
+            if (glowBackC == null) { glowBackC = center(); glowBackZ = Double.isNaN(zoomVal) ? map.getZoom() : zoomVal; }
+            setFollow(false);
+            flyTo(b.lat(), b.lng(), 16, 700);
+        } else if (glowBackC != null) {
+            double[] c = glowBackC; glowBackC = null;
+            flyTo(c[0], c[1], glowBackZ, 700);
+        }
     }
+    /** Clears the light without moving the camera (the list is being redrawn and the map is about to move by itself). */
+    public void glowQuiet() { glowBackC = null; layer.markGlow(null); }
     private void pinTapped(BoardingHouse b) {
         if (!preview) { onPin.accept(b); return; }
         if (selected != null && selected.id().equals(b.id())) return;
