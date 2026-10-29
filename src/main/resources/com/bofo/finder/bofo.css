@@ -1,26 +1,34 @@
-/* ===== BOFO theme v5 "Dock" - built around the floating dark dock. Change colors ONLY in the .root block. =====
-   Shape language (same as the dock): pills and circles for anything you tap, big soft corners for surfaces.
-   Radius scale: chips / buttons / search 999 | inputs 16 | cards 20 | photos 16 | notices 16
-   Colour roles: indigo = action + active state | ink (dock colour) = selected + strong secondary action.
-   Cards stay flat (1px cool line, no shadow) so long lists scroll smoothly on phones.
-   Only floating things (dock, mascot, toast, primary button, popups) get a shadow. */
+/* ===== BOFO theme v6 - one cascade, no override blocks. Change colours ONLY in the .root block. =====
+   Colour:   purple = actions + active state | ink = text + selected chip + dock | amber = one small accent (live dot) | everything else neutral.
+   Shape:    16 for cards, inputs, sheets, secondary buttons | 8 for tags, photos inside cards, map labels | 999 for chips, circular icon buttons,
+             avatars and the one primary button | 3 only for slider tracks.
+   Depth:    cards are flat (1px line). Two shadow tiers, neutral black only: float (0.14, blur 12) for things that hover over content (map controls, mascot, toast),
+             overlay (0.24, blur 24) for things that cover content (popups, sheets, dropdowns).
+   Type:     regular + bold only. Bold is set in ONE rule (type roles below); everything else gets hierarchy from size and colour.
+   Gradients: none in this file. */
 .root {
   -bofo-primary: #5B3BF0;
   -bofo-primary-dark: #3A22B8;
   -bofo-primary-tint: #ECE9FF;
-  -bofo-accent: #5B3BF0;
   -bofo-ink: #17142A;
-  -bofo-gold: #E3A008;
-  -bofo-white: #FFFFFF;
-  -bofo-bg: #F5F6FC;
+  -bofo-amber: #FFB400;
   -bofo-text: #17142A;
   -bofo-text-2: #5F5C75;
   -bofo-muted: #8D8AA3;
+  -bofo-bg: #F5F6FC;
   -bofo-border: #E7E8F2;
+  -bofo-skeleton: #E4E5F2;
   -bofo-success: #1E8E5E;
+  -bofo-success-tint: #E1F4EA;
   -bofo-error: #D14343;
+  -bofo-error-tint: #FCEBEB;
+  -bofo-warn-tint: #FFF4DC;
+  -bofo-google: #4285F4;
+  -bofo-hover: derive(-bofo-primary, 18%);
+  -bofo-scrim: rgba(23,20,42,0.50);
   -fx-font-family: "Segoe UI", "Roboto", "System";
   -fx-font-size: 14px;
+  -fx-font-weight: normal;
   -fx-background-color: -bofo-bg;
   -fx-text-fill: -bofo-text;
   -fx-focus-color: transparent;
@@ -28,684 +36,408 @@
 }
 .label { -fx-text-fill: -bofo-text; }
 
-/* ---- Type scale: 12 caption / 14 body / 17 subtitle / 22 title / 28 display ---- */
+/* ---- Type roles: the only place bold is set (headings, prices, primary button, avatar initials) ---- */
+.title, .login-title, .greet-name, .h2, .section, .home-title, .page-title, .step-title, .filter-title, .dir-head, .popup-title, .profile-name,
+.chat-row-name, .settings-brand, .app-bar .label, .dialog-pane > .header-panel .label { -fx-font-weight: bold; }
+.price, .price-big, .btn-primary, .avatar, .hdr-avatar { -fx-font-weight: bold; }
+.title { -fx-font-size: 22px; }
+.login-title { -fx-font-size: 28px; }
+.greet-name { -fx-font-size: 22px; }
+.page-header .greet-name { -fx-font-size: 22px; }
+.greet-hello { -fx-font-size: 13px; -fx-text-fill: -bofo-text-2; }
+.h2, .section { -fx-font-size: 17px; }
 .secondary { -fx-text-fill: -bofo-text-2; -fx-font-size: 12px; }
-.title { -fx-font-size: 22px; -fx-font-weight: bold; }
-.login-title { -fx-font-size: 28px; -fx-font-weight: bold; }
-.greet-name { -fx-font-size: 22px; -fx-font-weight: bold; }
-.h2 { -fx-font-size: 17px; -fx-font-weight: bold; }
-.section { -fx-font-size: 17px; -fx-font-weight: bold; }
 .row-label { -fx-font-size: 14px; }
 .preview { -fx-text-fill: -bofo-text-2; -fx-font-size: 13px; }
 .error-text { -fx-text-fill: -bofo-error; -fx-font-size: 13px; }
 .hline { -fx-background-color: -bofo-border; -fx-min-height: 1; -fx-pref-height: 1; -fx-max-height: 1; }
 
-/* ---- Top bar: sits straight on the page background, no strip, no line ---- */
+/* ---- Top bar, page header (all four main tabs share it) ---- */
 .app-bar { -fx-background-color: transparent; -fx-padding: 14 20 8 20; }
-.app-bar .label { -fx-text-fill: -bofo-text; -fx-font-size: 20px; -fx-font-weight: bold; }
+.app-bar .label { -fx-font-size: 20px; }
 .status-fill { -fx-background-color: -bofo-ink; }
+.page-header { -fx-background-color: transparent; -fx-padding: 16 16 4 16; }
+.page-header .page-title { -fx-font-size: 28px; }
+.page-header .page-sub { -fx-text-fill: -bofo-text-2; -fx-font-size: 13px; }
 
-/* ---- Buttons: pills, like the dock ---- */
+/* ---- Buttons: one pill (primary), everything else 16 ---- */
 .button { -fx-cursor: hand; }
-.btn-primary { -fx-background-color: -bofo-primary; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 15px;
-  -fx-background-radius: 999; -fx-padding: 14 28; -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.28), 14, 0, 0, 5); }
-.btn-primary:hover { -fx-background-color: #6D52F5; }
+.btn-primary { -fx-background-color: -bofo-primary; -fx-text-fill: white; -fx-font-size: 15px; -fx-background-radius: 999; -fx-padding: 14 28; }
+.btn-primary:hover { -fx-background-color: -bofo-hover; }
 .btn-primary:pressed { -fx-background-color: -bofo-primary-dark; }
-.btn-primary:disabled { -fx-opacity: 0.45; -fx-effect: null; }
-.btn-outline { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-text-fill: -bofo-text; -fx-font-weight: bold;
-  -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 12 24; }
-.btn-outline:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
+.btn-primary:disabled { -fx-opacity: 0.45; }
+.btn-outline, .btn-google, .btn-danger, .btn-ghost-filter, .btn-logout { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-text-fill: -bofo-text;
+  -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 12 24; }
+.btn-outline:hover, .btn-ghost-filter:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
 .btn-outline:pressed { -fx-background-color: -bofo-border; }
-.btn-cta { -fx-background-color: -bofo-ink; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 12 24; }
-.btn-cta:hover { -fx-background-color: #2C2750; }
-.btn-danger { -fx-background-color: white; -fx-border-color: #F0CBCB; -fx-border-radius: 999; -fx-text-fill: -bofo-error;
-  -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 12 24; }
-.btn-danger:hover { -fx-background-color: #FCEFEF; }
-.btn-google { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-text-fill: -bofo-text;
-  -fx-font-weight: bold; -fx-background-radius: 999; -fx-border-radius: 999; -fx-padding: 12 24; }
+.btn-danger { -fx-text-fill: -bofo-error; }
+.btn-danger:hover { -fx-background-color: -bofo-error-tint; }
+.btn-ghost-filter { -fx-text-fill: -bofo-text-2; -fx-font-size: 15px; -fx-padding: 13 22; }
+.btn-logout { -fx-border-color: -bofo-primary; -fx-border-width: 1.5; -fx-text-fill: -bofo-primary; -fx-font-size: 15px; -fx-padding: 14 24; }
+.btn-logout:hover { -fx-background-color: -bofo-primary-tint; }
+.btn-cta { -fx-background-color: -bofo-ink; -fx-text-fill: white; -fx-background-radius: 16; -fx-padding: 12 24; }
+.btn-cta:hover { -fx-background-color: derive(-bofo-ink, 20%); }
+.btn-tint { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-background-radius: 16; -fx-padding: 12 24; }
+.btn-tint:hover { -fx-background-color: derive(-bofo-primary-tint, -6%); }
+.btn-link { -fx-background-color: transparent; -fx-text-fill: -bofo-primary; -fx-padding: 8 12; }
+.btn-link:hover { -fx-text-fill: -bofo-primary-dark; -fx-underline: true; }
+.btn-sm { -fx-padding: 9 12; -fx-font-size: 13px; }
 .link { -fx-background-color: transparent; -fx-text-fill: -bofo-primary; -fx-underline: true; -fx-font-size: 12px; -fx-padding: 2 4; }
-.g-badge { -fx-background-color: white; -fx-text-fill: #4285F4; -fx-font-weight: bold; -fx-background-radius: 999;
-  -fx-min-width: 24; -fx-min-height: 24; -fx-alignment: center; }
-.icon-btn { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; -fx-padding: 0;
-  -fx-text-fill: -bofo-text; -fx-font-size: 18px; }
-.icon-btn:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
-.icon-btn-primary { -fx-background-color: -bofo-primary; -fx-background-radius: 999; -fx-min-width: 46; -fx-min-height: 46;
-  -fx-pref-width: 46; -fx-pref-height: 46; -fx-padding: 0; }
-.icon-btn-primary:hover { -fx-background-color: #6D52F5; }
+.link-danger { -fx-background-color: transparent; -fx-text-fill: -bofo-error; -fx-font-size: 13px; -fx-padding: 8 12; }
+.link-danger:hover { -fx-underline: true; }
+.g-badge { -fx-background-color: white; -fx-text-fill: -bofo-google; -fx-background-radius: 999; -fx-min-width: 24; -fx-min-height: 24; -fx-alignment: center; }
+
+/* ---- Round icon buttons (header bell, locate, close, filter, search clear, map FAB, mascot) ---- */
+.icon-btn, .hdr-btn, .near-btn, .filter-btn, .map-fab { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-padding: 0; -fx-text-fill: -bofo-text; -fx-font-size: 18px; }
+.icon-btn { -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; }
+.hdr-btn, .hdr-btn-cta { -fx-min-width: 44; -fx-min-height: 44; -fx-pref-width: 44; -fx-pref-height: 44; -fx-max-width: 44; -fx-max-height: 44; }
+.near-btn { -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; -fx-max-width: 42; -fx-max-height: 42; }
+.filter-btn { -fx-min-width: 50; -fx-min-height: 50; -fx-pref-width: 50; -fx-pref-height: 50; }
+.map-fab { -fx-border-color: transparent; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.14), 12, 0, 0, 3); -fx-min-width: 46; -fx-min-height: 46; -fx-pref-width: 46; -fx-pref-height: 46; -fx-max-width: 46; -fx-max-height: 46; }
+.icon-btn:hover, .hdr-btn:hover, .near-btn:hover, .filter-btn:hover, .map-fab:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
+.near-btn-on, .filter-btn-on, .map-fab-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; }
+.map-fab-on { -fx-border-width: 2; }
+.hdr-btn:pressed, .map-fab:pressed { -fx-scale-x: 0.94; -fx-scale-y: 0.94; }
+.icon-btn-primary { -fx-background-color: -bofo-primary; -fx-background-radius: 999; -fx-min-width: 46; -fx-min-height: 46; -fx-pref-width: 46; -fx-pref-height: 46; -fx-padding: 0; }
+.icon-btn-primary:hover { -fx-background-color: -bofo-hover; }
 .icon-circle { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 999; }
-
-/* ---- Cards: white, 1px cool line, big soft corners, no shadow ---- */
-.card { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 20; -fx-background-radius: 20; -fx-padding: 16; }
-/* loading placeholders (Skeleton.java); the whole group pulses */
-.skeleton { -fx-background-color: #E4E5F2; -fx-background-radius: 8; }
-.photo-placeholder { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 16; }
-.menu-row { -fx-padding: 10 0; -fx-cursor: hand; }
-
-/* ---- Chips, tags, badges ---- */
-.chip { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-text-fill: -bofo-text; -fx-padding: 8 16; -fx-font-size: 13px; }
-.chip:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
-.chip-selected { -fx-background-color: -bofo-ink; -fx-border-color: -bofo-ink; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-text-fill: white; -fx-padding: 8 16; -fx-font-size: 13px; }
-.college-chip { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-text-fill: -bofo-text; -fx-font-weight: bold; -fx-padding: 9 16; }
-.college-chip:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
-.tag { -fx-background-color: -bofo-bg; -fx-border-color: -bofo-border; -fx-border-radius: 8; -fx-background-radius: 8;
-  -fx-text-fill: -bofo-text-2; -fx-padding: 2 8; -fx-font-size: 11px; }
-.badge-hot { -fx-background-color: #FFF4DC; -fx-text-fill: #7A5200; -fx-background-radius: 8; -fx-padding: 3 8; -fx-font-weight: bold; -fx-font-size: 11px; }
-.badge-verified { -fx-background-color: #E1F4EA; -fx-text-fill: -bofo-success; -fx-background-radius: 8; -fx-padding: 3 8; -fx-font-weight: bold; -fx-font-size: 11px; }
-.pill-green { -fx-background-color: white; -fx-text-fill: -bofo-success; -fx-background-radius: 999; -fx-padding: 4 10;
-  -fx-font-size: 11px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.18), 6, 0, 0, 1); }
-.pill-grey { -fx-background-color: white; -fx-text-fill: -bofo-text-2; -fx-background-radius: 999; -fx-padding: 4 10;
-  -fx-font-size: 11px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.18), 6, 0, 0, 1); }
-.stars { -fx-text-fill: -bofo-gold; -fx-font-size: 12px; }
-.price { -fx-text-fill: -bofo-text; -fx-font-weight: bold; -fx-font-size: 17px; }
+.hdr-btn-cta { -fx-background-color: -bofo-ink; -fx-background-radius: 999; -fx-padding: 0; -fx-cursor: hand; }
+.hdr-btn-cta:hover { -fx-background-color: derive(-bofo-ink, 20%); }
+.hdr-btn-cta:pressed { -fx-background-color: derive(-bofo-ink, 35%); }
+.hdr-avatar { -fx-background-color: -bofo-primary; -fx-text-fill: white; -fx-background-radius: 999; }
+.search-clear { -fx-background-color: transparent; -fx-background-radius: 999; -fx-padding: 8; }
+.search-clear:hover { -fx-background-color: -bofo-bg; }
+.filter-close { -fx-background-color: -bofo-bg; -fx-background-radius: 999; -fx-min-width: 36; -fx-min-height: 36; -fx-pref-width: 36; -fx-pref-height: 36; -fx-padding: 0; }
+.filter-close:hover { -fx-background-color: -bofo-primary-tint; }
+.chat-icon-btn { -fx-background-color: transparent; -fx-background-radius: 999; -fx-border-color: transparent; -fx-text-fill: -bofo-text; -fx-font-size: 18px;
+  -fx-min-width: 38; -fx-min-height: 38; -fx-pref-width: 38; -fx-pref-height: 38; -fx-padding: 0; -fx-cursor: hand; }
+.chat-icon-btn:hover { -fx-background-color: -bofo-primary-tint; }
+.thumb-x { -fx-background-color: rgba(23,20,42,0.62); -fx-background-radius: 999; -fx-min-width: 20; -fx-min-height: 20; -fx-pref-width: 20; -fx-pref-height: 20; -fx-max-width: 20; -fx-max-height: 20; -fx-padding: 0; -fx-cursor: hand; }
+.thumb-x:hover { -fx-background-color: -bofo-error; }
 .heart { -fx-background-color: transparent; -fx-text-fill: -bofo-text-2; -fx-font-size: 20px; }
 .heart-on { -fx-background-color: transparent; -fx-text-fill: -bofo-primary; -fx-font-size: 20px; }
-.heart-fab { -fx-background-color: white; -fx-background-radius: 999; -fx-min-width: 36; -fx-min-height: 36; -fx-pref-width: 36;
-  -fx-pref-height: 36; -fx-padding: 0; -fx-font-size: 17px; -fx-text-fill: -bofo-text-2;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.18), 6, 0, 0, 1); }
-.heart-fab-on { -fx-background-color: white; -fx-background-radius: 999; -fx-min-width: 36; -fx-min-height: 36; -fx-pref-width: 36;
-  -fx-pref-height: 36; -fx-padding: 0; -fx-font-size: 17px; -fx-text-fill: -bofo-primary;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.18), 6, 0, 0, 1); }
-.stat-value { -fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: -bofo-primary; }
-.avatar { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-font-weight: bold; }
-.unread { -fx-background-color: -bofo-primary; -fx-text-fill: white; -fx-background-radius: 999;
-  -fx-padding: 1 7; -fx-font-size: 11px; -fx-font-weight: bold; }
+.heart-fab, .heart-fab-on { -fx-background-color: white; -fx-background-radius: 999; -fx-min-width: 32; -fx-min-height: 32; -fx-pref-width: 32; -fx-pref-height: 32;
+  -fx-max-width: 32; -fx-max-height: 32; -fx-padding: 0; -fx-font-size: 16px; -fx-text-fill: -bofo-text-2; }
+.heart-fab-on { -fx-text-fill: -bofo-primary; }
+
+/* ---- Cards: white, 1px line, 16 radius, flat ---- */
+.card, .filter-panel, .filter-group, .settings-card, .form-card { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 16; }
+.card:hover { -fx-border-color: -bofo-primary-tint; }
+.card-compact { -fx-padding: 8; }
+.card-compact:pressed { -fx-scale-x: 0.98; -fx-scale-y: 0.98; }
+.card-compact .h2 { -fx-font-size: 14px; }
+.card-compact .price-big { -fx-font-size: 17px; }
+.card-compact .price-unit { -fx-font-size: 11px; }
+.card-compact .secondary { -fx-font-size: 12px; }
+.card-compact .tag { -fx-font-size: 10px; -fx-padding: 1 6; }
+.card-compact .heart-fab, .card-compact .heart-fab-on { -fx-min-width: 30; -fx-min-height: 30; -fx-pref-width: 30; -fx-pref-height: 30; -fx-max-width: 30; -fx-max-height: 30; -fx-font-size: 15px; }
+.filter-group { -fx-padding: 14 14 16 14; }
+.settings-card { -fx-padding: 0; }
+.form-card { -fx-padding: 18; }
+.menu-row { -fx-padding: 10 0; -fx-cursor: hand; }
+/* a photo that is loading is a pulsing neutral block (Skeleton.java, Ui.trackLoading); a missing photo is the same block, still. No icons. */
+.skeleton, .photo-placeholder { -fx-background-color: -bofo-skeleton; -fx-background-radius: 8; }
+.hero-empty { -fx-background-color: -bofo-skeleton; -fx-background-radius: 16; }
+.price-big { -fx-text-fill: -bofo-text; -fx-font-size: 18px; }
+.price-unit { -fx-text-fill: -bofo-text-2; -fx-font-size: 13px; }
+.price { -fx-text-fill: -bofo-text; -fx-font-size: 17px; }
+.meta-dot { -fx-text-fill: -bofo-muted; -fx-font-size: 12px; }
+.stars { -fx-text-fill: -bofo-text; -fx-font-size: 12px; }
+.ad-card { -fx-background-color: -bofo-bg; -fx-border-color: -bofo-border; }
+.ad-cta { -fx-text-fill: -bofo-primary; -fx-font-size: 12px; }
+
+/* ---- Chips, tags, badges ---- */
+.chip, .amenity-chip, .amenity-pill, .college-chip { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-text-fill: -bofo-text; -fx-padding: 8 16; -fx-font-size: 13px; -fx-font-weight: normal; -fx-cursor: hand; }
+.chip:hover, .amenity-chip:hover, .college-chip:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
+.chip-selected { -fx-background-color: -bofo-ink; -fx-border-color: -bofo-ink; -fx-border-radius: 999; -fx-background-radius: 999; -fx-text-fill: white;
+  -fx-padding: 8 16; -fx-font-size: 13px; -fx-font-weight: normal; }
+.chip:pressed, .chip-selected:pressed { -fx-scale-x: 0.96; -fx-scale-y: 0.96; }
+.amenity-chip, .amenity-pill { -fx-padding: 8 14; }
+.amenity-pill { -fx-padding: 6 12; }
+.amenity-chip-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; -fx-text-fill: -bofo-primary-dark; }
+.amenity-add { -fx-background-color: transparent; -fx-border-color: -bofo-primary; -fx-border-style: segments(6, 4); -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-text-fill: -bofo-primary; -fx-padding: 8 14; -fx-font-size: 13px; -fx-cursor: hand; }
+.amenity-add:hover { -fx-background-color: -bofo-primary-tint; }
+.see-all { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 999; -fx-text-fill: -bofo-primary-dark; -fx-font-size: 12.5px; -fx-padding: 7 14; -fx-cursor: hand; }
+.see-all:hover { -fx-background-color: derive(-bofo-primary-tint, -6%); }
+.quick-row, .quick-row > .viewport { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; }
+.tag, .badge-hot, .badge-verified, .tag-open, .tag-full, .count-pill { -fx-background-radius: 8; -fx-border-radius: 8; -fx-font-size: 11px; -fx-padding: 3 8; }
+.tag { -fx-background-color: -bofo-bg; -fx-border-color: -bofo-border; -fx-text-fill: -bofo-text-2; -fx-padding: 2 8; }
+.badge-hot { -fx-background-color: -bofo-bg; -fx-text-fill: -bofo-text; }
+.badge-verified { -fx-background-color: -bofo-success-tint; -fx-text-fill: -bofo-success; }
+.tag-open, .tag-full { -fx-background-color: white; -fx-text-fill: -bofo-success; }                      /* on a photo: white label, no shadow */
+.tag-full { -fx-text-fill: -bofo-text-2; }
+.count-pill { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
+.pill-ok, .pill-full { -fx-background-radius: 999; -fx-padding: 4 10; -fx-font-size: 12px; }
+.pill-ok { -fx-background-color: -bofo-success-tint; -fx-text-fill: -bofo-success; }
+.pill-full { -fx-background-color: -bofo-error-tint; -fx-text-fill: -bofo-error; }
+.avatar { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
+.unread, .nav-badge, .filter-badge { -fx-background-color: -bofo-primary; -fx-text-fill: white; -fx-background-radius: 999; -fx-padding: 1 6; -fx-font-size: 10px; }
+.unread { -fx-padding: 1 7; -fx-font-size: 11px; }
+.nav-badge { -fx-background-color: -bofo-error; -fx-padding: 1 5; -fx-border-color: white; -fx-border-radius: 999; -fx-border-width: 1.5; }
+.filter-badge { -fx-border-color: -bofo-bg; -fx-border-radius: 999; -fx-border-width: 2; }
 
 /* ---- Inputs ---- */
-.text-field, .text-area, .combo-box-base { -fx-background-color: white; -fx-background-insets: 0; -fx-border-color: -bofo-border;
-  -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 12 16; -fx-prompt-text-fill: #A3A0B8; }
-.text-field:focused, .text-area:focused, .combo-box-base:focused { -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
+.text-field, .text-area, .combo-box-base, .filter-input, .popup-input { -fx-background-color: white; -fx-background-insets: 0; -fx-border-color: -bofo-border;
+  -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 12 16; -fx-prompt-text-fill: -bofo-muted; }
+.text-field:focused, .text-area:focused, .combo-box-base:focused, .filter-input:focused, .popup-input:focused { -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
 .text-field:disabled, .text-area:disabled { -fx-opacity: 0.6; }
 .text-area .content { -fx-background-color: white; -fx-background-radius: 16; }
-.search-field { -fx-background-radius: 999; -fx-border-radius: 999; -fx-padding: 13 20; }
-.search-pill { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-padding: 14 20; -fx-cursor: hand; }
+.search-field { -fx-padding: 13 20; }
+.search-pill { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 14 20; -fx-cursor: hand; }
 .search-pill:hover { -fx-border-color: -bofo-primary; }
-
-/* Combo box (Sort, dropdowns) */
 .combo-box-base { -fx-padding: 0 4 0 0; }
 .combo-box-base > .list-cell { -fx-background-color: transparent; -fx-text-fill: -bofo-text; -fx-padding: 12 6 12 16; }
 .combo-box-base > .arrow-button { -fx-background-color: transparent; -fx-padding: 0 10 0 4; }
 .combo-box-base > .arrow-button > .arrow { -fx-background-color: -bofo-text-2; }
-.combo-box-popup > .list-view { -fx-background-color: white; -fx-background-radius: 16; -fx-border-color: -bofo-border; -fx-border-radius: 16;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.16), 16, 0, 0, 5); -fx-padding: 6; }
-.combo-box-popup > .list-view .list-cell { -fx-background-color: transparent; -fx-background-radius: 999; -fx-padding: 10 14; -fx-text-fill: -bofo-text; }
+.combo-box-popup > .list-view, .college-list { -fx-background-color: white; -fx-background-insets: 0; -fx-background-radius: 16; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.24), 24, 0, 0, 8); -fx-padding: 6; }
+.combo-box-popup > .list-view .list-cell { -fx-background-color: transparent; -fx-background-radius: 8; -fx-padding: 10 14; -fx-text-fill: -bofo-text; }
 .combo-box-popup > .list-view .list-cell:hover { -fx-background-color: -bofo-bg; }
 .combo-box-popup > .list-view .list-cell:filled:selected { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
-
-/* Check box */
 .check-box { -fx-text-fill: -bofo-text; -fx-label-padding: 0 0 0 10; -fx-padding: 6 0; }
-.check-box > .box { -fx-background-color: white; -fx-background-insets: 0; -fx-background-radius: 7; -fx-border-color: #C4C1D8;
-  -fx-border-radius: 7; -fx-border-width: 1.5; -fx-padding: 3; }
+.check-box > .box { -fx-background-color: white; -fx-background-insets: 0; -fx-background-radius: 8; -fx-border-color: -bofo-muted; -fx-border-radius: 8; -fx-border-width: 1.5; -fx-padding: 3; }
 .check-box > .box > .mark { -fx-background-color: transparent; -fx-padding: 0.4em 0.5em; }
 .check-box:selected > .box { -fx-background-color: -bofo-primary; -fx-border-color: -bofo-primary; }
 .check-box:selected > .box > .mark { -fx-background-color: white; }
-
-/* Slider */
 .slider { -fx-padding: 6 0; }
-.slider > .track { -fx-background-color: -bofo-border; -fx-background-insets: 0; -fx-background-radius: 3; -fx-padding: 3; }   /* small radius: JavaFX stretches the track by this much on each side */
-.slider > .thumb { -fx-background-color: -bofo-primary; -fx-background-insets: 0; -fx-background-radius: 999; -fx-padding: 9;
-  -fx-border-color: white; -fx-border-width: 3; -fx-border-radius: 999; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.25), 5, 0, 0, 1); }
+.slider > .track { -fx-background-color: -bofo-border; -fx-background-insets: 0; -fx-background-radius: 3; -fx-padding: 3; }   /* keep this small, JavaFX stretches the track by this much on each side */
+.slider > .thumb { -fx-background-color: -bofo-primary; -fx-background-insets: 0; -fx-background-radius: 999; -fx-padding: 9; -fx-border-color: white; -fx-border-width: 3; -fx-border-radius: 999; }
+.stepper { -fx-background-color: white; -fx-background-radius: 16; -fx-border-color: -bofo-border; -fx-border-radius: 16; }
+.stepper .text-field, .stepper .text-field:focused { -fx-background-color: transparent; -fx-border-width: 0; -fx-padding: 8 0; -fx-alignment: center; }
+.stepper .increment-arrow-button, .stepper .decrement-arrow-button { -fx-background-color: transparent; -fx-background-insets: 0; -fx-background-radius: 8; -fx-padding: 8 12; }
+.stepper .increment-arrow-button:hover, .stepper .decrement-arrow-button:hover { -fx-background-color: -bofo-primary-tint; }
+.stepper .increment-arrow, .stepper .decrement-arrow { -fx-background-color: -bofo-primary; }
 
-/* Scroll bars: thin, quiet */
+/* ---- Scroll bars, tooltip, dialogs ---- */
 .scroll-pane, .scroll-pane > .viewport { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; }
 .scroll-pane:focused { -fx-background-insets: 0; }
 .scroll-bar:vertical { -fx-background-color: transparent; -fx-pref-width: 8; -fx-padding: 2; }
 .scroll-bar:horizontal { -fx-background-color: transparent; -fx-pref-height: 8; -fx-padding: 2; }
 .scroll-bar > .track, .scroll-bar > .track-background { -fx-background-color: transparent; -fx-border-color: transparent; }
-.scroll-bar > .thumb { -fx-background-color: #D5D3E6; -fx-background-radius: 6; -fx-background-insets: 0; }
-.scroll-bar > .thumb:hover { -fx-background-color: #BDBAD4; }
+.scroll-bar > .thumb { -fx-background-color: -bofo-skeleton; -fx-background-radius: 3; -fx-background-insets: 0; }
+.scroll-bar > .thumb:hover { -fx-background-color: -bofo-muted; }
 .scroll-bar > .increment-button, .scroll-bar > .decrement-button { -fx-padding: 0; -fx-pref-height: 0; -fx-pref-width: 0; -fx-background-color: transparent; }
 .scroll-bar > .increment-button > .increment-arrow, .scroll-bar > .decrement-button > .decrement-arrow { -fx-padding: 0; -fx-shape: ""; }
 .scroll-pane > .corner { -fx-background-color: transparent; }
-
-/* Tooltip and dialogs */
-.tooltip { -fx-background-color: -bofo-ink; -fx-text-fill: white; -fx-background-radius: 999; -fx-font-size: 12px; -fx-padding: 6 12; }
+.college-list .scroll-bar:horizontal { -fx-pref-height: 0; -fx-min-height: 0; -fx-max-height: 0; -fx-opacity: 0; }
+.tooltip { -fx-background-color: -bofo-ink; -fx-text-fill: white; -fx-background-radius: 8; -fx-font-size: 12px; -fx-padding: 6 12; }
 .dialog-pane { -fx-background-color: white; -fx-font-family: "Segoe UI", "Roboto", "System"; }
 .dialog-pane > .header-panel { -fx-background-color: white; -fx-padding: 18 22 4 22; }
-.dialog-pane > .header-panel .label { -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
+.dialog-pane > .header-panel .label { -fx-font-size: 18px; -fx-text-fill: -bofo-text; }
 .dialog-pane > .content.label { -fx-text-fill: -bofo-text-2; -fx-padding: 4 22 18 22; }
 .dialog-pane > .button-bar > .container { -fx-padding: 8 18 18 18; }
-.dialog-pane .button { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 10 22; }
-.dialog-pane .button:default { -fx-background-color: -bofo-primary; -fx-border-color: -bofo-primary; -fx-text-fill: white; -fx-font-weight: bold; }
+.dialog-pane .button { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 10 22; }
+.dialog-pane .button:default { -fx-background-color: -bofo-primary; -fx-border-color: -bofo-primary; -fx-text-fill: white; }
 
-/* ---- Floating tab bar: white bar, lavender highlight that slides to the active tab (see Shell.java) ---- */
-.dock-bar { -fx-background-color: white; -fx-background-radius: 24; }
-.dock-highlight { -fx-background-color: #E9E5FF; -fx-background-radius: 16; }
-.dock-btn { -fx-background-color: transparent; -fx-background-radius: 16; -fx-padding: 0; }
+/* ---- Floating tab bar (Shell.java): white bar, lavender highlight that slides to the active tab ---- */
+.dock-bar { -fx-background-color: white; -fx-background-radius: 16; }
+.dock-highlight { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 8; }
+.dock-btn { -fx-background-color: transparent; -fx-background-radius: 8; -fx-padding: 0; }
 .dock-btn:hover { -fx-background-color: rgba(91,59,240,0.06); }
-.nav-badge { -fx-background-color: #E5484D; -fx-text-fill: white; -fx-background-radius: 999; -fx-font-size: 10px;
-  -fx-font-weight: bold; -fx-padding: 1 5; -fx-border-color: white; -fx-border-radius: 999; -fx-border-width: 1.5; }
+.dock-create { -fx-background-color: -bofo-ink; -fx-background-radius: 16; }
+.dock-btn:hover .dock-create { -fx-background-color: derive(-bofo-ink, 20%); }
 
-/* ---- Explore: search bar, filter button, filter panel, List | Map switch ---- */
-.search-bar { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-padding: 0 8 0 18; -fx-min-height: 50; -fx-pref-height: 50; }
-.search-bar-focus { -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
-.search-input, .search-input:focused { -fx-background-color: transparent; -fx-background-insets: 0; -fx-border-color: transparent;
-  -fx-padding: 0; -fx-font-size: 15px; -fx-prompt-text-fill: #A3A0B8; }
-.search-clear { -fx-background-color: transparent; -fx-background-radius: 999; -fx-padding: 8; }
-.search-clear:hover { -fx-background-color: -bofo-bg; }
-.filter-btn { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-min-width: 50; -fx-min-height: 50; -fx-pref-width: 50; -fx-pref-height: 50; -fx-padding: 0; }
-.filter-btn:hover { -fx-background-color: -bofo-primary-tint; }
-.filter-btn-on { -fx-border-color: -bofo-primary; -fx-background-color: -bofo-primary-tint; }
-.filter-badge { -fx-background-color: -bofo-primary; -fx-text-fill: white; -fx-background-radius: 999; -fx-font-size: 10px;
-  -fx-font-weight: bold; -fx-padding: 1 6; -fx-border-color: -bofo-bg; -fx-border-radius: 999; -fx-border-width: 2; }
-.filter-panel { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 20; -fx-background-radius: 20; -fx-padding: 16; }
-.seg-wrap { -fx-background-color: #E8E6F6; -fx-background-radius: 999; -fx-padding: 3; }
-.seg { -fx-background-color: transparent; -fx-background-radius: 999; -fx-text-fill: -bofo-text-2; -fx-font-weight: bold; -fx-font-size: 13px; -fx-padding: 6 18; }
-.seg-on { -fx-background-color: white; -fx-background-radius: 999; -fx-text-fill: -bofo-text; -fx-font-weight: bold; -fx-font-size: 13px; -fx-padding: 6 18;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.12), 6, 0, 0, 1); }
-
-/* ---- Profile / Settings (GCash-style): gradient header, grouped icon rows, outlined Log out ---- */
-.profile-header { -fx-background-color: linear-gradient(to bottom right, #6B4DF6, #3A22B8); -fx-background-radius: 0 0 28 28; -fx-padding: 20 20 26 20; }
-.profile-title { -fx-text-fill: white; -fx-font-size: 17px; -fx-font-weight: bold; }
-.profile-name { -fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold; }
-.profile-chip { -fx-background-color: rgba(255,255,255,0.20); -fx-text-fill: white; -fx-background-radius: 999; -fx-padding: 3 10; -fx-font-size: 11px; -fx-font-weight: bold; }
-.profile-header .avatar { -fx-background-color: white; -fx-text-fill: -bofo-primary; -fx-background-radius: 999; }
-.settings-heading { -fx-text-fill: -bofo-text-2; -fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 0 0 0 6; }
-.settings-card { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 20; -fx-background-radius: 20; }
-.settings-row { -fx-padding: 15 16; -fx-background-radius: 20; }
-.settings-row:hover { -fx-background-color: #F7F5FF; }
-.btn-logout { -fx-background-color: white; -fx-border-color: -bofo-primary; -fx-border-width: 1.5; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-text-fill: -bofo-primary; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 13 24; }
-.btn-logout:hover { -fx-background-color: -bofo-primary-tint; }
-.link-danger { -fx-background-color: transparent; -fx-text-fill: -bofo-error; -fx-font-size: 13px; -fx-padding: 8 12; }
-.link-danger:hover { -fx-underline: true; }
-
-/* ---- Chat ---- */
-.bubble-me { -fx-background-color: -bofo-primary; -fx-background-radius: 20 20 6 20; -fx-padding: 10 16; }
-.bubble-me .label { -fx-text-fill: white; }
-.bubble-them { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 20 20 20 6; -fx-background-radius: 20 20 20 6; -fx-padding: 10 16; }
-
-/* ---- Floating mascot, banners, notices ---- */
-.bofo-fab { -fx-background-color: white; -fx-background-radius: 30; -fx-border-color: -bofo-border; -fx-border-radius: 30; -fx-min-width: 56; -fx-min-height: 56;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.20), 14, 0, 0, 4); }
-.action-bar { -fx-background-color: white; -fx-border-color: -bofo-border transparent transparent transparent; -fx-border-width: 1 0 0 0; -fx-padding: 14 20; }
-.offline-banner { -fx-background-color: #FFF4DC; -fx-text-fill: #7A5200; -fx-font-size: 12px; -fx-padding: 6 12; -fx-alignment: center; }
-.toast { -fx-background-color: -bofo-ink; -fx-text-fill: white; -fx-padding: 11 20; -fx-background-radius: 999;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.28), 14, 0, 0, 4); }
-.toast .label, .toast { -fx-text-fill: white; }
-.notice-ok { -fx-background-color: #E1F4EA; -fx-text-fill: #17603F; -fx-background-radius: 16; -fx-padding: 12 16; -fx-font-size: 13px; }
-.notice-warn { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-background-radius: 16; -fx-padding: 12 16; -fx-font-size: 13px; }
-.notice-bad { -fx-background-color: #FCEBEB; -fx-text-fill: #9A2B2B; -fx-background-radius: 16; -fx-padding: 12 16; -fx-font-size: 13px; }
-
-/* ---- Splash: same ink as the dock ---- */
-.splash { -fx-background-color: -bofo-ink; }
-.splash-title { -fx-text-fill: white; -fx-font-size: 38px; -fx-font-weight: bold; }
-.splash-sub { -fx-text-fill: #CFC9F2; -fx-font-size: 15px; }
-.splash-status { -fx-text-fill: #B7B2DA; -fx-font-size: 13px; }
-
-/* "Find me" button on the map */
-.map-fab { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999;
-  -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; -fx-max-width: 42; -fx-max-height: 42;
-  -fx-padding: 0; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.20), 8, 0, 0, 2); }
-.map-fab:hover { -fx-background-color: -bofo-primary-tint; }
-.map-fab:pressed { -fx-scale-x: 0.9; -fx-scale-y: 0.9; }
-
-/* Map credit (OpenFreeMap / OpenMapTiles / OpenStreetMap). Must stay visible: small, soft pill in the brand colours. */
-.map-attr { -fx-background-color: rgba(255,255,255,0.82); -fx-background-radius: 999; -fx-border-color: rgba(91,59,240,0.14);
-  -fx-border-radius: 999; -fx-padding: 3 9 3 9; -fx-text-fill: -bofo-text-2; -fx-font-size: 9px; -fx-font-weight: bold;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.10), 4, 0, 0, 1); }
-
-/* Map: preview card, follow-me button, distance badges */
-.map-card { -fx-background-color: white; -fx-background-radius: 20; -fx-padding: 10;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.24), 16, 0, 0, 4); -fx-cursor: hand; }
-.map-fab-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; }
-.map-badge { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-primary; -fx-border-radius: 999;
-  -fx-padding: 2 8 2 8; -fx-text-fill: -bofo-primary-dark; -fx-font-size: 11px; -fx-font-weight: bold; }
-.map-route-badge { -fx-background-color: -bofo-primary; -fx-background-radius: 999; -fx-padding: 3 10 3 10;
-  -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.25), 6, 0, 0, 2); }
-.map-origin-tag { -fx-background-color: rgba(255,255,255,0.92); -fx-background-radius: 8; -fx-padding: 1 6 1 6;
-  -fx-text-fill: -bofo-primary-dark; -fx-font-size: 10px; -fx-font-weight: bold; }
-
-/* ---- New listing form (ListingFormView) ---- */
-.sec-num { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 999; -fx-text-fill: -bofo-primary-dark; -fx-font-size: 13px; -fx-font-weight: bold; }
-.room-card { -fx-background-color: -bofo-bg; -fx-background-radius: 16; -fx-padding: 12; }
-.room-title { -fx-font-weight: bold; -fx-font-size: 14px; }
-.room-remove { -fx-min-width: 30; -fx-min-height: 30; -fx-pref-width: 30; -fx-pref-height: 30; -fx-max-width: 30; -fx-max-height: 30; -fx-padding: 0; }
-/* - / + stepper (Spinner with split arrows) */
-.stepper { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999; }
-.stepper .text-field, .stepper .text-field:focused { -fx-background-color: transparent; -fx-border-width: 0; -fx-padding: 8 0; -fx-alignment: center; -fx-font-weight: bold; }
-.stepper .increment-arrow-button, .stepper .decrement-arrow-button { -fx-background-color: transparent; -fx-background-insets: 0; -fx-background-radius: 999; -fx-padding: 8 12; }
-.stepper .increment-arrow-button:hover, .stepper .decrement-arrow-button:hover { -fx-background-color: -bofo-primary-tint; }
-.stepper .increment-arrow, .stepper .decrement-arrow { -fx-background-color: -bofo-primary; }
-/* pin status under the map */
-.pin-status { -fx-background-color: -bofo-bg; -fx-background-radius: 14; -fx-padding: 8 12; -fx-text-fill: -bofo-text-2; -fx-font-size: 12px; }
-.pin-status-ok { -fx-background-color: #E1F4EA; -fx-text-fill: #17603F; }
-/* photo preview tiles */
-.thumb-x { -fx-background-color: rgba(23,20,42,0.62); -fx-background-radius: 999; -fx-min-width: 20; -fx-min-height: 20; -fx-pref-width: 20; -fx-pref-height: 20; -fx-max-width: 20; -fx-max-height: 20; -fx-padding: 0; -fx-cursor: hand; }
-.thumb-x:hover { -fx-background-color: -bofo-error; }
-/* bottom bar that stays visible while the form scrolls */
-.sticky-bar { -fx-background-color: white; -fx-border-color: -bofo-border transparent transparent transparent; -fx-border-width: 1 0 0 0; }
-.progress-done { -fx-text-fill: -bofo-success; -fx-font-weight: bold; }
-
-/* ---- Home: college row, floating radius pill, campus names on the map ---- */
-.near-btn { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999;
-  -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; -fx-max-width: 42; -fx-max-height: 42; -fx-padding: 0; -fx-cursor: hand; }
-.near-btn:hover { -fx-background-color: -bofo-primary-tint; }
-.near-btn-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; }
-.radius-bar { -fx-background-color: rgba(255,255,255,0.96); -fx-background-radius: 999; -fx-padding: 5 6 5 16;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.22), 12, 0, 0, 3); }
-.radius-pill { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-background-radius: 999;
-  -fx-padding: 5 12; -fx-font-size: 12px; -fx-font-weight: bold; }
-.radius-slider { -fx-padding: 4 8; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; }
-.radius-slider > .track { -fx-background-insets: 0; -fx-background-radius: 3; -fx-padding: 3; }
-.radius-slider > .thumb { -fx-background-color: white; -fx-background-insets: 0; -fx-background-radius: 999; -fx-padding: 8;
-  -fx-border-color: #5B3BF0; -fx-border-width: 3.5; -fx-border-radius: 999;
-  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.35), 8, 0, 0, 2); }
-.radius-slider:focused > .thumb { -fx-background-insets: 0; }
-.map-bh-tag { -fx-background-color: rgba(255,255,255,0.92); -fx-background-radius: 6; -fx-padding: 1 5 1 5;
-  -fx-text-fill: #3A22B8; -fx-font-size: 10px; -fx-font-weight: bold; }
-.map-college-tag { -fx-background-color: rgba(255,255,255,0.72); -fx-background-radius: 5; -fx-padding: 0 4 0 4;
-  -fx-text-fill: #6B6486; -fx-font-size: 9px; -fx-font-weight: normal; }
-
-/* ---- Home: college search box + suggestion list ---- */
-.college-box { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-padding: 2 4 2 14;
-  -fx-min-height: 50; -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.10), 10, 0, 0, 2); }
-.college-box-focus { -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
-.college-field, .college-field:focused { -fx-background-color: transparent; -fx-background-insets: 0; -fx-background-radius: 0; -fx-padding: 8 4 8 4;
-  -fx-border-color: transparent; -fx-border-width: 0; -fx-border-radius: 0;
-  -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; -fx-prompt-text-fill: #8A84A0;
-  -fx-focus-color: transparent; -fx-faint-focus-color: transparent; }
-.college-arrow { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 999; -fx-text-fill: -bofo-primary-dark; -fx-font-size: 14px;
-  -fx-min-width: 34; -fx-min-height: 34; -fx-max-width: 34; -fx-max-height: 34; -fx-padding: 0; -fx-cursor: hand; }
-.college-list { -fx-background-color: white; -fx-background-insets: 0; -fx-background-radius: 16; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-padding: 4;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.16), 12, 0, 0, 3); }
-.college-list .list-cell { -fx-background-color: transparent; -fx-padding: 0 14 0 14; -fx-font-size: 14px; -fx-text-fill: -bofo-text; }
-.college-list .list-cell:filled:hover, .college-list .list-cell:filled:selected { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 12; -fx-text-fill: -bofo-primary-dark; }
-
-
-/* ---- Amenities + filter sheet (v1.6.0) ---- */
-.amenity-chip { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-text-fill: -bofo-text; -fx-padding: 8 14; -fx-font-size: 13px; -fx-cursor: hand; }
-.amenity-chip:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
-.amenity-chip-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-text-fill: -bofo-primary-dark; -fx-font-weight: bold; -fx-padding: 8 14; -fx-font-size: 13px; -fx-cursor: hand; }
-.amenity-add { -fx-background-color: transparent; -fx-border-color: -bofo-primary; -fx-border-style: segments(6, 4); -fx-border-radius: 999;
-  -fx-background-radius: 999; -fx-text-fill: -bofo-primary; -fx-font-weight: bold; -fx-padding: 8 14; -fx-font-size: 13px; -fx-cursor: hand; }
-.amenity-add:hover { -fx-background-color: -bofo-primary-tint; }
-.amenity-pill { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-text-fill: -bofo-text; -fx-padding: 6 12; -fx-font-size: 13px; }
-.quick-row, .quick-row > .viewport { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; }
-.filter-sheet { -fx-background-color: white; -fx-background-radius: 28 28 0 0;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.28), 24, 0, 0, -4); }
+/* ---- Explore: search bar, filter panel, List | Map switch ---- */
+.search-bar, .college-box { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-background-radius: 16; -fx-min-height: 52; -fx-pref-height: 52; }
+.search-bar { -fx-padding: 0 8 0 18; }
+.search-bar-focus, .college-box-focus { -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
+.search-input, .search-input:focused { -fx-background-color: transparent; -fx-background-insets: 0; -fx-border-color: transparent; -fx-padding: 0; -fx-font-size: 15px; -fx-prompt-text-fill: -bofo-muted; }
+.filter-badge { -fx-border-color: -bofo-bg; }
+.filter-title { -fx-font-size: 22px; }
+.filter-sheet { -fx-background-color: white; -fx-background-radius: 16 16 0 0; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.24), 24, 0, 0, 8); }
 .sheet-scroll, .sheet-scroll > .viewport { -fx-background-color: transparent; }
-.college-list .scroll-bar:horizontal { -fx-pref-height: 0; -fx-min-height: 0; -fx-max-height: 0; -fx-opacity: 0; }
+.seg-wrap { -fx-background-color: -bofo-skeleton; -fx-background-radius: 16; -fx-padding: 4; }
+.seg { -fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: -bofo-text-2; -fx-font-size: 13px; -fx-padding: 6 18; }
+.seg-on { -fx-background-color: white; -fx-background-radius: 8; -fx-text-fill: -bofo-text; -fx-font-size: 13px; -fx-padding: 6 18; }
+.seg-fit { -fx-font-size: 12.5px; -fx-padding: 10 2; -fx-cursor: hand; }   /* three tabs share the row: never wider than the screen */
+.seg-fit.seg-on { -fx-text-fill: -bofo-primary-dark; }
+.seg-fit.seg-centre.seg-on { -fx-background-color: -bofo-ink; -fx-text-fill: white; }   /* the middle tab is the main trip */
 
-/* ---- Boarding house detail (v1.7.0) ---- */
-.hero-empty { -fx-background-color: linear-gradient(to bottom right, #ECE9FF, #DDD6FF); -fx-background-radius: 20; }
-.stat-tile { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 12 8; }
-.pill-ok { -fx-background-color: #E1F4EA; -fx-text-fill: -bofo-success; -fx-background-radius: 999; -fx-padding: 4 10; -fx-font-weight: bold; -fx-font-size: 12px; }
-.pill-full { -fx-background-color: #FBE7E7; -fx-text-fill: -bofo-error; -fx-background-radius: 999; -fx-padding: 4 10; -fx-font-weight: bold; -fx-font-size: 12px; }
-
-/* ---- Directions card (v1.8.0) ---- */
-.seg-fit { -fx-font-size: 12px; -fx-padding: 9 2; }                      /* three tabs share the row: never wider than the screen */
-.dir-head { -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
-.dir-opt { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 10 12; }
-.dir-opt-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 10 12; }
-
-/* ---- Directions card redesign (v1.9.2) ---- */
-.dir-trip { -fx-background-color: -bofo-bg; -fx-background-radius: 16; -fx-padding: 12 14; }
-.dir-trip-what { -fx-text-fill: -bofo-muted; -fx-font-size: 11px; -fx-font-weight: bold; }
-.dir-trip-name { -fx-text-fill: -bofo-text; -fx-font-size: 13px; -fx-font-weight: bold; }
-.dir-hero { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 18; -fx-padding: 14; }
-.dir-hero-icon { -fx-background-color: white; -fx-background-radius: 14; -fx-font-size: 24px; }
-.dir-section { -fx-text-fill: -bofo-text-2; -fx-font-size: 12px; -fx-font-weight: bold; }
-.dir-src { -fx-text-fill: -bofo-muted; -fx-font-size: 11px; }
-.dir-opt-icon { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 12; -fx-font-size: 18px; }
-.dir-opt-title { -fx-text-fill: -bofo-text; -fx-font-size: 14px; -fx-font-weight: bold; }
-.dir-note { -fx-background-radius: 14; -fx-padding: 10 12; }
-.dir-note-text { -fx-font-size: 12.5px; }
-.dir-note-ok { -fx-background-color: #E9F7F0; }   .dir-note-ok .dir-note-text { -fx-text-fill: #17603F; }
-.dir-note-warn { -fx-background-color: #F4F1FF; } .dir-note-warn .dir-note-text { -fx-text-fill: -bofo-primary-dark; }
-.dir-note-bad { -fx-background-color: #FCEBEB; }  .dir-note-bad .dir-note-text { -fx-text-fill: #9A2B2B; }
-.dir-note-sym { -fx-background-radius: 999; -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: white; }
-.dir-note-sym-ok { -fx-background-color: -bofo-success; }
-.dir-note-sym-warn { -fx-background-color: -bofo-primary; }
-.dir-note-sym-bad { -fx-background-color: -bofo-error; }
-.btn-tint { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 12 24; }
-.btn-tint:hover { -fx-background-color: #DDD6FF; }
-.btn-link { -fx-background-color: transparent; -fx-text-fill: -bofo-primary; -fx-font-weight: bold; -fx-padding: 8 12; }
-.btn-link:hover { -fx-text-fill: -bofo-primary-dark; -fx-underline: true; }
-
-
-/* ---- Directions card polish (v2.0): centred BH -> Campus tab, calmer tabs, stronger summary ---- */
-.seg-wrap { -fx-background-color: #ECEAF9; -fx-padding: 4; }
-.seg-fit { -fx-font-size: 12.5px; -fx-padding: 10 2; -fx-cursor: hand; }
-.seg-fit.seg-on { -fx-background-color: white; -fx-text-fill: -bofo-primary-dark; -fx-font-weight: bold;
-  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.22), 8, 0, 0, 2); }
-.seg-fit.seg-centre.seg-on { -fx-background-color: linear-gradient(to bottom right, #6B4DF6, #3A22B8); -fx-text-fill: white; }   /* the middle tab is the main trip */
-.dir-trip { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 12 14; }
-.dir-hero { -fx-background-color: linear-gradient(to bottom right, #F1EDFF, #E3DCFF); -fx-background-radius: 20; -fx-padding: 14 16;
-  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.12), 10, 0, 0, 3); }
-.dir-hero-icon { -fx-background-color: white; -fx-background-radius: 16; -fx-font-size: 26px; }
-.dir-head { -fx-font-size: 19px; }
-.dir-opt { -fx-border-radius: 18; -fx-background-radius: 18; -fx-padding: 12 14; }
-.dir-opt:hover { -fx-background-color: #FAF9FF; }
-.dir-opt-on { -fx-border-width: 1.5; -fx-border-radius: 18; -fx-background-radius: 18; -fx-padding: 12 14; }
-.dir-section { -fx-font-size: 12px; -fx-padding: 4 0 0 2; }
-
-
-/* ---- Filter sheet (v1.10) ---- */
-.filter-title { -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
-.filter-close { -fx-background-color: -bofo-bg; -fx-background-radius: 999; -fx-min-width: 36; -fx-min-height: 36; -fx-pref-width: 36; -fx-pref-height: 36; -fx-padding: 0; }
-.filter-close:hover { -fx-background-color: -bofo-primary-tint; }
-.filter-group { -fx-background-color: #FAF9FF; -fx-border-color: #ECE9FA; -fx-border-radius: 20; -fx-background-radius: 20; -fx-padding: 14 14 16 14; }
-.filter-input { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 14; -fx-background-radius: 14; -fx-padding: 12 14; -fx-font-size: 14px; }
-.filter-input:focused { -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
-.btn-ghost-filter { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-background-radius: 999; -fx-text-fill: -bofo-text-2; -fx-font-weight: bold; -fx-font-size: 15px; -fx-padding: 13 22; }
-.btn-ghost-filter:hover { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
-.amenity-chip-on { -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.18), 6, 0, 0, 1); }
-
-/* ---- Chat (v1.10): header with avatar, softer bubbles, pill composer, quick replies ---- */
-.chat-bar { -fx-background-color: white; -fx-border-color: #ECE9FA; -fx-border-width: 0 0 1 0; -fx-padding: 10 14 10 14; }
-.chat-bar .chat-name { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
-.chat-bar .chat-role { -fx-font-size: 11px; -fx-text-fill: -bofo-muted; }
-.chat-time { -fx-font-size: 10.5px; -fx-text-fill: -bofo-muted; -fx-padding: 0 4 0 4; }
-.bubble-me { -fx-background-color: linear-gradient(to bottom right, #6B4DF6, #5B3BF0); -fx-background-radius: 20 20 6 20; -fx-padding: 10 15;
-  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.20), 6, 0, 0, 2); }
-.bubble-them { -fx-background-radius: 20 20 20 6; -fx-border-radius: 20 20 20 6; -fx-padding: 10 15; }
-.chat-composer { -fx-background-color: white; -fx-border-color: #ECE9FA; -fx-border-width: 1 0 0 0; }
-.chat-input { -fx-background-color: -bofo-bg; -fx-background-radius: 999; -fx-border-color: transparent; -fx-border-radius: 999; -fx-padding: 12 18; -fx-font-size: 14px; }
-.chat-input:focused { -fx-background-color: white; -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
-.chat-send { -fx-background-color: -bofo-primary; -fx-text-fill: white; -fx-background-radius: 999; -fx-font-size: 16px; -fx-min-width: 44; -fx-min-height: 44; -fx-pref-width: 44; -fx-pref-height: 44; -fx-padding: 0;
-  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.35), 8, 0, 0, 2); }
-.chat-send:hover { -fx-background-color: #6D52F5; }
-.chat-send:pressed { -fx-scale-x: 0.94; -fx-scale-y: 0.94; }
-.chat-send:disabled { -fx-background-color: #CFC8F5; -fx-opacity: 1; -fx-effect: null; }
-.chat-quick { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-background-radius: 999; -fx-border-color: transparent; -fx-font-size: 12.5px; -fx-font-weight: bold; -fx-padding: 8 14; -fx-cursor: hand; }
-.chat-quick:hover { -fx-background-color: #DCD4FF; }
-.chat-row { -fx-padding: 12 14; }
-.chat-row:hover { -fx-background-color: #FAF9FF; }
-.chat-row-unread { -fx-border-color: -bofo-primary; -fx-border-width: 1.5; -fx-border-radius: 20; -fx-background-radius: 20; }
-.chat-row-name { -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
-
-
-/* ---- Chat rework (v1.10.1) ---- */
-.chat-icon-btn { -fx-background-color: transparent; -fx-background-radius: 999; -fx-border-color: transparent; -fx-text-fill: -bofo-text; -fx-font-size: 18px; -fx-font-weight: bold;
-  -fx-min-width: 38; -fx-min-height: 38; -fx-pref-width: 38; -fx-pref-height: 38; -fx-padding: 0; -fx-cursor: hand; }
-.chat-icon-btn:hover { -fx-background-color: -bofo-primary-tint; }
-.chat-bar { -fx-padding: 8 10 8 8; }
-.chat-bar .chat-name { -fx-font-size: 15px; -fx-font-weight: bold; }
-.chat-bar .chat-role { -fx-font-size: 11.5px; -fx-text-fill: -bofo-primary; -fx-font-weight: bold; }
-.chat-day { -fx-background-color: #E8E6F6; -fx-background-radius: 999; -fx-text-fill: -bofo-text-2; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 4 12; }
-.bubble-me { -fx-padding: 8 12 6 14; }
-.bubble-them { -fx-padding: 8 12 6 14; }
-.bubble-meta { -fx-font-size: 10px; -fx-text-fill: -bofo-muted; }
-.bubble-me .bubble-meta { -fx-text-fill: rgba(255,255,255,0.72); }
-.bubble-me .bubble-read { -fx-text-fill: #CDF2FF; }
-.chat-input { -fx-padding: 11 18; }
-
-
-/* ---- Chat bubbles v1.10.2: softer shapes, shadow instead of border, drawn ticks ---- */
-.bubble-text { -fx-font-size: 14.5px; }
-.bubble-me { -fx-background-color: linear-gradient(to bottom right, #7456F8, #5333E8); -fx-padding: 9 12 6 14;
-  -fx-effect: dropshadow(gaussian, rgba(83,51,232,0.22), 8, 0, 0, 2); }
-.bubble-me .bubble-text { -fx-text-fill: white; }
-.bubble-them { -fx-background-color: white; -fx-border-color: transparent; -fx-padding: 9 12 6 14;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.08), 6, 0, 0, 1); }
-.bubble-them .bubble-text { -fx-text-fill: -bofo-text; }
-.bubble-meta { -fx-font-size: 10px; -fx-text-fill: -bofo-muted; }
-.bubble-me .bubble-meta { -fx-text-fill: rgba(255,255,255,0.75); }
-
-
-/* ---- Chats inbox (v1.10.3) ---- */
-.chat-row { -fx-padding: 14 14; -fx-background-radius: 22; -fx-border-radius: 22; }
-.chat-row-name { -fx-font-size: 15.5px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
-.chat-row-bh { -fx-font-size: 12px; -fx-text-fill: -bofo-primary; -fx-font-weight: bold; }
-.chat-row-preview { -fx-font-size: 13px; -fx-text-fill: -bofo-muted; }
-.chat-row-preview-on { -fx-font-size: 13px; -fx-text-fill: -bofo-text; -fx-font-weight: bold; }
-.chat-row-time { -fx-font-size: 11.5px; -fx-text-fill: -bofo-muted; }
-.chat-row-time-on { -fx-font-size: 11.5px; -fx-text-fill: -bofo-primary; -fx-font-weight: bold; }
-.chat-row-unread { -fx-background-color: #F6F3FF; -fx-border-color: #CFC4FF; -fx-border-width: 1; -fx-border-radius: 22; -fx-background-radius: 22; }
-
-
-/* ---- Settings / Profile polish (v1.10.4) ---- */
-.profile-header { -fx-padding: 22 20 30 20; -fx-background-radius: 0 0 32 32;
-  -fx-effect: dropshadow(gaussian, rgba(58,34,184,0.25), 14, 0, 0, 4); }
-.profile-header .avatar { -fx-border-color: rgba(255,255,255,0.55); -fx-border-width: 3; -fx-border-radius: 999; }
-.profile-name { -fx-font-size: 22px; }
-.profile-chip { -fx-padding: 4 12; -fx-font-size: 11.5px; }
-.settings-heading { -fx-font-size: 12.5px; -fx-text-fill: -bofo-muted; -fx-padding: 4 0 0 8; }
-.settings-card { -fx-border-color: #ECE9FA; -fx-border-radius: 22; -fx-background-radius: 22;
-  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.07), 12, 0, 0, 3); }
-.settings-row { -fx-padding: 13 16; -fx-background-radius: 22; }
-.settings-row:hover { -fx-background-color: #F8F6FF; }
-.settings-row .row-label { -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
-.settings-icon { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 12; }
-.settings-icon-danger { -fx-background-color: #FCEBEB; -fx-background-radius: 12; }
+/* ---- Profile / Settings ---- */
+.profile-header { -fx-background-color: -bofo-primary-dark; -fx-padding: 22 20 26 20; }
+.profile-title { -fx-text-fill: white; -fx-font-size: 17px; }
+.profile-name { -fx-text-fill: white; -fx-font-size: 22px; }
+.profile-chip { -fx-background-color: rgba(255,255,255,0.20); -fx-text-fill: white; -fx-background-radius: 999; -fx-padding: 4 12; -fx-font-size: 11.5px; }
+.profile-header .avatar { -fx-background-color: white; -fx-text-fill: -bofo-primary; -fx-background-radius: 999; -fx-border-color: rgba(255,255,255,0.55); -fx-border-width: 3; -fx-border-radius: 999; }
+.settings-heading { -fx-text-fill: -bofo-muted; -fx-font-size: 12.5px; -fx-padding: 4 0 0 8; }
+.settings-row { -fx-padding: 13 14; -fx-background-radius: 8; }
+.settings-row:hover { -fx-background-color: -bofo-bg; }
+.settings-row .row-label { -fx-font-size: 15px; -fx-text-fill: -bofo-text; }
+.settings-icon { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 8; }
+.settings-icon-danger { -fx-background-color: -bofo-error-tint; -fx-background-radius: 8; }
 .settings-value { -fx-font-size: 13px; -fx-text-fill: -bofo-muted; }
 .settings-sub { -fx-font-size: 12px; -fx-text-fill: -bofo-muted; }
-.settings-brand { -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
+.settings-brand { -fx-font-size: 15px; -fx-text-fill: -bofo-text; }
 .settings-ver { -fx-font-size: 12px; -fx-text-fill: -bofo-muted; }
-.btn-logout { -fx-border-width: 1.5; -fx-padding: 14 24; }
-
-/* ---- In-app legal reader (v1.11.0) ---- */
+.settings-ok { -fx-text-fill: -bofo-success; }
+.progress-done { -fx-text-fill: -bofo-success; }
 .legal-h { -fx-text-fill: -bofo-ink; }
 .legal-p { -fx-text-fill: -bofo-text; -fx-font-size: 14px; }
 
-/* ---- Home polish: list count pill + thin outline around the map ---- */
-.count-pill { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-background-radius: 999; -fx-padding: 4 12; -fx-font-size: 12px; -fx-font-weight: bold; }
-.map-frame { -fx-background-color: transparent; -fx-border-color: -bofo-border; -fx-border-width: 1; -fx-border-radius: 14; }
+/* ---- Chat ---- */
+.chat-bar { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-width: 0 0 1 0; -fx-padding: 8 10 8 8; }
+.chat-bar .chat-name { -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
+.chat-bar .chat-role { -fx-font-size: 11.5px; -fx-text-fill: -bofo-primary; }
+.chat-time { -fx-font-size: 10.5px; -fx-text-fill: -bofo-muted; -fx-padding: 0 4 0 4; }
+.chat-day { -fx-background-color: -bofo-skeleton; -fx-background-radius: 8; -fx-text-fill: -bofo-text-2; -fx-font-size: 11px; -fx-padding: 4 12; }
+.bubble-text { -fx-font-size: 14.5px; }
+.bubble-me, .bubble-them { -fx-padding: 9 12 6 14; }
+.bubble-me { -fx-background-color: -bofo-primary; -fx-background-radius: 16 16 8 16; }
+.bubble-me .bubble-text, .bubble-me .label { -fx-text-fill: white; }
+.bubble-them { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16 16 16 8; -fx-background-radius: 16 16 16 8; }
+.bubble-them .bubble-text { -fx-text-fill: -bofo-text; }
+.bubble-meta { -fx-font-size: 10px; -fx-text-fill: -bofo-muted; }
+.bubble-me .bubble-meta { -fx-text-fill: rgba(255,255,255,0.75); }
+.bubble-me .bubble-read { -fx-text-fill: white; }
+.chat-composer { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-width: 1 0 0 0; }
+.chat-input { -fx-background-color: -bofo-bg; -fx-background-radius: 16; -fx-border-color: transparent; -fx-border-radius: 16; -fx-padding: 11 18; -fx-font-size: 14px; }
+.chat-input:focused { -fx-background-color: white; -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
+.chat-send { -fx-background-color: -bofo-primary; -fx-text-fill: white; -fx-background-radius: 999; -fx-font-size: 16px; -fx-min-width: 44; -fx-min-height: 44; -fx-pref-width: 44; -fx-pref-height: 44; -fx-padding: 0; }
+.chat-send:hover { -fx-background-color: -bofo-hover; }
+.chat-send:pressed { -fx-scale-x: 0.94; -fx-scale-y: 0.94; }
+.chat-send:disabled { -fx-background-color: -bofo-muted; -fx-opacity: 0.5; }
+.chat-quick { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-background-radius: 999; -fx-border-color: transparent; -fx-font-size: 12.5px; -fx-padding: 8 14; -fx-cursor: hand; }
+.chat-quick:hover { -fx-background-color: derive(-bofo-primary-tint, -6%); }
+.chat-row { -fx-padding: 14; -fx-background-radius: 16; -fx-border-radius: 16; }
+.chat-row:hover { -fx-background-color: -bofo-bg; }
+.chat-row-unread { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; -fx-border-width: 1; -fx-border-radius: 16; -fx-background-radius: 16; }
+.chat-row-unread:hover { -fx-background-color: derive(-bofo-primary-tint, -4%); }
+.chat-row-name { -fx-font-size: 15.5px; -fx-text-fill: -bofo-text; }
+.chat-row-bh { -fx-font-size: 12px; -fx-text-fill: -bofo-primary; }
+.chat-row-preview { -fx-font-size: 13px; -fx-text-fill: -bofo-muted; }
+.chat-row-preview-on { -fx-font-size: 13px; -fx-text-fill: -bofo-text; }
+.chat-row-time { -fx-font-size: 11.5px; -fx-text-fill: -bofo-muted; }
+.chat-row-time-on { -fx-font-size: 11.5px; -fx-text-fill: -bofo-primary; }
 
-/* ---- v1.12.9 listing card: big price line, quieter meta row ---- */
-.price-big { -fx-text-fill: -bofo-primary; -fx-font-size: 20px; -fx-font-weight: bold; }
-.price-unit { -fx-text-fill: -bofo-text-2; -fx-font-size: 13px; }
-.meta-dot { -fx-text-fill: -bofo-muted; -fx-font-size: 12px; }
-.card:hover { -fx-border-color: #D9D4F7; }
+/* ---- Floating things: mascot, toast, banners, notices ---- */
+.bofo-fab { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999; -fx-min-width: 56; -fx-min-height: 56; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.14), 12, 0, 0, 3); }
+.action-bar, .sticky-bar { -fx-background-color: white; -fx-border-color: -bofo-border transparent transparent transparent; -fx-border-width: 1 0 0 0; -fx-padding: 14 20; }
+.sticky-bar { -fx-padding: 0; }
+.offline-banner { -fx-background-color: -bofo-warn-tint; -fx-text-fill: -bofo-text; -fx-font-size: 12px; -fx-padding: 6 12; -fx-alignment: center; }
+.toast { -fx-background-color: -bofo-ink; -fx-text-fill: white; -fx-padding: 11 20; -fx-background-radius: 16; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.14), 12, 0, 0, 3); }
+.toast .label { -fx-text-fill: white; }
+.notice-ok, .notice-warn, .notice-bad { -fx-background-radius: 16; -fx-padding: 12 16; -fx-font-size: 13px; }
+.notice-ok { -fx-background-color: -bofo-success-tint; -fx-text-fill: -bofo-success; }
+.notice-warn { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
+.notice-bad { -fx-background-color: -bofo-error-tint; -fx-text-fill: -bofo-error; }
+.splash { -fx-background-color: -bofo-ink; }
+.splash-title { -fx-text-fill: white; -fx-font-size: 38px; -fx-font-weight: bold; }
+.splash-sub { -fx-text-fill: -bofo-primary-tint; -fx-font-size: 15px; }
+.splash-status { -fx-text-fill: -bofo-muted; -fx-font-size: 13px; }
 
-/* ---- v1.13.1 light top section on every main tab: big title on the normal background, white round buttons, soft search bar ---- */
-.page-header { -fx-background-color: transparent; -fx-padding: 20 16 4 16; }
-.page-header .page-title { -fx-text-fill: -bofo-text; -fx-font-size: 28px; -fx-font-weight: bold; }
-.page-header .page-sub { -fx-text-fill: -bofo-text-2; -fx-font-size: 13px; }
-.page-header .greet-name { -fx-font-size: 26px; }
-.hdr-btn { -fx-background-color: white; -fx-background-radius: 999; -fx-border-color: -bofo-border; -fx-border-radius: 999;
-  -fx-min-width: 44; -fx-min-height: 44; -fx-pref-width: 44; -fx-pref-height: 44; -fx-max-width: 44; -fx-max-height: 44; -fx-padding: 0; -fx-cursor: hand; }
-.hdr-btn:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; }
-.page-header .college-box, .page-header .search-bar { -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.14), 14, 0, 0, 4); }
-
-/* ---- v1.13.2 Home: calmer map credit ---- */
-.map-attr { -fx-padding: 2 8 2 8; -fx-font-size: 8px; -fx-font-weight: normal; -fx-background-color: rgba(255,255,255,0.75); }
-
-/* ---- v1.14.0 two-column list: compact card + ad cell ---- */
-.card-compact { -fx-border-radius: 16; -fx-background-radius: 16; }
-.card-compact .photo-placeholder { -fx-background-radius: 12; }
-.card-compact .h2 { -fx-font-size: 13.5px; }
-.card-compact .price-big { -fx-font-size: 16px; }
-.card-compact .price-unit { -fx-font-size: 11px; }
-.card-compact .secondary { -fx-font-size: 11px; }
-.card-compact .stars { -fx-font-size: 11px; }
-.card-compact .tag { -fx-font-size: 10px; -fx-padding: 1 6; }
-.card-compact .badge-verified, .card-compact .badge-hot { -fx-font-size: 10px; -fx-padding: 2 6; }
-.card-compact .pill-green, .card-compact .pill-grey { -fx-font-size: 10px; -fx-padding: 3 8; }
-.card-compact .heart-fab, .card-compact .heart-fab-on { -fx-min-width: 30; -fx-min-height: 30; -fx-pref-width: 30; -fx-pref-height: 30; -fx-max-width: 30; -fx-max-height: 30; -fx-font-size: 15px; }
-.ad-card { -fx-background-color: #FBFAFF; -fx-border-color: #DCD6F6; }
-.ad-cta { -fx-text-fill: -bofo-primary; -fx-font-weight: bold; -fx-font-size: 12px; }
-
-/* ---- v1.14.3 Home header polish: branded avatar, floating bell, calmer search bar ---- */
-.greet-hello { -fx-font-size: 13px; -fx-text-fill: -bofo-text-2; }
-.page-header .greet-name { -fx-font-size: 26px; -fx-font-weight: bold; }
-.hdr-avatar { -fx-background-color: linear-gradient(to bottom right, #7C5CFF, #5B3BF0); -fx-text-fill: white; -fx-font-weight: bold;
-  -fx-border-color: white; -fx-border-width: 2; -fx-border-radius: 999;
-  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.30), 10, 0, 0, 3); }
-.hdr-btn { -fx-border-color: transparent; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.10), 10, 0, 0, 3); }
-.hdr-btn:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: transparent; }
-.college-box { -fx-min-height: 54; -fx-pref-height: 54; -fx-padding: 2 8 2 8; -fx-border-color: transparent; }
-.college-box-focus { -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
-.search-icon-wrap { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 999;
-  -fx-min-width: 38; -fx-min-height: 38; -fx-pref-width: 38; -fx-pref-height: 38; -fx-max-width: 38; -fx-max-height: 38; }
-.college-field, .college-field:focused { -fx-font-size: 15px; -fx-font-weight: normal; -fx-prompt-text-fill: #9A97B0; }
-.college-arrow { -fx-background-color: transparent; -fx-text-fill: -bofo-muted; -fx-font-size: 15px; }
+/* ---- Home: header, campus search, map, radius, chips, list ---- */
+.greet-hello { -fx-font-size: 12.5px; }
+.search-icon-wrap { -fx-background-color: transparent; -fx-min-width: 28; -fx-min-height: 28; -fx-pref-width: 28; -fx-pref-height: 28; -fx-max-width: 28; -fx-max-height: 28; }
+.college-box { -fx-padding: 2 6 2 14; }
+.college-field, .college-field:focused { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 8 4 8 4; -fx-border-color: transparent; -fx-border-width: 0;
+  -fx-font-size: 15px; -fx-font-weight: normal; -fx-text-fill: -bofo-text; -fx-prompt-text-fill: -bofo-muted; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; }
+.college-arrow { -fx-background-color: transparent; -fx-background-radius: 999; -fx-text-fill: -bofo-muted; -fx-font-size: 15px; -fx-min-width: 34; -fx-min-height: 34; -fx-max-width: 34; -fx-max-height: 34; -fx-padding: 0; -fx-cursor: hand; }
 .college-arrow:hover { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
+/* campus suggestions: every row is the same height (CampusPicker.ROW), text centred, so the selected highlight and the gaps line up */
+.college-list { -fx-padding: 4; }
+.college-list .list-cell { -fx-background-color: transparent; -fx-padding: 0 14 0 14; -fx-font-size: 14px; -fx-text-fill: -bofo-text; }
+.college-list .list-cell:filled:hover, .college-list .list-cell:filled:selected { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 8; }
+.home-map { -fx-background-color: white; -fx-background-radius: 16; }
+.map-frame { -fx-background-color: transparent; -fx-border-color: -bofo-border; -fx-border-width: 1; -fx-border-radius: 16; }
+.live-pill { -fx-background-color: white; -fx-background-radius: 999; -fx-padding: 6 12 6 10; }
+.live-pill-text { -fx-font-size: 12px; -fx-font-weight: normal; -fx-text-fill: -bofo-ink; }
+.radius-bar { -fx-background-color: white; -fx-background-radius: 999; -fx-padding: 5 6 5 16; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.14), 12, 0, 0, 3); }
+.radius-pill { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; -fx-background-radius: 999; -fx-padding: 5 12; -fx-font-size: 12px; }
+.radius-slider { -fx-padding: 4 8; }
+.radius-slider > .track { -fx-background-insets: 0; -fx-background-radius: 3; -fx-padding: 3; }
+.radius-slider > .thumb { -fx-background-color: white; -fx-background-insets: 0; -fx-background-radius: 999; -fx-padding: 8; -fx-border-color: -bofo-primary; -fx-border-width: 3.5; -fx-border-radius: 999; }
+.radius-slider:focused > .thumb { -fx-background-insets: 0; }
+.home-chips { -fx-spacing: 8; }
+.home-title { -fx-font-size: 20px; }
+.nearby-sub { -fx-font-size: 12.5px; -fx-text-fill: -bofo-text-2; }
 
-/* ---- v1.14.3 Home: soft violet header band, borderless map, pill tabs with glow, airy cards ---- */
-.home-header { -fx-background-color:
-    radial-gradient(center 100% 0%, radius 60%, rgba(124,92,255,0.34), rgba(124,92,255,0)),
-    radial-gradient(center 0% 100%, radius 50%, rgba(255,186,230,0.30), rgba(255,186,230,0)),
-    linear-gradient(to bottom, #E7E1FF 0%, #F0EDFF 55%, #F5F6FC 100%);
-  -fx-background-radius: 0 0 32 32, 0 0 32 32, 0 0 32 32; -fx-padding: 22 16 24 16; }
-.map-frame { -fx-border-color: transparent; }
-.home-chips { -fx-spacing: 10; }
-.home-chips .chip { -fx-background-color: white; -fx-border-color: transparent; -fx-padding: 9 18; -fx-font-size: 13.5px; -fx-text-fill: -bofo-text-2;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.07), 8, 0, 0, 2); }
-.home-chips .chip:hover { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
-.home-chips .chip-selected { -fx-background-color: linear-gradient(to bottom right, #7C5CFF, #5B3BF0); -fx-border-color: transparent; -fx-padding: 9 18;
-  -fx-font-size: 13.5px; -fx-font-weight: bold; -fx-text-fill: white; -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.35), 12, 0, 0, 4); }
-.home-title { -fx-font-size: 20px; -fx-font-weight: bold; }
-.nearby-sub { -fx-font-size: 12.5px; -fx-text-fill: -bofo-muted; }
-.card-compact { -fx-border-color: transparent; -fx-border-radius: 22; -fx-background-radius: 22; }
-.card-compact:hover { -fx-border-color: #DCD6F6; }
-.card-compact .h2 { -fx-font-size: 14px; }
-.card-compact .price-big { -fx-font-size: 17px; }
-.card-compact .pill-green, .card-compact .pill-grey { -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.12), 6, 0, 0, 1); }
+/* ---- Map overlays ---- */
+.map-attr { -fx-background-color: rgba(255,255,255,0.75); -fx-background-radius: 8; -fx-padding: 2 8 2 8; -fx-text-fill: -bofo-text-2; -fx-font-size: 8px; -fx-font-weight: normal; }
+.map-card { -fx-background-color: white; -fx-background-radius: 16; -fx-padding: 10; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.14), 12, 0, 0, 3); -fx-cursor: hand; }
+.map-chip { -fx-background-color: white; -fx-background-radius: 999; -fx-padding: 6 12; -fx-text-fill: -bofo-text; -fx-font-size: 12px; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.14), 12, 0, 0, 3); }
+.map-badge { -fx-background-color: white; -fx-background-radius: 8; -fx-border-color: -bofo-primary; -fx-border-radius: 8; -fx-padding: 2 8 2 8; -fx-text-fill: -bofo-primary-dark; -fx-font-size: 11px; }
+.map-route-badge { -fx-background-color: -bofo-primary; -fx-background-radius: 8; -fx-padding: 3 10 3 10; -fx-text-fill: white; -fx-font-size: 11px; }
+.map-origin-tag, .map-bh-tag { -fx-background-color: rgba(255,255,255,0.92); -fx-background-radius: 8; -fx-padding: 1 6 1 6; -fx-text-fill: -bofo-primary-dark; -fx-font-size: 10px; }
+.map-college-tag { -fx-background-color: rgba(255,255,255,0.72); -fx-background-radius: 8; -fx-padding: 0 4 0 4; -fx-text-fill: -bofo-text-2; -fx-font-size: 9px; -fx-font-weight: normal; }
 
-/* ---- v1.14.3 Home extras: floating map chip, "See all" pill, price accent ---- */
-.map-chip { -fx-background-color: rgba(255,255,255,0.94); -fx-background-radius: 999; -fx-padding: 6 12; -fx-text-fill: -bofo-primary-dark;
-  -fx-font-size: 12px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.18), 8, 0, 0, 2); }
-.see-all { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 999; -fx-text-fill: -bofo-primary-dark; -fx-font-weight: bold;
-  -fx-font-size: 12.5px; -fx-padding: 7 14; -fx-cursor: hand; }
-.see-all:hover { -fx-background-color: #DDD6FF; }
-.card-compact .price-big { -fx-text-fill: -bofo-primary-dark; }
-
-/* ---- v1.14.3 Chats list: unread conversations stand out ---- */
-.chat-row-unread { -fx-background-color: #F0ECFF; -fx-border-color: -bofo-primary; -fx-border-width: 1.5; -fx-border-radius: 22; -fx-background-radius: 22;
-  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.18), 12, 0, 0, 3); }
-.chat-row-unread:hover { -fx-background-color: #E9E3FF; }
-
-/* ---- v1.14.3 New listing form: airy cards, soft inputs, gradient step numbers, progress bar ---- */
-.form-card { -fx-background-color: white; -fx-border-color: transparent; -fx-border-radius: 24; -fx-background-radius: 24; -fx-padding: 18;
-  -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.09), 14, 0, 0, 4); }
+/* ---- New listing form ---- */
+.sec-num { -fx-background-color: -bofo-primary; -fx-background-radius: 999; -fx-text-fill: white; -fx-font-size: 13px; }
+.room-card { -fx-background-color: -bofo-bg; -fx-background-radius: 16; -fx-padding: 12; }
+.room-title { -fx-font-size: 14px; -fx-font-weight: bold; }
+.room-remove { -fx-min-width: 30; -fx-min-height: 30; -fx-pref-width: 30; -fx-pref-height: 30; -fx-max-width: 30; -fx-max-height: 30; -fx-padding: 0; }
+.pin-status { -fx-background-color: -bofo-bg; -fx-background-radius: 16; -fx-padding: 9 14; -fx-text-fill: -bofo-text-2; -fx-font-size: 12px; }
+.pin-status-ok { -fx-background-color: -bofo-success-tint; -fx-text-fill: -bofo-success; }
 .form-card .h2 { -fx-font-size: 17px; }
-.form-card .sec-num { -fx-background-color: linear-gradient(to bottom right, #7C5CFF, #5B3BF0); -fx-text-fill: white; }
-.form-card > .text-field { -fx-background-color: #F6F5FC; -fx-border-color: transparent; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 14 16; -fx-font-size: 14.5px; }
+.form-card > .text-field { -fx-background-color: -bofo-bg; -fx-border-color: transparent; -fx-padding: 14 16; -fx-font-size: 14.5px; }
 .form-card > .text-field:focused { -fx-background-color: white; -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
-.form-card .room-card { -fx-background-color: #F6F4FF; -fx-background-radius: 18; }
-.form-card .chip { -fx-background-color: -bofo-primary-tint; -fx-border-color: transparent; -fx-text-fill: -bofo-primary-dark; -fx-font-weight: bold; }
-.form-card .chip:hover { -fx-background-color: #DDD6FF; }
-.form-card .btn-outline { -fx-background-color: -bofo-primary-tint; -fx-border-color: transparent; -fx-text-fill: -bofo-primary-dark; -fx-font-weight: bold; }
-.form-card .btn-outline:hover { -fx-background-color: #DDD6FF; }
-.sticky-bar { -fx-border-color: transparent; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.10), 16, 0, 0, -4); }
-.form-progress { -fx-pref-height: 8; -fx-min-height: 8; -fx-max-height: 8; }
-.form-progress > .track { -fx-background-color: #ECEAF9; -fx-background-radius: 999; -fx-background-insets: 0; -fx-padding: 4; }
-.form-progress > .bar { -fx-background-color: linear-gradient(to right, #7C5CFF, #5B3BF0); -fx-background-radius: 999; -fx-background-insets: 0; -fx-padding: 4; }
+.form-card .room-card { -fx-background-color: -bofo-bg; }
+.form-card .chip { -fx-background-color: -bofo-primary-tint; -fx-border-color: transparent; -fx-text-fill: -bofo-primary-dark; }
+.form-card .btn-outline { -fx-background-color: -bofo-primary-tint; -fx-border-color: transparent; -fx-text-fill: -bofo-primary-dark; }
+.form-card .chip:hover, .form-card .btn-outline:hover { -fx-background-color: derive(-bofo-primary-tint, -6%); }
+.form-progress { -fx-pref-height: 8; -fx-min-height: 8; -fx-max-height: 8; -fx-pref-width: 120; }
+.form-progress > .track { -fx-background-color: -bofo-skeleton; -fx-background-radius: 8; -fx-background-insets: 0; -fx-padding: 4; }
+.form-progress > .bar { -fx-background-color: -bofo-primary; -fx-background-radius: 8; -fx-background-insets: 0; -fx-padding: 4; }
 .form-progress-done > .bar { -fx-background-color: -bofo-success; }
-
-/* ---- v1.15.0: raised blue Create button + step form ---- */
-.dock-create { -fx-background-color: linear-gradient(to bottom right, #3B82F6, #1D4ED8); -fx-background-radius: 16;
-    -fx-effect: dropshadow(gaussian, rgba(37,99,235,0.45), 16, 0.1, 0, 6); }
-.dock-btn:hover .dock-create { -fx-background-color: linear-gradient(to bottom right, #60A5FA, #2563EB); }
 .step-head { -fx-background-color: -bofo-bg; }
-.step-seg { -fx-background-color: #E3E0F6; -fx-background-radius: 999; -fx-pref-height: 6; -fx-min-height: 6; -fx-max-height: 6; }
-.step-seg-on { -fx-background-color: linear-gradient(to right, #7C5CFF, #5B3BF0); }
-.step-count { -fx-text-fill: -bofo-primary; -fx-font-size: 11px; -fx-font-weight: bold; }
-.step-title { -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: -bofo-text; }
+.step-seg { -fx-background-color: -bofo-skeleton; -fx-background-radius: 999; -fx-pref-height: 6; -fx-min-height: 6; -fx-max-height: 6; }
+.step-seg-on { -fx-background-color: -bofo-primary; }
+.step-count { -fx-text-fill: -bofo-primary; -fx-font-size: 11px; }
+.step-title { -fx-font-size: 24px; -fx-text-fill: -bofo-text; }
 .review-text { -fx-font-size: 14px; -fx-text-fill: -bofo-text; -fx-line-spacing: 3; }
 
-/* ---- v1.15.1 ---- */
-.form-card { -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.07), 14, 0, 0, 3); }
-.pin-status { -fx-background-radius: 999; -fx-padding: 9 14; }
-.form-progress { -fx-pref-width: 120; }
+/* ---- Boarding house detail + directions ---- */
+.stat-tile { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 12 8; }
+.stat-value { -fx-font-size: 22px; -fx-text-fill: -bofo-text; }
+.dir-head { -fx-font-size: 19px; -fx-text-fill: -bofo-text; }
+.dir-opt, .dir-opt-on, .dir-trip { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 12 14; }
+.dir-opt:hover { -fx-background-color: -bofo-bg; }
+.dir-opt-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
+.dir-trip { -fx-padding: 12 14; }
+.dir-trip-what { -fx-text-fill: -bofo-muted; -fx-font-size: 11px; }
+.dir-trip-name { -fx-text-fill: -bofo-text; -fx-font-size: 13px; }
+.dir-hero { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 16; -fx-padding: 14 16; }
+.dir-hero-icon { -fx-background-color: white; -fx-background-radius: 8; -fx-font-size: 26px; }
+.dir-section { -fx-text-fill: -bofo-text-2; -fx-font-size: 12px; -fx-padding: 4 0 0 2; }
+.dir-src { -fx-text-fill: -bofo-muted; -fx-font-size: 11px; }
+.dir-opt-icon { -fx-background-color: -bofo-primary-tint; -fx-background-radius: 8; -fx-font-size: 18px; }
+.dir-opt-title { -fx-text-fill: -bofo-text; -fx-font-size: 14px; }
+.dir-note { -fx-background-radius: 16; -fx-padding: 10 12; }
+.dir-note-text { -fx-font-size: 12.5px; }
+.dir-note-ok { -fx-background-color: -bofo-success-tint; }   .dir-note-ok .dir-note-text { -fx-text-fill: -bofo-success; }
+.dir-note-warn { -fx-background-color: -bofo-primary-tint; } .dir-note-warn .dir-note-text { -fx-text-fill: -bofo-primary-dark; }
+.dir-note-bad { -fx-background-color: -bofo-error-tint; }  .dir-note-bad .dir-note-text { -fx-text-fill: -bofo-error; }
+.dir-note-sym { -fx-background-radius: 999; -fx-font-size: 12px; -fx-text-fill: white; }
+.dir-note-sym-ok { -fx-background-color: -bofo-success; }
+.dir-note-sym-warn { -fx-background-color: -bofo-primary; }
+.dir-note-sym-bad { -fx-background-color: -bofo-error; }
 
-/* ---- Popup (v-popup): the one in-app pop-up used for every confirm / alert / ask ---- */
-.popup-scrim { -fx-background-color: rgba(23,20,42,0.50); }
-.popup-card { -fx-background-color: white; -fx-background-radius: 28;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.30), 36, 0.12, 0, 12); }
-.popup-icon { -fx-background-radius: 999; -fx-font-size: 26px; -fx-font-weight: bold; }
+/* ---- Pop-ups and action sheet (Popup.java) ---- */
+.popup-scrim { -fx-background-color: -bofo-scrim; }
+.popup-card, .popup-sheet { -fx-background-color: white; -fx-background-radius: 16; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.24), 24, 0, 0, 8); }
+.popup-sheet { -fx-padding: 10 14 14 14; }
+.popup-icon { -fx-background-radius: 999; -fx-font-size: 26px; }
 .popup-icon-info { -fx-background-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
-.popup-icon-danger { -fx-background-color: #FCEBEB; -fx-text-fill: -bofo-error; }
-.popup-icon-ok { -fx-background-color: #E3F6EA; -fx-text-fill: #1E8E4E; }
-.popup-title { -fx-font-size: 19px; -fx-font-weight: bold; -fx-text-fill: -bofo-ink; }
+.popup-icon-danger { -fx-background-color: -bofo-error-tint; -fx-text-fill: -bofo-error; }
+.popup-icon-ok { -fx-background-color: -bofo-success-tint; -fx-text-fill: -bofo-success; }
+.popup-title { -fx-font-size: 19px; -fx-text-fill: -bofo-ink; }
 .popup-message { -fx-font-size: 13.5px; -fx-text-fill: -bofo-text-2; -fx-line-spacing: 2; }
-.popup-input { -fx-background-color: #F6F5FC; -fx-border-color: transparent; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 13 16; -fx-font-size: 14px; }
-.popup-input:focused { -fx-background-color: white; -fx-border-color: -bofo-primary; -fx-border-width: 1.5; }
-.popup-text-area, .popup-text-area .content { -fx-background-color: #F6F5FC; -fx-background-radius: 16; -fx-font-size: 12.5px; }
+.popup-input { -fx-background-color: -bofo-bg; -fx-border-color: transparent; -fx-padding: 13 16; -fx-font-size: 14px; }
+.popup-input:focused { -fx-background-color: white; }
+.popup-text-area, .popup-text-area .content { -fx-background-color: -bofo-bg; -fx-background-radius: 16; -fx-font-size: 12.5px; }
 .popup-text-area { -fx-border-color: transparent; -fx-border-radius: 16; }
-.popup-btn { -fx-background-radius: 999; -fx-font-weight: bold; -fx-font-size: 14.5px; -fx-padding: 13 18; -fx-cursor: hand; -fx-min-width: 110; }
+.popup-btn { -fx-background-radius: 16; -fx-font-size: 14.5px; -fx-padding: 13 18; -fx-cursor: hand; -fx-min-width: 110; }
 .popup-btn-primary { -fx-background-color: -bofo-primary; -fx-text-fill: white; }
-.popup-btn-primary:hover { -fx-background-color: #6D52F5; }
+.popup-btn-primary:hover { -fx-background-color: -bofo-hover; }
 .popup-btn-danger { -fx-background-color: -bofo-error; -fx-text-fill: white; }
-.popup-btn-danger:hover { -fx-background-color: #C93A3A; }
-.popup-btn-ghost { -fx-background-color: #F1EFFA; -fx-text-fill: -bofo-text; }
-.popup-btn-ghost:hover { -fx-background-color: #E6E2F6; }
+.popup-btn-danger:hover { -fx-background-color: derive(-bofo-error, -8%); }
+.popup-btn-ghost { -fx-background-color: -bofo-bg; -fx-text-fill: -bofo-text; }
+.popup-btn-ghost:hover { -fx-background-color: -bofo-skeleton; }
 .popup-btn:disabled { -fx-opacity: 0.45; }
-
-/* ---- Action sheet (Popup.menu): replaces the grey right-click / long-press menus ---- */
-.popup-sheet { -fx-background-color: white; -fx-background-radius: 26; -fx-padding: 10 14 14 14;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.30), 36, 0.12, 0, 8); }
-.popup-handle { -fx-background-color: #D9D6EA; -fx-background-radius: 999; }
-.popup-sheet-title { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: -bofo-text-2; -fx-padding: 2 8 8 8; }
-.popup-sheet-row { -fx-background-color: transparent; -fx-background-radius: 16; -fx-text-fill: -bofo-ink; -fx-font-size: 15.5px;
-  -fx-font-weight: bold; -fx-padding: 15 14; -fx-cursor: hand; }
-.popup-sheet-row:hover, .popup-sheet-row:pressed { -fx-background-color: #F6F5FC; }
+.popup-handle { -fx-background-color: -bofo-skeleton; -fx-background-radius: 999; }
+.popup-sheet-title { -fx-font-size: 13px; -fx-text-fill: -bofo-text-2; -fx-padding: 2 8 8 8; }
+.popup-sheet-row { -fx-background-color: transparent; -fx-background-radius: 8; -fx-text-fill: -bofo-ink; -fx-font-size: 15.5px; -fx-padding: 15 14; -fx-cursor: hand; }
+.popup-sheet-row:hover, .popup-sheet-row:pressed { -fx-background-color: -bofo-bg; }
 .popup-sheet-row-danger { -fx-text-fill: -bofo-error; }
-.popup-sheet-row-danger:hover, .popup-sheet-row-danger:pressed { -fx-background-color: #FCEFEF; }
-
-/* ---- v1.16.9 narrow-screen fixes (320 px): settings rows, header button, listing action buttons ---- */
-.settings-row { -fx-padding: 13 14; }
-.settings-ok { -fx-text-fill: -bofo-success; -fx-font-weight: bold; }
-.btn-sm { -fx-padding: 9 12; -fx-font-size: 13px; }
-.hdr-btn-cta { -fx-background-color: -bofo-ink; -fx-background-radius: 999; -fx-padding: 0; -fx-cursor: hand;
-  -fx-min-width: 44; -fx-min-height: 44; -fx-pref-width: 44; -fx-pref-height: 44; -fx-max-width: 44; -fx-max-height: 44;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.22), 10, 0, 0, 3); }
-.hdr-btn-cta:hover { -fx-background-color: #2C2750; }
-.hdr-btn-cta:pressed { -fx-background-color: #3A3466; }
-
-/* ---- v1.18.0 Home + map redesign: soft framed map, glass "Live" chip, bigger locate button, press feedback ----
-   Press feedback is instant (JavaFX CSS has no transitions); the animated parts (blue dot, entrance) live in LiveDot / HomeView. */
-.home-map { -fx-background-color: white; -fx-background-radius: 28; }
-.map-frame { -fx-border-color: white; -fx-border-width: 3; -fx-border-radius: 28; }
-.map-fab { -fx-min-width: 46; -fx-min-height: 46; -fx-pref-width: 46; -fx-pref-height: 46; -fx-max-width: 46; -fx-max-height: 46;
-  -fx-border-color: transparent; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.22), 12, 0, 0, 3); }
-.map-fab:pressed { -fx-scale-x: 0.92; -fx-scale-y: 0.92; }
-.map-fab-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; -fx-border-width: 2; -fx-border-radius: 999; }
-.radius-bar { -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.16), 12, 0, 0, 3); }
-.map-card { -fx-background-radius: 22; }
-.map-attr { -fx-background-color: rgba(255,255,255,0.7); }
-.hdr-btn:pressed, .home-chips .chip:pressed, .home-chips .chip-selected:pressed { -fx-scale-x: 0.94; -fx-scale-y: 0.94; }
-.card-compact:pressed { -fx-scale-x: 0.98; -fx-scale-y: 0.98; }
-.home-title { -fx-font-size: 21px; }
-.greet-hello { -fx-font-size: 12.5px; }
-
-/* ---- v1.18.3 Home redesign v3: purple hero card + overlapping search, stat tiles, amber accents, white photo cards ---- */
-.home-hero { -fx-background-color:
-    radial-gradient(center 100% 0%, radius 40%, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.14) 98%, rgba(255,255,255,0) 100%),
-    radial-gradient(center 76% 118%, radius 30%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.10) 98%, rgba(255,255,255,0) 100%),
-    radial-gradient(center 0% 100%, radius 60%, rgba(255,180,0,0.40), rgba(255,180,0,0)),
-    linear-gradient(to bottom right, #7457FF 0%, #4A2BDD 100%);
-  -fx-background-radius: 30, 30, 30, 30; -fx-padding: 16 18 48 18;
-  -fx-effect: dropshadow(gaussian, rgba(74,43,221,0.28), 22, 0, 0, 8); }
-.home-hero .greet-hello { -fx-text-fill: rgba(255,255,255,0.82); -fx-font-size: 12.5px; }
-.home-hero .greet-name { -fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold; }
-.home-headline { -fx-text-fill: white; -fx-font-size: 25px; -fx-font-weight: bold; }
-.home-hero .hdr-avatar { -fx-background-color: white; -fx-text-fill: -bofo-primary; -fx-border-color: rgba(255,255,255,0.45); -fx-border-width: 3;
-  -fx-effect: dropshadow(gaussian, rgba(20,8,90,0.30), 10, 0, 0, 3); }
-.home-hero .hdr-btn { -fx-effect: dropshadow(gaussian, rgba(20,8,90,0.28), 12, 0, 0, 4); }
-.home-search .college-box, .home-search .search-bar { -fx-border-color: -bofo-border; -fx-effect: dropshadow(gaussian, rgba(40,20,140,0.24), 20, 0, 0, 8); }
-.home-map { -fx-background-color: white; -fx-background-radius: 24; }
-.map-frame { -fx-border-color: rgba(23,20,42,0.07); -fx-border-width: 1; -fx-border-radius: 24; }
-.map-count { -fx-background-color: rgba(255,255,255,0.96); -fx-background-radius: 999; -fx-padding: 6 12; -fx-text-fill: -bofo-ink; -fx-font-size: 12px; -fx-font-weight: bold;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.16), 8, 0, 0, 2); }
-.stat-tile { -fx-background-color: white; -fx-background-radius: 18; -fx-padding: 11 14; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.06), 10, 0, 0, 2); }
-.stat-num { -fx-font-size: 20px; -fx-font-weight: bold; }
-.stat-purple { -fx-text-fill: -bofo-primary; }
-.stat-green { -fx-text-fill: #1E8E5E; }
-.stat-amber { -fx-text-fill: #D98F00; }
-.stat-cap { -fx-font-size: 11.5px; -fx-text-fill: -bofo-muted; }
-.home-chips { -fx-background-color: transparent; -fx-background-radius: 0; -fx-padding: 4 0; -fx-spacing: 8; -fx-effect: none; }
-.home-chips .chip { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-width: 1; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-padding: 8 18; -fx-font-size: 13.5px; -fx-font-weight: bold; -fx-text-fill: -bofo-text-2; -fx-effect: none; }
-.home-chips .chip:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
-.home-chips .chip-selected { -fx-background-color: linear-gradient(to bottom right, #7C5CFF, #5B3BF0); -fx-border-color: transparent; -fx-border-width: 1; -fx-border-radius: 999; -fx-background-radius: 999;
-  -fx-padding: 8 18; -fx-font-size: 13.5px; -fx-font-weight: bold; -fx-text-fill: white; -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.35), 12, 0, 0, 4); }
-.home-title { -fx-font-size: 20px; -fx-font-weight: bold; }
-.title-bar { -fx-background-color: #FFB400; -fx-background-radius: 2; }
-.card-compact { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 22; -fx-background-radius: 22; -fx-padding: 8 8 12 8; }
-.card-compact:hover { -fx-border-color: #D9D4F7; }
-.card-compact .photo-placeholder { -fx-background-color: linear-gradient(to bottom right, #E9E1FF, #C9BBFF); -fx-background-radius: 16; }
-.card-compact .h2 { -fx-font-size: 14px; -fx-text-fill: -bofo-ink; }
-.price-chip { -fx-background-color: #FFB400; -fx-background-radius: 999; -fx-padding: 4 10; -fx-text-fill: #2B1D00; -fx-font-size: 12px; -fx-font-weight: bold; }
-.rate-chip { -fx-background-color: rgba(255,255,255,0.95); -fx-background-radius: 999; -fx-padding: 3 8; -fx-text-fill: -bofo-ink; -fx-font-size: 11px; -fx-font-weight: bold; }
+.popup-sheet-row-danger:hover, .popup-sheet-row-danger:pressed { -fx-background-color: -bofo-error-tint; }

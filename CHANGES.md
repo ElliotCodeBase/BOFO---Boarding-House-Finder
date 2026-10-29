@@ -1,21 +1,10 @@
-# v1.18.3 - Home redesign v3: purple hero card, stat tiles, amber accents
-- Header is a rounded **purple hero card** (soft circles + amber glow) with the greeting, bell and headline; the **search pill overlaps its bottom edge**.
-- **Stat tiles** under the map from the real list: places, with free beds, cheapest per month.
-- Pill tabs again, selected = purple with glow. Section title has an amber accent bar.
-- Listing cards are white again with an **amber price chip** and a rating chip on the photo, "x beds left" under the name, nicer empty-photo gradient.
-
-# v1.18.2 - Home redesign v2: calm, photo-first (after Airbnb / Apple Maps research)
-- Removed the heavy purple hero and headline. Header is light again: small greeting, search pill with one soft shadow.
-- Map: 24 px corners with a hairline instead of the white frame; the "N places nearby" chip is white; locate button unchanged.
-- New / Hot / Best rated are compact pill chips again (selected = dark pill), left aligned.
-- Listing cards (2-column list) are flat: rounded photo, then name, rating + distance, price - no box, no price chip.
-- Blue dot is now flat (no gloss), smaller ripples, a narrower view cone, and no cone at all for approximate (PC / Wi-Fi) locations.
-
-# v1.18.1 - Whole Home redesign, "Approximate" label removed
-- **Home header**: purple hero band with an amber glow, white greeting, headline "Find your place near campus" and the search bar floating on it.
-- **Tabs**: New / Hot / Best rated is now one full-width segmented control (dark pill = selected).
-- **Cards**: in the 2-column list the price sits on the photo as a dark chip, the text block is shorter, corners are rounder.
-- **Map**: the Live / Approximate / Location off chip is gone. A small "6 places nearby" chip shows instead (hidden while a campus is chosen, the radius bar uses that spot).
+# v1.19.0 - Home redesign: plain header, flat cards, one design system
+- **Home**: the violet gradient header band is gone. Greeting + campus search sit on the page background; the search bar is a flat 16 px field with a 1 px line. Map corners 16 px, 1 px outline (no white frame), plain white "Live" chip. The first-Home entrance stagger was removed (motion now only confirms an action).
+- **Cards**: no house icon and no amber price pill. A missing photo is a plain neutral block, a loading photo a pulsing one. Price is ink text under the photo. Meta line is real info: `350 m · 4 beds left` (rating first when there are reviews, nothing printed when a value is missing, "No reviews yet" on the wide card). Ratings are ink, not gold.
+- **Copy**: "Boarding houses near you", "Within 1.5 km of <campus> · 6 with free beds", "No free beds in range".
+- **Campus dropdown**: every row is the same height (56 px) with the text centred, so the selected row and the gaps line up; a third line is cut instead of overflowing.
+- **bofo.css rewritten as one cascade** (674 -> 443 lines, no override blocks at the end). Gradients 16 -> 0, shadow variants 38 -> 2 tiers, radius values 18 -> 4 (16 / 8 / 999 / 3), distinct hex colours 77 -> 16, bold declarations 93 -> 5. Shared by every tab, so Explore, Saved, Chats and Profile follow the same rules (profile header is now solid, chat bubbles solid, dock Create button solid ink).
+- Not run on screen (no Maven / JavaFX / javac in the sandbox). Only the Java edits were bracket-checked.
 
 # v1.18.0 - New live location marker + Home / map redesign
 - **Blue dot redesigned** (new `ui/LiveDot`): glossy blue-indigo core in a white ring with a soft shadow, two staggered ripple rings, and a fading **view cone** that turns the way you move (replaces the tiny arrow). First fix settles in from 82% size; pressing the locate button ends with a "found you" ring + pop on the dot.
