@@ -78,3 +78,36 @@ Build environment is set up. A finished APK is NOT yet confirmed. Native builds 
 - Android Google sign-in needs an Android OAuth client in Google Cloud (package name + signing SHA-1).
 - Release builds need a signed keystore (releaseConfiguration in pom.xml).
 - Never commit GitHub tokens or Supabase secrets.
+
+## Update + rebuild the APK (one command) - added v1.19.15
+Run in PowerShell from C:\Users\user\bofo-finder:
+
+    .\build-apk.ps1
+
+It syncs the folder to Ubuntu, builds, packages and copies the APK to the Desktop. Options:
+
+    .\build-apk.ps1 -PackageOnly   # only repackage (manifest/icons/resources changed, no Java changes)
+    .\build-apk.ps1 -Online        # allow downloads: first build, or after changing dependencies in pom.xml
+    .\build-apk.ps1 -Clean         # full clean rebuild if the build acts strange
+
+If PowerShell blocks the script: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, or run
+`powershell -ExecutionPolicy Bypass -File .\build-apk.ps1`.
+
+### Checklist for every new version
+1. Bump `<versionCode>` (+1) and `<versionName>` in pom.xml releaseConfiguration. The script copies them into
+   src/android/AndroidManifest.xml automatically.
+2. Run `.\build-apk.ps1`. Java changes need the full run (not -PackageOnly).
+3. Install the APK from the Desktop on the phone.
+
+### Fix guide
+| Problem | Fix |
+|---|---|
+| `Unknown host repo.maven.apache.org` (WSL has no DNS) | Run: `wsl -d Ubuntu -u root bash -c "printf '[network]\ngenerateResolvConf = false\n' > /etc/wsl.conf; rm -f /etc/resolv.conf; printf 'nameserver 8.8.8.8\nnameserver 1.1.1.1\n' > /etc/resolv.conf"; wsl --shutdown` then rebuild. Turn off VPN if it still fails. |
+| `Version code not found in manifest` | Run through `build-apk.ps1` (it writes versionCode/versionName). Or add `android:versionCode` and `android:versionName` to the `<manifest>` tag by hand. |
+| Offline error / "could not resolve" | Run `.\build-apk.ps1 -Online` once, then go back to the normal command. |
+| Maven version not supported | GluonFX needs Maven 3.8.8, not 3.9.x. |
+| Slow or odd failures | Never build under /mnt/c. The script builds in ~/bofo-finder inside Ubuntu. |
+| Out of memory in native compile | Add `memory=8GB` under `[wsl2]` in %UserProfile%\.wslconfig, then `wsl --shutdown`. |
+| Strange leftovers from an old build | `.\build-apk.ps1 -Clean` |
+| Need the real error | `wsl -d Ubuntu bash -ic 'tail -n 40 ~/bofo-finder/build.log'` and the newest file in `~/bofo-finder/target/gluonfx/log/` |
+| Gluon license message | Free license at https://gluonhq.com/activate, then `wsl -d Ubuntu bash -ic "mvn gluonfx:activate"` |
