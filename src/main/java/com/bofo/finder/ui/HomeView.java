@@ -212,28 +212,68 @@ public final class HomeView extends VBox {
      * so on that tab the range is read from the unfiltered list instead (one extra request) and shown when it arrives.
      */
     private void showPriceRange(List<BoardingHouse> items, int my, double[] ref, Double rad) {
+        if (State.college.get() == null) { paintPriceHint(); return; }          // prices are only for the places near the picked campus
         if (items != null) { paintPriceRange(PriceRange.of(items)); return; }
         Async.run(() -> bh.list(BhService.Tab.NEW, ref == null ? null : ref[0], ref == null ? null : ref[1], rad, null),
                 all -> { if (my == seq) paintPriceRange(PriceRange.of(all)); }, e -> { if (my == seq) priceRange.setVisible(false); });
     }
 
+    private static final String CARD = "-fx-background-color:white;-fx-background-radius:16;-fx-border-color:#E9E5FA;-fx-border-radius:16;-fx-border-width:2;-fx-padding:9 11 9 11;";
+    private static final String CARD_ON = "-fx-background-color:#FFF5F7;-fx-background-radius:16;-fx-border-color:#F43F5E;-fx-border-radius:16;-fx-border-width:2;-fx-padding:9 11 9 11;";
+    private BoardingHouse glowTarget;                                        // the place whose circle a price chip is lighting up on the map
+
+    /** No campus yet: a friendly card instead of prices from every boarding house. Tap it to start typing a campus. */
+    private void paintPriceHint() {
+        glowTarget = null; map.glow(null);
+        priceRange.getChildren().clear();
+        priceRange.setStyle("-fx-background-color:transparent;");
+        javafx.scene.shape.Circle ring = new javafx.scene.shape.Circle(7, Color.TRANSPARENT); ring.setStroke(Color.web("#5B3BF0")); ring.setStrokeWidth(3);
+        javafx.scene.shape.Circle core = new javafx.scene.shape.Circle(2.5, Color.web("#5B3BF0"));
+        StackPane icon = new StackPane(ring, core); icon.setMinSize(38, 38); icon.setMaxSize(38, 38);
+        icon.setStyle("-fx-background-color:#EFEBFF;-fx-background-radius:19;");
+        Label t = Ui.label("Pick a campus", "h2"); t.setStyle("-fx-font-size:15px;-fx-font-weight:bold;-fx-text-fill:#17142A;");
+        Label sub = Ui.label("See the lowest, middle and highest rent near it.", "secondary"); sub.setWrapText(true); sub.setStyle("-fx-font-size:12px;-fx-text-fill:#8A84A8;");
+        VBox text = new VBox(2, t, sub); HBox.setHgrow(text, Priority.ALWAYS);
+        HBox card = new HBox(12, icon, text); card.setAlignment(Pos.CENTER_LEFT); card.setStyle(CARD);
+        card.setCursor(javafx.scene.Cursor.HAND); HBox.setHgrow(card, Priority.ALWAYS); card.setMaxWidth(Double.MAX_VALUE);
+        card.setOnMouseClicked(e -> searchBar.field().requestFocus());
+        priceRange.getChildren().add(card);
+        priceRange.setVisible(true);
+    }
+
     private void paintPriceRange(PriceRange r) {
+        glowTarget = null; map.glow(null);
         priceRange.getChildren().clear();
         if (r == null) { priceRange.setVisible(false); return; }
-        priceRange.setStyle("-fx-background-color:#EFEBFF;-fx-background-radius:16;-fx-padding:12 16 12 16;"); if (r.single()) priceRange.getChildren().add(priceCell("Rent", r.lowest, r.lowestBh));
+        priceRange.setStyle("-fx-background-color:transparent;"); priceRange.setSpacing(8);
+        if (r.single()) priceRange.getChildren().add(priceCell("Rent", r.lowest, r.lowestBh, "#5B3BF0"));
         else {
-            priceRange.getChildren().add(priceCell("Lowest", r.lowest, r.lowestBh));
-            if (r.hasMiddle()) priceRange.getChildren().add(priceCell("Middle", r.middle, r.middleBh));
-            priceRange.getChildren().add(priceCell("Highest", r.highest, r.highestBh));
+            priceRange.getChildren().add(priceCell("Lowest", r.lowest, r.lowestBh, "#16A34A"));
+            if (r.hasMiddle()) priceRange.getChildren().add(priceCell("Middle", r.middle, r.middleBh, "#5B3BF0"));
+            priceRange.getChildren().add(priceCell("Highest", r.highest, r.highestBh, "#F59E0B"));
         }
         priceRange.setVisible(true);
     }
 
-    private VBox priceCell(String caption, double value, BoardingHouse target) {
-        Label v = Ui.label(PriceRange.peso(value), "h2"); v.setMinWidth(Region.USE_PREF_SIZE); v.setStyle("-fx-font-size:18px;-fx-font-weight:bold;-fx-text-fill:" + ("Middle".equals(caption) ? "#5B3BF0" : "#17142A") + ";");
+    /** One price card: a colored dot + caption, the rent, and a tap that lights up that boarding house's circle on the map. */
+    private VBox priceCell(String caption, double value, BoardingHouse target, String accent) {
+        javafx.scene.shape.Circle dot = new javafx.scene.shape.Circle(4, Color.web(accent));
+        Label c = Ui.label(caption.toUpperCase(), "secondary"); c.setStyle("-fx-font-size:10px;-fx-font-weight:bold;-fx-text-fill:#8A84A8;");
+        HBox head = new HBox(6, dot, c); head.setAlignment(Pos.CENTER_LEFT);
+        Label v = Ui.label(PriceRange.peso(value), "h2"); v.setMinWidth(Region.USE_PREF_SIZE); v.setStyle("-fx-font-size:17px;-fx-font-weight:bold;-fx-text-fill:#17142A;");
         Label u = Ui.label("/mo", "price-unit"); u.setMinWidth(Region.USE_PREF_SIZE); u.setStyle("-fx-font-size:11px;-fx-text-fill:#8A84A8;");
         HBox val = new HBox(3, v, u); val.setAlignment(Pos.BASELINE_LEFT);
-        Label c = Ui.label(caption.toUpperCase(), "secondary"); c.setStyle("-fx-font-size:10px;-fx-font-weight:bold;-fx-text-fill:#8A84A8;"); VBox cell = new VBox(2, c, val); cell.setMaxWidth(Double.MAX_VALUE); javafx.scene.layout.HBox.setHgrow(cell, javafx.scene.layout.Priority.ALWAYS); cell.setCursor(javafx.scene.Cursor.HAND); if (target != null) cell.setOnMouseClicked(e -> map.highlight(target)); return cell;
+        VBox cell = new VBox(5, head, val);
+        cell.setStyle(CARD); cell.setPrefWidth(100); cell.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(cell, Priority.ALWAYS);
+        cell.setCursor(javafx.scene.Cursor.HAND);
+        if (target != null) cell.setOnMouseClicked(e -> {
+            boolean off = target == glowTarget;                              // tap the lit card again to turn the light off
+            glowTarget = off ? null : target;
+            map.glow(glowTarget);
+            for (javafx.scene.Node n : priceRange.getChildren()) { n.setStyle(CARD); n.setEffect(null); }
+            if (!off) { cell.setStyle(CARD_ON); cell.setEffect(new javafx.scene.effect.DropShadow(12, 0, 3, Color.web("#F43F5E", 0.25))); }
+        });
+        return cell;
     }
 
     /** Subtitle + count under "Nearby boarding houses". */

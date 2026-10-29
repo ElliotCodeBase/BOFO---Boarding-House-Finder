@@ -488,6 +488,15 @@ public final class MapPane extends StackPane {
         if (b == null) return;
         if (preview) pinTapped(b); else flyTo(b.lat(), b.lng(), 16, 650);
     }
+    /**
+     * Lights up the circle (single pin, dot or numbered bubble) where {@code b} is, without selecting it or hiding the others.
+     * Used by the Lowest / Middle / Highest price chips. {@code null} clears it. If the place is off screen the map glides to it.
+     */
+    public void glow(BoardingHouse b) {
+        if (selected != null) deselect();
+        layer.markGlow(b == null ? null : b.id());
+        if (b != null && !layer.onScreen(b.lat(), b.lng())) flyTo(b.lat(), b.lng(), Double.isNaN(zoomVal) ? map.getZoom() : zoomVal, 450);
+    }
     private void pinTapped(BoardingHouse b) {
         if (!preview) { onPin.accept(b); return; }
         if (selected != null && selected.id().equals(b.id())) return;
@@ -778,7 +787,9 @@ public final class MapPane extends StackPane {
             Polygon tail = new Polygon(0.0, 0.0, -6.5, -15.0, 6.5, -15.0); tail.setFill(PURPLE);
             Circle head = new Circle(0, -21, 10, PURPLE); head.setStroke(Color.WHITE); head.setStrokeWidth(2.5);
             Circle dot = new Circle(0, -21, 3.4, Color.WHITE);
-            g.getChildren().addAll(hit, tail, head, dot);
+            Circle ring = new Circle(0, -21, 17, Color.web("#F43F5E", 0.18)); ring.setStroke(SELECTED); ring.setStrokeWidth(3); ring.setMouseTransparent(true); ring.setVisible(false);
+            g.getChildren().addAll(ring, hit, tail, head, dot);
+            g.getProperties().put("ring", ring);
             Scale sc = new Scale(0.001, 0.001, 0, 0);                        // pivot = the tip of the pin
             g.getTransforms().add(sc);
             Scale zs = new Scale(1, 1, 0, 0);                                // zoom-dependent size (bigger when zoomed out), also pivoting on the tip
@@ -794,6 +805,13 @@ public final class MapPane extends StackPane {
                     new KeyFrame(Duration.millis(delayMs + 180), new KeyValue(sc.xProperty(), 1.18, Interpolator.EASE_OUT), new KeyValue(sc.yProperty(), 1.18, Interpolator.EASE_OUT), new KeyValue(g.opacityProperty(), 1.0, Interpolator.EASE_OUT)),
                     new KeyFrame(Duration.millis(delayMs + 300), new KeyValue(sc.xProperty(), 1.0, Interpolator.EASE_BOTH), new KeyValue(sc.yProperty(), 1.0, Interpolator.EASE_BOTH))).play();
             return g;
+        }
+
+        private String glowId;                                          // the boarding house whose circle / bubble is lit by a price chip
+        void markGlow(String id) { glowId = id; markDirty(); }
+        boolean onScreen(double lat, double lng) {
+            Point2D q = getMapPoint(lat, lng);
+            return q.getX() > 20 && q.getX() < map.getWidth() - 20 && q.getY() > 20 && q.getY() < map.getHeight() - 20;
         }
 
         /** Selected pin grows and turns dark purple; null clears the selection. */
@@ -921,10 +939,16 @@ public final class MapPane extends StackPane {
                 boolean dotMode = far && !b.id().equals(selId);
                 Scale zs = (Scale) g.getProperties().get("zs");
                 double ks = dotMode ? Math.min(k, 1.0) : (b.id().equals(selId) ? Math.min(k, 1.15) : k);
+                boolean lit = b.id().equals(glowId);
+                if (lit) ks = Math.max(ks, 1.0) * 1.25;
                 if (zs != null) { zs.setX(ks); zs.setY(ks); }
                 ((Polygon) g.getProperties().get("tail")).setVisible(!dotMode);
                 double cyp = dotMode ? 0 : -21;
                 ((Circle) g.getProperties().get("head")).setCenterY(cyp); ((Circle) g.getProperties().get("dotc")).setCenterY(cyp);
+                Circle ringC = (Circle) g.getProperties().get("ring");
+                if (ringC != null) { ringC.setCenterY(cyp); ringC.setVisible(lit); }
+                if (lit) { ((Circle) g.getProperties().get("head")).setFill(SELECTED); ((Polygon) g.getProperties().get("tail")).setFill(SELECTED); }
+                else if (!Boolean.TRUE.equals(g.getProperties().get("sel"))) { ((Circle) g.getProperties().get("head")).setFill(PURPLE); ((Polygon) g.getProperties().get("tail")).setFill(PURPLE); }
                 ((Circle) g.getProperties().get("hit")).setCenterY(dotMode ? 0 : -16);
                 boolean hideIt = selId != null && !b.id().equals(selId);          // a boarding house is selected: all the others disappear
                 g.setVisible(!hideIt);
@@ -950,13 +974,20 @@ public final class MapPane extends StackPane {
                     sx += g.getTranslateX(); sy += g.getTranslateY(); la += b.lat(); ln += b.lng(); g.setVisible(false);
                 }
                 int cnt = grp.size();
+                boolean litC = false;
+                for (Group g : grp) if (((BoardingHouse) g.getUserData()).id().equals(glowId)) litC = true;
                 Group c = clusterAt(used++);
                 c.setVisible(true);
                 c.setTranslateX(sx / cnt); c.setTranslateY(sy / cnt);
                 c.getProperties().put("lat", la / cnt); c.getProperties().put("lng", ln / cnt);
                 Circle halo2 = (Circle) c.getProperties().get("halo"), body = (Circle) c.getProperties().get("body"); Text t = (Text) c.getProperties().get("txt");
                 double r = (13 + Math.min(9, Math.log(cnt) / Math.log(2) * 2.6)) * Math.min(k, 1.3);
-                body.setRadius(r); halo2.setRadius(r + 6);
+                if (litC) r *= 1.2;
+                body.setRadius(r); halo2.setRadius(litC ? r + 10 : r + 6);
+                halo2.setFill(Color.web(litC ? "#F43F5E" : "#5B3BF0", litC ? 0.30 : 0.16));
+                body.setFill(litC ? SELECTED : Color.WHITE); body.setStroke(litC ? Color.WHITE : PURPLE);
+                t.setFill(litC ? Color.WHITE : PURPLE);
+                if (litC) c.toFront();
                 String ct = String.valueOf(cnt);
                 if (!ct.equals(t.getText())) t.setText(ct);
                 t.setTranslateX(-t.getLayoutBounds().getWidth() / 2); t.setTranslateY(t.getLayoutBounds().getHeight() * 0.27);
