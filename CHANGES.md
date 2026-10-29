@@ -1,3 +1,12 @@
+# v1.17.3 - PC: an old pinned spot can no longer hide your real location
+- Fix: the spot you pinned by pressing and holding the map was saved on the PC and used on every start instead of your real location (easy to trigger by accident). It is now kept for the current session only, and turning "Use my location" off and on again clears it.
+- The console now prints where each location came from, e.g. `[location] wifi service -> 9.37, 122.80` (sources: phone GPS, wifi service, windows, browser, pinned spot, dev.location).
+
+# v1.17.2 - PC location from nearby Wi-Fi (like Google Maps)
+- On a PC the app now scans the Wi-Fi networks around you (`netsh wlan`) and asks a Wi-Fi location service where those routers are, the way Chrome / Google Maps do. Usually 20-200 m instead of Windows' internet-address guess. The dot then keeps following you (checked every 15 s, moves under 25 m ignored).
+- Service: free beacondb.net by default; for Google's own database set `geolocation.key=<Google Geolocation API key>` in `config.local.properties`.
+- If the Wi-Fi service cannot place you (fewer than 2 networks, no coverage), the app falls back to Windows' location as before. Press and hold the map still pins an exact spot.
+
 # v1.17.1 - PC: blue dot follows you live
 - On a PC the blue dot used to be set once. Now, after the first Windows location fix, the app keeps Windows' location watcher open and moves the dot whenever the position changes by more than 10 m (checked every 3 s). It stops when "Use my location" is turned off or when you press and hold the map to pin your spot (a pinned spot is never moved).
 - A PC has no GPS, so the dot is only as exact as Windows can make it (Wi-Fi). Turn on Windows Settings > Privacy & security > Location. Phones are unchanged (real GPS).

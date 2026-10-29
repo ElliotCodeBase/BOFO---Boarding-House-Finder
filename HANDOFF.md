@@ -1,3 +1,15 @@
+# Handoff - v1.17.3 Pinned spot no longer persists (2026-10-29)
+- **PR title:** `v1.17.3 - PC: pinned spot is session-only; log location source`. Version in `config.properties`, `pom.xml` (versionCode 74), CHANGES.md.
+- `Locator`: `manual` no longer loaded/saved (`location.properties`), cleared in `setEnabled(true)`; `src` field + `[location]` println in `fix()`. Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.17.2 PC Wi-Fi location (2026-10-29)
+- **PR title:** `v1.17.2 - PC location from nearby Wi-Fi (like Google Maps)`. Version in `config.properties`, `pom.xml` (versionCode 73), CHANGES.md.
+- New `util/WifiLocator` (netsh scan -> Geolocation API, Google if `geolocation.key` else beacondb). `Locator.desktopFix` tries it first, `wifiSource` selects the 15 s `startWifiLive` loop instead of the PowerShell watcher. Network and Windows scan not tested by Claude; not compiled/run.
+
+---
+
 # Handoff - v1.17.1 Live location on PC (2026-10-29)
 - **PR title:** `v1.17.1 - PC: blue dot follows your location live`. Version in `config.properties`, `pom.xml` (versionCode 72), CHANGES.md.
 - `Locator`: `startLive()` / `stopLive()` keep one PowerShell (`WIN_LIVE_SCRIPT`, GeoCoordinateWatcher) printing a fix every 3 s; started after the first successful `desktopFix`; stopped in `stop()` and `setManual()`; shutdown hook destroys it. Not compiled/run by Claude.

@@ -10,6 +10,18 @@ Patch (x.y.Z) for fixes, minor (x.Y.0) for new features. The v1.2.0 merge once l
 
 ---
 
+# v1.17.3 - Pinned spot is session-only (2026-10-29)
+
+`util/Locator.java`. Details: `CHANGES.md`.
+
+---
+
+# v1.17.2 - PC location from nearby Wi-Fi (2026-10-29)
+
+`util/WifiLocator.java`, `util/Locator.java`. Details: `CHANGES.md`.
+
+---
+
 # v1.17.1 - PC live location (2026-10-29)
 
 `util/Locator.java` (`startLive` / `stopLive`). Details: `CHANGES.md`.

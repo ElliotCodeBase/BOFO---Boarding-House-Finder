@@ -54,7 +54,8 @@ public final class Locator {
     private final File prefFile;
     private PauseTransition timeout;
     private boolean listening;
-    private double[] manual;                   // PC only: the spot the user pinned by holding the map (saved)
+    private double[] manual;                   // PC only: the spot the user pinned by holding the map (this session only; turning location off and on again clears it)
+    private volatile String src = "?";         // where the latest fix came from (printed in the console to find wrong-dot problems)
     private boolean nextFixApprox;               // the fix that is about to arrive comes from a PC, not from phone GPS
 
     private Locator() {
@@ -65,8 +66,6 @@ public final class Locator {
             Properties p = new Properties(); p.load(in);
             enabled.set(!"false".equals(p.getProperty("enabled")));
             asked = "true".equals(p.getProperty("asked"));
-            String m = p.getProperty("manual");
-            if (m != null && m.contains(",")) manual = new double[]{Double.parseDouble(m.split(",")[0]), Double.parseDouble(m.split(",")[1])};
         } catch (Exception firstRun) { /* defaults */ }
     }
 
@@ -76,7 +75,6 @@ public final class Locator {
             Properties p = new Properties();
             p.setProperty("enabled", String.valueOf(enabled.get()));
             p.setProperty("asked", String.valueOf(asked));
-            if (manual != null) p.setProperty("manual", manual[0] + "," + manual[1]);
             try (OutputStream out = Files.newOutputStream(prefFile.toPath())) { p.store(out, "BOFO location choice"); }
         } catch (Exception ignored) { }
     }
@@ -107,6 +105,7 @@ public final class Locator {
     /** The Settings switch. Off = stop tracking and forget the position. On = ask the phone and start again. */
     public void setEnabled(boolean on) {
         enabled.set(on);
+        if (on) manual = null;                     // switching location on again forgets an old pin
         asked = true;
         save();
         if (on) { if (status.get() == Status.UNAVAILABLE) status.set(Status.IDLE); start(); }
@@ -129,16 +128,16 @@ public final class Locator {
         if (!enabled.get()) return;
         if (status.get() == Status.ON || status.get() == Status.REQUESTING) return;
         double[] dev = AppConfig.devLocation();
-        if (dev != null) { nextFixApprox = true; fix(dev); return; }
+        if (dev != null) { nextFixApprox = true; src = "dev.location (config)"; fix(dev); return; }
         status.set(Status.REQUESTING);
         if (timeout != null) timeout.stop();                 // an old timer must never fail a newer request
         try {
             Optional<PositionService> svc = PositionService.create();
             if (svc.isEmpty()) {
-                if (manual != null) { nextFixApprox = false; fix(manual); return; }          // the user told us where they are: trust that over Wi-Fi / IP guesses
+                if (manual != null) { nextFixApprox = false; src = "pinned spot"; fix(manual); return; }          // the user told us where they are: trust that over Wi-Fi / IP guesses
                 nextFixApprox = true; desktopFix(); return;
             }        // PC: ask Windows, else the browser (coarse: Wi-Fi / IP based)
-            nextFixApprox = false;
+            nextFixApprox = false; src = "phone GPS";
             PositionService ps = svc.get();
             service = ps;
             if (!listening) {
@@ -166,7 +165,10 @@ public final class Locator {
         if (!System.getProperty("os.name", "").toLowerCase().contains("win")) { browserFix(); return; }
         Thread t = new Thread(() -> {
             double[] got = null;
-            try {
+            wifiSource = false;
+            WifiLocator.Fix wf = WifiLocator.locate();             // like Google Maps: nearby Wi-Fi networks -> a location service (20-200 m)
+            if (wf != null) { got = new double[]{wf.lat(), wf.lng()}; wifiSource = true; }
+            else try {                                              // Wi-Fi gave nothing: Windows' own guess
                 Process p = new ProcessBuilder("powershell", "-NoProfile", "-NonInteractive", "-Command", WIN_SCRIPT)
                         .redirectErrorStream(true).start();
                 String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
@@ -175,7 +177,7 @@ public final class Locator {
                 if (a.length == 2) got = new double[]{Double.parseDouble(a[0].trim()), Double.parseDouble(a[1].trim())};
             } catch (Throwable ignored) { }
             double[] result = got;
-            Platform.runLater(() -> { if (result != null) { fix(result); startLive(); } else browserFix(); });   // Windows could not tell: try the browser
+            Platform.runLater(() -> { if (result != null) { src = wifiSource ? "wifi service" : "windows"; fix(result); startLive(); } else browserFix(); });   // Windows could not tell: try the browser
         }, "bofo-win-geo");
         t.setDaemon(true); t.start();
     }
@@ -187,9 +189,32 @@ public final class Locator {
     private volatile Process liveProc;
     private boolean hookAdded;
 
+    private volatile boolean wifiSource;           // the first fix came from the Wi-Fi service, so live updates use it too
+    private volatile Thread wifiThread;
+
+    private void startWifiLive() {
+        if (wifiThread != null && wifiThread.isAlive()) return;
+        Thread t = new Thread(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                try { Thread.sleep(15000); } catch (InterruptedException e) { return; }
+                WifiLocator.Fix f = WifiLocator.locate();
+                if (f == null) continue;
+                double[] pos = {f.lat(), f.lng()};
+                Platform.runLater(() -> {
+                    double[] cur = State.gps.get();
+                    if (manual != null || wifiThread == null || !enabled.get()) return;
+                    if (cur != null && com.bofo.finder.util.Geo.km(cur[0], cur[1], pos[0], pos[1]) < 0.025) return;   // Wi-Fi jitters by tens of metres: ignore tiny moves
+                    nextFixApprox = true; src = "wifi service (live)"; fix(pos);
+                });
+            }
+        }, "bofo-wifi-live");
+        t.setDaemon(true); wifiThread = t; t.start();
+    }
+
     private void startLive() {
         if (manual != null || AppConfig.devLocation() != null || AppConfig.isAndroid()) return;       // a pinned or fixed spot is not moved by Windows
         if (!System.getProperty("os.name", "").toLowerCase().contains("win")) return;
+        if (wifiSource) { startWifiLive(); return; }
         if (liveProc != null && liveProc.isAlive()) return;
         try {
             Process p = new ProcessBuilder("powershell", "-NoProfile", "-NonInteractive", "-Command", WIN_LIVE_SCRIPT).redirectErrorStream(true).start();
@@ -207,7 +232,7 @@ public final class Locator {
                             double[] cur = State.gps.get();
                             if (manual != null || liveProc != p || !enabled.get()) return;
                             if (cur != null && com.bofo.finder.util.Geo.km(cur[0], cur[1], pos[0], pos[1]) < 0.01) return;   // moved less than 10 m: leave the dot alone
-                            nextFixApprox = true; fix(pos);
+                            nextFixApprox = true; src = "windows (live)"; fix(pos);
                         });
                     }
                 } catch (Throwable ignored) { }
@@ -217,6 +242,8 @@ public final class Locator {
     }
 
     private void stopLive() {
+        Thread w = wifiThread; wifiThread = null;
+        if (w != null) w.interrupt();
         Process p = liveProc; liveProc = null;
         if (p != null) p.destroy();
     }
@@ -260,7 +287,7 @@ public final class Locator {
                         catch (NumberFormatException ignored) { }
                     }
                     ex.sendResponseHeaders(200, -1); ex.close();
-                    if (!Double.isNaN(lat) && !Double.isNaN(lng)) fix(new double[]{lat, lng});
+                    if (!Double.isNaN(lat) && !Double.isNaN(lng)) { src = "browser"; fix(new double[]{lat, lng}); }
                     stopGeo();
                 });
                 srv.createContext("/fail", ex -> {
@@ -315,11 +342,13 @@ public final class Locator {
     /** PC only: the user pressed and held the map to say "I'm here". Saved, and used instead of the coarse Windows / browser guess. */
     public void setManual(double[] p) {
         manual = p; save(); nextFixApprox = false; stopLive();
-        fix(p);
+        src = "pinned spot"; fix(p);
     }
 
     private void fix(double[] p) {
+        final String s = src;
         Platform.runLater(() -> {
+            System.out.println("[location] " + s + " -> " + p[0] + ", " + p[1]);
             if (timeout != null) timeout.stop();
             State.gpsApprox.set(nextFixApprox);
             State.gps.set(p);
