@@ -30,9 +30,11 @@ public final class HomeView extends VBox {
     private Set<String> favs = new HashSet<>();
     private List<BoardingHouse> current = List.of();
     private static String entryUser;                                    // the user whose login already got its first Home
+    private boolean firstHome;                                           // true on the first Home of a login: plays the short entrance (rare, so it may have personality)
     private CampusPicker searchBar;
     private Button nearMe;
     private final Label nearbySub = Ui.label("", "secondary", "nearby-sub");     // under the list title: what the list is sorted / limited by
+    private final HBox priceRange = new HBox(20);                  // under the list subtitle: lowest / middle / highest rent in range (hidden when there is nothing to show)
     private final Label countPill = Ui.label("", "count-pill");     // "12 places"
     // zoomed-out overview of every boarding house + me: on when the app opens and whenever the search bar is empty,
     // switched off by the location button and back on by pressing it again
@@ -49,7 +51,7 @@ public final class HomeView extends VBox {
     public HomeView() {
         super(0);
         String uid0 = AuthService.get().userId();                      // first Home of a login: start with no campus chosen, so the overview shows
-        if (uid0 != null && !uid0.equals(entryUser)) { entryUser = uid0; State.college.set(null); }
+        if (uid0 != null && !uid0.equals(entryUser)) { entryUser = uid0; State.college.set(null); firstHome = true; }
         var prof = AuthService.get().profile();
         String full = prof == null ? "" : prof.fullName();
         String name = full.isBlank() ? "" : full.split(" ")[0];
@@ -77,7 +79,7 @@ public final class HomeView extends VBox {
         searchRow.setPadding(Insets.EMPTY); searchRow.setFillHeight(false);
         searchRow.setViewOrder(-1);                                  // the campus dropdown floats above the map and list
 
-        Label hintText = Ui.label("Location is off. Turn it on or pick your campus to see boarding houses near it.", "secondary");
+        Label hintText = Ui.label("Location is off, so we can't show places near you. Turn it on, or choose your college.", "secondary");
         HBox.setHgrow(hintText, Priority.ALWAYS);
         HBox locHint = Ui.hbox(10, hintText, Ui.btn("Try again", "link", () -> Locator.get().start()));
         locHint.getStyleClass().add("card");
@@ -109,10 +111,12 @@ public final class HomeView extends VBox {
         radiusBar.managedProperty().bind(radiusBar.visibleProperty());
 
         HBox chips = Ui.chipRow(new String[]{"New", "Hot", "Best rated"}, 0, i -> { tab = BhService.Tab.values()[i]; reload(); });
-        chips.setPadding(new Insets(14, 16, 0, 16)); chips.getStyleClass().add("home-chips");
+        chips.setPadding(new Insets(18, 16, 0, 16)); chips.getStyleClass().add("home-chips");
         countPill.setMinWidth(Region.USE_PREF_SIZE); countPill.setVisible(false); countPill.managedProperty().bind(countPill.visibleProperty());
-        Label nearbyTitle = Ui.section("Boarding houses near you"); nearbyTitle.getStyleClass().add("home-title");
-        HBox nearby = new HBox(10, Ui.vbox(2, nearbyTitle, nearbySub));
+        Label nearbyTitle = Ui.section("Nearby boarding houses"); nearbyTitle.getStyleClass().add("home-title");
+        priceRange.setAlignment(Pos.BOTTOM_LEFT); priceRange.setPadding(new Insets(8, 0, 0, 0));
+        priceRange.managedProperty().bind(priceRange.visibleProperty()); priceRange.setVisible(false);
+        HBox nearby = new HBox(10, Ui.vbox(2, nearbyTitle, nearbySub, priceRange));
         nearby.setAlignment(Pos.CENTER_LEFT); nearby.setPadding(new Insets(16, 16, 6, 16));
         list.setPadding(new Insets(4, 16, 130, 16));   // the floating tab bar is ~100 px tall
 
@@ -121,13 +125,13 @@ public final class HomeView extends VBox {
         StackPane mapWrap = new StackPane(map, mapFrame, radiusBar, livePill);
         StackPane.setAlignment(radiusBar, Pos.TOP_CENTER); StackPane.setMargin(radiusBar, new Insets(12, 12, 0, 12));
         StackPane.setAlignment(livePill, Pos.TOP_LEFT); StackPane.setMargin(livePill, new Insets(12, 0, 0, 12));
-        Rectangle mc = new Rectangle(); mc.setArcWidth(32); mc.setArcHeight(32);
+        Rectangle mc = new Rectangle(); mc.setArcWidth(56); mc.setArcHeight(56);
         mc.widthProperty().bind(mapWrap.widthProperty()); mc.heightProperty().bind(mapWrap.heightProperty());
         mapWrap.setClip(mc);
         mapWrap.getStyleClass().add("home-map");
         VBox.setMargin(mapWrap, new Insets(4, 16, 0, 16));
 
-        VBox header = new VBox(14, top, searchRow); header.getStyleClass().add("page-header"); header.setViewOrder(-1);   // greeting + search on the page background
+        VBox header = new VBox(18, top, searchRow); header.getStyleClass().addAll("page-header", "home-header"); header.setViewOrder(-1);   // greeting + search in one branded band
         VBox.setMargin(locHint, new Insets(12, 16, 0, 16));
         VBox content = new VBox(0, header, locHint, mapWrap, chips, nearby, list);
         map.openOnRegion();
@@ -138,6 +142,7 @@ public final class HomeView extends VBox {
         searchBar.setMinWidth(0); mapWrap.setMinWidth(0); chips.setMinWidth(0); nearby.setMinWidth(0); sp.setMinWidth(0);
         fitMapHeight(720);                                                // until the first layout: a normal phone
         heightProperty().addListener((o, was, h) -> fitMapHeight(h.doubleValue()));
+        if (firstHome) entrance(header, mapWrap, chips, nearby);
         Async.run(bh::favoriteIds, f -> { favs = f; reload(); }, e -> reload());
         Async.run(bh::colleges, cs -> map.showColleges(cs), e -> {});   // every campus on the map
         startGps();
@@ -174,6 +179,23 @@ public final class HomeView extends VBox {
         return pill;
     }
 
+    /**
+     * First Home of a login only (rare, so a little personality is fine): the header, map, chips and list title rise 10 px and fade in,
+     * 40 ms apart (total under 300 ms). Transform + opacity only, enter curve; leaves every node exactly where layout put it.
+     */
+    private void entrance(javafx.scene.Node... parts) {
+        for (int i = 0; i < parts.length; i++) {
+            javafx.scene.Node n = parts[i];
+            n.setOpacity(0); n.setTranslateY(10);
+            javafx.animation.Timeline t = new javafx.animation.Timeline(
+                    new javafx.animation.KeyFrame(javafx.util.Duration.ZERO, new javafx.animation.KeyValue(n.opacityProperty(), 0.0), new javafx.animation.KeyValue(n.translateYProperty(), 10.0)),
+                    new javafx.animation.KeyFrame(javafx.util.Duration.millis(240), new javafx.animation.KeyValue(n.opacityProperty(), 1.0, LiveDot.ENTER), new javafx.animation.KeyValue(n.translateYProperty(), 0.0, LiveDot.ENTER)));
+            t.setDelay(javafx.util.Duration.millis(40L * i));
+            t.setOnFinished(e -> { n.setOpacity(1); n.setTranslateY(0); });
+            t.play();
+        }
+    }
+
     /** Map takes ~42% of the window height (200-440 px): a small phone still sees the list under it, a tall window does not get a giant map. */
     private void fitMapHeight(double windowH) {
         if (windowH <= 0) return;
@@ -185,13 +207,41 @@ public final class HomeView extends VBox {
         return h < 12 ? "Good morning," : h < 18 ? "Good afternoon," : "Good evening,";
     }
 
+    /**
+     * Lowest / middle / highest monthly rent of every place in range, whatever tab is open. "Best rated" only lists places with 3+ reviews,
+     * so on that tab the range is read from the unfiltered list instead (one extra request) and shown when it arrives.
+     */
+    private void showPriceRange(List<BoardingHouse> items, int my, double[] ref, Double rad) {
+        if (items != null) { paintPriceRange(PriceRange.of(items)); return; }
+        Async.run(() -> bh.list(BhService.Tab.NEW, ref == null ? null : ref[0], ref == null ? null : ref[1], rad, null),
+                all -> { if (my == seq) paintPriceRange(PriceRange.of(all)); }, e -> { if (my == seq) priceRange.setVisible(false); });
+    }
+
+    private void paintPriceRange(PriceRange r) {
+        priceRange.getChildren().clear();
+        if (r == null) { priceRange.setVisible(false); return; }
+        if (r.single()) priceRange.getChildren().add(priceCell("Rent", r.lowest));
+        else {
+            priceRange.getChildren().add(priceCell("Lowest", r.lowest));
+            if (r.hasMiddle()) priceRange.getChildren().add(priceCell("Middle", r.middle));
+            priceRange.getChildren().add(priceCell("Highest", r.highest));
+        }
+        priceRange.setVisible(true);
+    }
+
+    private static VBox priceCell(String caption, double value) {
+        Label v = Ui.label(PriceRange.peso(value), "h2"); v.setMinWidth(Region.USE_PREF_SIZE);
+        Label u = Ui.label("/mo", "price-unit"); u.setMinWidth(Region.USE_PREF_SIZE);
+        HBox val = new HBox(3, v, u); val.setAlignment(Pos.BASELINE_LEFT);
+        return new VBox(0, Ui.label(caption, "secondary"), val);
+    }
+
     /** Subtitle + count under "Nearby boarding houses". */
     private void updateHeader(int n, double[] ref) {
         College c = State.college.get();
-        String count = n == 1 ? "1 with free beds" : n + " with free beds";
         String base = c != null ? String.format(java.util.Locale.ROOT, "Within %.1f km of %s", State.radiusKm.get(), c.name())
-                : ref != null ? "Closest to you first" : "Pick your campus to sort by distance";
-        nearbySub.setText(base + " \u00B7 " + count);
+                : ref != null ? "Closest to you first" : "Choose a campus to see what is close";
+        nearbySub.setText(base + " \u00B7 " + (n == 1 ? "1 place" : n + " places"));   // the count lives in the subtitle now (the mascot used to cover the pill)
     }
 
     /** Colors the filled part of the radius track purple (JavaFX has no built-in filled track). */
@@ -268,15 +318,16 @@ public final class HomeView extends VBox {
             if (my != seq) return;                               // a newer request is in flight
             current = items; shown = 0; adSpots = AdSlot.spots(items.size());
             updateHeader(items.size(), ref);
+            showPriceRange(tab == BhService.Tab.BEST ? null : items, my, ref, rad);
             if (overviewActive()) {                              // zoomed out: all boarding houses + my location (the camera only moves when it needs to)
                 map.showOverview(items, State.gps.get(), ovFit ? 700 : -1);
                 ovFit = false;
             } else map.show(ref, circle ? State.radiusKm.get() : 0, items, circle, null);
             ovShown = overviewActive(); paintOverviewButtons();
             list.getChildren().clear();
-            if (items.isEmpty()) list.getChildren().add(Ui.emptyState("No free beds in range", ref == null ? "Allow location or pick your campus to see boarding houses near it." : "Nothing with a free bed within " + String.format(java.util.Locale.ROOT, "%.1f", State.radiusKm.get()) + " km. Try a bigger radius."));
+            if (items.isEmpty()) list.getChildren().add(Ui.emptyState("Nothing nearby yet", ref == null ? "Allow location or choose your college to see nearby boarding houses." : "No boarding houses with free beds in this radius. Try a larger radius."));
             renderMore();
-        }, err -> { if (my == seq) list.getChildren().setAll(Ui.errorState(err, this::reload)); });   // banner is set globally
+        }, err -> { if (my == seq) { priceRange.setVisible(false); list.getChildren().setAll(Ui.errorState(err, this::reload)); } });   // banner is set globally
     }
 
     /** Renders the next batch of cards; a "Show more" button appears when more remain. */

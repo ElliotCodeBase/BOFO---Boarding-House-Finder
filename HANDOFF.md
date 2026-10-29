@@ -1,9 +1,7 @@
-# Handoff - v1.19.0 Home redesign + CSS consolidation (2026-10-29)
-- **PR title:** `v1.19.0 - Home redesign: plain header, flat cards, consolidated theme`. Version in `config.properties`, `pom.xml` (versionCode 76), CHANGES.md.
-- `bofo.css` was rewritten as one cascade with tokens in `.root` (colours, `-bofo-hover`, `-bofo-skeleton`, `-bofo-amber`). Rules: 0 gradients (only `HomeView.paintTrack` still draws the radius-slider fill with one hard-stop gradient), two shadow tiers (0.14/12 float, 0.24/24 overlay), radii 16 / 8 / 999 / 3, bold set in one "Type roles" rule. Removed classes: `.home-header`, `.pill-green`, `.pill-grey` (now `.tag-open` / `.tag-full` in `BhCard`).
-- `HomeView`: entrance() removed, header plain, map clip 16, new subtitle copy. `BhCard`: no house icon, `distance()` helper, meta line = distance + beds left. `CampusPicker`: ROW 56, MAX_ROWS 5, centred cells.
-- Not compiled/run by Claude (no javac/Maven in sandbox). Check on a real device: 320/360 px widths, campus dropdown with long names, a card with no photo and 0 reviews, Chats unread row, Profile header (now solid).
-- The screenshots in the brief (purple hero, stat tiles, amber price pills) were NOT in this repo zip (v1.18.0 has no stat tiles on Home), so those exact bugs could not be reproduced; the intent was applied to the code that exists.
+# Handoff - v1.19.0 Price range in radius (2026-10-29)
+- **PR title:** `v1.19.0 - Home shows lowest, middle and highest rent in the radius`. Version in `config.properties`, `pom.xml` (versionCode 76), CHANGES.md.
+- New `ui/PriceRange` (lowest / median / highest, ignores price <= 0). `HomeView`: `priceRange` row inside the list title block, filled in `reload()` via `showPriceRange`; on the Best rated tab it fetches the NEW list for the same radius so the numbers match every tab. Not compiled/run by Claude.
+- The earlier v1.19.0 redesign attempt was reverted by the user locally; this version number is for the price range only. Delete older `BOFO-v1.19.0-changes*.zip` downloads before using this one.
 ---
 # Handoff - v1.18.0 Live location marker + Home/map redesign (2026-10-29)
 - **PR title:** `v1.18.0 - New live location marker (ripples + view cone) and redesigned Home map`. Version in `config.properties`, `pom.xml` (versionCode 75), CHANGES.md.

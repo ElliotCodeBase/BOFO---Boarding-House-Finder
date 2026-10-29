@@ -1,10 +1,9 @@
-# v1.19.0 - Home redesign: plain header, flat cards, one design system
-- **Home**: the violet gradient header band is gone. Greeting + campus search sit on the page background; the search bar is a flat 16 px field with a 1 px line. Map corners 16 px, 1 px outline (no white frame), plain white "Live" chip. The first-Home entrance stagger was removed (motion now only confirms an action).
-- **Cards**: no house icon and no amber price pill. A missing photo is a plain neutral block, a loading photo a pulsing one. Price is ink text under the photo. Meta line is real info: `350 m · 4 beds left` (rating first when there are reviews, nothing printed when a value is missing, "No reviews yet" on the wide card). Ratings are ink, not gold.
-- **Copy**: "Boarding houses near you", "Within 1.5 km of <campus> · 6 with free beds", "No free beds in range".
-- **Campus dropdown**: every row is the same height (56 px) with the text centred, so the selected row and the gaps line up; a third line is cut instead of overflowing.
-- **bofo.css rewritten as one cascade** (674 -> 443 lines, no override blocks at the end). Gradients 16 -> 0, shadow variants 38 -> 2 tiers, radius values 18 -> 4 (16 / 8 / 999 / 3), distinct hex colours 77 -> 16, bold declarations 93 -> 5. Shared by every tab, so Explore, Saved, Chats and Profile follow the same rules (profile header is now solid, chat bubbles solid, dock Create button solid ink).
-- Not run on screen (no Maven / JavaFX / javac in the sandbox). Only the Java edits were bracket-checked.
+# v1.19.0 - Home: lowest / middle / highest rent in range
+- Under "Nearby boarding houses" Home now shows **Lowest, Middle, Highest** monthly rent of the places in the radius (e.g. `Lowest P1,300/mo   Middle P1,550/mo   Highest P2,050/mo`). Plain text, no tiles.
+- Follows the campus and radius slider (and "closest to you" when no campus is chosen). Middle = median; with an even count it is halfway between the two middle prices.
+- 1 place, or all the same price: one "Rent" value. 2 places: Lowest + Highest only. 0 places or a load error: the row is hidden (never a dash).
+- Same numbers on New, Hot and Best rated: "Best rated" only lists places with 3+ reviews, so that tab reads the range from the unfiltered list (one extra request).
+- New `ui/PriceRange` (pure maths), `HomeView.showPriceRange / paintPriceRange / priceCell`. No CSS or Supabase change. Not compiled/run by Claude (no javac/Maven in the sandbox; brackets checked only).
 
 # v1.18.0 - New live location marker + Home / map redesign
 - **Blue dot redesigned** (new `ui/LiveDot`): glossy blue-indigo core in a white ring with a soft shadow, two staggered ripple rings, and a fading **view cone** that turns the way you move (replaces the tiny arrow). First fix settles in from 82% size; pressing the locate button ends with a "found you" ring + pop on the dot.

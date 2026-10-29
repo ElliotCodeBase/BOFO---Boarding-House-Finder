@@ -1,11 +1,2 @@
-changed  src/main/resources/com/bofo/finder/bofo.css
-changed  src/main/resources/com/bofo/finder/config.properties
-changed  src/main/java/com/bofo/finder/ui/HomeView.java
-changed  src/main/java/com/bofo/finder/ui/BhCard.java
-changed  src/main/java/com/bofo/finder/ui/CampusPicker.java
-changed  pom.xml
-changed  CHANGES.md
-changed  HANDOFF.md
-changed  docs/HANDOFF_ARCHIVE.md
-new      CHANGELOG_v1.19.0.md
-new      CHANGED_FILES.txt
+src/main/java/com/bofo/finder/service/AuthService.java
+CHANGELOG_v1.19.2.md
