@@ -79,6 +79,14 @@ public final class SupabaseClient {
         return new JSONArray(body);
     }
 
+    /** Insert, or update the existing row when {@code onConflict} (comma-separated unique columns) already matches one. */
+    public JSONArray upsert(String table, String onConflict, JSONObject row) throws Exception {
+        String body = send(base("/rest/v1/" + table + "?on_conflict=" + onConflict, true).header("Content-Type", "application/json")
+                .header("Prefer", "resolution=merge-duplicates,return=representation")
+                .POST(HttpRequest.BodyPublishers.ofString(row.toString())).build());
+        return new JSONArray(body);
+    }
+
     /** Inserts many rows in ONE request (instead of one request per row). All rows must have the same keys. */
     public JSONArray insert(String table, JSONArray rows) throws Exception {
         String body = send(base("/rest/v1/" + table, true).header("Content-Type", "application/json")

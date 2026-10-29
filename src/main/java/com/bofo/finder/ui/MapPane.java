@@ -192,6 +192,11 @@ public final class MapPane extends StackPane {
     /** Campuses used as the route start when no college is chosen (owner screens): the nearest one to the tapped BH. */
     public void setColleges(List<College> list) { this.colleges = list == null ? List.of() : list; layer.setMarks(this.colleges); }
 
+    private Consumer<College> onCampusTap;                                  // null = campus dots are not tappable (owner screens, directions)
+
+    /** Makes the campus dots (and their names) tappable: {@code h} gets the campus that was tapped. Used by Home and Explore. */
+    public void enableCampusTap(Consumer<College> h) { this.onCampusTap = h; layer.setCampusTappable(h != null); }
+
     /** Draws every campus on the map (dot + name) without changing where routes start. Used by Home and Explore. */
     public void showColleges(List<College> list) { layer.setMarks(list == null ? List.of() : list); }
 
@@ -671,7 +676,7 @@ public final class MapPane extends StackPane {
             casing.setStroke(Color.web("#FFFFFF", 0.95)); casing.setStrokeWidth(8);
             line.setStroke(PURPLE); line.setStrokeWidth(4.5);
             for (Polyline p : new Polyline[]{casing, line}) { p.setStrokeLineCap(StrokeLineCap.ROUND); p.setStrokeLineJoin(StrokeLineJoin.ROUND); p.setMouseTransparent(true); }
-            collegeGroup.setMouseTransparent(true); bhNameGroup.setMouseTransparent(true);
+            bhNameGroup.setMouseTransparent(true); collegeGroup.setMouseTransparent(true);   // campus dots only take taps once enableCampusTap is called
             for (Circle c : new Circle[]{originDot, destDot}) { c.setStroke(Color.WHITE); c.setStrokeWidth(2.5); c.setMouseTransparent(true); }
             originTag.setWrapText(false); originTag.setMouseTransparent(true);
             routeBadge.setWrapText(false); routeBadge.setMouseTransparent(true); routeBadge.setOpacity(0);
@@ -708,6 +713,8 @@ public final class MapPane extends StackPane {
             ringAnim.play();
         }
 
+        void setCampusTappable(boolean on) { collegeGroup.setMouseTransparent(!on); }
+
         /** Every campus gets a small dot and its name, always visible (names appear from a medium zoom). */
         void setMarks(List<College> list) {
             marks = list;
@@ -715,11 +722,18 @@ public final class MapPane extends StackPane {
             for (College c : list) {
                 Group g = new Group();
                 Circle dot = new Circle(0, 0, 5.5, Color.web("#FF8A3D")); dot.setStroke(Color.WHITE); dot.setStrokeWidth(2);
+                Circle hit = new Circle(0, 0, 16, Color.TRANSPARENT);                 // big invisible target so a finger can hit a small dot
                 Label name = Ui.label(c.name(), "map-college-tag"); name.setWrapText(false);
                 name.setLayoutX(9); name.setLayoutY(-9);
-                g.getChildren().addAll(dot, name);
+                g.getChildren().addAll(hit, dot, name);
                 g.getProperties().put("dot", dot); g.getProperties().put("name", name);
-                g.setUserData(c); g.setMouseTransparent(true); g.setVisible(false);
+                g.setUserData(c); g.setVisible(false);
+                g.setCursor(javafx.scene.Cursor.HAND);
+                g.setOnMouseClicked(e -> {
+                    if (onCampusTap == null || !e.isStillSincePress()) return;       // a drag that started on a dot is a pan, not a tap
+                    e.consume();
+                    onCampusTap.accept((College) g.getUserData());
+                });
                 collegeGroup.getChildren().add(g);
             }
             markDirty();

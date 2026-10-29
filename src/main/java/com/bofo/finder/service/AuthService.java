@@ -55,7 +55,7 @@ public final class AuthService {
         apply(s.get());
         // Wait at most 4 s for the server. If it does not answer, ALWAYS open the app (offline banner + saved data) as long as the
         // user is signed in on this device: with the saved profile, or - when none was saved yet - a basic one built from the Google account.
-        java.util.concurrent.Future<Restore> f = com.bofo.finder.util.Async.pool().submit(this::restoreOnline);
+        java.util.concurrent.Future<Restore> f = com.bofo.finder.util.Async.fanout().submit(this::restoreOnline);
         Restore r;
         try { r = f.get(4, java.util.concurrent.TimeUnit.SECONDS); }
         catch (Exception slowOrDown) { r = Restore.OFFLINE; }
@@ -224,6 +224,11 @@ public final class AuthService {
 
     public String googleName() { return meta("full_name", meta("name", "")); }
     public String googlePhoto() { return meta("avatar_url", meta("picture", "")); }
+    /** The picture to show for the signed-in user: the one saved in Settings, else the Google account photo, else "" (initials). */
+    public String avatarUrl() {
+        String own = profile == null ? null : profile.photoUrl();
+        return own != null && !own.isBlank() ? own : googlePhoto();
+    }
     private JSONObject user;
     private String meta(String k, String d) { return user == null ? d : user.optJSONObject("user_metadata") == null ? d : user.getJSONObject("user_metadata").optString(k, d); }
 

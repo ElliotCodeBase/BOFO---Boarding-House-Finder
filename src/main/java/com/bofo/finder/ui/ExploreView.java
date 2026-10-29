@@ -107,6 +107,7 @@ public final class ExploreView extends StackPane {
         map.fillAvailable(260);
         map.openOnRegion();
         map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
+        map.enableCampusTap(CampusPicker::chooseFromMap);                     // tap a campus dot on the map = choose that campus
         Async.run(() -> new BhService().colleges(), map::showColleges, e -> {});     // every campus is always on the map
         content.getChildren().setAll(listScroll); VBox.setVgrow(content, Priority.ALWAYS);
 

@@ -21,6 +21,16 @@ public final class Async {
     }
     public static <T> void run(Work<T> work, Consumer<T> ok) { run(work, ok, e -> e.printStackTrace()); }
     public static ExecutorService pool() { return POOL; }
+
+    /**
+     * For work that a task ALREADY running on {@link #pool()} starts and then waits for (e.g. "load the list + the featured places in parallel").
+     * If those sub-tasks went into the same 6-thread pool, six waiting tasks would block every thread and the sub-tasks behind them
+     * could never run: every screen then sat on its loading skeleton forever. This pool grows as needed, so a waiting task never starves its own sub-tasks.
+     */
+    private static final ExecutorService FANOUT = Executors.newCachedThreadPool(r -> {
+        Thread t = new Thread(r, "bofo-fanout"); t.setDaemon(true); return t;
+    });
+    public static ExecutorService fanout() { return FANOUT; }
     public static void bg(Runnable r) { POOL.submit(r); }
     public static ScheduledExecutorService scheduler() {
         return Executors.newSingleThreadScheduledExecutor(r -> { Thread t = new Thread(r, "bofo-poll"); t.setDaemon(true); return t; });

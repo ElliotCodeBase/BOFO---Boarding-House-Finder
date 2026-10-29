@@ -58,7 +58,7 @@ public final class HomeView extends VBox {
 
         Button bell = new Button(); bell.getStyleClass().add("hdr-btn"); bell.setGraphic(Icons.icon(Icons.BELL, 20, Color.web("#17142A")));
         bell.setOnAction(e -> Nav.toast("No new notifications"));
-        Label avatar = Ui.avatar(full, 46); avatar.getStyleClass().add("hdr-avatar");
+        Label avatar = Ui.avatar(full, 46, AuthService.get().avatarUrl()); avatar.getStyleClass().add("hdr-avatar");
         HBox top = Ui.hbox(12, avatar,
                 Ui.vbox(0, Ui.label(greeting().replace(",", ""), "greet-hello"), Ui.label(name.isBlank() ? "there" : name, "greet-name")), Ui.grow(), bell);
         top.setPadding(Insets.EMPTY);
@@ -116,7 +116,10 @@ public final class HomeView extends VBox {
         Label nearbyTitle = Ui.section("Nearby boarding houses"); nearbyTitle.getStyleClass().add("home-title");
         priceRange.setAlignment(Pos.BOTTOM_LEFT); priceRange.setPadding(new Insets(8, 0, 0, 0));
         priceRange.managedProperty().bind(priceRange.visibleProperty()); priceRange.setVisible(false);
-        HBox nearby = new HBox(10, Ui.vbox(2, nearbyTitle, nearbySub, priceRange));
+        priceRange.setMaxWidth(Double.MAX_VALUE);                  // the rent card spans the full width, same edges as the map and search bar
+        VBox nearbyCol = Ui.vbox(2, nearbyTitle, nearbySub, priceRange); nearbyCol.setMaxWidth(Double.MAX_VALUE); nearbyCol.setMinWidth(0);
+        HBox.setHgrow(nearbyCol, Priority.ALWAYS);
+        HBox nearby = new HBox(10, nearbyCol);
         nearby.setAlignment(Pos.CENTER_LEFT); nearby.setPadding(new Insets(16, 16, 6, 16));
         list.setPadding(new Insets(4, 16, 130, 16));   // the floating tab bar is ~100 px tall
 
@@ -136,6 +139,7 @@ public final class HomeView extends VBox {
         VBox content = new VBox(0, header, locHint, mapWrap, chips, nearby, list);
         map.openOnRegion();
         map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
+        map.enableCampusTap(CampusPicker::chooseFromMap);                 // tap a campus dot on the map = choose that campus
         ScrollPane sp = Ui.scroll(content); VBox.setVgrow(sp, Priority.ALWAYS);
         getChildren().add(sp);
         setMinWidth(0); content.setMinWidth(0); header.setMinWidth(0); top.setMinWidth(0); searchRow.setMinWidth(0);
@@ -156,20 +160,15 @@ public final class HomeView extends VBox {
      * Bound (weakly) to the Locator and State, so nothing has to be removed when the Home is left.
      */
     private HBox locationPill() {
-        javafx.scene.shape.Circle dot = new javafx.scene.shape.Circle(4);
         Label text = Ui.label("", "live-pill-text");
         text.setWrapText(false);
         var st = Locator.get().status;
         text.textProperty().bind(javafx.beans.binding.Bindings.createStringBinding(() -> {
-            if (st.get() == Locator.Status.REQUESTING && State.gps.get() == null) return "Finding you\u2026";
-            if (State.gps.get() == null) return "Location off";
-            return State.gpsApprox.get() ? "Approximate" : "Live";
+            if (st.get() == Locator.Status.REQUESTING && State.gps.get() == null) return "Finding your location\u2026";
+            if (State.gps.get() == null) return "Location is off";
+            return State.gpsApprox.get() ? "Approximate location" : "Your location";
         }, st, State.gps, State.gpsApprox));
-        dot.fillProperty().bind(javafx.beans.binding.Bindings.createObjectBinding(() -> {
-            if (State.gps.get() == null) return st.get() == Locator.Status.REQUESTING ? Color.web("#FFB400") : Color.web("#B4B1C6");
-            return State.gpsApprox.get() ? Color.web("#FFB400") : Color.web("#2FBF71");
-        }, st, State.gps, State.gpsApprox));
-        HBox pill = new HBox(7, dot, text);
+        HBox pill = new HBox(text);
         pill.setAlignment(Pos.CENTER_LEFT); pill.getStyleClass().add("live-pill");
         pill.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
         pill.visibleProperty().bind(javafx.beans.binding.Bindings.createBooleanBinding(
@@ -208,7 +207,7 @@ public final class HomeView extends VBox {
     }
 
     /**
-     * Lowest / middle / highest monthly rent of every place in range, whatever tab is open. "Best rated" only lists places with 3+ reviews,
+     * Lowest / middle / highest monthly rent of every place in range, whatever tab is open. "Best rated" only lists places with at least 1 review,
      * so on that tab the range is read from the unfiltered list instead (one extra request) and shown when it arrives.
      */
     private void showPriceRange(List<BoardingHouse> items, int my, double[] ref, Double rad) {
@@ -224,7 +223,8 @@ public final class HomeView extends VBox {
     private final java.util.List<BoardingHouse> priceTargets = new java.util.ArrayList<>();
     private static final String WHITE_CARD = "-fx-background-color:white;-fx-background-radius:18;-fx-border-color:#ECE8FA;-fx-border-radius:18;-fx-border-width:1;-fx-padding:14 16 14 16;";
 
-    private static String valStyle(boolean on) { return "-fx-font-size:20px;-fx-font-weight:bold;-fx-text-fill:" + (on ? "#F43F5E" : "#17142A") + ";"; }
+    private int priceFont = 20;                                              // 16 when three prices share the row
+    private String valStyle(boolean on) { return "-fx-font-size:" + priceFont + "px;-fx-font-weight:bold;-fx-text-fill:" + (on ? "#F43F5E" : "#17142A") + ";"; }
 
     /** No campus yet: one quiet line instead of prices from every boarding house. Tap it to start typing a campus. */
     private void paintPriceHint() {
@@ -236,7 +236,7 @@ public final class HomeView extends VBox {
         Label go = Ui.label("Choose", "secondary"); go.setStyle("-fx-font-size:13px;-fx-font-weight:bold;-fx-text-fill:#5B3BF0;");
         HBox row = new HBox(8, t, gap, go); row.setAlignment(Pos.CENTER_LEFT); HBox.setHgrow(row, Priority.ALWAYS); row.setMaxWidth(Double.MAX_VALUE);
         row.setCursor(javafx.scene.Cursor.HAND);
-        row.setOnMouseClicked(e -> searchBar.field().requestFocus());
+        row.setOnMouseClicked(e -> searchBar.open());
         priceRange.getChildren().add(row);
         priceRange.setVisible(true);
     }
@@ -247,17 +247,31 @@ public final class HomeView extends VBox {
         if (r == null) { priceRange.setVisible(false); return; }
         priceRange.setStyle(WHITE_CARD);
         boolean single = r.single();
-        String[] caps = single ? new String[]{"Rent"} : r.hasMiddle() ? new String[]{"Lowest", "Middle", "Highest"} : new String[]{"Lowest", "Highest"};
-        double[] vals = single ? new double[]{r.lowest} : r.hasMiddle() ? new double[]{r.lowest, r.middle, r.highest} : new double[]{r.lowest, r.highest};
-        BoardingHouse[] tg = single ? new BoardingHouse[]{r.lowestBh} : r.hasMiddle() ? new BoardingHouse[]{r.lowestBh, r.middleBh, r.highestBh} : new BoardingHouse[]{r.lowestBh, r.highestBh};
+        // columns, cheapest to dearest, three at most: Lowest, then Best rated if it is a different place from the lowest and highest, else Middle (3+ places), then Highest.
+        // If the best rated place is also the lowest or the highest, that column says so instead of repeating the price.
+        java.util.List<String> capL = new java.util.ArrayList<>(); java.util.List<Double> valL = new java.util.ArrayList<>(); java.util.List<BoardingHouse> tgL = new java.util.ArrayList<>();
+        BoardingHouse best = r.bestBh;
+        boolean bestIsLow = best != null && best.id().equals(r.lowestBh.id()), bestIsHigh = best != null && best.id().equals(r.highestBh.id());
+        if (single) { capL.add(best != null ? "Rent \u00B7 Best rated" : "Rent"); valL.add(r.lowest); tgL.add(best != null ? best : r.lowestBh); }
+        else {
+            capL.add(bestIsLow ? "Lowest \u00B7 Best rated" : "Lowest"); valL.add(r.lowest); tgL.add(r.lowestBh);
+            if (best != null && !bestIsLow && !bestIsHigh) { capL.add("Best rated"); valL.add(best.price()); tgL.add(best); }
+            else if (r.hasMiddle()) { capL.add("Middle"); valL.add(r.middle); tgL.add(r.middleBh); }
+            capL.add(bestIsHigh ? "Highest \u00B7 Best rated" : "Highest"); valL.add(r.highest); tgL.add(r.highestBh);
+        }
+        String[] caps = capL.toArray(new String[0]);
+        double[] vals = valL.stream().mapToDouble(Double::doubleValue).toArray();
+        BoardingHouse[] tg = tgL.toArray(new BoardingHouse[0]);
 
-        HBox cols = new HBox(); cols.setMaxWidth(Double.MAX_VALUE);
+        boolean three = caps.length >= 3;
+        priceFont = three ? 16 : 20;
+        HBox cols = new HBox(); cols.setMaxWidth(Double.MAX_VALUE); cols.setMinWidth(0);
         for (int i = 0; i < caps.length; i++) {
             final int idx = i;
             int slot = i == 0 ? 0 : i == caps.length - 1 ? 2 : 1;                 // left / middle / right, so the text lines up with the ends of the range line
-            Label c = Ui.label(caps[i], "secondary"); c.setStyle("-fx-font-size:12px;-fx-font-weight:600;-fx-text-fill:#8A84A8;");
+            Label c = Ui.label(caps[i], "secondary"); c.setStyle("-fx-font-size:" + (three ? 11 : 12) + "px;-fx-font-weight:600;-fx-text-fill:#8A84A8;");
             Label v = Ui.label(PriceRange.peso(vals[i]), "h2"); v.setMinWidth(Region.USE_PREF_SIZE); v.setStyle(valStyle(false));
-            Label u = Ui.label("/mo", "price-unit"); u.setMinWidth(Region.USE_PREF_SIZE); u.setStyle("-fx-font-size:11px;-fx-text-fill:#8A84A8;");
+            Label u = Ui.label("/mo", "price-unit"); u.setMinWidth(Region.USE_PREF_SIZE); u.setStyle("-fx-font-size:" + (three ? 10 : 11) + "px;-fx-text-fill:#8A84A8;");
             HBox val = new HBox(3, v, u); val.setAlignment(slot == 0 ? Pos.BASELINE_LEFT : slot == 1 ? Pos.BASELINE_CENTER : Pos.BASELINE_RIGHT);
             VBox col = new VBox(2, c, val); col.setAlignment(slot == 0 ? Pos.TOP_LEFT : slot == 1 ? Pos.TOP_CENTER : Pos.TOP_RIGHT);
             col.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(col, Priority.ALWAYS); col.setCursor(javafx.scene.Cursor.HAND);
@@ -279,7 +293,7 @@ public final class HomeView extends VBox {
             }
             double lo = vals[0], hi = vals[vals.length - 1];
             Runnable lay = () -> {
-                double w = track.getWidth(), pad = 8;
+                double w = track.getWidth(), pad = 8.5;
                 line.setLayoutX(pad); line.setLayoutY(6); line.setPrefWidth(Math.max(0, w - 2 * pad));
                 for (int i = 0; i < priceMarks.size(); i++) {
                     double f = hi == lo ? 0.5 : (vals[i] - lo) / (hi - lo);
@@ -393,7 +407,7 @@ public final class HomeView extends VBox {
             if (my != seq) return;                               // a newer request is in flight
             current = items; shown = 0; adSpots = AdSlot.spots(items.size());
             updateHeader(items.size(), ref);
-            showPriceRange(tab == BhService.Tab.BEST ? null : items, my, ref, rad);
+            showPriceRange(items, my, ref, rad);
             if (overviewActive()) {                              // zoomed out: all boarding houses + my location (the camera only moves when it needs to)
                 map.showOverview(items, State.gps.get(), ovFit ? 700 : -1);
                 ovFit = false;

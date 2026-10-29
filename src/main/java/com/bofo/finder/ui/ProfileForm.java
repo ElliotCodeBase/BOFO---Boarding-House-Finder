@@ -31,7 +31,7 @@ public final class ProfileForm extends VBox {
         super(6);
         this.p = p;
         String shown = p.fullName() == null || p.fullName().isBlank() ? p.username() : p.fullName();
-        avatar = Ui.avatar(shown, 88, p.photoUrl());
+        avatar = Ui.avatar(shown, 88, AuthService.get().avatarUrl());
         Button cam = Ui.btn("Camera", "chip", () -> Capture.camera().ifPresent(this::picked));
         Button gal = Ui.btn("Gallery", "chip", () -> Capture.gallery().ifPresent(this::picked));
         VBox picBox = new VBox(8, avatar, Ui.hbox(8, cam, gal));

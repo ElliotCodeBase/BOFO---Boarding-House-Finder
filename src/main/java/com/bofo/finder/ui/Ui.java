@@ -189,7 +189,7 @@ public final class Ui {
         v.setAlignment(Pos.CENTER); v.setPadding(new Insets(28, 20, 28, 20)); v.setMaxWidth(Double.MAX_VALUE);
         return v;
     }
-    private static final String WIFI_OFF = "M12 20h.01M8.5 16.429a5 5 0 0 1 7 0M5 12.859a10 10 0 0 1 5.17-2.69M19 12.859a10 10 0 0 0-2.007-1.523M2 8.82a15 15 0 0 1 4.177-2.643M22 8.82a15 15 0 0 0-11.288-3.764M2 2l20 20";
+    public static final String WIFI_OFF = "M12 20h.01M8.5 16.429a5 5 0 0 1 7 0M5 12.859a10 10 0 0 1 5.17-2.69M19 12.859a10 10 0 0 0-2.007-1.523M2 8.82a15 15 0 0 1 4.177-2.643M22 8.82a15 15 0 0 0-11.288-3.764M2 2l20 20";
     private static final String ALERT = "M12 2.5a9.5 9.5 0 1 0 0 19a9.5 9.5 0 1 0 0-19ZM12 8v5M12 16.5h.01";
 
     /** Thin outline icon drawn on a 24x24 grid and scaled to size. */

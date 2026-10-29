@@ -103,7 +103,7 @@ public final class BhService {
         String order = switch (tab) {
             case NEW -> "&order=created_at.desc";
             case HOT -> "&order=hot_score.desc";
-            case BEST -> "&review_count=gte.3&order=avg_rating.desc";
+            case BEST -> "&review_count=gte.1&order=avg_rating.desc,review_count.desc";    // any place that has been rated (it used to need 3 reviews, so the tab stayed empty)
         };
         final String main = base + order + "&limit=60";
         final String featuredQ = base + "&is_featured=is.true&limit=10";           // featured listings are fetched separately so a top-60 cut never hides them
@@ -111,7 +111,7 @@ public final class BhService {
         var featuredJob = CompletableFuture.supplyAsync(() -> {
             try { return Cache.get("list:" + featuredQ, 30_000, () -> com.bofo.finder.util.Offline.array("list_" + Integer.toHexString(featuredQ.hashCode()), () -> cards(featuredQ))); }
             catch (Exception e) { throw new java.util.concurrent.CompletionException(e); }
-        }, Async.pool());
+        }, Async.fanout());
         JSONArray a = Cache.get("list:" + main, 30_000, () -> com.bofo.finder.util.Offline.array("list_" + Integer.toHexString(main.hashCode()), () -> cards(main)));
         JSONArray fa;
         try { fa = featuredJob.get(); }
@@ -122,11 +122,15 @@ public final class BhService {
                 BoardingHouse b = BoardingHouse.from(src.getJSONObject(i));
                 if (refLat != null && refLng != null) b = b.withDistance(Geo.km(refLat, refLng, b.lat(), b.lng()));
                 if (radiusKm != null && refLat != null && b.distanceKm() > radiusKm) continue;
+                if (tab == Tab.BEST && b.reviewCount() < 1) continue;                    // featured places are fetched without the review filter
                 byId.putIfAbsent(b.id(), b);
             }
         List<BoardingHouse> out = new ArrayList<>(byId.values());
         Comparator<BoardingHouse> byDistance = Comparator.comparingDouble(BoardingHouse::distanceKm);
-        if (refLat != null) out.sort(byDistance);                                   // each tab: nearest first
+        if (tab == Tab.BEST)                                                         // best rated: highest stars first, then most reviews, then nearest
+            out.sort(Comparator.<BoardingHouse>comparingDouble(BoardingHouse::avgRating).reversed()
+                    .thenComparing(Comparator.<BoardingHouse>comparingInt(BoardingHouse::reviewCount).reversed()).thenComparing(byDistance));
+        else if (refLat != null) out.sort(byDistance);                              // other tabs: nearest first
         // Pin up to MAX_PINNED featured listings (nearest first) at the top; they stay labelled "Featured".
         List<BoardingHouse> pinned = out.stream().filter(BoardingHouse::featured).limit(MAX_PINNED).collect(Collectors.toList());
         out.removeAll(pinned);
@@ -139,7 +143,7 @@ public final class BhService {
 
     private JSONObject detailOnline(String id) throws Exception {
         // 4 independent requests run in parallel instead of one after another.
-        var pool = Async.pool();
+        var pool = Async.fanout();
         var card = CompletableFuture.supplyAsync(() -> call(() -> cards("id=eq." + id + "&select=" + cols())), pool);
         var photos = CompletableFuture.supplyAsync(() -> call(() -> api.select("photos", "boarding_house_id=eq." + id + "&order=sort_order.asc&select=url")), pool);
         var rooms = CompletableFuture.supplyAsync(() -> call(() -> api.select("rooms", "boarding_house_id=eq." + id + "&select=beds,occupants")), pool);
@@ -178,13 +182,18 @@ public final class BhService {
     }
 
     /* ---------- reviews ---------- */
+    /** Reviews with the reviewer's name and photo (reviews_v, see migration 010). Falls back to the plain table (no names) if the view is not installed yet. */
     public JSONArray reviews(String bhId) throws Exception {
-        return api.select("reviews", "boarding_house_id=eq." + bhId + "&order=created_at.desc&select=*");
+        String q = "boarding_house_id=eq." + bhId + "&order=created_at.desc&select=*";
+        try { return api.select("reviews_v", q); }
+        catch (SupabaseClient.ApiException missing) { return api.select("reviews", q); }
     }
+    /** One review per student per place: the first post creates it, posting again edits it. */
     public void upsertReview(String bhId, String studentId, int rating, String comment) throws Exception {
         if (rating < 1 || rating > 5) throw new IllegalArgumentException("Rating must be 1-5");
-        api.insert("reviews", new JSONObject().put("boarding_house_id", bhId).put("student_id", studentId)
-                .put("rating", rating).put("comment", comment));
+        String c = comment == null ? "" : comment.trim();
+        api.upsert("reviews", "boarding_house_id,student_id", new JSONObject().put("boarding_house_id", bhId).put("student_id", studentId)
+                .put("rating", rating).put("comment", c.isEmpty() ? JSONObject.NULL : c));
     }
 
     /* ---------- owner: listings ---------- */
@@ -265,7 +274,7 @@ public final class BhService {
                         api.upload("bh-photos", path, p, "image/png");
                         return api.publicUrl("bh-photos", path);
                     } catch (Exception e) { throw new java.util.concurrent.CompletionException(e); }
-                }, Async.pool()));
+                }, Async.fanout()));
             }
             JSONArray photoRows = new JSONArray();
             for (int k = 0; k < total; k++) {

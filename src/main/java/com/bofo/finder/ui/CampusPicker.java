@@ -155,6 +155,18 @@ public final class CampusPicker extends VBox {
         } catch (Exception ignored) {} });
     }
 
+    /** A campus dot on a map was tapped: it becomes the chosen campus (the search bar, list and map follow State.college). */
+    static void chooseFromMap(College c) {
+        College cur = State.college.get();
+        if (cur != null && java.util.Objects.equals(cur.id(), c.id())) return;
+        State.college.set(c);
+        remember(c);
+        Nav.toast("Showing places near " + split(c.name())[0]);
+    }
+
+    /** Opens the full campus list under the bar and focuses it (used by the "Choose" row on Home). */
+    public void open() { field.requestFocus(); refresh(""); }
+
     /** The text field, for callers that need to focus it. */
     public TextField field() { return field; }
 

@@ -9,6 +9,7 @@ public final class PriceRange {
     public final int count;
     public final double lowest, middle, highest;
     public final BoardingHouse lowestBh, middleBh, highestBh;
+    public BoardingHouse bestBh;                 // the top-rated place with a price (null when nobody has reviews yet)
 
     private PriceRange(int count, double lowest, double middle, double highest, BoardingHouse lowestBh, BoardingHouse middleBh, BoardingHouse highestBh) {
         this.count = count; this.lowest = lowest; this.middle = middle; this.highest = highest;
@@ -22,8 +23,13 @@ public final class PriceRange {
         if (s.isEmpty()) return null;
         double[] p = s.stream().mapToDouble(BoardingHouse::price).toArray();
         int n = p.length;
-        double mid = n % 2 == 1 ? p[n / 2] : Math.round((p[n / 2 - 1] + p[n / 2]) / 2);   // even count: halfway between the two middle prices
-        return new PriceRange(n, p[0], mid, p[n - 1], s.get(0), s.get(n / 2), s.get(n - 1));
+        double mid = p[n / 2];                                    // always a real place's price (the middle one; with an even count the upper of the two middle ones), so the price and the place it lights up agree
+        PriceRange r = new PriceRange(n, p[0], mid, p[n - 1], s.get(0), s.get(n / 2), s.get(n - 1));
+        r.bestBh = s.stream().filter(x -> x.reviewCount() > 0 && x.avgRating() > 0)         // best rated: highest stars, then more reviews, then cheaper
+                .max(java.util.Comparator.comparingDouble(BoardingHouse::avgRating)
+                        .thenComparingInt(BoardingHouse::reviewCount)
+                        .thenComparingDouble(x -> -x.price())).orElse(null);
+        return r;
     }
 
     /** Which cells to show: 1 place or all the same price = one price; 2 places = lowest + highest; 3 or more = lowest, middle, highest. */

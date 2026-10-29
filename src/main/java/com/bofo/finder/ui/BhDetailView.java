@@ -114,23 +114,20 @@ public final class BhDetailView extends VBox {
         DirectionsCard directions = new DirectionsCard(b);
         VBox.setMargin(directions, new Insets(0, 16, 0, 16));
 
-        /* ---- 7. reviews ---- */
+        /* ---- 7. reviews: who rated (photo, name, stars, date, comment) + a form to rate ---- */
         VBox reviewList = new VBox(0);
         Label reviewSummary = Ui.label(b.reviewCount() == 0 ? "No reviews yet" : String.format("%.1f \u2605 \u00B7 %d %s", b.avgRating(), b.reviewCount(), b.reviewCount() == 1 ? "review" : "reviews"), "secondary");
         VBox reviews = new VBox(10, Ui.section("Reviews"), reviewSummary, reviewList);
-        Async.run(() -> bh.reviews(b.id()), arr -> {
-            for (int i = 0; i < arr.length(); i++) {
-                JSONObject r = arr.getJSONObject(i);
-                VBox item = new VBox(3, Ui.label(Ui.stars(r.getInt("rating")), "stars"));
-                String comment = r.optString("comment", "");
-                if (!comment.isBlank()) item.getChildren().add(Ui.label(comment, "label"));
-                if (!r.isNull("owner_reply")) item.getChildren().add(Ui.label("Owner: " + r.getString("owner_reply"), "secondary"));
-                item.setPadding(new Insets(10, 0, 10, 0));
-                if (i > 0) item.setStyle("-fx-border-color:#E7E8F2;-fx-border-width:1 0 0 0;");
-                reviewList.getChildren().add(item);
-            }
+        boolean student = AuthService.get().profile().role() == com.bofo.finder.model.Role.STUDENT;
+        ReviewForm form = student ? new ReviewForm(b.id()) : null;
+        Runnable[] reload = new Runnable[1];
+        reload[0] = () -> Async.run(() -> bh.reviews(b.id()), arr -> {
+            paintReviews(arr, reviewList, reviewSummary, form);
+            if (form != null) form.loaded(arr);
         }, e -> {});
-        if (AuthService.get().profile().role() == com.bofo.finder.model.Role.STUDENT) reviews.getChildren().add(reviewForm(b.id()));
+        if (form != null) { form.onPosted = reload[0]; reviews.getChildren().add(form); }
+        else reviews.getChildren().add(Ui.label("Only students can rate a boarding house.", "secondary"));
+        reload[0].run();
 
         /* ---- page ---- */
         body.getChildren().addAll(hero, head, stats);
@@ -160,15 +157,114 @@ public final class BhDetailView extends VBox {
         return t;
     }
 
-    private javafx.scene.Node reviewForm(String bhId) {
-        ComboBox<Integer> stars = new ComboBox<>(); stars.getItems().addAll(5, 4, 3, 2, 1); stars.getSelectionModel().selectFirst();
-        TextArea text = new TextArea(); text.setPromptText("Write a review (optional)"); text.setPrefRowCount(2);
-        Button post = Ui.btn("Post review", "btn-cta", () -> {
+    /** The list of reviews and the "4.5 * 12 reviews" line, rebuilt from what the server returned. */
+    private static void paintReviews(JSONArray arr, VBox list, Label summary, ReviewForm form) {
+        list.getChildren().clear();
+        String me = AuthService.get().userId();
+        double sum = 0;
+        for (int i = 0; i < arr.length(); i++) {
+            JSONObject r = arr.getJSONObject(i);
+            sum += r.optInt("rating", 0);
+            boolean mine = me != null && me.equals(r.optString("student_id", ""));
+            String nm = r.isNull("reviewer_name") || r.optString("reviewer_name", "").isBlank() ? "Student" : r.getString("reviewer_name");
+            String photo = r.isNull("reviewer_photo") ? "" : r.optString("reviewer_photo", "");
+            Label who = Ui.label(mine ? nm + " (you)" : nm, "h2"); who.setStyle("-fx-font-size:14px;");
+            Label when = Ui.label(when(r.optString("created_at", "")), "secondary");
+            HBox line = new HBox(8, Ui.label(Ui.stars(r.optInt("rating", 0)), "stars"), when); line.setAlignment(Pos.CENTER_LEFT);
+            VBox who2 = new VBox(1, who, line); who2.setMinWidth(0);
+            HBox top = new HBox(10, Ui.avatar(nm, 38, photo), who2); top.setAlignment(Pos.CENTER_LEFT);
+            VBox item = new VBox(6, top);
+            String comment = r.isNull("comment") ? "" : r.optString("comment", "");
+            if (!comment.isBlank()) { Label c = Ui.label(comment, "label"); c.setWrapText(true); item.getChildren().add(c); }
+            if (!r.isNull("owner_reply") && !r.optString("owner_reply", "").isBlank()) {
+                Label rep = Ui.label("Owner: " + r.getString("owner_reply"), "secondary"); rep.setWrapText(true); item.getChildren().add(rep);
+            }
+            item.setPadding(new Insets(12, 0, 12, 0));
+            if (i > 0) item.setStyle("-fx-border-color:#E7E8F2;-fx-border-width:1 0 0 0;");
+            list.getChildren().add(item);
+        }
+        int n = arr.length();
+        summary.setText(n == 0 ? "No reviews yet" : String.format(java.util.Locale.ROOT, "%.1f \u2605 \u00B7 %d %s", Math.round(sum / n * 10) / 10.0, n, n == 1 ? "review" : "reviews"));
+    }
+
+    /** "2026-10-29T05:27:26+00:00" -> "Oct 29, 2026" (empty when it cannot be read). */
+    private static String when(String iso) {
+        try { return java.time.OffsetDateTime.parse(iso).atZoneSameInstant(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy", java.util.Locale.ENGLISH)); }
+        catch (Exception e) { return ""; }
+    }
+
+    /** Short, real reason a request failed (so "could not post" can be told apart from "no permission"). */
+    private static String reason(Throwable e) {
+        Throwable r = e; for (int i = 0; i < 8 && r.getCause() != null && r.getCause() != r; i++) r = r.getCause();
+        String m = r.getMessage() == null ? r.getClass().getSimpleName() : r.getMessage().replaceAll("\\s+", " ");
+        return m.length() > 140 ? m.substring(0, 140) + "\u2026" : m;
+    }
+
+    /** Five tappable stars + optional comment + Post button. Posting again edits your review; it fills in with your old one when it exists. */
+    private final class ReviewForm extends VBox {
+        private final String bhId;
+        private final Label[] star = new Label[5];
+        private final Label hint = Ui.label("Tap a star to rate", "secondary");
+        private final TextArea text = new TextArea();
+        private final Button post = Ui.btn("Post review", "btn-cta", () -> {});
+        private int picked;
+        private boolean existing, busy;
+        Runnable onPosted = () -> {};
+
+        ReviewForm(String bhId) {
+            super(8);
+            this.bhId = bhId;
+            HBox row = new HBox(6); row.setAlignment(Pos.CENTER_LEFT);
+            for (int i = 0; i < 5; i++) {
+                final int v = i + 1;
+                Label s = new Label("\u2605"); s.setCursor(javafx.scene.Cursor.HAND);
+                s.setOnMouseClicked(e -> pick(v));
+                s.setPadding(new Insets(2, 3, 2, 3));
+                star[i] = s; row.getChildren().add(s);
+            }
+            text.setPromptText("Write a review (optional)"); text.setPrefRowCount(2); text.setWrapText(true);
+            post.setMaxWidth(Double.MAX_VALUE);
+            post.setOnAction(e -> submit());
+            getChildren().addAll(Ui.label("Your rating", "h2"), row, hint, text, post);
+            setPadding(new Insets(6, 0, 0, 0));
+            paint();
+        }
+
+        private void pick(int v) { picked = v; paint(); }
+
+        private void paint() {
+            for (int i = 0; i < 5; i++) {
+                star[i].setStyle("-fx-font-size:30px;-fx-text-fill:" + (i < picked ? "#F5A524" : "#D4D0E6") + ";");
+            }
+            String[] words = {"Tap a star to rate", "Poor", "Fair", "Good", "Very good", "Excellent"};
+            hint.setText(words[picked]);
+            post.setDisable(picked == 0 || busy);
+            post.setText(busy ? "Posting..." : existing ? "Update review" : "Post review");
+        }
+
+        /** The reviews arrived: if one of them is mine, show it in the form so it can be edited. */
+        void loaded(JSONArray arr) {
+            String me = AuthService.get().userId();
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject r = arr.getJSONObject(i);
+                if (me != null && me.equals(r.optString("student_id", ""))) {
+                    existing = true;
+                    if (picked == 0) picked = r.optInt("rating", 0);
+                    if (text.getText().isEmpty() && !r.isNull("comment")) text.setText(r.optString("comment", ""));
+                }
+            }
+            paint();
+        }
+
+        private void submit() {
+            if (picked == 0 || busy) return;
             String uid = AuthService.get().userId();
-            Async.run(() -> { bh.upsertReview(bhId, uid, stars.getValue(), text.getText()); return true; },
-                    ok -> Nav.toast("Thanks for your review!"), e -> Ui.failToast(e, "You can only review a place once."));
-        });
-        return new VBox(6, Ui.label("Your rating", "h2"), stars, text, post);
+            busy = true; paint();
+            final int stars = picked; final String comment = text.getText();
+            Async.run(() -> { bh.upsertReview(bhId, uid, stars, comment); return true; },
+                    ok -> { busy = false; existing = true; paint(); Nav.toast("Thanks for your review!"); onPosted.run(); },
+                    e -> { busy = false; paint(); Ui.failToast(e, "Could not post your review: " + reason(e)); });
+        }
     }
 
     private void openChat(BoardingHouse b) {

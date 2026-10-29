@@ -73,7 +73,7 @@ public final class TripPlanner {
      * answer is an offline estimate; the real work keeps running in the background and fills the caches, so the next try is fast.
      */
     public static Trip.Plan planWithin(double[] from, double[] to, int seconds) {
-        Future<Trip.Plan> f = com.bofo.finder.util.Async.pool().submit(() -> plan(from, to));
+        Future<Trip.Plan> f = com.bofo.finder.util.Async.fanout().submit(() -> plan(from, to));
         try { return f.get(seconds, TimeUnit.SECONDS); }
         catch (Throwable t) { return quick(from, to, "The route servers are slow right now, so distances are rough estimates. Tap the tab again in a moment for exact roads."); }
     }

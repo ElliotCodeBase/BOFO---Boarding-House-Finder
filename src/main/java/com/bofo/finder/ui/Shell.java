@@ -98,8 +98,9 @@ public class Shell extends BorderPane {
     protected Shell(String[] labels, Supplier<Node>... pages) {
         setMinWidth(0); body.setMinWidth(0);                  // a screen may never be wider than the window
         factories = pages; tabs = new DockTab[labels.length]; cells = new StackPane[labels.length];
-        Label offline = Ui.label("No internet connection - showing saved data", "secondary");
-        offline.getStyleClass().add("offline-banner"); offline.setMaxWidth(Double.MAX_VALUE);
+        // offline notice: one slim plain line, like a system status bar (no icon, no card)
+        Label offline = new Label("No connection. Showing saved places.");
+        offline.getStyleClass().add("offline-bar"); offline.setMaxWidth(Double.MAX_VALUE); offline.setMinWidth(0);
         offline.managedProperty().bind(State.offline); offline.visibleProperty().bind(State.offline);
 
         badge.getStyleClass().add("nav-badge"); badge.setVisible(false); badge.setMouseTransparent(true);
