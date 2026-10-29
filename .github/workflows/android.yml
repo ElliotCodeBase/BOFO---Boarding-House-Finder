@@ -45,7 +45,11 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: BOFO-build-log
-          path: build.log
+          path: |
+            build.log
+            target/gluonfx/log/
+            target/gluonfx/aarch64-android/gvm/log/
+          if-no-files-found: warn
 
       - name: Upload APK
         if: success()
