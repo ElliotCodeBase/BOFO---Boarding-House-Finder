@@ -1,3 +1,9 @@
+# v1.18.3 - Home redesign v3: purple hero card, stat tiles, amber accents
+- Header is a rounded **purple hero card** (soft circles + amber glow) with the greeting, bell and headline; the **search pill overlaps its bottom edge**.
+- **Stat tiles** under the map from the real list: places, with free beds, cheapest per month.
+- Pill tabs again, selected = purple with glow. Section title has an amber accent bar.
+- Listing cards are white again with an **amber price chip** and a rating chip on the photo, "x beds left" under the name, nicer empty-photo gradient.
+
 # v1.18.2 - Home redesign v2: calm, photo-first (after Airbnb / Apple Maps research)
 - Removed the heavy purple hero and headline. Header is light again: small greeting, search pill with one soft shadow.
 - Map: 24 px corners with a hairline instead of the white frame; the "N places nearby" chip is white; locate button unchanged.
