@@ -34,7 +34,7 @@ import java.util.function.Consumer;
  * choice). {@code false}: a plain search box that empties after a pick (used by the Home search bar).
  */
 public final class CampusPicker extends VBox {
-    private static final double ROW = 56;      // two lines of 14 px text plus even padding; every row is the same height, so the highlight and gaps line up
+    private static final double ROW = 64;      // two lines of 14 px text plus even padding; every row is the same height, so the highlight and gaps line up
     private static final int MAX_ROWS = 5;
 
     private final TextField field = new TextField();
@@ -83,13 +83,24 @@ public final class CampusPicker extends VBox {
             @Override protected void updateItem(College c, boolean empty) {
                 super.updateItem(c, empty);
                 if (empty || c == null) { setText(null); setGraphic(null); return; }
-                javafx.scene.Node g = highlight(c.name(), field.getText());
-                if (g instanceof javafx.scene.layout.Region) {
-                    javafx.scene.layout.Region r = (javafx.scene.layout.Region) g;
-                    r.prefWidthProperty().bind(list.widthProperty().subtract(44));
-                    r.maxWidthProperty().bind(list.widthProperty().subtract(44));
-                    r.setMaxHeight(ROW - 8);                            // a third line is cut instead of spilling into the next row
+                String[] parts = split(c.name());                       // "Name - Campus (City)" -> title "Name", small line "Campus · City"
+                TextFlow title = highlight(parts[0], field.getText());
+                title.prefWidthProperty().bind(list.widthProperty().subtract(44 + 46)); title.maxWidthProperty().bind(title.prefWidthProperty());
+                title.setMaxHeight(36);                                 // two lines of title at most
+                VBox text = new VBox(2, title);
+                if (!parts[1].isEmpty()) {
+                    javafx.scene.control.Label sub = new javafx.scene.control.Label(parts[1]);
+                    sub.setStyle("-fx-font-size:12px;-fx-text-fill:#8A84A8;");
+                    sub.maxWidthProperty().bind(title.prefWidthProperty());
+                    text.getChildren().add(sub);
                 }
+                text.setAlignment(Pos.CENTER_LEFT);
+                javafx.scene.shape.Circle ring = new javafx.scene.shape.Circle(5, Color.TRANSPARENT); ring.setStroke(Color.web("#5B3BF0")); ring.setStrokeWidth(2.5);
+                javafx.scene.shape.Circle core = new javafx.scene.shape.Circle(1.8, Color.web("#5B3BF0"));
+                javafx.scene.layout.StackPane icon = new javafx.scene.layout.StackPane(ring, core);
+                icon.setMinSize(34, 34); icon.setMaxSize(34, 34); icon.setStyle("-fx-background-color:#EFEBFF;-fx-background-radius:17;");
+                HBox row = new HBox(12, icon, text); row.setAlignment(Pos.CENTER_LEFT);
+                javafx.scene.Node g = row;
                 setText(null); setGraphic(g);
             }
         });
@@ -214,6 +225,17 @@ public final class CampusPicker extends VBox {
         mid.setStyle("-fx-font-size:14px;-fx-font-weight:bold;-fx-fill:#17142A;");   // the matched part is bold, same ink (no second colour)
         tf.getChildren().addAll(plain(name.substring(0, i)), mid, plain(name.substring(i + q.length())));
         return tf;
+    }
+
+    /** "Carlos Hilado Memorial State University - Alijis Campus (Bacolod)" -> { "Carlos Hilado Memorial State University", "Alijis Campus \u00B7 Bacolod" }. */
+    static String[] split(String name) {
+        String main = name, city = "", sub = "";
+        int par = name.lastIndexOf('(');
+        if (par > 0 && name.endsWith(")")) { city = name.substring(par + 1, name.length() - 1).trim(); main = name.substring(0, par).trim(); }
+        int dash = main.indexOf(" - ");
+        if (dash > 0) { sub = main.substring(dash + 3).trim(); main = main.substring(0, dash).trim(); }
+        if (!city.isEmpty()) sub = sub.isEmpty() ? city : sub + " \u00B7 " + city;
+        return new String[]{main, sub};
     }
 
     private static Text plain(String s) { Text t = new Text(s); t.setStyle("-fx-font-size:14px;-fx-fill:#17142A;"); return t; }

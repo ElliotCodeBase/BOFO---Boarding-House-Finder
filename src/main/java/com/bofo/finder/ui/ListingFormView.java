@@ -316,7 +316,10 @@ public final class ListingFormView extends VBox {
         return amenities.selectedAmenities().stream().anyMatch(a -> a.name().equalsIgnoreCase(amenityName));
     }
 
+    private boolean publishing;                               // set while the listing is being saved: a second tap must not create a second listing
+
     private void submit() {
+        if (publishing) return;
         d.name = name.getText(); d.address = address.getText(); d.phone = phone.getText(); d.facebook = fb.getText(); d.email = email.getText();
         d.priceMode = modeIdx == 0 ? "per_bed" : "per_room";
         try { d.price = price.getText().isBlank() ? null : Double.parseDouble(price.getText().trim()); } catch (NumberFormatException e) { d.price = null; }
@@ -329,7 +332,8 @@ public final class ListingFormView extends VBox {
         var me = AuthService.get().profile();
         if (!me.verified() && me.role() != Role.ADMIN) { setErrors("Only verified owners can publish. Complete verification first."); return; }
         setErrors("");
+        publishing = true;
         Async.run(() -> new BhService().publish(AuthService.get().userId(), d), id -> { Nav.toast("Listing published!"); onDone.run(); },
-                e -> { e.printStackTrace(); setErrors(ErrorText.full("Publish failed", e)); });
+                e -> { publishing = false; e.printStackTrace(); setErrors(ErrorText.full("Publish failed", e)); });   // only a failure lets the owner try again
     }
 }

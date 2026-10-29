@@ -441,3 +441,14 @@
 .popup-sheet-row:hover, .popup-sheet-row:pressed { -fx-background-color: -bofo-bg; }
 .popup-sheet-row-danger { -fx-text-fill: -bofo-error; }
 .popup-sheet-row-danger:hover, .popup-sheet-row-danger:pressed { -fx-background-color: -bofo-error-tint; }
+
+/* campus dropdown: roomier rows, soft hover, slim scrollbar */
+.college-list { -fx-padding: 6; }
+.college-list .list-cell { -fx-padding: 0 10 0 10; -fx-background-radius: 12; }
+.college-list .list-cell:filled:hover { -fx-background-color: #F6F4FF; }
+.college-list .list-cell:filled:selected { -fx-background-color: -bofo-primary-tint; }
+.college-list .scroll-bar:vertical { -fx-background-color: transparent; -fx-pref-width: 8; -fx-padding: 4 2 4 0; }
+.college-list .scroll-bar:vertical .track { -fx-background-color: transparent; }
+.college-list .scroll-bar:vertical .thumb { -fx-background-color: #D9D3F5; -fx-background-radius: 999; }
+.college-list .scroll-bar .increment-button, .college-list .scroll-bar .decrement-button { -fx-pref-height: 0; -fx-padding: 0; }
+.college-list .scroll-bar .increment-arrow, .college-list .scroll-bar .decrement-arrow { -fx-padding: 0; -fx-shape: ""; }
