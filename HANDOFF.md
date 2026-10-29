@@ -1,3 +1,9 @@
+# Handoff - v1.17.1 Live location on PC (2026-10-29)
+- **PR title:** `v1.17.1 - PC: blue dot follows your location live`. Version in `config.properties`, `pom.xml` (versionCode 72), CHANGES.md.
+- `Locator`: `startLive()` / `stopLive()` keep one PowerShell (`WIN_LIVE_SCRIPT`, GeoCoordinateWatcher) printing a fix every 3 s; started after the first successful `desktopFix`; stopped in `stop()` and `setManual()`; shutdown hook destroys it. Not compiled/run by Claude.
+
+---
+
 # Handoff - v1.17.0 Profile setup + region map start (2026-10-29)
 - **PR title:** `v1.17.0 - First sign-up profile setup (username, picture, number, age, sex, region) + map opens on region`. Version in `config.properties`, `pom.xml` (versionCode 71), CHANGES.md.
 - New: `ProfileForm` (shared fields + save), `ProfileSetupView` (shown once from `Main.firstProfileSetup` after `RoleView`), `util/Regions`, migration `009_profile_setup.sql`. `PersonalInfoView` now wraps `ProfileForm`. `Profile` record has `username, sex, age, region` (old 8-arg constructor kept). `Ui.avatar(name, size, url)` + `Ui.setAvatarImage`. `MapPane.openOnRegion()` called in `HomeView`, `ExploreView`, `DashboardView`. Not compiled/run by Claude.

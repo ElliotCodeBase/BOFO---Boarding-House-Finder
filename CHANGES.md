@@ -1,3 +1,7 @@
+# v1.17.1 - PC: blue dot follows you live
+- On a PC the blue dot used to be set once. Now, after the first Windows location fix, the app keeps Windows' location watcher open and moves the dot whenever the position changes by more than 10 m (checked every 3 s). It stops when "Use my location" is turned off or when you press and hold the map to pin your spot (a pinned spot is never moved).
+- A PC has no GPS, so the dot is only as exact as Windows can make it (Wi-Fi). Turn on Windows Settings > Privacy & security > Location. Phones are unchanged (real GPS).
+
 # v1.17.0 - Profile setup on first sign-up + region the map opens on
 - New accounts get a "Set up your profile" screen right after choosing Student / Owner: profile picture (camera or gallery), username, mobile number, age, sex and region. Everything is optional ("Skip for now").
 - All of it can be edited later in Profile > Personal information (age and sex now load back into the form; before they were saved but shown empty).
