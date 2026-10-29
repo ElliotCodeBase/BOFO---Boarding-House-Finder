@@ -72,22 +72,22 @@ public final class VectorTileRetriever implements TileRetriever {
 
     // ---- palette (edit here) -------------------------------------------------------------------------------------
     static final Color BRAND = Color.web("#5B3BF0");
-    private static final Color LAND = Color.web("#E9E5F6");          // faint lavender
-    private static final Color GRASS = Color.web("#C4E5B8");
+    private static final Color LAND = Color.web("#EFECF8");          // faint lavender
+    private static final Color GRASS = Color.web("#CBEBBE");
     private static final Color WOOD = Color.web("#B5DBA8");
-    private static final Color PARK = Color.web("#BCE2B0");
+    private static final Color PARK = Color.web("#C3E7B6");
     private static final Color PITCH = Color.web("#C2E8B8");
     private static final Color WETLAND = Color.web("#B9E0D3");
     private static final Color SAND = Color.web("#EFE6C8");
     private static final Color CEMETERY = Color.web("#CFE3C6");
-    private static final Color SCHOOL = Color.web("#DDD3F3");
+    private static final Color SCHOOL = Color.web("#E4DAFB");
     private static final Color HOSPITAL = Color.web("#F4D9E6");
-    private static final Color WATER = Color.web("#8EC9F2");
+    private static final Color WATER = Color.web("#9AD0F5");
     private static final Color AERO = Color.web("#DCD6EC");
-    private static final Color BUILDING = Color.web("#D6CDEC");
-    private static final Color BUILDING_LINE = Color.web("#B9AEDB");
+    private static final Color BUILDING = Color.web("#E0D9F1");
+    private static final Color BUILDING_LINE = Color.web("#CBC2E6");
     private static final Color ROAD = Color.WHITE;
-    private static final Color CASING = Color.web("#AFA6CF");                              // thin outline of small roads
+    private static final Color CASING = Color.web("#C7BFE2");                              // thin outline of small roads
     private static final Color CASING_MAJOR = Color.web("#9B88F5");                        // brand purple #5B3BF0 at 30% on land: main-road outline
 
     /** false when config says map.renderer=raster: every tile is then served by the old raster retriever. */

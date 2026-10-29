@@ -53,7 +53,7 @@ import java.util.function.Consumer;
  * Map built on Gluon Maps. The base map is BOFO's own style drawn from OpenFreeMap vector tiles
  * ({@link com.bofo.finder.util.VectorTileRetriever}), or the old picture tiles when map.renderer=raster. On top:
  * <ul>
- *   <li><b>You</b>: a blue dot that glides between GPS fixes, pulses, and shows a direction arrow once you move. The round
+ *   <li><b>You</b>: a {@link LiveDot} (blue core, soft ripples, view cone) that glides between GPS fixes and turns the cone once you move. The round
  *       button (bottom right) flies to you and keeps the camera following you until you drag the map.</li>
  *   <li><b>Pins</b>: purple pins that pop in. With {@link #enablePreview} a tap selects a pin, shows a small card at the
  *       bottom and draws the walking route to it (from the chosen college, else the nearest college, else from you).</li>
@@ -257,6 +257,9 @@ public final class MapPane extends StackPane {
         layer.moveMe(p);                                     // make sure the blue dot is on the map before flying to it
         setFollow(true);
         flyTo(p[0], p[1], 16, 700);
+        javafx.animation.PauseTransition landed = new javafx.animation.PauseTransition(Duration.millis(560));   // camera is nearly there: ring + pop on the dot
+        landed.setOnFinished(e -> layer.pingMe());
+        landed.play();
     }
 
     /**
@@ -628,12 +631,10 @@ public final class MapPane extends StackPane {
         private final Group collegeGroup = new Group();
         private List<College> marks = List.of();
         // you
-        private final Group me = new Group();
-        private final Circle halo = new Circle(13, Color.web("#2F6FED", 0.22)), meDot = new Circle(7.5, BLUE);
-        private final Polygon arrow = new Polygon(0.0, -5.2, 3.6, 3.0, 0.0, 1.2, -3.6, 3.0);
+        private final LiveDot me = new LiveDot();                           // v1.18.0: core + ripples + view cone (see LiveDot)
         private double meLat = Double.NaN, meLng = Double.NaN, fromLat, fromLng, toLat, toLng, lastLat = Double.NaN, lastLng = Double.NaN;
         private final DoubleProperty meT = new SimpleDoubleProperty(1);
-        private Timeline meAnim, pulse;
+        private Timeline meAnim;
         private boolean active;
 
         PinLayer() {
@@ -651,32 +652,26 @@ public final class MapPane extends StackPane {
             routeBadge.setWrapText(false); routeBadge.setMouseTransparent(true); routeBadge.setOpacity(0);
             rProg.addListener((o, a, v) -> markDirty());
 
-            halo.setMouseTransparent(true);
-            meDot.setStroke(Color.WHITE); meDot.setStrokeWidth(3);
-            arrow.setFill(Color.WHITE); arrow.setVisible(false);
-            me.getChildren().addAll(halo, meDot, arrow); me.setMouseTransparent(true); me.setVisible(false);
+            me.setVisible(false);
             meT.addListener((o, a, v) -> {                              // glide between two GPS fixes
                 double t = v.doubleValue();
                 meLat = fromLat + (toLat - fromLat) * t; meLng = fromLng + (toLng - fromLng) * t;
                 if (follow && (cam == null || cam.getStatus() != javafx.animation.Animation.Status.RUNNING)) setCenterNow(meLat, meLng);   // "follow me" keeps the camera on the glide, but never fights a flight in progress
                 markDirty();
             });
-            pulse = new Timeline(
-                    new KeyFrame(Duration.ZERO, new KeyValue(halo.scaleXProperty(), 0.7), new KeyValue(halo.scaleYProperty(), 0.7), new KeyValue(halo.opacityProperty(), 1.0)),
-                    new KeyFrame(Duration.millis(1700), new KeyValue(halo.scaleXProperty(), 2.1, Interpolator.EASE_OUT), new KeyValue(halo.scaleYProperty(), 2.1, Interpolator.EASE_OUT),
-                            new KeyValue(halo.opacityProperty(), 0.0, Interpolator.EASE_IN)));
-            pulse.setCycleCount(Timeline.INDEFINITE);
-
             getChildren().addAll(ring, radiusBadge, casing, line, originDot, destDot, originTag, collegeGroup, collegeDot, clusterGroup, pinsGroup, bhNameGroup, routeBadge, me);
         }
 
         void refresh() { markDirty(); }
 
-        /** The pulse only runs while the map is on screen (saves battery). */
+        /** The ripples only run while the map is on screen (saves battery). */
         void setActive(boolean on) {
             active = on;
-            if (on && !Double.isNaN(meLat)) pulse.play(); else pulse.pause();
+            me.setRunning(on && !Double.isNaN(meLat));
         }
+
+        /** "Found you" ring + pop on the blue dot (the locate button calls this once the camera lands). */
+        void pingMe() { if (!Double.isNaN(meLat)) me.ping(); }
 
         /** Zoom we last set (NaN when unknown). */
         double zoomNow() { return Double.isNaN(zoomVal) ? map.getZoom() : zoomVal; }
@@ -711,15 +706,15 @@ public final class MapPane extends StackPane {
             if (now == null) {                                           // location switched off
                 meLat = Double.NaN; meLng = Double.NaN; lastLat = Double.NaN; lastLng = Double.NaN;
                 if (meAnim != null) meAnim.stop();
-                arrow.setVisible(false); me.setVisible(false); pulse.pause(); markDirty(); return;
+                me.reset(); me.setVisible(false); markDirty(); return;
             }
-            if (!Double.isNaN(lastLat) && Geo.km(lastLat, lastLng, now[0], now[1]) > 0.004) {       // moved 4 m or more: point the arrow
+            if (!Double.isNaN(lastLat) && Geo.km(lastLat, lastLng, now[0], now[1]) > 0.004) {       // moved 4 m or more: turn the view cone
                 setHeading(Geo.bearing(lastLat, lastLng, now[0], now[1]));
                 lastLat = now[0]; lastLng = now[1];
             } else if (Double.isNaN(lastLat)) { lastLat = now[0]; lastLng = now[1]; }
             if (Double.isNaN(meLat)) {                                   // first fix: appear in place, start pulsing
                 meLat = now[0]; meLng = now[1]; fromLat = toLat = meLat; fromLng = toLng = meLng;
-                if (active) pulse.play();
+                me.appear(); me.setRunning(active);
                 markDirty(); return;
             }
             if (Math.abs(meLat - now[0]) < 1e-7 && Math.abs(meLng - now[1]) < 1e-7) { markDirty(); return; }
@@ -731,13 +726,7 @@ public final class MapPane extends StackPane {
             meAnim.play();
         }
 
-        private void setHeading(double deg) {
-            double cur = arrow.getRotate();
-            double target = cur + (((deg - cur) % 360 + 540) % 360 - 180);       // turn the short way round
-            arrow.setVisible(true);
-            new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(arrow.rotateProperty(), cur)),
-                    new KeyFrame(Duration.millis(300), new KeyValue(arrow.rotateProperty(), target, Interpolator.EASE_BOTH))).play();
-        }
+        private void setHeading(double deg) { me.setHeading(deg); }
 
         // ---- pins ----
 

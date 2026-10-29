@@ -30,6 +30,7 @@ public final class HomeView extends VBox {
     private Set<String> favs = new HashSet<>();
     private List<BoardingHouse> current = List.of();
     private static String entryUser;                                    // the user whose login already got its first Home
+    private boolean firstHome;                                           // true on the first Home of a login: plays the short entrance (rare, so it may have personality)
     private CampusPicker searchBar;
     private Button nearMe;
     private final Label nearbySub = Ui.label("", "secondary", "nearby-sub");     // under the list title: what the list is sorted / limited by
@@ -49,7 +50,7 @@ public final class HomeView extends VBox {
     public HomeView() {
         super(0);
         String uid0 = AuthService.get().userId();                      // first Home of a login: start with no campus chosen, so the overview shows
-        if (uid0 != null && !uid0.equals(entryUser)) { entryUser = uid0; State.college.set(null); }
+        if (uid0 != null && !uid0.equals(entryUser)) { entryUser = uid0; State.college.set(null); firstHome = true; }
         var prof = AuthService.get().profile();
         String full = prof == null ? "" : prof.fullName();
         String name = full.isBlank() ? "" : full.split(" ")[0];
@@ -117,11 +118,14 @@ public final class HomeView extends VBox {
         list.setPadding(new Insets(4, 16, 130, 16));   // the floating tab bar is ~100 px tall
 
         Region mapFrame = new Region(); mapFrame.getStyleClass().add("map-frame"); mapFrame.setMouseTransparent(true);   // thin rounded outline on top of the map
-        StackPane mapWrap = new StackPane(map, mapFrame, radiusBar);
-        StackPane.setAlignment(radiusBar, Pos.TOP_CENTER); StackPane.setMargin(radiusBar, new Insets(10, 12, 0, 12));
-        Rectangle mc = new Rectangle(); mc.setArcWidth(44); mc.setArcHeight(44);
+        HBox livePill = locationPill();                                   // top-left "Live" chip; the radius bar takes the top when a campus is chosen
+        StackPane mapWrap = new StackPane(map, mapFrame, radiusBar, livePill);
+        StackPane.setAlignment(radiusBar, Pos.TOP_CENTER); StackPane.setMargin(radiusBar, new Insets(12, 12, 0, 12));
+        StackPane.setAlignment(livePill, Pos.TOP_LEFT); StackPane.setMargin(livePill, new Insets(12, 0, 0, 12));
+        Rectangle mc = new Rectangle(); mc.setArcWidth(56); mc.setArcHeight(56);
         mc.widthProperty().bind(mapWrap.widthProperty()); mc.heightProperty().bind(mapWrap.heightProperty());
         mapWrap.setClip(mc);
+        mapWrap.getStyleClass().add("home-map");
         VBox.setMargin(mapWrap, new Insets(4, 16, 0, 16));
 
         VBox header = new VBox(18, top, searchRow); header.getStyleClass().addAll("page-header", "home-header"); header.setViewOrder(-1);   // greeting + search in one branded band
@@ -135,12 +139,58 @@ public final class HomeView extends VBox {
         searchBar.setMinWidth(0); mapWrap.setMinWidth(0); chips.setMinWidth(0); nearby.setMinWidth(0); sp.setMinWidth(0);
         fitMapHeight(720);                                                // until the first layout: a normal phone
         heightProperty().addListener((o, was, h) -> fitMapHeight(h.doubleValue()));
+        if (firstHome) entrance(header, mapWrap, chips, nearby);
         Async.run(bh::favoriteIds, f -> { favs = f; reload(); }, e -> reload());
         Async.run(bh::colleges, cs -> map.showColleges(cs), e -> {});   // every campus on the map
         startGps();
         ChangeListener<College> l = (o, a, b) -> { suppressionChanged(); reload(); };
         State.college.addListener(l);
         sceneProperty().addListener((o, was, sc) -> { State.college.removeListener(l); if (sc != null) State.college.addListener(l); });
+    }
+
+    /**
+     * Small glass chip on the map's top-left corner that says what the blue dot is doing: "Finding you...", "Live" or "Location off".
+     * Bound (weakly) to the Locator and State, so nothing has to be removed when the Home is left.
+     */
+    private HBox locationPill() {
+        javafx.scene.shape.Circle dot = new javafx.scene.shape.Circle(4);
+        Label text = Ui.label("", "live-pill-text");
+        text.setWrapText(false);
+        var st = Locator.get().status;
+        text.textProperty().bind(javafx.beans.binding.Bindings.createStringBinding(() -> {
+            if (st.get() == Locator.Status.REQUESTING && State.gps.get() == null) return "Finding you\u2026";
+            if (State.gps.get() == null) return "Location off";
+            return State.gpsApprox.get() ? "Approximate" : "Live";
+        }, st, State.gps, State.gpsApprox));
+        dot.fillProperty().bind(javafx.beans.binding.Bindings.createObjectBinding(() -> {
+            if (State.gps.get() == null) return st.get() == Locator.Status.REQUESTING ? Color.web("#FFB400") : Color.web("#B4B1C6");
+            return State.gpsApprox.get() ? Color.web("#FFB400") : Color.web("#2FBF71");
+        }, st, State.gps, State.gpsApprox));
+        HBox pill = new HBox(7, dot, text);
+        pill.setAlignment(Pos.CENTER_LEFT); pill.getStyleClass().add("live-pill");
+        pill.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        pill.visibleProperty().bind(javafx.beans.binding.Bindings.createBooleanBinding(
+                () -> State.college.get() == null && (st.get() != Locator.Status.IDLE || State.gps.get() != null), st, State.college, State.gps));
+        pill.managedProperty().bind(pill.visibleProperty());
+        pill.setMouseTransparent(true);
+        return pill;
+    }
+
+    /**
+     * First Home of a login only (rare, so a little personality is fine): the header, map, chips and list title rise 10 px and fade in,
+     * 40 ms apart (total under 300 ms). Transform + opacity only, enter curve; leaves every node exactly where layout put it.
+     */
+    private void entrance(javafx.scene.Node... parts) {
+        for (int i = 0; i < parts.length; i++) {
+            javafx.scene.Node n = parts[i];
+            n.setOpacity(0); n.setTranslateY(10);
+            javafx.animation.Timeline t = new javafx.animation.Timeline(
+                    new javafx.animation.KeyFrame(javafx.util.Duration.ZERO, new javafx.animation.KeyValue(n.opacityProperty(), 0.0), new javafx.animation.KeyValue(n.translateYProperty(), 10.0)),
+                    new javafx.animation.KeyFrame(javafx.util.Duration.millis(240), new javafx.animation.KeyValue(n.opacityProperty(), 1.0, LiveDot.ENTER), new javafx.animation.KeyValue(n.translateYProperty(), 0.0, LiveDot.ENTER)));
+            t.setDelay(javafx.util.Duration.millis(40L * i));
+            t.setOnFinished(e -> { n.setOpacity(1); n.setTranslateY(0); });
+            t.play();
+        }
     }
 
     /** Map takes ~42% of the window height (200-440 px): a small phone still sees the list under it, a tall window does not get a giant map. */

@@ -653,3 +653,22 @@
   -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.22), 10, 0, 0, 3); }
 .hdr-btn-cta:hover { -fx-background-color: #2C2750; }
 .hdr-btn-cta:pressed { -fx-background-color: #3A3466; }
+
+/* ---- v1.18.0 Home + map redesign: soft framed map, glass "Live" chip, bigger locate button, press feedback ----
+   Press feedback is instant (JavaFX CSS has no transitions); the animated parts (blue dot, entrance) live in LiveDot / HomeView. */
+.home-map { -fx-background-color: white; -fx-background-radius: 28; }
+.map-frame { -fx-border-color: white; -fx-border-width: 3; -fx-border-radius: 28; }
+.live-pill { -fx-background-color: rgba(255,255,255,0.93); -fx-background-radius: 999; -fx-padding: 6 12 6 10;
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.16), 8, 0, 0, 2); }
+.live-pill-text { -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: -bofo-ink; }
+.map-fab { -fx-min-width: 46; -fx-min-height: 46; -fx-pref-width: 46; -fx-pref-height: 46; -fx-max-width: 46; -fx-max-height: 46;
+  -fx-border-color: transparent; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.22), 12, 0, 0, 3); }
+.map-fab:pressed { -fx-scale-x: 0.92; -fx-scale-y: 0.92; }
+.map-fab-on { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary; -fx-border-width: 2; -fx-border-radius: 999; }
+.radius-bar { -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.16), 12, 0, 0, 3); }
+.map-card { -fx-background-radius: 22; }
+.map-attr { -fx-background-color: rgba(255,255,255,0.7); }
+.hdr-btn:pressed, .home-chips .chip:pressed, .home-chips .chip-selected:pressed { -fx-scale-x: 0.94; -fx-scale-y: 0.94; }
+.card-compact:pressed { -fx-scale-x: 0.98; -fx-scale-y: 0.98; }
+.home-title { -fx-font-size: 21px; }
+.greet-hello { -fx-font-size: 12.5px; }
