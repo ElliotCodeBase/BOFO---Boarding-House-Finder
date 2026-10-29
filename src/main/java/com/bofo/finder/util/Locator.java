@@ -54,8 +54,7 @@ public final class Locator {
     private final File prefFile;
     private PauseTransition timeout;
     private boolean listening;
-    private double[] manual;                     // "I am here" spot the user set by pressing and holding the map (wins over GPS until location is switched off and on)
-    private static boolean approxHintShown;
+    private double[] manual;                   // PC only: the spot the user pinned by holding the map (saved)
     private boolean nextFixApprox;               // the fix that is about to arrive comes from a PC, not from phone GPS
 
     private Locator() {
@@ -66,7 +65,8 @@ public final class Locator {
             Properties p = new Properties(); p.load(in);
             enabled.set(!"false".equals(p.getProperty("enabled")));
             asked = "true".equals(p.getProperty("asked"));
-            try { manual = new double[]{Double.parseDouble(p.getProperty("manualLat")), Double.parseDouble(p.getProperty("manualLng"))}; } catch (Exception none) { manual = null; }
+            String m = p.getProperty("manual");
+            if (m != null && m.contains(",")) manual = new double[]{Double.parseDouble(m.split(",")[0]), Double.parseDouble(m.split(",")[1])};
         } catch (Exception firstRun) { /* defaults */ }
     }
 
@@ -76,7 +76,7 @@ public final class Locator {
             Properties p = new Properties();
             p.setProperty("enabled", String.valueOf(enabled.get()));
             p.setProperty("asked", String.valueOf(asked));
-            if (manual != null) { p.setProperty("manualLat", String.valueOf(manual[0])); p.setProperty("manualLng", String.valueOf(manual[1])); }
+            if (manual != null) p.setProperty("manual", manual[0] + "," + manual[1]);
             try (OutputStream out = Files.newOutputStream(prefFile.toPath())) { p.store(out, "BOFO location choice"); }
         } catch (Exception ignored) { }
     }
@@ -108,7 +108,6 @@ public final class Locator {
     public void setEnabled(boolean on) {
         enabled.set(on);
         asked = true;
-        if (on) manual = null;                               // switching location on again goes back to the automatic position
         save();
         if (on) { if (status.get() == Status.UNAVAILABLE) status.set(Status.IDLE); start(); }
         else stop();
@@ -128,20 +127,22 @@ public final class Locator {
         if (!Platform.isFxApplicationThread()) { Platform.runLater(this::start); return; }
         if (!enabled.get()) return;
         if (status.get() == Status.ON || status.get() == Status.REQUESTING) return;
-        if (manual != null) { nextFixApprox = false; fix(manual); return; }
         double[] dev = AppConfig.devLocation();
         if (dev != null) { nextFixApprox = true; fix(dev); return; }
         status.set(Status.REQUESTING);
         if (timeout != null) timeout.stop();                 // an old timer must never fail a newer request
         try {
             Optional<PositionService> svc = PositionService.create();
-            if (svc.isEmpty()) { nextFixApprox = true; desktopFix(); return; }        // PC: ask Windows, else the browser (coarse: Wi-Fi / IP based)
+            if (svc.isEmpty()) {
+                if (manual != null) { nextFixApprox = false; fix(manual); return; }          // the user told us where they are: trust that over Wi-Fi / IP guesses
+                nextFixApprox = true; desktopFix(); return;
+            }        // PC: ask Windows, else the browser (coarse: Wi-Fi / IP based)
             nextFixApprox = false;
             PositionService ps = svc.get();
             service = ps;
             if (!listening) {
                 listening = true;
-                ps.positionProperty().addListener((o, a, p) -> { if (p != null && manual == null) fix(new double[]{p.getLatitude(), p.getLongitude()}); });
+                ps.positionProperty().addListener((o, a, p) -> { if (p != null) fix(new double[]{p.getLatitude(), p.getLongitude()}); });
             }
             ps.start();
             Position now = ps.positionProperty().get();
@@ -157,7 +158,7 @@ public final class Locator {
     /* ---------- PC: ask Windows' own location service (the same one the browser uses) ---------- */
     private static final String WIN_SCRIPT =
             "Add-Type -AssemblyName System.Device; $w = New-Object System.Device.Location.GeoCoordinateWatcher([System.Device.Location.GeoPositionAccuracy]::High); $w.Start(); "
-            + "for ($i = 0; $i -lt 30; $i++) { $q = $w.Position.Location; if (-not $q.IsUnknown -and $q.HorizontalAccuracy -le 150) { break }; Start-Sleep -Milliseconds 500 }; "
+            + "for ($i = 0; $i -lt 24 -and $w.Position.Location.IsUnknown; $i++) { Start-Sleep -Milliseconds 500 }; "
             + "$l = $w.Position.Location; if (-not $l.IsUnknown) { [string]::Format([cultureinfo]::InvariantCulture, '{0},{1}', $l.Latitude, $l.Longitude) }";
 
     private void desktopFix() {
@@ -269,29 +270,21 @@ public final class Locator {
         start();
     }
 
+    /** PC only: the user pressed and held the map to say "I'm here". Saved, and used instead of the coarse Windows / browser guess. */
+    public void setManual(double[] p) {
+        manual = p; save(); nextFixApprox = false;
+        fix(p);
+    }
+
     private void fix(double[] p) {
         Platform.runLater(() -> {
             if (timeout != null) timeout.stop();
             State.gpsApprox.set(nextFixApprox);
-            if (nextFixApprox && !approxHintShown) { approxHintShown = true; Nav.toast("This PC can only guess where you are. Press and hold the map to set your exact spot."); }
             State.gps.set(p);
             status.set(Status.ON);
             List<Consumer<double[]>> todo = new ArrayList<>(waiting); waiting.clear();
             for (Consumer<double[]> c : todo) c.accept(p);
         });
-    }
-
-    /** The user pressed and held the map and said "I am here": use that spot instead of the (possibly wrong) automatic one. */
-    public void setManual(double lat, double lng) {
-        if (!Platform.isFxApplicationThread()) { Platform.runLater(() -> setManual(lat, lng)); return; }
-        manual = new double[]{lat, lng};
-        if (!enabled.get()) { enabled.set(true); asked = true; }
-        save();
-        if (timeout != null) timeout.stop();
-        stopGeo();
-        nextFixApprox = false;
-        fix(manual);
-        Nav.toast("Your location is set.");
     }
 
     private void fail() {
