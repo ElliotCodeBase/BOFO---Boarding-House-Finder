@@ -97,7 +97,7 @@ public class Main extends Application {
     private static void dispatch(AuthService.Restore r, SplashView splash) {
         switch (r) {
             case NO_SESSION -> showLogin(null);
-            case NEEDS_ROLE -> Nav.show(new RoleView(Main::route), false);
+            case NEEDS_ROLE -> Nav.show(new RoleView(Main::firstProfileSetup), false);
             case READY -> route();
             case OFFLINE -> {
                 // Offline launch: with a cached profile open the app with an offline banner, else offer retry.
@@ -110,9 +110,12 @@ public class Main extends Application {
     /** Sign-in screen; on success decide between role selection and the correct home. */
     public static void showLogin(String notice) {
         Nav.show(new LoginView(() -> Async.run(() -> AuthService.get().loadProfile(),
-                hasProfile -> { if (hasProfile) route(); else Nav.show(new RoleView(Main::route), false); },
+                hasProfile -> { if (hasProfile) route(); else Nav.show(new RoleView(Main::firstProfileSetup), false); },
                 e -> showLogin("Could not load your account.")), notice), false);
     }
+
+    /** New account: after Student / Owner, one screen for username, picture, number, age, sex and region (all skippable). */
+    private static void firstProfileSetup() { Nav.show(new ProfileSetupView(Main::route), false); }
 
     /** Returning users skip sign-in: students -> Home, owners -> Dashboard, admins -> Verification queue. */
     public static void route() {

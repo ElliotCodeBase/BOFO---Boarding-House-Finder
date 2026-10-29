@@ -42,7 +42,7 @@ public final class ProfileView extends VBox {
         HBox chips = Ui.hbox(6, Ui.label(roleName, "profile-chip"));
         if (owner) chips.getChildren().add(Ui.label(statusText(p), "profile-chip"));
         VBox who = Ui.vbox(6, name, chips);
-        HBox idRow = Ui.hbox(14, Ui.avatar(nm, 72), who); idRow.setAlignment(Pos.CENTER_LEFT);
+        HBox idRow = Ui.hbox(14, Ui.avatar(nm, 72, p.photoUrl()), who); idRow.setAlignment(Pos.CENTER_LEFT);
         VBox header = new VBox(12, Ui.label("Profile", "profile-title"), idRow);
         header.getStyleClass().add("profile-header");
 

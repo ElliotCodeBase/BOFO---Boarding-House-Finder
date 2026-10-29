@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const uid = u.user.id;
 
     const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    for (const bucket of ["id-verification", "bh-photos"]) {
+    for (const bucket of ["id-verification", "bh-photos", "avatars"]) {
       const files = await listAll(admin, bucket, uid);
       for (let i = 0; i < files.length; i += 100) {
         const { error } = await admin.storage.from(bucket).remove(files.slice(i, i + 100));

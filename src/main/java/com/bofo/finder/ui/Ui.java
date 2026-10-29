@@ -407,6 +407,28 @@ public final class Ui {
         l.setStyle("-fx-background-radius:" + (size / 2) + ";-fx-font-size:" + Math.round(size * 0.36) + "px;");
         return l;
     }
+    /** Round avatar that shows the profile picture once it has loaded (initials until then, and when offline). */
+    public static Label avatar(String name, double size, String photoUrl) {
+        Label l = avatar(name, size);
+        if (photoUrl == null || photoUrl.isBlank()) return l;
+        try {
+            Image im = new Image(photoUrl, size * 2, size * 2, true, true, true);
+            Runnable apply = () -> { if (!im.isError() && im.getProgress() >= 1) setAvatarImage(l, im, size); };
+            if (im.getProgress() >= 1) apply.run();
+            else im.progressProperty().addListener((o, was, now) -> { if (now.doubleValue() >= 1) apply.run(); });
+        } catch (Exception ignored) { }
+        return l;
+    }
+    /** Puts a centre-cropped round picture into an avatar label. */
+    public static void setAvatarImage(Label l, Image im, double size) {
+        double s = Math.min(im.getWidth(), im.getHeight());
+        if (s <= 0) return;
+        ImageView iv = new ImageView(im);
+        iv.setViewport(new Rectangle2D((im.getWidth() - s) / 2, (im.getHeight() - s) / 2, s, s));
+        iv.setFitWidth(size); iv.setFitHeight(size); iv.setPreserveRatio(false); iv.setSmooth(true);
+        iv.setClip(new Circle(size / 2, size / 2, size / 2));
+        l.setText(""); l.setGraphic(iv); l.setContentDisplay(ContentDisplay.GRAPHIC_ONLY); l.setPadding(Insets.EMPTY);
+    }
     /** On/off filter chip. */
     public static final class Chip extends Button {
         private final javafx.beans.property.BooleanProperty on = new javafx.beans.property.SimpleBooleanProperty(false);

@@ -105,6 +105,7 @@ public final class ExploreView extends StackPane {
         list.setPadding(new Insets(4, 16, 130, 16));
         listScroll = Ui.scroll(list);
         map.fillAvailable(260);
+        map.openOnRegion();
         map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
         Async.run(() -> new BhService().colleges(), map::showColleges, e -> {});     // every campus is always on the map
         content.getChildren().setAll(listScroll); VBox.setVgrow(content, Priority.ALWAYS);

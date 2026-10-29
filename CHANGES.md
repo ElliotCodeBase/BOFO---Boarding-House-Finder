@@ -1,3 +1,10 @@
+# v1.17.0 - Profile setup on first sign-up + region the map opens on
+- New accounts get a "Set up your profile" screen right after choosing Student / Owner: profile picture (camera or gallery), username, mobile number, age, sex and region. Everything is optional ("Skip for now").
+- All of it can be edited later in Profile > Personal information (age and sex now load back into the form; before they were saved but shown empty).
+- The map (student Home, Explore, owner Dashboard) opens on the saved region every time; the round locate button still flies to you.
+- Profile picture shows in the Profile header (Google photo until you change it). Usernames are unique (case-insensitive).
+- Supabase: run `supabase/migrations/009_profile_setup.sql` (new columns, `username_available`, public `avatars` bucket). Redeploy the `delete-account` Edge Function (it now also clears avatars).
+
 # v1.16.13 - Owner locate button works like the student one
 - Fix: on the owner Dashboard map and the New/Edit listing map the app never asked for your location, so the blue dot was missing and the round locate button had to wait (or did nothing). They now ask once (same "Use your location" question as the student Home) and start tracking, so the button flies to you right away.
 
