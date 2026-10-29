@@ -883,11 +883,7 @@ public final class MapPane extends StackPane {
             boolean far = !Double.isNaN(zNow) && zNow < 15;
             double k = Double.isNaN(zNow) ? 1 : Math.max(1, Math.min(1.7, 1 + (14.5 - zNow) * 0.13));   // markers grow as the map zooms out
             double zReal = map.getZoom();                                   // the real zoom (also after a pinch / scroll)
-<<<<<<< HEAD
             boolean names = zReal >= 11;                                  // campus names from about city zoom; boarding-house names come first and win any overlap
-=======
-            boolean names = zReal >= 12;                                  // campus names only a bit zoomed in (the chosen campus always); boarding-house names come first and win any overlap
->>>>>>> origin/main
             College chosen = State.college.get();
             // campus labels: short (ellipsis), kept inside the map, and a label that would land on another one is hidden
             // (the chosen campus always wins); zooming in makes room, so more names appear
@@ -986,7 +982,6 @@ public final class MapPane extends StackPane {
                 Scale z0 = (Scale) g.getProperties().get("zs");
                 double r0 = 10 * (z0 == null ? 1 : z0.getX());
                 boolean dm = !((Polygon) g.getProperties().get("tail")).isVisible();
-<<<<<<< HEAD
                 double[] bb = {q.getX() - r0, q.getY() + (dm ? 0 : -21 * (z0 == null ? 1 : z0.getX())) - r0, 2 * r0, 2 * r0};
                 dotBoxes.add(bb); hardBoxes.add(bb);
             }
@@ -996,14 +991,6 @@ public final class MapPane extends StackPane {
                 dotBoxes.add(cb); hardBoxes.add(cb);
             }
             if (!Double.isNaN(meLat)) { Point2D mp = getMapPoint(meLat, meLng); double mr = 15 * k; hardBoxes.add(new double[]{mp.getX() - mr, mp.getY() - mr, 2 * mr, 2 * mr}); }
-=======
-                dotBoxes.add(new double[]{q.getX() - r0, q.getY() + (dm ? 0 : -21 * (z0 == null ? 1 : z0.getX())) - r0, 2 * r0, 2 * r0});
-            }
-            for (Group cg : clusterPool) if (cg.isVisible()) {                    // numbered bubbles
-                double r1 = ((Circle) cg.getProperties().get("halo")).getRadius();
-                dotBoxes.add(new double[]{cg.getTranslateX() - r1, cg.getTranslateY() - r1, 2 * r1, 2 * r1});
-            }
->>>>>>> origin/main
             if (zReal >= 9) {                                                     // zoomed out too: names that fit show, the rest wait for zoom
                 for (Node n : pinsGroup.getChildren()) {
                     Group g = (Group) n;
@@ -1044,17 +1031,12 @@ public final class MapPane extends StackPane {
                 }
             }
 
-<<<<<<< HEAD
             // campus names last. Each name tries four spots around its dot (right, left, below, above): first spots that touch no other name or dot,
             // then spots that only avoid other names. So a campus only loses its name when the map is truly packed there.
-=======
-            // campus names last: only where they do not touch a boarding-house name or another campus name
->>>>>>> origin/main
             for (Object[] pc : pendingCampus) {
                 Point2D cp = (Point2D) pc[1]; Label cname = (Label) pc[2]; boolean cmine = (Boolean) pc[3];
                 if (!names && !cmine) { cname.setVisible(false); continue; }
                 if (cname.getMaxWidth() != labelMax) cname.setMaxWidth(labelMax);
-<<<<<<< HEAD
                 double cw = Math.min(labelMax, cname.getWidth() > 0 ? cname.getWidth() : cname.prefWidth(-1)), ch = 17;
                 double[][] spots = {
                         {cp.getX() + 9, cp.getY() - 9},                       // right
@@ -1077,17 +1059,6 @@ public final class MapPane extends StackPane {
                         cname.setLayoutX(tx - cp.getX()); cname.setLayoutY(ty - cp.getY());
                         labelBoxes.add(new double[]{tx, ty, cw, ch}); cplaced = true; break;
                     }
-=======
-                double cw = Math.min(labelMax, cname.getWidth() > 0 ? cname.getWidth() : cname.prefWidth(-1));
-                double cy0 = cp.getY() - 9, ch = 17;
-                boolean cplaced = false;
-                for (int side = 0; side < 2 && !cplaced; side++) {
-                    double tx = side == 0 ? cp.getX() + 9 : cp.getX() - 9 - cw;
-                    if (tx < 2 || tx + cw > vw - 2) continue;
-                    boolean clash = false;
-                    for (double[] r : labelBoxes) if (tx < r[0] + r[2] + 3 && tx + cw + 3 > r[0] && cy0 < r[1] + r[3] + 1 && cy0 + ch + 1 > r[1]) { clash = true; break; }
-                    if (!clash) { cname.setLayoutX(side == 0 ? 9 : -9 - cw); labelBoxes.add(new double[]{tx, cy0, cw, ch}); cplaced = true; }
->>>>>>> origin/main
                 }
                 cname.setVisible(cplaced);
             }

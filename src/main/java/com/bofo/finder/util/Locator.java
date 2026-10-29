@@ -115,6 +115,7 @@ public final class Locator {
 
     private void stop() {
         if (timeout != null) timeout.stop();
+        stopLive();
         stopGeo();
         waiting.clear();
         try { if (service != null) service.stop(); } catch (Throwable ignored) { }
@@ -174,9 +175,50 @@ public final class Locator {
                 if (a.length == 2) got = new double[]{Double.parseDouble(a[0].trim()), Double.parseDouble(a[1].trim())};
             } catch (Throwable ignored) { }
             double[] result = got;
-            Platform.runLater(() -> { if (result != null) fix(result); else browserFix(); });   // Windows could not tell: try the browser
+            Platform.runLater(() -> { if (result != null) { fix(result); startLive(); } else browserFix(); });   // Windows could not tell: try the browser
         }, "bofo-win-geo");
         t.setDaemon(true); t.start();
+    }
+
+    /* ---------- PC: live tracking. One PowerShell keeps Windows' location watcher open and prints a fix every 3 s; the dot follows. ---------- */
+    private static final String WIN_LIVE_SCRIPT =
+            "Add-Type -AssemblyName System.Device; $w = New-Object System.Device.Location.GeoCoordinateWatcher([System.Device.Location.GeoPositionAccuracy]::High); $w.Start(); "
+            + "while ($true) { $l = $w.Position.Location; if (-not $l.IsUnknown) { [Console]::Out.WriteLine([string]::Format([cultureinfo]::InvariantCulture, '{0},{1}', $l.Latitude, $l.Longitude)); [Console]::Out.Flush() }; Start-Sleep -Seconds 3 }";
+    private volatile Process liveProc;
+    private boolean hookAdded;
+
+    private void startLive() {
+        if (manual != null || AppConfig.devLocation() != null || AppConfig.isAndroid()) return;       // a pinned or fixed spot is not moved by Windows
+        if (!System.getProperty("os.name", "").toLowerCase().contains("win")) return;
+        if (liveProc != null && liveProc.isAlive()) return;
+        try {
+            Process p = new ProcessBuilder("powershell", "-NoProfile", "-NonInteractive", "-Command", WIN_LIVE_SCRIPT).redirectErrorStream(true).start();
+            liveProc = p;
+            if (!hookAdded) { hookAdded = true; Runtime.getRuntime().addShutdownHook(new Thread(() -> { Process q = liveProc; if (q != null) q.destroy(); })); }
+            Thread t = new Thread(() -> {
+                try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = r.readLine()) != null) {
+                        String[] a = line.trim().split(",");
+                        if (a.length != 2) continue;
+                        double[] pos;
+                        try { pos = new double[]{Double.parseDouble(a[0]), Double.parseDouble(a[1])}; } catch (NumberFormatException e) { continue; }
+                        Platform.runLater(() -> {
+                            double[] cur = State.gps.get();
+                            if (manual != null || liveProc != p || !enabled.get()) return;
+                            if (cur != null && com.bofo.finder.util.Geo.km(cur[0], cur[1], pos[0], pos[1]) < 0.01) return;   // moved less than 10 m: leave the dot alone
+                            nextFixApprox = true; fix(pos);
+                        });
+                    }
+                } catch (Throwable ignored) { }
+            }, "bofo-win-live");
+            t.setDaemon(true); t.start();
+        } catch (Throwable cannotStart) { liveProc = null; }
+    }
+
+    private void stopLive() {
+        Process p = liveProc; liveProc = null;
+        if (p != null) p.destroy();
     }
 
     /* ---------- PC: the same Geolocation feature Google Maps uses (the browser asks Windows / Wi-Fi) ---------- */
@@ -272,7 +314,7 @@ public final class Locator {
 
     /** PC only: the user pressed and held the map to say "I'm here". Saved, and used instead of the coarse Windows / browser guess. */
     public void setManual(double[] p) {
-        manual = p; save(); nextFixApprox = false;
+        manual = p; save(); nextFixApprox = false; stopLive();
         fix(p);
     }
 
