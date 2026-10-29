@@ -60,7 +60,6 @@ public final class HomeView extends VBox {
         Button bell = new Button(); bell.getStyleClass().add("hdr-btn"); bell.setGraphic(Icons.icon(Icons.BELL, 20, Color.web("#17142A")));
         bell.setOnAction(e -> Nav.toast("No new notifications"));
         Label avatar = Ui.avatar(full, 46); avatar.getStyleClass().add("hdr-avatar");
-        Label headline = Ui.label("Find your place\nnear campus", "home-headline"); headline.setWrapText(true);
         HBox top = Ui.hbox(12, avatar,
                 Ui.vbox(0, Ui.label(greeting().replace(",", ""), "greet-hello"), Ui.label(name.isBlank() ? "there" : name, "greet-name")), Ui.grow(), bell);
         top.setPadding(Insets.EMPTY);
@@ -113,9 +112,8 @@ public final class HomeView extends VBox {
         radiusBar.managedProperty().bind(radiusBar.visibleProperty());
 
         HBox chips = Ui.chipRow(new String[]{"New", "Hot", "Best rated"}, 0, i -> { tab = BhService.Tab.values()[i]; reload(); });
-        chips.setPadding(new Insets(4)); chips.setSpacing(4); chips.getStyleClass().add("home-chips");   // one white track, full width; the selected segment is the dark pill
-        for (javafx.scene.Node c : chips.getChildren()) { HBox.setHgrow(c, Priority.ALWAYS); ((Button) c).setMaxWidth(Double.MAX_VALUE); }
-        HBox chipWrap = new HBox(chips); chipWrap.setPadding(new Insets(18, 16, 0, 16)); HBox.setHgrow(chips, Priority.ALWAYS);
+        chips.setPadding(new Insets(4, 0, 4, 0)); chips.getStyleClass().add("home-chips");   // small pill chips; the selected one is the dark pill
+        HBox chipWrap = new HBox(chips); chipWrap.setPadding(new Insets(16, 16, 0, 16));
         countPill.setMinWidth(Region.USE_PREF_SIZE); countPill.setVisible(false); countPill.managedProperty().bind(countPill.visibleProperty());
         Label nearbyTitle = Ui.section("Nearby boarding houses"); nearbyTitle.getStyleClass().add("home-title");
         HBox nearby = new HBox(10, Ui.vbox(2, nearbyTitle, nearbySub));
@@ -128,13 +126,13 @@ public final class HomeView extends VBox {
         StackPane mapWrap = new StackPane(map, mapFrame, radiusBar, mapCount);
         StackPane.setAlignment(radiusBar, Pos.TOP_CENTER); StackPane.setMargin(radiusBar, new Insets(12, 12, 0, 12));
         StackPane.setAlignment(mapCount, Pos.TOP_LEFT); StackPane.setMargin(mapCount, new Insets(12, 0, 0, 12));
-        Rectangle mc = new Rectangle(); mc.setArcWidth(56); mc.setArcHeight(56);
+        Rectangle mc = new Rectangle(); mc.setArcWidth(48); mc.setArcHeight(48);
         mc.widthProperty().bind(mapWrap.widthProperty()); mc.heightProperty().bind(mapWrap.heightProperty());
         mapWrap.setClip(mc);
         mapWrap.getStyleClass().add("home-map");
         VBox.setMargin(mapWrap, new Insets(4, 16, 0, 16));
 
-        VBox header = new VBox(16, top, headline, searchRow); header.getStyleClass().addAll("page-header", "home-header"); header.setViewOrder(-1);   // greeting + search in one branded band
+        VBox header = new VBox(14, top, searchRow); header.getStyleClass().addAll("page-header", "home-header"); header.setViewOrder(-1);   // greeting + search in one branded band
         VBox.setMargin(locHint, new Insets(12, 16, 0, 16));
         VBox content = new VBox(0, header, locHint, mapWrap, chipWrap, nearby, list);
         map.openOnRegion();

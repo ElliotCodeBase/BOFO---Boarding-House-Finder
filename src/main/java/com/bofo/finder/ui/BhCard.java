@@ -77,12 +77,6 @@ public final class BhCard extends VBox {
         price.setMinWidth(Region.USE_PREF_SIZE); unit.setMinWidth(Region.USE_PREF_SIZE);
         HBox priceRow = new HBox(5, price, unit); priceRow.setAlignment(Pos.BASELINE_LEFT);
         VBox head = new VBox(4, name, priceRow);
-        if (compact) {                                                   // 2-column card: the price sits on the photo as a dark glass chip, the text block gets shorter
-            Label chip = Ui.label("\u20B1" + String.format("%,.0f", b.price()) + "/mo", "price-chip"); chip.setWrapText(false); chip.setMaxWidth(Region.USE_PREF_SIZE);
-            StackPane.setAlignment(chip, Pos.BOTTOM_LEFT); StackPane.setMargin(chip, new Insets(10));
-            photoBox.getChildren().add(chip);
-            head.getChildren().remove(priceRow);
-        }
 
         FlowPane meta = new FlowPane(6, 2); meta.setAlignment(Pos.CENTER_LEFT);
         if (compact) {                                                   // one short line: "\u2605 4.5 \u00B7 1.2 km" or just "1.2 km"
@@ -105,7 +99,8 @@ public final class BhCard extends VBox {
         if (hot) tags.getChildren().add(Ui.label("Hot", "badge-hot"));
         addAmenityTags(tags, b, 3);
 
-        getChildren().addAll(photoBox, head, meta);
+        if (compact) getChildren().addAll(photoBox, new VBox(2, name, meta, priceRow));   // flat card (v1.18.2): photo, name, rating + distance, price - no box around it
+        else getChildren().addAll(photoBox, head, meta);
         if (!compact) getChildren().add(tags);                        // the 2-column card stays clean: details are on the detail page
         setOnMouseClicked(e -> {
             Node t = (Node) e.getTarget();

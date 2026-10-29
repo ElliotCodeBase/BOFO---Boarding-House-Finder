@@ -649,3 +649,9 @@ Then open the pull request link printed by `git push` (or GitHub > Pull requests
 # Handoff - v1.17.2 PC Wi-Fi location (2026-10-29)
 - **PR title:** `v1.17.2 - PC location from nearby Wi-Fi (like Google Maps)`. Version in `config.properties`, `pom.xml` (versionCode 73), CHANGES.md.
 - New `util/WifiLocator` (netsh scan -> Geolocation API, Google if `geolocation.key` else beacondb). `Locator.desktopFix` tries it first, `wifiSource` selects the 15 s `startWifiLive` loop instead of the PowerShell watcher. Network and Windows scan not tested by Claude; not compiled/run.
+
+---
+
+# Handoff - v1.17.3 Pinned spot no longer persists (2026-10-29)
+- **PR title:** `v1.17.3 - PC: pinned spot is session-only; log location source`. Version in `config.properties`, `pom.xml` (versionCode 74), CHANGES.md.
+- `Locator`: `manual` no longer loaded/saved (`location.properties`), cleared in `setEnabled(true)`; `src` field + `[location]` println in `fix()`. Not compiled/run by Claude.
