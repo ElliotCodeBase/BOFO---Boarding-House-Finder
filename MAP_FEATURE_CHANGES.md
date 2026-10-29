@@ -10,6 +10,12 @@ Patch (x.y.Z) for fixes, minor (x.Y.0) for new features. The v1.2.0 merge once l
 
 ---
 
+# v1.17.0 - Profile setup + map opens on your region (2026-10-29)
+
+`ui/ProfileForm`, `ui/ProfileSetupView`, `ui/PersonalInfoView`, `util/Regions`, `ui/MapPane.openOnRegion()`, `supabase/migrations/009_profile_setup.sql` (run it in Supabase). Details: `CHANGES.md`.
+
+---
+
 # v1.16.1 - Chat menu UI (2026-10-27)
 
 `Ui.menu()`, `bofo.css` (`.context-menu`), `ChatView`, `ChatsView`. Details: `CHANGES.md`.

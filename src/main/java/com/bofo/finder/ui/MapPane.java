@@ -102,6 +102,14 @@ public final class MapPane extends StackPane {
         layer.moveMe(now);
     };
 
+    /** Opens the map on the region saved in the profile (Profile > Personal information). Does nothing when none is saved or the map was already pointed somewhere. */
+    public void openOnRegion() {
+        var p = com.bofo.finder.service.AuthService.get().profile();
+        var r = p == null ? null : com.bofo.finder.util.Regions.byKey(p.region());
+        if (r == null || centered) return;
+        centered = true; applyZoom(r.zoom()); setCenterNow(r.lat(), r.lng());
+    }
+
     public MapPane(double height) {
         setMinHeight(height); setPrefHeight(height); setMaxHeight(height);
         setMinWidth(0);                                              // the map shrinks with the screen, it never forces it wider

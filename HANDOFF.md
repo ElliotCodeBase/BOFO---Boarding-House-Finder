@@ -1,3 +1,10 @@
+# Handoff - v1.17.0 Profile setup + region map start (2026-10-29)
+- **PR title:** `v1.17.0 - First sign-up profile setup (username, picture, number, age, sex, region) + map opens on region`. Version in `config.properties`, `pom.xml` (versionCode 71), CHANGES.md.
+- New: `ProfileForm` (shared fields + save), `ProfileSetupView` (shown once from `Main.firstProfileSetup` after `RoleView`), `util/Regions`, migration `009_profile_setup.sql`. `PersonalInfoView` now wraps `ProfileForm`. `Profile` record has `username, sex, age, region` (old 8-arg constructor kept). `Ui.avatar(name, size, url)` + `Ui.setAvatarImage`. `MapPane.openOnRegion()` called in `HomeView`, `ExploreView`, `DashboardView`. Not compiled/run by Claude.
+- Run 009 in Supabase and redeploy `delete-account`.
+
+---
+
 # Handoff - v1.16.13 Owner locate button like student (2026-10-27)
 - **PR title:** `v1.16.13 - Owner maps start location like student Home (locate button + blue dot)`. Version in `config.properties`, `pom.xml` (versionCode 70), CHANGES.md.
 - `DashboardView` and `ListingFormView` now call `Locator.get().startWithPrompt()` after creating their `MapPane` (only student `HomeView.startGps()` did before, so owner maps had no GPS fix). Not compiled/run by Claude.

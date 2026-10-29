@@ -127,6 +127,7 @@ public final class HomeView extends VBox {
         VBox header = new VBox(18, top, searchRow); header.getStyleClass().addAll("page-header", "home-header"); header.setViewOrder(-1);   // greeting + search in one branded band
         VBox.setMargin(locHint, new Insets(12, 16, 0, 16));
         VBox content = new VBox(0, header, locHint, mapWrap, chips, nearby, list);
+        map.openOnRegion();
         map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
         ScrollPane sp = Ui.scroll(content); VBox.setVgrow(sp, Priority.ALWAYS);
         getChildren().add(sp);
