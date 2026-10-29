@@ -8,3 +8,6 @@ create or replace view public.reviews_v as
   join public.users u on u.id = r.student_id;
 
 grant select on public.reviews_v to authenticated;
+
+-- make the API see the new view right away (without this the app can keep getting 404 and shows "Student")
+notify pgrst, 'reload schema';

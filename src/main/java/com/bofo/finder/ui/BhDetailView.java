@@ -123,9 +123,17 @@ public final class BhDetailView extends VBox {
         Runnable[] reload = new Runnable[1];
         reload[0] = () -> Async.run(() -> bh.reviews(b.id()), arr -> {
             paintReviews(arr, reviewList, reviewSummary, form);
-            if (form != null) form.loaded(arr);
+            if (form != null) { form.loaded(arr); form.onLoaded.run(); }
         }, e -> {});
-        if (form != null) { form.onPosted = reload[0]; reviews.getChildren().add(form); }
+        if (form != null) {
+            form.setVisible(false); form.setManaged(false);
+            Button write = Ui.btn("Write a review", "btn-outline", () -> {});
+            write.setMaxWidth(Double.MAX_VALUE);
+            write.setOnAction(e -> { boolean open = !form.isVisible(); form.setVisible(open); form.setManaged(open); });
+            form.onLoaded = () -> write.setText(form.hasMine() ? "Edit your review" : "Write a review");
+            form.onPosted = () -> { form.setVisible(false); form.setManaged(false); reload[0].run(); };
+            reviews.getChildren().addAll(write, form);
+        }
         else reviews.getChildren().add(Ui.label("Only students can rate a boarding house.", "secondary"));
         reload[0].run();
 
@@ -162,16 +170,26 @@ public final class BhDetailView extends VBox {
         list.getChildren().clear();
         String me = AuthService.get().userId();
         double sum = 0;
+        boolean all = Boolean.TRUE.equals(list.getProperties().get("all"));
+        int shown = all ? arr.length() : Math.min(3, arr.length());
         for (int i = 0; i < arr.length(); i++) {
             JSONObject r = arr.getJSONObject(i);
             sum += r.optInt("rating", 0);
             boolean mine = me != null && me.equals(r.optString("student_id", ""));
-            String nm = r.isNull("reviewer_name") || r.optString("reviewer_name", "").isBlank() ? "Student" : r.getString("reviewer_name");
+            String nm = r.isNull("reviewer_name") ? "" : r.optString("reviewer_name", "").trim();
             String photo = r.isNull("reviewer_photo") ? "" : r.optString("reviewer_photo", "");
+            if (mine) {                                          // my own review: I always know my name, even if the server sent none
+                if (nm.isEmpty()) { var pr = AuthService.get().profile(); nm = pr == null || pr.fullName() == null ? "" : pr.fullName().trim(); }
+                if (nm.isEmpty()) nm = AuthService.get().googleName();
+                if (photo.isBlank()) { var pr = AuthService.get().profile(); photo = pr == null || pr.photoUrl() == null ? "" : pr.photoUrl(); }
+            }
+            if (nm == null || nm.isBlank()) nm = "Student";
             Label who = Ui.label(mine ? nm + " (you)" : nm, "h2"); who.setStyle("-fx-font-size:14px;");
-            Label when = Ui.label(when(r.optString("created_at", "")), "secondary");
-            HBox line = new HBox(8, Ui.label(Ui.stars(r.optInt("rating", 0)), "stars"), when); line.setAlignment(Pos.CENTER_LEFT);
-            VBox who2 = new VBox(1, who, line); who2.setMinWidth(0);
+            Label when = Ui.label(when(r.optString("created_at", "")), "secondary"); when.setStyle("-fx-font-size:12px;");
+            Region gap = new Region(); HBox.setHgrow(gap, Priority.ALWAYS);
+            HBox nameRow = new HBox(8, who, gap, when); nameRow.setAlignment(Pos.CENTER_LEFT);
+            Label stars = Ui.label(Ui.stars(r.optInt("rating", 0)), "stars"); stars.setStyle("-fx-text-fill:#F5A524;-fx-font-size:13px;");
+            VBox who2 = new VBox(2, nameRow, stars); who2.setMinWidth(0); HBox.setHgrow(who2, Priority.ALWAYS);
             HBox top = new HBox(10, Ui.avatar(nm, 38, photo), who2); top.setAlignment(Pos.CENTER_LEFT);
             VBox item = new VBox(6, top);
             String comment = r.isNull("comment") ? "" : r.optString("comment", "");
@@ -181,9 +199,16 @@ public final class BhDetailView extends VBox {
             }
             item.setPadding(new Insets(12, 0, 12, 0));
             if (i > 0) item.setStyle("-fx-border-color:#E7E8F2;-fx-border-width:1 0 0 0;");
-            list.getChildren().add(item);
+            if (i < shown) list.getChildren().add(item);
         }
         int n = arr.length();
+        if (n > 3) {
+            Button more = Ui.btn(all ? "Show less" : "See all " + n + " reviews", "btn-link", () -> {
+                list.getProperties().put("all", !all);
+                paintReviews(arr, list, summary, form);
+            });
+            list.getChildren().add(more);
+        }
         summary.setText(n == 0 ? "No reviews yet" : String.format(java.util.Locale.ROOT, "%.1f \u2605 \u00B7 %d %s", Math.round(sum / n * 10) / 10.0, n, n == 1 ? "review" : "reviews"));
     }
 
@@ -210,6 +235,8 @@ public final class BhDetailView extends VBox {
         private int picked;
         private boolean existing, busy;
         Runnable onPosted = () -> {};
+        Runnable onLoaded = () -> {};
+        boolean hasMine() { return existing; }
 
         ReviewForm(String bhId) {
             super(8);
@@ -225,7 +252,7 @@ public final class BhDetailView extends VBox {
             text.setPromptText("Write a review (optional)"); text.setPrefRowCount(2); text.setWrapText(true);
             post.setMaxWidth(Double.MAX_VALUE);
             post.setOnAction(e -> submit());
-            getChildren().addAll(Ui.label("Your rating", "h2"), row, hint, text, post);
+            getChildren().addAll(row, hint, text, post);
             setPadding(new Insets(6, 0, 0, 0));
             paint();
         }

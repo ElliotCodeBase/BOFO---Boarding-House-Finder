@@ -186,7 +186,10 @@ public final class BhService {
     public JSONArray reviews(String bhId) throws Exception {
         String q = "boarding_house_id=eq." + bhId + "&order=created_at.desc&select=*";
         try { return api.select("reviews_v", q); }
-        catch (SupabaseClient.ApiException missing) { return api.select("reviews", q); }
+        catch (SupabaseClient.ApiException missing) {
+            System.err.println("[reviews] reviews_v not available (run migration 010, then: notify pgrst, 'reload schema';) -> " + missing.getMessage());
+            return api.select("reviews", q);
+        }
     }
     /** One review per student per place: the first post creates it, posting again edits it. */
     public void upsertReview(String bhId, String studentId, int rating, String comment) throws Exception {
