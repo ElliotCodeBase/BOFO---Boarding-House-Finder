@@ -13,6 +13,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 import java.util.function.BiConsumer;
@@ -27,7 +28,11 @@ public final class BhCard extends VBox {
     /** compact = true for the 2-column grid: shorter photo, smaller text, "/mo", two tags at most. Fixed when the card is built (never switched later). */
     public BhCard(BoardingHouse b, boolean hot, boolean favorite, Consumer<BoardingHouse> open, BiConsumer<Boolean, Runnable> onFav, boolean compact) {
         super(compact ? 8 : 12); getStyleClass().add("card"); setPadding(new Insets(compact ? 8 : 12));
-        if (compact) getStyleClass().add("card-compact");
+        if (compact) {
+            getStyleClass().add("card-compact");
+            setStyle("-fx-background-color:white;-fx-background-radius:22;-fx-border-color:transparent;-fx-border-radius:22;"
+                   + "-fx-effect:dropshadow(gaussian, rgba(45,30,120,0.10), 16, 0, 0, 4);");   // soft lift instead of a thin outline (v1.19.3)
+        }
 
         // photo that follows the card width
         ImageView iv = Ui.coverPhoto(b.photoUrl(), 720);
@@ -44,9 +49,11 @@ public final class BhCard extends VBox {
             double h = Math.max(100, Math.min(170, (w.doubleValue() - 16) * 0.75));
             iv.setFitHeight(h); ph.setMinHeight(h); ph.setPrefHeight(h); ph.setMaxHeight(h);
         });
-        Region noIcon = new Region(); noIcon.setManaged(false);          // no house icon: a missing photo is a plain neutral block
-        StackPane photoBox = new StackPane(ph, noIcon, iv);
-        Ui.trackLoading(iv, ph, noIcon);                          // grey pulse while the photo downloads
+        ph.setStyle(compact ? "-fx-background-radius:16;-fx-background-color:linear-gradient(to bottom right,#EEE8FF,#D3C7FF);"
+                            : "-fx-background-radius:16;");
+        Node homeIcon = Icons.icon(Icons.HOME, 44, compact ? Color.web("#6C4DF5", 0.55) : Color.web("#FFFFFF", 0.85));
+        StackPane photoBox = new StackPane(ph, homeIcon, iv);
+        Ui.trackLoading(iv, ph, homeIcon);                        // grey pulse while the photo downloads
 
         Button heart = new Button(favorite ? "\u2665" : "\u2661");
         heart.getStyleClass().add(favorite ? "heart-fab-on" : "heart-fab");
@@ -61,11 +68,24 @@ public final class BhCard extends VBox {
             onFav.accept(attempted, () -> { on[0] = !attempted; paint.run(); });   // undo the heart if saving fails
         });
         StackPane.setAlignment(heart, Pos.TOP_RIGHT); StackPane.setMargin(heart, new Insets(10));
-        Label avail = Ui.label(b.availableBeds() > 0 ? b.availableBeds() + (b.availableBeds() == 1 ? " bed left" : " beds left") : "Full", b.availableBeds() > 0 ? "tag-open" : "tag-full");
+        Label avail = Ui.label(b.availableBeds() > 0 ? b.availableBeds() + (b.availableBeds() == 1 ? " bed left" : " beds left") : "Full", b.availableBeds() > 0 ? "pill-green" : "pill-grey");
         avail.setMaxWidth(Region.USE_PREF_SIZE); avail.setWrapText(false);
         StackPane.setAlignment(avail, Pos.TOP_LEFT); StackPane.setMargin(avail, new Insets(12));
         if (!compact || b.availableBeds() <= 0) photoBox.getChildren().add(avail);   // compact card: only say so when it is full
         photoBox.getChildren().add(heart);
+        if (compact) {                                                   // amber price chip bottom-left, rating chip bottom-right (v1.18.3)
+            Label chip = Ui.label("\u20B1" + String.format("%,.0f", b.price()) + "/mo", "price-chip"); chip.setWrapText(false); chip.setMaxWidth(Region.USE_PREF_SIZE);
+            chip.setStyle("-fx-background-color:white;-fx-text-fill:#4B2FD0;-fx-font-size:12.5px;-fx-font-weight:bold;-fx-background-radius:999;-fx-padding:4 10;"
+                        + "-fx-effect:dropshadow(gaussian, rgba(23,20,42,0.20), 8, 0, 0, 2);");
+            StackPane.setAlignment(chip, Pos.BOTTOM_LEFT); StackPane.setMargin(chip, new Insets(8));
+            photoBox.getChildren().add(chip);
+            if (b.reviewCount() > 0) {
+                Label rate = Ui.label("\u2605 " + String.format("%.1f", b.avgRating()), "rate-chip"); rate.setWrapText(false); rate.setMaxWidth(Region.USE_PREF_SIZE);
+                rate.setStyle("-fx-background-color:rgba(23,20,42,0.72);-fx-text-fill:white;-fx-font-size:11px;-fx-font-weight:bold;-fx-background-radius:999;-fx-padding:3 8;");
+                StackPane.setAlignment(rate, Pos.BOTTOM_RIGHT); StackPane.setMargin(rate, new Insets(8));
+                photoBox.getChildren().add(rate);
+            }
+        }
 
         // text block: name, then a big price line, then rating + distance on one wrapping row, then tags
         Label name = Ui.label(b.name(), "h2");
@@ -77,17 +97,16 @@ public final class BhCard extends VBox {
         VBox head = new VBox(4, name, priceRow);
 
         FlowPane meta = new FlowPane(6, 2); meta.setAlignment(Pos.CENTER_LEFT);
-        if (compact) {                                                   // "350 m · 4 beds left" (rating first when there are reviews); nothing is shown for missing values
-            java.util.List<String> bits = new java.util.ArrayList<>();
-            if (b.reviewCount() > 0) bits.add("\u2605 " + String.format("%.1f", b.avgRating()) + " (" + b.reviewCount() + ")");
-            if (b.distanceKm() > 0) bits.add(distance(b.distanceKm()));
-            if (b.availableBeds() > 0) bits.add(b.availableBeds() + (b.availableBeds() == 1 ? " bed left" : " beds left"));
-            if (!bits.isEmpty()) { Label l = Ui.label(String.join(" \u00B7 ", bits), "secondary"); l.setWrapText(true); meta.getChildren().add(l); }
+        if (compact) {                                                   // one short line: "\u2605 4.5 \u00B7 1.2 km" or just "1.2 km"
+            String km = b.distanceKm() > 0 ? String.format("%.1f km", b.distanceKm()) : "";
+            String beds = b.availableBeds() > 0 ? b.availableBeds() + (b.availableBeds() == 1 ? " bed left" : " beds left") : "";
+            String line = beds.isEmpty() ? km : km.isEmpty() ? beds : km + " \u00B7 " + beds;
+            if (!line.isEmpty()) meta.getChildren().add(Ui.label(line, "secondary"));
         } else if (b.reviewCount() > 0) {
             meta.getChildren().addAll(Ui.label(Ui.stars(b.avgRating()), "stars"),
                     Ui.label(String.format("%.1f (%d)", b.avgRating(), b.reviewCount()), "secondary"));
         } else {
-            meta.getChildren().add(Ui.label("No reviews yet", "secondary"));
+            meta.getChildren().add(Ui.label("New listing", "secondary"));
         }
         if (!compact) meta.getChildren().addAll(Ui.label("\u00B7", "meta-dot"),
                 Ui.label(b.distanceKm() > 0 ? Geo.walkText(b.distanceKm()) : b.address(), "secondary"));
@@ -98,7 +117,8 @@ public final class BhCard extends VBox {
         if (hot) tags.getChildren().add(Ui.label("Hot", "badge-hot"));
         addAmenityTags(tags, b, 3);
 
-        getChildren().addAll(photoBox, head, meta);
+        if (compact) getChildren().addAll(photoBox, compactText(b));                     // price + rating live on the photo; name, place and chips below
+        else getChildren().addAll(photoBox, head, meta);
         if (!compact) getChildren().add(tags);                        // the 2-column card stays clean: details are on the detail page
         setOnMouseClicked(e -> {
             Node t = (Node) e.getTarget();
@@ -107,9 +127,26 @@ public final class BhCard extends VBox {
         });
     }
 
-    /** "350 m" under a kilometre, "1.2 km" above it. */
-    static String distance(double km) {
-        return km < 1 ? Math.round(km * 1000 / 10.0) * 10 + " m" : String.format(java.util.Locale.ROOT, "%.1f km", km);
+    /** 2-column card text: bold name, one grey line for the place ("near St. Paul University"), then distance / beds chips. Never wraps, so every card is the same height. */
+    private static VBox compactText(BoardingHouse b) {
+        String full = b.name() == null ? "" : b.name().trim(), title = full, where = "";
+        int i = full.toLowerCase().indexOf(" near ");
+        if (i > 0) { title = full.substring(0, i).trim(); where = full.substring(i + 1).trim(); }
+        else if (b.address() != null && !b.address().isBlank()) where = b.address().trim();
+        Label t = Ui.label(title, "h2"); oneLine(t); t.setStyle("-fx-font-size:14.5px;-fx-font-weight:bold;");
+        VBox box = new VBox(3, t);
+        if (!where.isEmpty()) { Label w = Ui.label(where, "secondary"); oneLine(w); w.setStyle("-fx-font-size:11.5px;"); box.getChildren().add(w); }
+        FlowPane chips = new FlowPane(6, 4);
+        if (b.distanceKm() > 0) chips.getChildren().add(chip(String.format("%.1f km", b.distanceKm()), "#F1EEFF", "#5B3BF0"));
+        if (b.availableBeds() > 0) chips.getChildren().add(chip(b.availableBeds() + (b.availableBeds() == 1 ? " bed left" : " beds left"), "#E6F6EC", "#1E8A4C"));
+        if (!chips.getChildren().isEmpty()) { VBox.setMargin(chips, new Insets(4, 0, 0, 0)); box.getChildren().add(chips); }
+        return box;
+    }
+    private static void oneLine(Label l) { l.setWrapText(false); l.setMinWidth(0); l.setPrefWidth(0); l.setMaxWidth(Double.MAX_VALUE); }
+    private static Label chip(String text, String bg, String fg) {
+        Label c = new Label(text); c.setWrapText(false); c.setMinWidth(Region.USE_PREF_SIZE);
+        c.setStyle("-fx-background-color:" + bg + ";-fx-text-fill:" + fg + ";-fx-background-radius:999;-fx-padding:3 9;-fx-font-size:10.5px;-fx-font-weight:bold;");
+        return c;
     }
 
     /** First few amenity names as small tags, then "+N". Falls back to the old water / power / Wi-Fi flags if a place has no amenity rows yet. */

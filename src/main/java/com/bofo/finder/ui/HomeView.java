@@ -220,20 +220,20 @@ public final class HomeView extends VBox {
     private void paintPriceRange(PriceRange r) {
         priceRange.getChildren().clear();
         if (r == null) { priceRange.setVisible(false); return; }
-        if (r.single()) priceRange.getChildren().add(priceCell("Rent", r.lowest));
+        priceRange.setStyle("-fx-background-color:#EFEBFF;-fx-background-radius:16;-fx-padding:12 16 12 16;"); if (r.single()) priceRange.getChildren().add(priceCell("Rent", r.lowest, r.lowestBh));
         else {
-            priceRange.getChildren().add(priceCell("Lowest", r.lowest));
-            if (r.hasMiddle()) priceRange.getChildren().add(priceCell("Middle", r.middle));
-            priceRange.getChildren().add(priceCell("Highest", r.highest));
+            priceRange.getChildren().add(priceCell("Lowest", r.lowest, r.lowestBh));
+            if (r.hasMiddle()) priceRange.getChildren().add(priceCell("Middle", r.middle, r.middleBh));
+            priceRange.getChildren().add(priceCell("Highest", r.highest, r.highestBh));
         }
         priceRange.setVisible(true);
     }
 
-    private static VBox priceCell(String caption, double value) {
-        Label v = Ui.label(PriceRange.peso(value), "h2"); v.setMinWidth(Region.USE_PREF_SIZE);
-        Label u = Ui.label("/mo", "price-unit"); u.setMinWidth(Region.USE_PREF_SIZE);
+    private VBox priceCell(String caption, double value, BoardingHouse target) {
+        Label v = Ui.label(PriceRange.peso(value), "h2"); v.setMinWidth(Region.USE_PREF_SIZE); v.setStyle("-fx-font-size:18px;-fx-font-weight:bold;-fx-text-fill:" + ("Middle".equals(caption) ? "#5B3BF0" : "#17142A") + ";");
+        Label u = Ui.label("/mo", "price-unit"); u.setMinWidth(Region.USE_PREF_SIZE); u.setStyle("-fx-font-size:11px;-fx-text-fill:#8A84A8;");
         HBox val = new HBox(3, v, u); val.setAlignment(Pos.BASELINE_LEFT);
-        return new VBox(0, Ui.label(caption, "secondary"), val);
+        Label c = Ui.label(caption.toUpperCase(), "secondary"); c.setStyle("-fx-font-size:10px;-fx-font-weight:bold;-fx-text-fill:#8A84A8;"); VBox cell = new VBox(2, c, val); cell.setMaxWidth(Double.MAX_VALUE); javafx.scene.layout.HBox.setHgrow(cell, javafx.scene.layout.Priority.ALWAYS); cell.setCursor(javafx.scene.Cursor.HAND); if (target != null) cell.setOnMouseClicked(e -> map.highlight(target)); return cell;
     }
 
     /** Subtitle + count under "Nearby boarding houses". */
