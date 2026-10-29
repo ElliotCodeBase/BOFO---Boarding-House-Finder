@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Gluon GraalVM (Java 17)
         uses: gluonhq/setup-graalvm@master
@@ -30,14 +30,24 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libz-dev zlib1g-dev
 
       - name: Build and package
-        run: mvn -B gluonfx:build gluonfx:package 2>&1 | tee build.log
+        shell: bash
+        run: |
+          set -o pipefail
+          mvn -B gluonfx:build gluonfx:package 2>&1 | tee build.log
 
-      - name: Upload APK / AAB
+      - name: Upload build log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
+        with:
+          name: BOFO-build-log
+          path: build.log
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v5
         with:
           name: BOFO-android
           path: |
             target/gluonfx/aarch64-android/**/*.apk
             target/gluonfx/aarch64-android/**/*.aab
-            build.log
+          if-no-files-found: error

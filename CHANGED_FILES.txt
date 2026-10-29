@@ -1,4 +1,5 @@
-src/main/java/com/bofo/finder/ui/PriceRange.java  changed
-src/main/java/com/bofo/finder/ui/HomeView.java  patched in place by apply-price-highlight.ps1
-src/main/java/com/bofo/finder/ui/MapPane.java  patched in place (adds highlight())
-CHANGELOG_v1.19.5.md  new
+pom.xml  changed
+src/main/resources/com/bofo/finder/config.properties  changed
+.github/workflows/android.yml  changed
+CHANGES.md  changed
+HANDOFF.md  changed

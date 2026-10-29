@@ -1,3 +1,8 @@
+# v1.19.14 - Android build fix (APK now builds for real)
+- Fix: the GitHub "Build Android APK" run showed green but built nothing. The native build stopped with `Error parsing resource configuration ... Invalid escape character` because the `resourcesList` patterns in `pom.xml` used `\.`. They now use `[.]`.
+- Workflow: the build step now fails (red) when Maven fails (`set -o pipefail`), the build log is uploaded as its own artifact `BOFO-build-log`, and `BOFO-android` holds only the `.apk` (the run fails if none is made). Actions bumped to checkout@v5 / upload-artifact@v5 (Node 20 warning).
+- `pom.xml`: `packageType` is now `apk` (an `.aab` cannot be installed on a phone directly). App version 1.19.14 (versionCode 78).
+
 # v1.19.13 - Calmer Directions card
 - Directions now shows the result, one short line and two small links. The long notes, the data credit and the extra explanations are behind a "More info" link. "Show BH -> Campus" and "Open in OpenStreetMap" are text links instead of a big button.
 
