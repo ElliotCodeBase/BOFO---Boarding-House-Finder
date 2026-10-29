@@ -185,6 +185,64 @@ public final class AuthService {
         }
     }
 
+    /* ---------- Email sign-in inside the app (no browser, no tab): 6-digit code, or email + password ---------- */
+    /** Sends a 6-digit code to the email (creates the account on first use). The user types it in the app. */
+    public void requestEmailCode(String email) throws Exception {
+        api.authPost("otp", new JSONObject().put("email", email.trim()).put("create_user", true));
+    }
+
+    /** Checks the code from the email and signs in. */
+    public void verifyEmailCode(String email, String code) throws Exception {
+        String e = email.trim(), t = code.replaceAll("\\s", "");
+        JSONObject s;
+        try { s = api.authPost("verify", new JSONObject().put("type", "email").put("email", e).put("token", t)); }
+        catch (SupabaseClient.ApiException first) {
+            if (first.status == 429 || first.status >= 500) throw first;
+            try { s = api.authPost("verify", new JSONObject().put("type", "signup").put("email", e).put("token", t)); }   // older "confirm sign up" codes
+            catch (SupabaseClient.ApiException second) { throw first; }
+        }
+        apply(s); store.save(s);
+    }
+
+    /** Email + password sign-in. */
+    public void signInWithPassword(String email, String password) throws Exception {
+        JSONObject s = api.authPost("token?grant_type=password", new JSONObject().put("email", email.trim()).put("password", password));
+        apply(s); store.save(s);
+    }
+
+    /** Creates an account. Returns true when signed in right away; false when Supabase emailed a confirmation code first
+     *  (then call {@link #verifyEmailCode}). */
+    public boolean signUpWithPassword(String email, String password, String fullName) throws Exception {
+        JSONObject body = new JSONObject().put("email", email.trim()).put("password", password);
+        if (fullName != null && !fullName.isBlank()) body.put("data", new JSONObject().put("full_name", fullName.trim()));
+        JSONObject s = api.authPost("signup", body);
+        if (s.has("access_token")) { apply(s); store.save(s); return true; }
+        return false;
+    }
+
+    /** Short, plain-language text for a failed sign-in call (shown in red under the form). */
+    public static String friendlyError(Throwable ex) {
+        Throwable c = ex.getCause() != null && !(ex instanceof SupabaseClient.ApiException) ? ex.getCause() : ex;
+        if (com.bofo.finder.util.Connectivity.isNetworkError(c)) return "No internet connection. Check your network and try again.";
+        if (c instanceof SupabaseClient.ApiException a) {
+            String code = "", msg = "";
+            try { JSONObject j = new JSONObject(a.body); code = j.optString("error_code", j.optString("code", "")); msg = j.optString("msg", j.optString("error_description", j.optString("message", ""))); }
+            catch (Exception notJson) { msg = a.body; }
+            String m = msg.toLowerCase();
+            if (a.status == 429 || code.contains("rate_limit") || m.contains("rate limit") || m.contains("security purposes"))
+                return "Too many tries. Wait a minute, then try again.";
+            if (code.equals("invalid_credentials") || m.contains("invalid login")) return "Wrong email or password.";
+            if (code.equals("otp_expired") || m.contains("expired") || m.contains("invalid") && m.contains("token")) return "That code is wrong or has expired. Request a new one.";
+            if (code.equals("email_not_confirmed")) return "Confirm your email first: choose \"Email me a code\" to get a code.";
+            if (code.equals("user_already_exists") || m.contains("already registered")) return "That email already has an account. Sign in instead.";
+            if (code.equals("weak_password") || m.contains("password")) return msg.isBlank() ? "Choose a stronger password (8+ characters)." : msg;
+            if (code.equals("email_address_invalid") || m.contains("invalid") && m.contains("email")) return "That email address does not look right.";
+            if (code.equals("signup_disabled") || code.equals("email_provider_disabled")) return "Email sign-in is turned off for this app. Use Google instead.";
+            return msg.isBlank() ? "Sign-in failed (" + a.status + ")." : msg;
+        }
+        return c.getMessage() == null ? c.getClass().getSimpleName() : c.getMessage();
+    }
+
     /* ---------- DEV ONLY: login bypass ---------- */
     /** Pretends a user is signed in (no Google, no token). Requests go out with the anon key, so RLS-protected writes may fail. */
     public void devLogin(Role role) {
@@ -216,13 +274,23 @@ public final class AuthService {
     public void createProfile(Role role, String fullName, String photoUrl, String termsV, String privV) throws Exception {
         if (role == Role.ADMIN) throw new IllegalArgumentException("Admin cannot be self-assigned");
         api.insert("users", new JSONObject().put("id", userId).put("role", role.db())
-                .put("auth_provider", "google").put("full_name", fullName).put("photo_url", photoUrl));
+                .put("auth_provider", authProvider()).put("full_name", fullName).put("photo_url", photoUrl));
         api.insert("user_agreements", new JSONObject().put("user_id", userId).put("document_type", "terms").put("document_version", termsV));
         api.insert("user_agreements", new JSONObject().put("user_id", userId).put("document_type", "privacy").put("document_version", privV));
         loadProfile();
     }
 
-    public String googleName() { return meta("full_name", meta("name", "")); }
+    /** "google", "email"... as reported by Supabase for the signed-in user. */
+    public String authProvider() {
+        try { return user.getJSONObject("app_metadata").optString("provider", "email"); } catch (Exception none) { return "email"; }
+    }
+    /** Name from the Google account or the sign-up form; for plain email accounts the part of the email before the @. */
+    public String googleName() {
+        String n = meta("full_name", meta("name", ""));
+        if (!n.isBlank()) return n;
+        String em = user == null ? "" : user.optString("email", "");
+        return em.contains("@") ? em.substring(0, em.indexOf('@')) : "";
+    }
     public String googlePhoto() { return meta("avatar_url", meta("picture", "")); }
     /** The picture to show for the signed-in user: the one saved in Settings, else the Google account photo, else "" (initials). */
     public String avatarUrl() {

@@ -1,5 +1,10 @@
+src/main/java/com/bofo/finder/ui/LoginView.java  changed
+src/main/java/com/bofo/finder/service/AuthService.java  changed
+src/main/java/com/bofo/finder/ui/Nav.java  changed
 pom.xml  changed
+src/android/AndroidManifest.xml  changed
 src/main/resources/com/bofo/finder/config.properties  changed
-.github/workflows/android.yml  changed
+docs/EMAIL_LOGIN_SETUP.md  new
+docs/HANDOFF_ARCHIVE.md  changed
 CHANGES.md  changed
 HANDOFF.md  changed

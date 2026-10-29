@@ -1,3 +1,10 @@
+# v1.20.0 - Login inside the app + phone keyboard
+- New sign-in screen that never opens a browser tab: type your email, get a 6-digit code, type it in the app (like the Claude app). Also email + password (sign in / create account) and Google.
+- Friendly error messages (wrong password, expired code, too many tries, no internet). Resend code with a 45 s timer.
+- Phones: the app lifts above the on-screen keyboard and scrolls the field you tap into view (all forms, chat input).
+- Test-account buttons on the login screen only appear when `dev.*` accounts are in `config.local.properties`.
+- Needs Supabase email templates with the code: `docs/EMAIL_LOGIN_SETUP.md`. App version 1.20.0 (versionCode 80).
+
 # v1.19.15 - Android build: Gluon license step
 - v1.19.14 got past the native compile, then `gluonfx:package` stopped asking for a Gluon license (https://gluonhq.com/activate). The workflow now runs `gluonhq/gluon-build-license@v1` with the repo secret `GLUON_LICENSE` before the build. Needs the secret (see HANDOFF.md). App version 1.19.15 (versionCode 79).
 

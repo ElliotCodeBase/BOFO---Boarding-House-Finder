@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.bofo</groupId>
   <artifactId>finder</artifactId>
-  <version>1.19.15</version>
+  <version>1.20.0</version>
   <name>BOFO Finder</name>
 
   <properties>
@@ -30,6 +30,7 @@
     <dependency><groupId>com.gluonhq.attach</groupId><artifactId>position</artifactId><version>${attach.version}</version></dependency>
     <dependency><groupId>com.gluonhq.attach</groupId><artifactId>pictures</artifactId><version>${attach.version}</version></dependency>
     <dependency><groupId>com.gluonhq.attach</groupId><artifactId>statusbar</artifactId><version>${attach.version}</version></dependency>
+    <dependency><groupId>com.gluonhq.attach</groupId><artifactId>keyboard</artifactId><version>${attach.version}</version></dependency>
     <!-- JSON without reflection (safe for native-image) -->
     <dependency><groupId>org.json</groupId><artifactId>json</artifactId><version>20240303</version></dependency>
   </dependencies>
@@ -56,7 +57,7 @@
           <mainClass>${main.class}</mainClass>
           <attachList>
             <list>lifecycle</list><list>storage</list><list>display</list>
-            <list>position</list><list>pictures</list><list>statusbar</list>
+            <list>position</list><list>pictures</list><list>statusbar</list><list>keyboard</list>
           </attachList>
           <resourcesList><list>.*[.]properties$</list><list>.*[.]css$</list><list>.*[.]json$</list><list>.*[.]png$</list><list>META-INF/services/.*</list></resourcesList>
           <reflectionList><list>com.bofo.finder.app.Main</list><list>com.bofo.finder.util.VectorTileRetriever</list><list>com.bofo.finder.util.MinimalTileRetriever</list></reflectionList>
@@ -64,8 +65,8 @@
             <vendor>BOFO</vendor>
             <description>BOFO - Boarding House Finder</description>
             <packageType>apk</packageType>
-            <versionCode>79</versionCode>
-            <versionName>1.19.15</versionName>
+            <versionCode>80</versionCode>
+            <versionName>1.20.0</versionName>
           </releaseConfiguration>
         </configuration>
       </plugin>
