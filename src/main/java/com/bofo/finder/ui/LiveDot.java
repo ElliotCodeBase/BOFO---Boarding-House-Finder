@@ -7,7 +7,6 @@ import javafx.animation.Timeline;
 import javafx.scene.Group;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
-import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.shape.Arc;
@@ -19,7 +18,7 @@ import javafx.util.Duration;
 /**
  * "You are here" marker for the map (v1.18.0 redesign). Drawn around (0,0) so the map layer only has to translate/scale it.
  * <ul>
- *   <li><b>Core</b>: a glossy blue-indigo dot in a white ring with a soft contact shadow.</li>
+ *   <li><b>Core</b>: a flat blue dot in a white ring with a soft contact shadow.</li>
  *   <li><b>Ripples</b>: two soft rings that expand and fade, staggered, so the dot reads as live without flashing.</li>
  *   <li><b>View cone</b>: a fading fan that points the way you are moving (replaces the old tiny arrow).</li>
  *   <li><b>Motion rules</b> (ui-animation skill): only transform + opacity are animated, never from scale 0, enter curve
@@ -34,13 +33,13 @@ final class LiveDot extends Group {
     static final Interpolator MOVE = Interpolator.SPLINE(0.25, 1, 0.5, 1);
 
     private static final Color BLUE = Color.web("#2F6FED");
-    private static final double RIPPLE_R = 16, CONE_R = 40, CONE_SPREAD = 64;
+    private static final double RIPPLE_R = 16, CONE_R = 34, CONE_SPREAD = 52;
 
     private final Circle rippleA = ripple(), rippleB = ripple(), ping = ripple();
     private final Arc cone = new Arc(0, 0, CONE_R, CONE_R, 90 - CONE_SPREAD / 2, CONE_SPREAD);
     private final Rotate coneRot = new Rotate(0, 0, 0);
     private final Group body = new Group();                       // shadow + ring + core: pops in and on ping
-    private final Circle core = new Circle(6.8);
+    private final Circle core = new Circle(6.6);
     private final Timeline loopA, loopB;
     private Timeline coneFade, coneTurn, popAnim, pingAnim;
     private boolean coneOn;
@@ -51,18 +50,16 @@ final class LiveDot extends Group {
 
         cone.setType(ArcType.ROUND);
         cone.setFill(new RadialGradient(0, 0, 0, 0, CONE_R, false, CycleMethod.NO_CYCLE,
-                new Stop(0.15, Color.web("#2F6FED", 0.46)), new Stop(1.0, Color.web("#2F6FED", 0.0))));
+                new Stop(0.12, Color.web("#2F6FED", 0.40)), new Stop(1.0, Color.web("#2F6FED", 0.0))));
         cone.getTransforms().add(coneRot);
         cone.setOpacity(0); cone.setVisible(false);
 
         Circle shadow = new Circle(0, 1.8, 12);
         shadow.setFill(new RadialGradient(0, 0, 0, 1.8, 12, false, CycleMethod.NO_CYCLE,
-                new Stop(0.55, Color.web("#17142A", 0.26)), new Stop(1.0, Color.web("#17142A", 0.0))));
+                new Stop(0.6, Color.web("#17142A", 0.20)), new Stop(1.0, Color.web("#17142A", 0.0))));
         Circle ring = new Circle(9.6, Color.WHITE);
-        core.setFill(new LinearGradient(-0.7, -1, 0.7, 1, true, CycleMethod.NO_CYCLE,
-                new Stop(0, Color.web("#7DB2FF")), new Stop(1, Color.web("#3D4FEA"))));
-        Circle glint = new Circle(-2.1, -2.5, 2.1, Color.web("#FFFFFF", 0.38));
-        body.getChildren().addAll(shadow, ring, core, glint);
+        core.setFill(Color.web("#2F6FED"));                                  // flat, like the Google / Apple puck: no gloss
+        body.getChildren().addAll(shadow, ring, core);
 
         ping.setOpacity(0);
         getChildren().addAll(rippleA, rippleB, ping, cone, body);
@@ -77,7 +74,7 @@ final class LiveDot extends Group {
         Circle c = new Circle(RIPPLE_R);
         c.setFill(new RadialGradient(0, 0, 0.5, 0.5, 0.5, true, CycleMethod.NO_CYCLE,
                 new Stop(0.0, Color.web("#2F6FED", 0.0)), new Stop(0.55, Color.web("#2F6FED", 0.05)),
-                new Stop(0.86, Color.web("#2F6FED", 0.22)), new Stop(1.0, Color.web("#2F6FED", 0.0))));
+                new Stop(0.86, Color.web("#2F6FED", 0.16)), new Stop(1.0, Color.web("#2F6FED", 0.0))));
         c.setScaleX(0.5); c.setScaleY(0.5); c.setOpacity(0);
         return c;
     }
@@ -85,8 +82,8 @@ final class LiveDot extends Group {
     /** One looping ripple: scale 0.5 -> 2.7 (enter curve, front-loaded), opacity fades out linearly. Transform + opacity only. */
     private static Timeline loop(Circle c, int delayMs) {
         Timeline t = new Timeline(
-                new KeyFrame(Duration.ZERO, new KeyValue(c.scaleXProperty(), 0.5), new KeyValue(c.scaleYProperty(), 0.5), new KeyValue(c.opacityProperty(), 0.9)),
-                new KeyFrame(Duration.millis(2600), new KeyValue(c.scaleXProperty(), 2.7, ENTER), new KeyValue(c.scaleYProperty(), 2.7, ENTER),
+                new KeyFrame(Duration.ZERO, new KeyValue(c.scaleXProperty(), 0.5), new KeyValue(c.scaleYProperty(), 0.5), new KeyValue(c.opacityProperty(), 0.8)),
+                new KeyFrame(Duration.millis(2600), new KeyValue(c.scaleXProperty(), 2.2, ENTER), new KeyValue(c.scaleYProperty(), 2.2, ENTER),
                         new KeyValue(c.opacityProperty(), 0.0, Interpolator.LINEAR)));
         t.setCycleCount(Timeline.INDEFINITE);
         t.setDelay(Duration.millis(delayMs));
@@ -135,6 +132,9 @@ final class LiveDot extends Group {
         coneTurn.play();
         fadeCone(true);
     }
+
+    /** Hide the view cone (heading unknown or unreliable). */
+    void clearHeading() { fadeCone(false); }
 
     /** Location lost / switched off: hide the cone, stop the ripples. */
     void reset() {

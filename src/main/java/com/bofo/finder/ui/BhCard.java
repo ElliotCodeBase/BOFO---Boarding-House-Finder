@@ -46,7 +46,7 @@ public final class BhCard extends VBox {
             iv.setFitHeight(h); ph.setMinHeight(h); ph.setPrefHeight(h); ph.setMaxHeight(h);
         });
         ph.setStyle("-fx-background-radius:16;");
-        Node homeIcon = Icons.icon(Icons.HOME, 44, Color.web("#C9BEFA"));
+        Node homeIcon = Icons.icon(Icons.HOME, 44, Color.web("#FFFFFF", 0.85));
         StackPane photoBox = new StackPane(ph, homeIcon, iv);
         Ui.trackLoading(iv, ph, homeIcon);                        // grey pulse while the photo downloads
 
@@ -68,6 +68,16 @@ public final class BhCard extends VBox {
         StackPane.setAlignment(avail, Pos.TOP_LEFT); StackPane.setMargin(avail, new Insets(12));
         if (!compact || b.availableBeds() <= 0) photoBox.getChildren().add(avail);   // compact card: only say so when it is full
         photoBox.getChildren().add(heart);
+        if (compact) {                                                   // amber price chip bottom-left, rating chip bottom-right (v1.18.3)
+            Label chip = Ui.label("\u20B1" + String.format("%,.0f", b.price()) + "/mo", "price-chip"); chip.setWrapText(false); chip.setMaxWidth(Region.USE_PREF_SIZE);
+            StackPane.setAlignment(chip, Pos.BOTTOM_LEFT); StackPane.setMargin(chip, new Insets(8));
+            photoBox.getChildren().add(chip);
+            if (b.reviewCount() > 0) {
+                Label rate = Ui.label("\u2605 " + String.format("%.1f", b.avgRating()), "rate-chip"); rate.setWrapText(false); rate.setMaxWidth(Region.USE_PREF_SIZE);
+                StackPane.setAlignment(rate, Pos.BOTTOM_RIGHT); StackPane.setMargin(rate, new Insets(8));
+                photoBox.getChildren().add(rate);
+            }
+        }
 
         // text block: name, then a big price line, then rating + distance on one wrapping row, then tags
         Label name = Ui.label(b.name(), "h2");
@@ -81,8 +91,8 @@ public final class BhCard extends VBox {
         FlowPane meta = new FlowPane(6, 2); meta.setAlignment(Pos.CENTER_LEFT);
         if (compact) {                                                   // one short line: "\u2605 4.5 \u00B7 1.2 km" or just "1.2 km"
             String km = b.distanceKm() > 0 ? String.format("%.1f km", b.distanceKm()) : "";
-            String rate = b.reviewCount() > 0 ? "\u2605 " + String.format("%.1f", b.avgRating()) : "";
-            String line = rate.isEmpty() ? km : km.isEmpty() ? rate : rate + " \u00B7 " + km;
+            String beds = b.availableBeds() > 0 ? b.availableBeds() + (b.availableBeds() == 1 ? " bed left" : " beds left") : "";
+            String line = beds.isEmpty() ? km : km.isEmpty() ? beds : km + " \u00B7 " + beds;
             if (!line.isEmpty()) meta.getChildren().add(Ui.label(line, "secondary"));
         } else if (b.reviewCount() > 0) {
             meta.getChildren().addAll(Ui.label(Ui.stars(b.avgRating()), "stars"),
@@ -99,7 +109,8 @@ public final class BhCard extends VBox {
         if (hot) tags.getChildren().add(Ui.label("Hot", "badge-hot"));
         addAmenityTags(tags, b, 3);
 
-        getChildren().addAll(photoBox, head, meta);
+        if (compact) getChildren().addAll(photoBox, new VBox(2, name, meta));            // price + rating live on the photo (v1.18.3)
+        else getChildren().addAll(photoBox, head, meta);
         if (!compact) getChildren().add(tags);                        // the 2-column card stays clean: details are on the detail page
         setOnMouseClicked(e -> {
             Node t = (Node) e.getTarget();

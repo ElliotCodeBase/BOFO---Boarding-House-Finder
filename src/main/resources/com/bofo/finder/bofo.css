@@ -658,9 +658,6 @@
    Press feedback is instant (JavaFX CSS has no transitions); the animated parts (blue dot, entrance) live in LiveDot / HomeView. */
 .home-map { -fx-background-color: white; -fx-background-radius: 28; }
 .map-frame { -fx-border-color: white; -fx-border-width: 3; -fx-border-radius: 28; }
-.live-pill { -fx-background-color: rgba(255,255,255,0.93); -fx-background-radius: 999; -fx-padding: 6 12 6 10;
-  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.16), 8, 0, 0, 2); }
-.live-pill-text { -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: -bofo-ink; }
 .map-fab { -fx-min-width: 46; -fx-min-height: 46; -fx-pref-width: 46; -fx-pref-height: 46; -fx-max-width: 46; -fx-max-height: 46;
   -fx-border-color: transparent; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.22), 12, 0, 0, 3); }
 .map-fab:pressed { -fx-scale-x: 0.92; -fx-scale-y: 0.92; }
@@ -672,3 +669,43 @@
 .card-compact:pressed { -fx-scale-x: 0.98; -fx-scale-y: 0.98; }
 .home-title { -fx-font-size: 21px; }
 .greet-hello { -fx-font-size: 12.5px; }
+
+/* ---- v1.18.3 Home redesign v3: purple hero card + overlapping search, stat tiles, amber accents, white photo cards ---- */
+.home-hero { -fx-background-color:
+    radial-gradient(center 100% 0%, radius 40%, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.14) 98%, rgba(255,255,255,0) 100%),
+    radial-gradient(center 76% 118%, radius 30%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.10) 98%, rgba(255,255,255,0) 100%),
+    radial-gradient(center 0% 100%, radius 60%, rgba(255,180,0,0.40), rgba(255,180,0,0)),
+    linear-gradient(to bottom right, #7457FF 0%, #4A2BDD 100%);
+  -fx-background-radius: 30, 30, 30, 30; -fx-padding: 16 18 48 18;
+  -fx-effect: dropshadow(gaussian, rgba(74,43,221,0.28), 22, 0, 0, 8); }
+.home-hero .greet-hello { -fx-text-fill: rgba(255,255,255,0.82); -fx-font-size: 12.5px; }
+.home-hero .greet-name { -fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold; }
+.home-headline { -fx-text-fill: white; -fx-font-size: 25px; -fx-font-weight: bold; }
+.home-hero .hdr-avatar { -fx-background-color: white; -fx-text-fill: -bofo-primary; -fx-border-color: rgba(255,255,255,0.45); -fx-border-width: 3;
+  -fx-effect: dropshadow(gaussian, rgba(20,8,90,0.30), 10, 0, 0, 3); }
+.home-hero .hdr-btn { -fx-effect: dropshadow(gaussian, rgba(20,8,90,0.28), 12, 0, 0, 4); }
+.home-search .college-box, .home-search .search-bar { -fx-border-color: -bofo-border; -fx-effect: dropshadow(gaussian, rgba(40,20,140,0.24), 20, 0, 0, 8); }
+.home-map { -fx-background-color: white; -fx-background-radius: 24; }
+.map-frame { -fx-border-color: rgba(23,20,42,0.07); -fx-border-width: 1; -fx-border-radius: 24; }
+.map-count { -fx-background-color: rgba(255,255,255,0.96); -fx-background-radius: 999; -fx-padding: 6 12; -fx-text-fill: -bofo-ink; -fx-font-size: 12px; -fx-font-weight: bold;
+  -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.16), 8, 0, 0, 2); }
+.stat-tile { -fx-background-color: white; -fx-background-radius: 18; -fx-padding: 11 14; -fx-effect: dropshadow(gaussian, rgba(23,20,42,0.06), 10, 0, 0, 2); }
+.stat-num { -fx-font-size: 20px; -fx-font-weight: bold; }
+.stat-purple { -fx-text-fill: -bofo-primary; }
+.stat-green { -fx-text-fill: #1E8E5E; }
+.stat-amber { -fx-text-fill: #D98F00; }
+.stat-cap { -fx-font-size: 11.5px; -fx-text-fill: -bofo-muted; }
+.home-chips { -fx-background-color: transparent; -fx-background-radius: 0; -fx-padding: 4 0; -fx-spacing: 8; -fx-effect: none; }
+.home-chips .chip { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-width: 1; -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-padding: 8 18; -fx-font-size: 13.5px; -fx-font-weight: bold; -fx-text-fill: -bofo-text-2; -fx-effect: none; }
+.home-chips .chip:hover { -fx-background-color: -bofo-primary-tint; -fx-border-color: -bofo-primary-tint; -fx-text-fill: -bofo-primary-dark; }
+.home-chips .chip-selected { -fx-background-color: linear-gradient(to bottom right, #7C5CFF, #5B3BF0); -fx-border-color: transparent; -fx-border-width: 1; -fx-border-radius: 999; -fx-background-radius: 999;
+  -fx-padding: 8 18; -fx-font-size: 13.5px; -fx-font-weight: bold; -fx-text-fill: white; -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.35), 12, 0, 0, 4); }
+.home-title { -fx-font-size: 20px; -fx-font-weight: bold; }
+.title-bar { -fx-background-color: #FFB400; -fx-background-radius: 2; }
+.card-compact { -fx-background-color: white; -fx-border-color: -bofo-border; -fx-border-radius: 22; -fx-background-radius: 22; -fx-padding: 8 8 12 8; }
+.card-compact:hover { -fx-border-color: #D9D4F7; }
+.card-compact .photo-placeholder { -fx-background-color: linear-gradient(to bottom right, #E9E1FF, #C9BBFF); -fx-background-radius: 16; }
+.card-compact .h2 { -fx-font-size: 14px; -fx-text-fill: -bofo-ink; }
+.price-chip { -fx-background-color: #FFB400; -fx-background-radius: 999; -fx-padding: 4 10; -fx-text-fill: #2B1D00; -fx-font-size: 12px; -fx-font-weight: bold; }
+.rate-chip { -fx-background-color: rgba(255,255,255,0.95); -fx-background-radius: 999; -fx-padding: 3 8; -fx-text-fill: -bofo-ink; -fx-font-size: 11px; -fx-font-weight: bold; }

@@ -709,7 +709,7 @@ public final class MapPane extends StackPane {
                 me.reset(); me.setVisible(false); markDirty(); return;
             }
             if (!Double.isNaN(lastLat) && Geo.km(lastLat, lastLng, now[0], now[1]) > 0.004) {       // moved 4 m or more: turn the view cone
-                setHeading(Geo.bearing(lastLat, lastLng, now[0], now[1]));
+                if (State.gpsApprox.get()) me.clearHeading(); else setHeading(Geo.bearing(lastLat, lastLng, now[0], now[1]));   // PC / Wi-Fi fixes jump around: no cone for them
                 lastLat = now[0]; lastLng = now[1];
             } else if (Double.isNaN(lastLat)) { lastLat = now[0]; lastLng = now[1]; }
             if (Double.isNaN(meLat)) {                                   // first fix: appear in place, start pulsing

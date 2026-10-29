@@ -643,3 +643,21 @@ Then open the pull request link printed by `git push` (or GitHub > Pull requests
 # Handoff - v1.16.9 Narrow-screen UI fixes (2026-10-27)
 - **PR title:** `v1.16.9 - Fix clipped text on Profile and My listings (320 px); compact header + action buttons`. Version in `config.properties`, `pom.xml` (versionCode 66), CHANGES.md.
 - Cause: at 320 px the rows had a stretchy spacer + `HBox` gap 14 (4 gaps), so titles got ~90 px and wrapped mid-word / ellipsized. `Ui.settingsRow` now has no spacer and shows the value as a `settings-sub` line (`settings-ok` green for "Verified"); gaps 12, hairline inset 64 (also `ProfileView.addRow`). `Ui.pageHeader`: title has `Hgrow`, header buttons keep their pref width. `ListingsView`: round `hdr-btn-cta` "+" instead of the pill, `btn-sm` action buttons (min width = pref), card + actions in one `VBox`, `.heart-fab` hidden. New CSS block at the end of `bofo.css`. `ProfileView` bottom padding 110. Parse-checked with javac only; not run on screen.
+
+---
+
+# Handoff - v1.17.2 PC Wi-Fi location (2026-10-29)
+- **PR title:** `v1.17.2 - PC location from nearby Wi-Fi (like Google Maps)`. Version in `config.properties`, `pom.xml` (versionCode 73), CHANGES.md.
+- New `util/WifiLocator` (netsh scan -> Geolocation API, Google if `geolocation.key` else beacondb). `Locator.desktopFix` tries it first, `wifiSource` selects the 15 s `startWifiLive` loop instead of the PowerShell watcher. Network and Windows scan not tested by Claude; not compiled/run.
+
+---
+
+# Handoff - v1.17.3 Pinned spot no longer persists (2026-10-29)
+- **PR title:** `v1.17.3 - PC: pinned spot is session-only; log location source`. Version in `config.properties`, `pom.xml` (versionCode 74), CHANGES.md.
+- `Locator`: `manual` no longer loaded/saved (`location.properties`), cleared in `setEnabled(true)`; `src` field + `[location]` println in `fix()`. Not compiled/run by Claude.
+
+---
+
+# Handoff - v1.18.0 Live location marker + Home/map redesign (2026-10-29)
+- **PR title:** `v1.18.0 - New live location marker (ripples + view cone) and redesigned Home map`. Version in `config.properties`, `pom.xml` (versionCode 75), CHANGES.md.
+- New `ui/LiveDot` (replaces halo/meDot/arrow/pulse in `MapPane.PinLayer`; API `setRunning / appear / ping / setHeading / reset`). `MapPane.goTo` pings the dot 560 ms after the camera starts flying. `HomeView`: `locationPill()` (bound to `Locator.status`, `State.gps`, `State.gpsApprox`, `State.college`), `entrance()` (only when `firstHome`), map clip radius 28. CSS block "v1.18.0" at the end of `bofo.css`. `VectorTileRetriever` palette constants lightened. Not compiled/run by Claude (Maven Central is unreachable in the sandbox; syntax-checked with javac only). If map colours look unchanged, clear the cached map tiles.
