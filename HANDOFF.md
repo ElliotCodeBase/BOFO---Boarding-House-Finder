@@ -1,3 +1,7 @@
+# Handoff - v1.19.13 Calmer Directions card (2026-10-29)
+- **PR title:** `v1.19.13 - Calmer Directions card`. Version in `config.properties`, `pom.xml` (versionCode 77), CHANGES.md.
+- `DirectionsCard.render()` rewritten: result + one quiet line (`quickLine`) + link row; notes/credit in a collapsible `moreBox`. Not compiled/run by Claude.
+---
 # Handoff - v1.19.0 Price range in radius (2026-10-29)
 - **PR title:** `v1.19.0 - Home shows lowest, middle and highest rent in the radius`. Version in `config.properties`, `pom.xml` (versionCode 76), CHANGES.md.
 - New `ui/PriceRange` (lowest / median / highest, ignores price <= 0). `HomeView`: `priceRange` row inside the list title block, filled in `reload()` via `showPriceRange`; on the Best rated tab it fetches the NEW list for the same radius so the numbers match every tab. Not compiled/run by Claude.

@@ -1,3 +1,6 @@
+# v1.19.13 - Calmer Directions card
+- Directions now shows the result, one short line and two small links. The long notes, the data credit and the extra explanations are behind a "More info" link. "Show BH -> Campus" and "Open in OpenStreetMap" are text links instead of a big button.
+
 # v1.19.0 - Home: lowest / middle / highest rent in range
 - Under "Nearby boarding houses" Home now shows **Lowest, Middle, Highest** monthly rent of the places in the radius (e.g. `Lowest P1,300/mo   Middle P1,550/mo   Highest P2,050/mo`). Plain text, no tiles.
 - Follows the campus and radius slider (and "closest to you" when no campus is chosen). Middle = median; with an even count it is halfway between the two middle prices.

@@ -215,9 +215,20 @@ final class DirectionsCard extends VBox {
         HBox.setHgrow(heroText, Priority.ALWAYS);
         out.add(hero);
 
-        if (!plan.note().isBlank()) out.add(note(plan.note(), plan.straightKm() > TripPlanner.FAR_KM ? "warn" : "ok"));
-        if (t != 2 && State.gpsApprox.get())
-            out.add(note("Your location comes from this computer (Wi-Fi or internet address) and can be off by several km. A phone uses GPS and is much closer.", "warn"));
+        // calm layout: the result, ONE short line, a few small links. The fine print waits behind "More info".
+        boolean far = plan.straightKm() > TripPlanner.FAR_KM;
+        boolean approx = t != 2 && State.gpsApprox.get();
+        List<Node> more = new ArrayList<>();
+        if (far) {
+            out.add(quickLine("About " + Geo.fmt(plan.straightKm()) + " in a straight line, too far to walk."
+                    + (approx ? " Your location is approximate." : "")));
+            more.add(note(plan.note(), "warn"));
+        } else {
+            if (!plan.note().isBlank()) out.add(note(plan.note(), "ok"));
+            if (approx) out.add(quickLine("Your location is approximate."));
+        }
+        if (approx)
+            more.add(note("Your location comes from this computer (Wi-Fi or internet address) and can be off by several km. A phone uses GPS and is much closer.", "warn"));
 
         List<HBox> rows = new ArrayList<>();
         if (plan.options().size() > 1) {
@@ -231,21 +242,23 @@ final class DirectionsCard extends VBox {
             }
             out.add(ways); out.add(list);
         } else {
-            Label detail = Ui.label(plan.options().get(0).detail(), "secondary"); detail.setMinWidth(0);
-            out.add(detail);
+            Label detail = Ui.label(plan.options().get(0).detail(), "secondary"); detail.setMinWidth(0); detail.setWrapText(true);
+            if (far) more.add(detail); else out.add(detail);          // for a far trip this only repeats "too far to walk"
         }
 
-        if (plan.straightKm() > TripPlanner.FAR_KM && t != 2 && campus != null) {
-            Button b = Ui.btn("Show BH \u2192 Campus instead", "btn-tint", () -> select(2));
-            b.setMaxWidth(Double.MAX_VALUE); b.setMinWidth(0);
-            out.add(b);
-        }
-
-        Button open = Ui.btn("Open in OpenStreetMap", "btn-link", () -> openExternal(t));
-        open.setMaxWidth(Double.MAX_VALUE); open.setMinWidth(0);
         Label src = Ui.label("Lines: \u00A9 OpenStreetMap contributors. Fares: LTFRB, effective 19 March 2026. Times are estimates.", "dir-src");
-        src.setMinWidth(0);
-        out.add(open); out.add(src);
+        src.setMinWidth(0); src.setWrapText(true);
+        more.add(src);
+        VBox moreBox = new VBox(8, more.toArray(new Node[0]));
+        moreBox.setMinWidth(0); moreBox.setVisible(false); moreBox.setManaged(false);
+
+        Button toggle = Ui.btn("More info", "btn-link", () -> {});
+        toggle.setMinWidth(0);
+        toggle.setOnAction(e -> { boolean open = !moreBox.isVisible(); moreBox.setVisible(open); moreBox.setManaged(open); toggle.setText(open ? "Hide info" : "More info"); });
+        FlowPane links = new FlowPane(6, 2); links.setMinWidth(0);
+        if (far && t != 2 && campus != null) links.getChildren().add(Ui.btn("Show BH \u2192 Campus", "btn-link", () -> select(2)));
+        links.getChildren().addAll(Ui.btn("Open in OpenStreetMap", "btn-link", () -> openExternal(t)), toggle);
+        out.add(links); out.add(moreBox);
 
         results.getChildren().setAll(out);
         choose(chosen, rows);
@@ -285,6 +298,12 @@ final class DirectionsCard extends VBox {
         row.setAlignment(Pos.TOP_LEFT); row.setMinWidth(0); row.setCursor(javafx.scene.Cursor.HAND);
         row.getStyleClass().add("dir-opt");
         return row;
+    }
+
+    /** One short, quiet line (no coloured box). */
+    private static Label quickLine(String text) {
+        Label l = Ui.label(text, "secondary"); l.setWrapText(true); l.setMinWidth(0); l.setMaxWidth(Double.MAX_VALUE);
+        return l;
     }
 
     /** Small tinted message with a symbol in front: kind = ok, warn or bad. */
