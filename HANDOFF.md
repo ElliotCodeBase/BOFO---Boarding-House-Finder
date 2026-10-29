@@ -1,17 +1,12 @@
-# Handoff - v1.18.3 Home redesign v3 (2026-10-29)
-- **PR title:** `v1.18.3 - Home redesign v3: hero card, stat tiles, amber price chips`. Version in `config.properties`, `pom.xml` (versionCode 78), CHANGES.md.
-- `HomeView`: `hero` VBox (`.home-hero`) + `searchRow` margin -27 overlap; `statRow` (`statTile`, filled in `updateHeader` from `current`); amber `title-bar`. `BhCard` compact: `price-chip` / `rate-chip` on the photo. CSS block "v1.18.3" replaces the v1.18.2 block at the end of `bofo.css`. Not compiled/run by Claude.
-
+# Handoff - v1.19.0 Price range in radius (2026-10-29)
+- **PR title:** `v1.19.0 - Home shows lowest, middle and highest rent in the radius`. Version in `config.properties`, `pom.xml` (versionCode 76), CHANGES.md.
+- New `ui/PriceRange` (lowest / median / highest, ignores price <= 0). `HomeView`: `priceRange` row inside the list title block, filled in `reload()` via `showPriceRange`; on the Best rated tab it fetches the NEW list for the same radius so the numbers match every tab. Not compiled/run by Claude.
+- The earlier v1.19.0 redesign attempt was reverted by the user locally; this version number is for the price range only. Delete older `BOFO-v1.19.0-changes*.zip` downloads before using this one.
 ---
-
-# Handoff - v1.18.2 Home redesign v2 (2026-10-29)
-- **PR title:** `v1.18.2 - Home redesign v2: light header, flat photo-first cards, flat live dot`. Version in `config.properties`, `pom.xml` (versionCode 77), CHANGES.md.
-- Replaced the v1.18.1 CSS block at the end of `bofo.css` (hero gone). `HomeView`: headline removed, chips auto width in `chipWrap`, map clip 24. `BhCard` compact: `VBox(name, meta, priceRow)`. `LiveDot`: flat core, `clearHeading()`; `MapPane.moveMe` skips the cone when `State.gpsApprox`. Design notes: white canvas, one accent, one shadow tier, photo carries the card. Not compiled/run by Claude.
-
+# Handoff - v1.18.0 Live location marker + Home/map redesign (2026-10-29)
+- **PR title:** `v1.18.0 - New live location marker (ripples + view cone) and redesigned Home map`. Version in `config.properties`, `pom.xml` (versionCode 75), CHANGES.md.
+- New `ui/LiveDot` (replaces halo/meDot/arrow/pulse in `MapPane.PinLayer`; API `setRunning / appear / ping / setHeading / reset`). `MapPane.goTo` pings the dot 560 ms after the camera starts flying. `HomeView`: `locationPill()` (bound to `Locator.status`, `State.gps`, `State.gpsApprox`, `State.college`), `entrance()` (only when `firstHome`), map clip radius 28. CSS block "v1.18.0" at the end of `bofo.css`. `VectorTileRetriever` palette constants lightened. Not compiled/run by Claude (Maven Central is unreachable in the sandbox; syntax-checked with javac only). If map colours look unchanged, clear the cached map tiles.
 ---
-
-# Handoff - v1.18.1 Whole Home redesign (2026-10-29)
-- **PR title:** `v1.18.1 - Redesigned Home (hero header, segmented tabs, price-on-photo cards); remove Approximate chip`. Version in `config.properties`, `pom.xml` (versionCode 76), CHANGES.md.
-- `HomeView`: `locationPill()` removed -> `mapCount` chip (set in `updateHeader`, bound to `State.college` + `hasCount`); `headline` label in the header; `chips` wrapped in `chipWrap`, buttons grow equally. `BhCard` (compact): `price-chip` over the photo, price row removed from the text block. CSS block "v1.18.1" at the end of `bofo.css` (hero gradient, segmented `.home-chips`, `.price-chip`). Not compiled/run by Claude.
-
----
+# Handoff - v1.17.3 Pinned spot no longer persists (2026-10-29)
+- **PR title:** `v1.17.3 - PC: pinned spot is session-only; log location source`. Version in `config.properties`, `pom.xml` (versionCode 74), CHANGES.md.
+- `Locator`: `manual` no longer loaded/saved (`location.properties`), cleared in `setEnabled(true)`; `src` field + `[location]` println in `fix()`. Not compiled/run by Claude.

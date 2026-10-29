@@ -483,6 +483,11 @@ public final class MapPane extends StackPane {
 
     // ---------------------------------------------------------------- selection + route
 
+    /** Selects a pin from outside the map (e.g. a row in a list), same as tapping it. */
+    public void highlight(BoardingHouse b) {
+        if (b == null) return;
+        if (preview) pinTapped(b); else flyTo(b.lat(), b.lng(), 16, 650);
+    }
     private void pinTapped(BoardingHouse b) {
         if (!preview) { onPin.accept(b); return; }
         if (selected != null && selected.id().equals(b.id())) return;

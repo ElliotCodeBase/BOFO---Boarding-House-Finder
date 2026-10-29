@@ -120,7 +120,7 @@ public final class AuthService {
 
     /** Stops a sign-in that is waiting (Cancel button). */
     public void cancelSignIn() {
-        synchronized (this) { if (loopback != null) { try { loopback.stop(0); } catch (Exception ignored) { } loopback = null; } }
+        // The callback listener is kept open on purpose: closing it here made the next click fail with "Address already in use" (Windows frees the port a moment later).
         CompletableFuture<Void> p = pendingLogin;
         if (p != null) p.completeExceptionally(new java.util.concurrent.CancellationException("cancelled"));
     }
@@ -153,13 +153,18 @@ public final class AuthService {
 
     private HttpServer loopback;     // the single desktop callback listener (port 54321)
 
-    /** Starts (or restarts) the desktop callback listener. Any listener left over from an earlier click is stopped first,
-     *  so a second "Continue with Google" never fails with "address already in use". Returns false if it could not start. */
+    /** Starts the desktop callback listener, or reuses the one still open after an earlier click or a cancelled sign-in.
+     *  Returns false if it could not start. */
     private synchronized boolean startLoopback() {
-        if (loopback != null) { try { loopback.stop(0); } catch (Exception ignored) { } loopback = null; }
+        if (loopback != null) return true;     // still listening from an earlier click or a cancelled sign-in: reuse it
         try {
-            HttpServer srv = HttpServer.create(new InetSocketAddress("127.0.0.1", 54321), 0);
-            srv.createContext("/callback", ex -> {
+            HttpServer srv = null;
+            for (int i = 0; srv == null; i++) {    // a port closed a moment ago can take ~1 s to free up on Windows
+                try { srv = HttpServer.create(new InetSocketAddress("127.0.0.1", 54321), 0); }
+                catch (java.net.BindException busy) { if (i >= 8) throw busy; Thread.sleep(150); }
+            }
+            final HttpServer srv0 = srv;
+            srv0.createContext("/callback", ex -> {
                 handleDeepLink("http://localhost/callback?" + ex.getRequestURI().getRawQuery());
                 byte[] b = ("<html><head><meta name='viewport' content='width=device-width,initial-scale=1'><title>BOFO</title></head>"
                         + "<body style='font-family:sans-serif;text-align:center;padding:64px 24px;color:#17142A'>"
@@ -168,11 +173,11 @@ public final class AuthService {
                 ex.getResponseHeaders().add("Content-Type", "text/html");
                 ex.sendResponseHeaders(200, b.length);
                 ex.getResponseBody().write(b); ex.close();
-                srv.stop(1);
-                synchronized (AuthService.this) { if (loopback == srv) loopback = null; }
+                srv0.stop(1);
+                synchronized (AuthService.this) { if (loopback == srv0) loopback = null; }
             });
-            srv.start();
-            loopback = srv;
+            srv0.start();
+            loopback = srv0;
             return true;
         } catch (Exception e) {
             if (pendingLogin != null) pendingLogin.completeExceptionally(new IllegalStateException("Port 54321 is busy. Close other BOFO windows and try again.", e));

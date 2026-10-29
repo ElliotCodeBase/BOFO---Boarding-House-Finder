@@ -1,21 +1,9 @@
-# v1.18.3 - Home redesign v3: purple hero card, stat tiles, amber accents
-- Header is a rounded **purple hero card** (soft circles + amber glow) with the greeting, bell and headline; the **search pill overlaps its bottom edge**.
-- **Stat tiles** under the map from the real list: places, with free beds, cheapest per month.
-- Pill tabs again, selected = purple with glow. Section title has an amber accent bar.
-- Listing cards are white again with an **amber price chip** and a rating chip on the photo, "x beds left" under the name, nicer empty-photo gradient.
-
-# v1.18.2 - Home redesign v2: calm, photo-first (after Airbnb / Apple Maps research)
-- Removed the heavy purple hero and headline. Header is light again: small greeting, search pill with one soft shadow.
-- Map: 24 px corners with a hairline instead of the white frame; the "N places nearby" chip is white; locate button unchanged.
-- New / Hot / Best rated are compact pill chips again (selected = dark pill), left aligned.
-- Listing cards (2-column list) are flat: rounded photo, then name, rating + distance, price - no box, no price chip.
-- Blue dot is now flat (no gloss), smaller ripples, a narrower view cone, and no cone at all for approximate (PC / Wi-Fi) locations.
-
-# v1.18.1 - Whole Home redesign, "Approximate" label removed
-- **Home header**: purple hero band with an amber glow, white greeting, headline "Find your place near campus" and the search bar floating on it.
-- **Tabs**: New / Hot / Best rated is now one full-width segmented control (dark pill = selected).
-- **Cards**: in the 2-column list the price sits on the photo as a dark chip, the text block is shorter, corners are rounder.
-- **Map**: the Live / Approximate / Location off chip is gone. A small "6 places nearby" chip shows instead (hidden while a campus is chosen, the radius bar uses that spot).
+# v1.19.0 - Home: lowest / middle / highest rent in range
+- Under "Nearby boarding houses" Home now shows **Lowest, Middle, Highest** monthly rent of the places in the radius (e.g. `Lowest P1,300/mo   Middle P1,550/mo   Highest P2,050/mo`). Plain text, no tiles.
+- Follows the campus and radius slider (and "closest to you" when no campus is chosen). Middle = median; with an even count it is halfway between the two middle prices.
+- 1 place, or all the same price: one "Rent" value. 2 places: Lowest + Highest only. 0 places or a load error: the row is hidden (never a dash).
+- Same numbers on New, Hot and Best rated: "Best rated" only lists places with 3+ reviews, so that tab reads the range from the unfiltered list (one extra request).
+- New `ui/PriceRange` (pure maths), `HomeView.showPriceRange / paintPriceRange / priceCell`. No CSS or Supabase change. Not compiled/run by Claude (no javac/Maven in the sandbox; brackets checked only).
 
 # v1.18.0 - New live location marker + Home / map redesign
 - **Blue dot redesigned** (new `ui/LiveDot`): glossy blue-indigo core in a white ring with a soft shadow, two staggered ripple rings, and a fading **view cone** that turns the way you move (replaces the tiny arrow). First fix settles in from 82% size; pressing the locate button ends with a "found you" ring + pop on the dot.

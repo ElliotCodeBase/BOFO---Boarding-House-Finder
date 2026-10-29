@@ -34,8 +34,8 @@ import java.util.function.Consumer;
  * choice). {@code false}: a plain search box that empties after a pick (used by the Home search bar).
  */
 public final class CampusPicker extends VBox {
-    private static final double ROW = 44;
-    private static final int MAX_ROWS = 6;
+    private static final double ROW = 56;      // two lines of 14 px text plus even padding; every row is the same height, so the highlight and gaps line up
+    private static final int MAX_ROWS = 5;
 
     private final TextField field = new TextField();
     private final ListView<College> list = new ListView<>();
@@ -79,7 +79,7 @@ public final class CampusPicker extends VBox {
         list.getStyleClass().add("college-list"); list.setFixedCellSize(ROW);
         list.setPlaceholder(Ui.label("No campus found", "secondary"));
         list.setCellFactory(lv -> new ListCell<>() {
-            { setPrefWidth(0); }                                        // a long name wraps instead of adding a sideways scrollbar
+            { setPrefWidth(0); setAlignment(Pos.CENTER_LEFT); }          // a long name wraps instead of adding a sideways scrollbar; text is centred in the row
             @Override protected void updateItem(College c, boolean empty) {
                 super.updateItem(c, empty);
                 if (empty || c == null) { setText(null); setGraphic(null); return; }
@@ -88,6 +88,7 @@ public final class CampusPicker extends VBox {
                     javafx.scene.layout.Region r = (javafx.scene.layout.Region) g;
                     r.prefWidthProperty().bind(list.widthProperty().subtract(44));
                     r.maxWidthProperty().bind(list.widthProperty().subtract(44));
+                    r.setMaxHeight(ROW - 8);                            // a third line is cut instead of spilling into the next row
                 }
                 setText(null); setGraphic(g);
             }
@@ -210,7 +211,7 @@ public final class CampusPicker extends VBox {
         TextFlow tf = new TextFlow();
         if (i < 0) { tf.getChildren().add(plain(name)); return tf; }
         Text mid = new Text(name.substring(i, i + q.length()));
-        mid.setStyle("-fx-font-size:14px;-fx-font-weight:bold;-fx-fill:#5B3BF0;");
+        mid.setStyle("-fx-font-size:14px;-fx-font-weight:bold;-fx-fill:#17142A;");   // the matched part is bold, same ink (no second colour)
         tf.getChildren().addAll(plain(name.substring(0, i)), mid, plain(name.substring(i + q.length())));
         return tf;
     }
