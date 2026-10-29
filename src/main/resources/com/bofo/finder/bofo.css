@@ -298,6 +298,8 @@
   -fx-border-color: #5B3BF0; -fx-border-width: 3.5; -fx-border-radius: 999;
   -fx-effect: dropshadow(gaussian, rgba(91,59,240,0.35), 8, 0, 0, 2); }
 .radius-slider:focused > .thumb { -fx-background-insets: 0; }
+.map-bh-tag { -fx-background-color: rgba(255,255,255,0.92); -fx-background-radius: 6; -fx-padding: 1 5 1 5;
+  -fx-text-fill: #3A22B8; -fx-font-size: 10px; -fx-font-weight: bold; }
 .map-college-tag { -fx-background-color: rgba(255,255,255,0.88); -fx-background-radius: 6; -fx-padding: 1 5 1 5;
   -fx-text-fill: -bofo-primary-dark; -fx-font-size: 10px; -fx-font-weight: bold; }
 

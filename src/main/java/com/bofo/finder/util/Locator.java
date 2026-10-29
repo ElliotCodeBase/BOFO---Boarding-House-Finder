@@ -54,6 +54,7 @@ public final class Locator {
     private final File prefFile;
     private PauseTransition timeout;
     private boolean listening;
+    private double[] manual;                   // PC only: the spot the user pinned by holding the map (saved)
     private boolean nextFixApprox;               // the fix that is about to arrive comes from a PC, not from phone GPS
 
     private Locator() {
@@ -64,6 +65,8 @@ public final class Locator {
             Properties p = new Properties(); p.load(in);
             enabled.set(!"false".equals(p.getProperty("enabled")));
             asked = "true".equals(p.getProperty("asked"));
+            String m = p.getProperty("manual");
+            if (m != null && m.contains(",")) manual = new double[]{Double.parseDouble(m.split(",")[0]), Double.parseDouble(m.split(",")[1])};
         } catch (Exception firstRun) { /* defaults */ }
     }
 
@@ -73,6 +76,7 @@ public final class Locator {
             Properties p = new Properties();
             p.setProperty("enabled", String.valueOf(enabled.get()));
             p.setProperty("asked", String.valueOf(asked));
+            if (manual != null) p.setProperty("manual", manual[0] + "," + manual[1]);
             try (OutputStream out = Files.newOutputStream(prefFile.toPath())) { p.store(out, "BOFO location choice"); }
         } catch (Exception ignored) { }
     }
@@ -129,7 +133,10 @@ public final class Locator {
         if (timeout != null) timeout.stop();                 // an old timer must never fail a newer request
         try {
             Optional<PositionService> svc = PositionService.create();
-            if (svc.isEmpty()) { nextFixApprox = true; desktopFix(); return; }        // PC: ask Windows, else the browser (coarse: Wi-Fi / IP based)
+            if (svc.isEmpty()) {
+                if (manual != null) { nextFixApprox = false; fix(manual); return; }          // the user told us where they are: trust that over Wi-Fi / IP guesses
+                nextFixApprox = true; desktopFix(); return;
+            }        // PC: ask Windows, else the browser (coarse: Wi-Fi / IP based)
             nextFixApprox = false;
             PositionService ps = svc.get();
             service = ps;
@@ -150,7 +157,7 @@ public final class Locator {
 
     /* ---------- PC: ask Windows' own location service (the same one the browser uses) ---------- */
     private static final String WIN_SCRIPT =
-            "Add-Type -AssemblyName System.Device; $w = New-Object System.Device.Location.GeoCoordinateWatcher; $w.Start(); "
+            "Add-Type -AssemblyName System.Device; $w = New-Object System.Device.Location.GeoCoordinateWatcher([System.Device.Location.GeoPositionAccuracy]::High); $w.Start(); "
             + "for ($i = 0; $i -lt 24 -and $w.Position.Location.IsUnknown; $i++) { Start-Sleep -Milliseconds 500 }; "
             + "$l = $w.Position.Location; if (-not $l.IsUnknown) { [string]::Format([cultureinfo]::InvariantCulture, '{0},{1}', $l.Latitude, $l.Longitude) }";
 
@@ -261,6 +268,12 @@ public final class Locator {
         Nav.toast("Finding your location...");
         if (status.get() == Status.UNAVAILABLE) status.set(Status.IDLE);
         start();
+    }
+
+    /** PC only: the user pressed and held the map to say "I'm here". Saved, and used instead of the coarse Windows / browser guess. */
+    public void setManual(double[] p) {
+        manual = p; save(); nextFixApprox = false;
+        fix(p);
     }
 
     private void fix(double[] p) {

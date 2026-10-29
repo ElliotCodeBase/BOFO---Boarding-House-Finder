@@ -139,6 +139,26 @@ public final class MapPane extends StackPane {
             if (selected != null && e.isStillSincePress() && !inside(e.getTarget(), locate) && !inside(e.getTarget(), card)) deselect();
         });
 
+        // press and hold on empty map = "I'm here": fixes a coarse PC location (phones with GPS never need this)
+        final javafx.animation.PauseTransition hold = new javafx.animation.PauseTransition(Duration.millis(650));
+        final double[] holdAt = new double[2];
+        hold.setOnFinished(e -> {
+            Point2D sp = map.localToScene(holdAt[0], holdAt[1]);
+            MapPoint mp = map.getMapPosition(sp.getX(), sp.getY());
+            if (mp == null) return;
+            Locator.get().setManual(new double[]{mp.getLatitude(), mp.getLongitude()});
+            com.bofo.finder.ui.Nav.toast("Your location is set here");
+        });
+        addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
+            if (e.getButton() != javafx.scene.input.MouseButton.PRIMARY || !(e.getTarget() instanceof Node t)
+                    || inside(t, locate) || inside(t, card) || t.getParent() instanceof Group && t.getParent().getOnMouseClicked() != null) return;
+            Point2D lp = map.sceneToLocal(e.getSceneX(), e.getSceneY());
+            holdAt[0] = lp.getX(); holdAt[1] = lp.getY();
+            if (State.gpsApprox.get() || State.gps.get() == null) hold.playFromStart();
+        });
+        addEventFilter(MouseEvent.MOUSE_DRAGGED, e -> { if (!e.isStillSincePress()) hold.stop(); });
+        addEventFilter(MouseEvent.MOUSE_RELEASED, e -> hold.stop());
+
         // keep the blue dot in sync with GPS while this map is on screen
         sceneProperty().addListener((o, was, sc) -> {
             if (sc != null) {
@@ -584,6 +604,8 @@ public final class MapPane extends StackPane {
         private final Label radiusBadge = Ui.label("", "map-badge");
         // pins
         private final Group pinsGroup = new Group();
+        private final Group bhNameGroup = new Group();                  // boarding-house names next to their circles (zoomed in only)
+        private final Map<String, Label> bhNames = new HashMap<>();
         private final Group clusterGroup = new Group();                 // zoomed out: pins that are close together become one numbered bubble
         private final List<Group> clusterPool = new ArrayList<>();
         private Map<String, Group> pinMap = new LinkedHashMap<>();
@@ -615,7 +637,7 @@ public final class MapPane extends StackPane {
             casing.setStroke(Color.web("#FFFFFF", 0.95)); casing.setStrokeWidth(8);
             line.setStroke(PURPLE); line.setStrokeWidth(4.5);
             for (Polyline p : new Polyline[]{casing, line}) { p.setStrokeLineCap(StrokeLineCap.ROUND); p.setStrokeLineJoin(StrokeLineJoin.ROUND); p.setMouseTransparent(true); }
-            collegeGroup.setMouseTransparent(true);
+            collegeGroup.setMouseTransparent(true); bhNameGroup.setMouseTransparent(true);
             for (Circle c : new Circle[]{originDot, destDot}) { c.setStroke(Color.WHITE); c.setStrokeWidth(2.5); c.setMouseTransparent(true); }
             originTag.setWrapText(false); originTag.setMouseTransparent(true);
             routeBadge.setWrapText(false); routeBadge.setMouseTransparent(true); routeBadge.setOpacity(0);
@@ -637,7 +659,7 @@ public final class MapPane extends StackPane {
                             new KeyValue(halo.opacityProperty(), 0.0, Interpolator.EASE_IN)));
             pulse.setCycleCount(Timeline.INDEFINITE);
 
-            getChildren().addAll(ring, radiusBadge, casing, line, originDot, destDot, originTag, collegeGroup, collegeDot, clusterGroup, pinsGroup, routeBadge, me);
+            getChildren().addAll(ring, radiusBadge, casing, line, originDot, destDot, originTag, collegeGroup, collegeDot, clusterGroup, pinsGroup, bhNameGroup, routeBadge, me);
         }
 
         void refresh() { markDirty(); }
@@ -853,7 +875,7 @@ public final class MapPane extends StackPane {
             boolean far = !Double.isNaN(zNow) && zNow < 15;
             double k = Double.isNaN(zNow) ? 1 : Math.max(1, Math.min(1.7, 1 + (14.5 - zNow) * 0.13));   // markers grow as the map zooms out
             double zReal = map.getZoom();                                   // the real zoom (also after a pinch / scroll)
-            boolean names = zReal >= 14.5;                                   // campus names only when zoomed in, so they never pile up
+            boolean names = zReal >= 9;                                   // campus names only when zoomed in, so they never pile up
             College chosen = State.college.get();
             // campus labels: short (ellipsis), kept inside the map, and a label that would land on another one is hidden
             // (the chosen campus always wins); zooming in makes room, so more names appear
@@ -876,10 +898,18 @@ public final class MapPane extends StackPane {
                 if (name.getMaxWidth() != labelMax) name.setMaxWidth(labelMax);
                 double nw = Math.min(labelMax, name.getWidth() > 0 ? name.getWidth() : name.prefWidth(-1));
                 boolean onRight = p.getX() + 9 + nw <= vw - 4;                    // no room on the right: put the name on the left of the dot
-                name.setLayoutX(onRight ? 9 : -9 - nw);
-                double lx = p.getX() + name.getLayoutX(), ly = p.getY() - 9, lh = 17;
+                double ly = p.getY() - 9, lh = 17, lx = p.getX() + (onRight ? 9 : -9 - nw);
                 boolean clash = false;
                 for (double[] r : labelBoxes) if (lx < r[0] + r[2] + 2 && lx + nw + 2 > r[0] && ly < r[1] + r[3] && ly + lh > r[1]) { clash = true; break; }
+                if (clash) {                                                      // overlaps another name: try the other side of the dot
+                    double lx2 = p.getX() + (onRight ? -9 - nw : 9);
+                    if (lx2 >= 2 && lx2 + nw <= vw - 2) {
+                        boolean c2 = false;
+                        for (double[] r : labelBoxes) if (lx2 < r[0] + r[2] + 2 && lx2 + nw + 2 > r[0] && ly < r[1] + r[3] && ly + lh > r[1]) { c2 = true; break; }
+                        if (!c2) { clash = false; onRight = !onRight; lx = lx2; }
+                    }
+                }
+                name.setLayoutX(onRight ? 9 : -9 - nw);
                 boolean showName = names && !clash;
                 name.setVisible(showName);
                 if (showName) labelBoxes.add(new double[]{lx, ly, nw, lh});
@@ -945,6 +975,45 @@ public final class MapPane extends StackPane {
                 t.setTranslateX(-t.getLayoutBounds().getWidth() / 2); t.setTranslateY(t.getLayoutBounds().getHeight() * 0.27);
             }
             for (int i = used; i < clusterPool.size(); i++) clusterPool.get(i).setVisible(false);
+
+            // boarding-house names: beside each visible circle / pin when zoomed in; a name that would land on another label (or a campus name) is hidden
+            for (Label l : bhNames.values()) l.setVisible(false);
+            List<double[]> dotBoxes = new ArrayList<>();                          // the orange campus dots: a name must not cover them
+            for (Node cn : collegeGroup.getChildren()) if (cn.isVisible()) dotBoxes.add(new double[]{cn.getTranslateX() - 8, cn.getTranslateY() - 8, 16, 16});
+            if (zReal >= 9) {                                                     // zoomed out too: names that fit show, the rest wait for zoom
+                for (Node n : pinsGroup.getChildren()) {
+                    Group g = (Group) n;
+                    if (!g.isVisible()) continue;                                  // hidden pin or merged into a number bubble
+                    BoardingHouse b = (BoardingHouse) g.getUserData();
+                    Point2D p = getMapPoint(b.lat(), b.lng());
+                    if (p.getX() < -20 || p.getX() > vw + 20 || p.getY() < -60 || p.getY() > vh + 40) continue;
+                    Label l = bhNames.get(b.id());
+                    if (l == null) {
+                        l = Ui.label(b.name(), "map-bh-tag"); l.setWrapText(false); l.setMouseTransparent(true);
+                        bhNames.put(b.id(), l); bhNameGroup.getChildren().add(l);
+                    } else if (!b.name().equals(l.getText())) l.setText(b.name());
+                    if (l.getMaxWidth() != labelMax) l.setMaxWidth(labelMax);
+                    double nw = Math.min(labelMax, l.getWidth() > 0 ? l.getWidth() : l.prefWidth(-1));
+                    Scale zs = (Scale) g.getProperties().get("zs");
+                    double ks = zs == null ? 1 : zs.getX();
+                    boolean dotMode = !((Polygon) g.getProperties().get("tail")).isVisible();
+                    double cy = p.getY() + (dotMode ? 0 : -21 * ks);               // vertical middle of the circle
+                    double off = (dotMode ? 10 : 12) * ks + 3;
+                    double lx = 0, ly = cy - 8.5;
+                    boolean placed = false;
+                    for (int side = 0; side < 2 && !placed; side++) {                 // try the right of the circle, then the left
+                        double tx = side == 0 ? p.getX() + off : p.getX() - off - nw;
+                        if (tx < 2 || tx + nw > vw - 2) continue;
+                        boolean clash = false;
+                        for (double[] r : labelBoxes) if (tx < r[0] + r[2] + 2 && tx + nw + 2 > r[0] && ly < r[1] + r[3] && ly + 17 > r[1]) { clash = true; break; }
+                        if (!clash) for (double[] r : dotBoxes) if (tx < r[0] + r[2] && tx + nw > r[0] && ly < r[1] + r[3] && ly + 17 > r[1]) { clash = true; break; }
+                        if (!clash) { lx = tx; placed = true; }
+                    }
+                    if (!placed) continue;
+                    l.setTranslateX(lx); l.setTranslateY(ly); l.setVisible(true);
+                    labelBoxes.add(new double[]{lx, ly, nw, 17});
+                }
+            }
 
             boolean hasRoute = rpts != null && rpts.length > 1;
             casing.setVisible(hasRoute); line.setVisible(hasRoute); destDot.setVisible(hasRoute);
