@@ -34,6 +34,8 @@ public final class HomeView extends VBox {
     private CampusPicker searchBar;
     private Button nearMe;
     private final Label nearbySub = Ui.label("", "secondary", "nearby-sub");     // under the list title: what the list is sorted / limited by
+    private final Label mapCount = Ui.label("", "map-count");                  // glass chip on the map: "6 places nearby" (hidden while a campus is chosen)
+    private final javafx.beans.property.SimpleBooleanProperty hasCount = new javafx.beans.property.SimpleBooleanProperty(false);
     private final Label countPill = Ui.label("", "count-pill");     // "12 places"
     // zoomed-out overview of every boarding house + me: on when the app opens and whenever the search bar is empty,
     // switched off by the location button and back on by pressing it again
@@ -58,6 +60,7 @@ public final class HomeView extends VBox {
         Button bell = new Button(); bell.getStyleClass().add("hdr-btn"); bell.setGraphic(Icons.icon(Icons.BELL, 20, Color.web("#17142A")));
         bell.setOnAction(e -> Nav.toast("No new notifications"));
         Label avatar = Ui.avatar(full, 46); avatar.getStyleClass().add("hdr-avatar");
+        Label headline = Ui.label("Find your place\nnear campus", "home-headline"); headline.setWrapText(true);
         HBox top = Ui.hbox(12, avatar,
                 Ui.vbox(0, Ui.label(greeting().replace(",", ""), "greet-hello"), Ui.label(name.isBlank() ? "there" : name, "greet-name")), Ui.grow(), bell);
         top.setPadding(Insets.EMPTY);
@@ -110,7 +113,9 @@ public final class HomeView extends VBox {
         radiusBar.managedProperty().bind(radiusBar.visibleProperty());
 
         HBox chips = Ui.chipRow(new String[]{"New", "Hot", "Best rated"}, 0, i -> { tab = BhService.Tab.values()[i]; reload(); });
-        chips.setPadding(new Insets(18, 16, 0, 16)); chips.getStyleClass().add("home-chips");
+        chips.setPadding(new Insets(4)); chips.setSpacing(4); chips.getStyleClass().add("home-chips");   // one white track, full width; the selected segment is the dark pill
+        for (javafx.scene.Node c : chips.getChildren()) { HBox.setHgrow(c, Priority.ALWAYS); ((Button) c).setMaxWidth(Double.MAX_VALUE); }
+        HBox chipWrap = new HBox(chips); chipWrap.setPadding(new Insets(18, 16, 0, 16)); HBox.setHgrow(chips, Priority.ALWAYS);
         countPill.setMinWidth(Region.USE_PREF_SIZE); countPill.setVisible(false); countPill.managedProperty().bind(countPill.visibleProperty());
         Label nearbyTitle = Ui.section("Nearby boarding houses"); nearbyTitle.getStyleClass().add("home-title");
         HBox nearby = new HBox(10, Ui.vbox(2, nearbyTitle, nearbySub));
@@ -118,62 +123,35 @@ public final class HomeView extends VBox {
         list.setPadding(new Insets(4, 16, 130, 16));   // the floating tab bar is ~100 px tall
 
         Region mapFrame = new Region(); mapFrame.getStyleClass().add("map-frame"); mapFrame.setMouseTransparent(true);   // thin rounded outline on top of the map
-        HBox livePill = locationPill();                                   // top-left "Live" chip; the radius bar takes the top when a campus is chosen
-        StackPane mapWrap = new StackPane(map, mapFrame, radiusBar, livePill);
+        mapCount.setWrapText(false); mapCount.setMouseTransparent(true); mapCount.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        mapCount.visibleProperty().bind(State.college.isNull().and(hasCount)); mapCount.managedProperty().bind(mapCount.visibleProperty());
+        StackPane mapWrap = new StackPane(map, mapFrame, radiusBar, mapCount);
         StackPane.setAlignment(radiusBar, Pos.TOP_CENTER); StackPane.setMargin(radiusBar, new Insets(12, 12, 0, 12));
-        StackPane.setAlignment(livePill, Pos.TOP_LEFT); StackPane.setMargin(livePill, new Insets(12, 0, 0, 12));
+        StackPane.setAlignment(mapCount, Pos.TOP_LEFT); StackPane.setMargin(mapCount, new Insets(12, 0, 0, 12));
         Rectangle mc = new Rectangle(); mc.setArcWidth(56); mc.setArcHeight(56);
         mc.widthProperty().bind(mapWrap.widthProperty()); mc.heightProperty().bind(mapWrap.heightProperty());
         mapWrap.setClip(mc);
         mapWrap.getStyleClass().add("home-map");
         VBox.setMargin(mapWrap, new Insets(4, 16, 0, 16));
 
-        VBox header = new VBox(18, top, searchRow); header.getStyleClass().addAll("page-header", "home-header"); header.setViewOrder(-1);   // greeting + search in one branded band
+        VBox header = new VBox(16, top, headline, searchRow); header.getStyleClass().addAll("page-header", "home-header"); header.setViewOrder(-1);   // greeting + search in one branded band
         VBox.setMargin(locHint, new Insets(12, 16, 0, 16));
-        VBox content = new VBox(0, header, locHint, mapWrap, chips, nearby, list);
+        VBox content = new VBox(0, header, locHint, mapWrap, chipWrap, nearby, list);
         map.openOnRegion();
         map.enablePreview(b -> Nav.show(new BhDetailView(b.id(), () -> Nav.show(new StudentShell(), true)), true));
         ScrollPane sp = Ui.scroll(content); VBox.setVgrow(sp, Priority.ALWAYS);
         getChildren().add(sp);
         setMinWidth(0); content.setMinWidth(0); header.setMinWidth(0); top.setMinWidth(0); searchRow.setMinWidth(0);
-        searchBar.setMinWidth(0); mapWrap.setMinWidth(0); chips.setMinWidth(0); nearby.setMinWidth(0); sp.setMinWidth(0);
+        searchBar.setMinWidth(0); mapWrap.setMinWidth(0); chips.setMinWidth(0); chipWrap.setMinWidth(0); nearby.setMinWidth(0); sp.setMinWidth(0);
         fitMapHeight(720);                                                // until the first layout: a normal phone
         heightProperty().addListener((o, was, h) -> fitMapHeight(h.doubleValue()));
-        if (firstHome) entrance(header, mapWrap, chips, nearby);
+        if (firstHome) entrance(header, mapWrap, chipWrap, nearby);
         Async.run(bh::favoriteIds, f -> { favs = f; reload(); }, e -> reload());
         Async.run(bh::colleges, cs -> map.showColleges(cs), e -> {});   // every campus on the map
         startGps();
         ChangeListener<College> l = (o, a, b) -> { suppressionChanged(); reload(); };
         State.college.addListener(l);
         sceneProperty().addListener((o, was, sc) -> { State.college.removeListener(l); if (sc != null) State.college.addListener(l); });
-    }
-
-    /**
-     * Small glass chip on the map's top-left corner that says what the blue dot is doing: "Finding you...", "Live" or "Location off".
-     * Bound (weakly) to the Locator and State, so nothing has to be removed when the Home is left.
-     */
-    private HBox locationPill() {
-        javafx.scene.shape.Circle dot = new javafx.scene.shape.Circle(4);
-        Label text = Ui.label("", "live-pill-text");
-        text.setWrapText(false);
-        var st = Locator.get().status;
-        text.textProperty().bind(javafx.beans.binding.Bindings.createStringBinding(() -> {
-            if (st.get() == Locator.Status.REQUESTING && State.gps.get() == null) return "Finding you\u2026";
-            if (State.gps.get() == null) return "Location off";
-            return State.gpsApprox.get() ? "Approximate" : "Live";
-        }, st, State.gps, State.gpsApprox));
-        dot.fillProperty().bind(javafx.beans.binding.Bindings.createObjectBinding(() -> {
-            if (State.gps.get() == null) return st.get() == Locator.Status.REQUESTING ? Color.web("#FFB400") : Color.web("#B4B1C6");
-            return State.gpsApprox.get() ? Color.web("#FFB400") : Color.web("#2FBF71");
-        }, st, State.gps, State.gpsApprox));
-        HBox pill = new HBox(7, dot, text);
-        pill.setAlignment(Pos.CENTER_LEFT); pill.getStyleClass().add("live-pill");
-        pill.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-        pill.visibleProperty().bind(javafx.beans.binding.Bindings.createBooleanBinding(
-                () -> State.college.get() == null && (st.get() != Locator.Status.IDLE || State.gps.get() != null), st, State.college, State.gps));
-        pill.managedProperty().bind(pill.visibleProperty());
-        pill.setMouseTransparent(true);
-        return pill;
     }
 
     /**
@@ -209,7 +187,8 @@ public final class HomeView extends VBox {
         College c = State.college.get();
         String base = c != null ? String.format(java.util.Locale.ROOT, "Within %.1f km of %s", State.radiusKm.get(), c.name())
                 : ref != null ? "Closest to you first" : "Choose a campus to see what is close";
-        nearbySub.setText(base + " \u00B7 " + (n == 1 ? "1 place" : n + " places"));   // the count lives in the subtitle now (the mascot used to cover the pill)
+        nearbySub.setText(base + " \u00B7 " + (n == 1 ? "1 place" : n + " places"));
+        mapCount.setText(n == 1 ? "1 place nearby" : n + " places nearby"); hasCount.set(n > 0);   // the count lives in the subtitle now (the mascot used to cover the pill)
     }
 
     /** Colors the filled part of the radius track purple (JavaFX has no built-in filled track). */

@@ -1,3 +1,9 @@
+# v1.18.1 - Whole Home redesign, "Approximate" label removed
+- **Home header**: purple hero band with an amber glow, white greeting, headline "Find your place near campus" and the search bar floating on it.
+- **Tabs**: New / Hot / Best rated is now one full-width segmented control (dark pill = selected).
+- **Cards**: in the 2-column list the price sits on the photo as a dark chip, the text block is shorter, corners are rounder.
+- **Map**: the Live / Approximate / Location off chip is gone. A small "6 places nearby" chip shows instead (hidden while a campus is chosen, the radius bar uses that spot).
+
 # v1.18.0 - New live location marker + Home / map redesign
 - **Blue dot redesigned** (new `ui/LiveDot`): glossy blue-indigo core in a white ring with a soft shadow, two staggered ripple rings, and a fading **view cone** that turns the way you move (replaces the tiny arrow). First fix settles in from 82% size; pressing the locate button ends with a "found you" ring + pop on the dot.
 - **Home / map**: softer framed map (28 px corners, white frame), glass **Live / Finding you... / Approximate / Location off** chip on the map (hidden while a campus is chosen, the radius bar uses that spot), 46 px locate button with a clearer "on" state, lighter map colours (land, greens, water, buildings), press feedback on buttons, chips and cards, and a short staggered entrance on the first Home of a login only.
