@@ -1,0 +1,43 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:          # run it by hand: GitHub > Actions > Build Android APK > Run workflow
+  push:
+    tags: ['v*']              # or automatically for every version tag
+
+jobs:
+  android:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gluon GraalVM (Java 17)
+        uses: gluonhq/setup-graalvm@master
+        with:
+          graalvm: '22.1.0.1-Final'
+          jdk: 'java17'
+          arch: 'x86_64'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Maven 3.8.8 (GluonFX rejects 3.9.x)
+        uses: stCarolas/setup-maven@v5
+        with:
+          maven-version: 3.8.8
+
+      - name: Native build tools
+        run: sudo apt-get update && sudo apt-get install -y libz-dev zlib1g-dev
+
+      - name: Build and package
+        run: mvn -B gluonfx:build gluonfx:package 2>&1 | tee build.log
+
+      - name: Upload APK / AAB
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOFO-android
+          path: |
+            target/gluonfx/aarch64-android/**/*.apk
+            target/gluonfx/aarch64-android/**/*.aab
+            build.log
