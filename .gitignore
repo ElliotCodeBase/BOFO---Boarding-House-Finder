@@ -26,3 +26,27 @@ out-check/
 # Python caches
 __pycache__/
 *.pyc
+
+# Build output
+/target/
+
+# Old copies and backups
+/_backup_*/
+/BOFO---Boarding-House-Finder-main/
+/bofo/
+/*.zip
+/*.ps1
+
+# Secrets and local config
+.env
+.env.*
+*.key
+*.pem
+
+# IDE and OS files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+*.log
