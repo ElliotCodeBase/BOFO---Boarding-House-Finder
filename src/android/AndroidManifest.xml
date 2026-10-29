@@ -19,6 +19,10 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="bofo" android:host="auth-callback"/>
       </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
     </activity>
     <!-- Google account sheet inside the app (no browser). Opened by bofo://google-signin, see NativeGoogle.java -->
     <activity android:name="com.bofo.finder.android.GoogleSignInActivity" android:exported="true"
