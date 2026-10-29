@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.bofo</groupId>
   <artifactId>finder</artifactId>
-  <version>1.19.14</version>
+  <version>1.19.15</version>
   <name>BOFO Finder</name>
 
   <properties>
@@ -64,8 +64,8 @@
             <vendor>BOFO</vendor>
             <description>BOFO - Boarding House Finder</description>
             <packageType>apk</packageType>
-            <versionCode>78</versionCode>
-            <versionName>1.19.14</versionName>
+            <versionCode>79</versionCode>
+            <versionName>1.19.15</versionName>
           </releaseConfiguration>
         </configuration>
       </plugin>

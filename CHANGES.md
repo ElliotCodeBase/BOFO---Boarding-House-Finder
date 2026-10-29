@@ -1,3 +1,6 @@
+# v1.19.15 - Android build: Gluon license step
+- v1.19.14 got past the native compile, then `gluonfx:package` stopped asking for a Gluon license (https://gluonhq.com/activate). The workflow now runs `gluonhq/gluon-build-license@v1` with the repo secret `GLUON_LICENSE` before the build. Needs the secret (see HANDOFF.md). App version 1.19.15 (versionCode 79).
+
 # v1.19.14 - Android build fix (APK now builds for real)
 - Fix: the GitHub "Build Android APK" run showed green but built nothing. The native build stopped with `Error parsing resource configuration ... Invalid escape character` because the `resourcesList` patterns in `pom.xml` used `\.`. They now use `[.]`.
 - Workflow: the build step now fails (red) when Maven fails (`set -o pipefail`), the build log is uploaded as its own artifact `BOFO-build-log`, and `BOFO-android` holds only the `.apk` (the run fails if none is made). Actions bumped to checkout@v5 / upload-artifact@v5 (Node 20 warning).
