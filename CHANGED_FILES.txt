@@ -1,4 +1,0 @@
-BOFO Android v2.0.41 - OpenGL ES map engine (on top of v2.0.40). Unzip INTO C:\Users\user\bofo-finder, overwrite.
-changed  bofo-android/app/build.gradle  (2.0.41 / 241)
-changed  CHANGES_ANDROID.md, HANDOFF_ANDROID.md, REVERT_PROGRESS.md
-DELETE   nothing
