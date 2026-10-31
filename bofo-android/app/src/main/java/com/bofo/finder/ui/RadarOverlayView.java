@@ -32,6 +32,7 @@ public class RadarOverlayView extends android.view.View {
     private float t = 0.35f, pop = 1f, found = -1f;
     private float cx, cy;
     private boolean has, moving, running;
+    private long lastDraw;
 
     public RadarOverlayView(@NonNull Context c, float unit) {
         super(c);
@@ -78,7 +79,10 @@ public class RadarOverlayView extends android.view.View {
         anim.setRepeatCount(ValueAnimator.INFINITE);
         anim.addUpdateListener(a -> {
             t = (float) a.getAnimatedValue();
-            if (has && !moving && isShown()) {                 // hidden / scrolled away / camera moving: no work at all
+            long now = android.os.SystemClock.uptimeMillis();
+            if (now - lastDraw < 33) return;                   // ~30 fps is plenty for a soft ripple (a 120 Hz screen would repaint it 120 times a second)
+            if (has && !moving && isShown()) {
+                lastDraw = now;                 // hidden / scrolled away / camera moving: no work at all
                 float rr = 66f * unit;                          // only the square around the dot repaints (biggest ring = 45 style px)
                 invalidate((int) (cx - rr), (int) (cy - rr), (int) (cx + rr) + 1, (int) (cy + rr) + 1);
             }

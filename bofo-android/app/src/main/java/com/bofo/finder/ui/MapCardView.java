@@ -196,6 +196,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         b.mapHost.addView(mapView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         radar = new RadarOverlayView(getContext(), Math.min(1.75f, getResources().getDisplayMetrics().density));   // same unit as the map's pixelRatio
         b.mapHost.addView(radar, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        mapView.setMaximumFps(60);          // 120 Hz phones (realme 14 Pro+) would otherwise render the map up to 120 times a second while panning: double the GPU work, no visible gain
         mapView.onCreate(null);
         owner.getLifecycle().addObserver(this);        // replays onStart / onResume if the screen is already showing
         mapView.getMapAsync(this::onMapReady);

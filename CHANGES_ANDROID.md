@@ -1,3 +1,9 @@
+# v2.0.39 - Android port, lag fix 5: 120 Hz screens (JavaFX app stays v1.20.0)
+- The map is capped at 60 fps (`setMaximumFps(60)`) and the ripple overlay repaints at ~30 fps. A 120 Hz phone (realme 14 Pro+, Snapdragon 7s Gen 3 / Adreno 710) would otherwise draw the map up to 120 times a second while panning.
+- Changed: `MapCardView`, `RadarOverlayView`, `build.gradle` (2.0.39 / 239). Not built or run by Claude.
+
+---
+
 # v2.0.38 - Android port, lag fix 4: rounded-corner mask (JavaFX app stays v1.20.0)
 - `CornerMaskView` drew one huge inverse-fill shape over the whole map card, and the GPU replayed it every frame once the ripple overlay animated. It now draws four tiny corner pieces. `RadarOverlayView` also repaints only the square around the dot.
 - Changed: `CornerMaskView`, `RadarOverlayView`, `build.gradle` (2.0.38 / 238). Not built or run by Claude.
