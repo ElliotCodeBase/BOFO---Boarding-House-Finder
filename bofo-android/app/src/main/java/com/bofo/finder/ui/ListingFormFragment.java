@@ -97,6 +97,9 @@ public class ListingFormFragment extends Fragment {
     private final Set<String> selected = new LinkedHashSet<>();
     private boolean catalogLoaded, catalogFailed, expanded, adding;
     private Set<String> pendingSelected;                // edit mode: ids to tick once the catalog is there
+    private final List<String> rules = new ArrayList<>();   // house rules typed by the owner
+    private static final int MAX_RULES = 20;
+    private boolean rulesColumn;                        // edit mode: the place came back with a rules column (011_rules.sql is run)
     private boolean[] freeFlags;                        // edit mode, old places: water / electricity / wifi columns
 
     @Override
@@ -148,6 +151,9 @@ public class ListingFormFragment extends Fragment {
         });
         b.amenSearch.setOnEditorActionListener((v, id, ev) -> { addTyped(); return true; });
         b.amenMore.setOnClickListener(v -> { expanded = !expanded; renderAmenities(); });
+        b.ruleAdd.setOnClickListener(v -> addRule());
+        b.ruleInput.setOnEditorActionListener((v, id, ev) -> { addRule(); return true; });
+        renderRules();
         buildMap();
         loadCatalog();
         photoCount();
@@ -576,6 +582,45 @@ public class ListingFormFragment extends Fragment {
         return false;
     }
 
+    // ------------------------------------------------------------------ house rules
+
+    private void addRule() {
+        String t = text(b.ruleInput).replaceAll("\\s+", " ");
+        if (t.isEmpty()) return;
+        if (rules.size() >= MAX_RULES) { ListArea.toast(this, getString(R.string.form_rules_max, MAX_RULES)); return; }
+        boolean dup = false;
+        for (String r : rules) if (r.equalsIgnoreCase(t)) dup = true;
+        if (!dup) rules.add(t);
+        b.ruleInput.setText("");
+        renderRules();
+    }
+
+    private void renderRules() {
+        b.rulesList.removeAllViews();
+        for (int i = 0; i < rules.size(); i++) {
+            final int idx = i;
+            android.widget.LinearLayout row = new android.widget.LinearLayout(requireContext());
+            row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            android.widget.TextView t = new android.widget.TextView(requireContext());
+            t.setText("\u2022  " + rules.get(i));
+            t.setTextSize(14f);
+            t.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.bofo_text));
+            row.addView(t, new android.widget.LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            android.widget.TextView x = new android.widget.TextView(requireContext());
+            x.setText("\u2715");
+            x.setTextSize(16f);
+            x.setGravity(android.view.Gravity.CENTER);
+            x.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.bofo_text_2));
+            x.setContentDescription(getString(R.string.form_rules_remove));
+            int pad = (int) (12 * getResources().getDisplayMetrics().density);
+            x.setPadding(pad, pad, pad, pad);
+            x.setOnClickListener(v -> { if (idx < rules.size()) rules.remove(idx); renderRules(); });
+            row.addView(x);
+            b.rulesList.addView(row);
+        }
+    }
+
     // ------------------------------------------------------------------ edit mode
 
     private void startEdit() {
@@ -599,6 +644,11 @@ public class ListingFormFragment extends Fragment {
                 }
                 freeFlags = null;                                    // the real amenity rows win over the old columns
             }
+            JSONArray rl = o.optJSONArray("rules");
+            rulesColumn = rl != null;
+            rules.clear();
+            if (rl != null) for (int i = 0; i < rl.length(); i++) { String r = rl.optString(i, "").trim(); if (!r.isEmpty()) rules.add(r); }
+            renderRules();
             applyPending();
             renderAmenities();
             if (!o.isNull("lat") && !o.isNull("lng")) {
@@ -641,6 +691,9 @@ public class ListingFormFragment extends Fragment {
         d.priceMode = b.modeRoom.isChecked() ? "per_room" : "per_bed";
         d.lat = pinLat; d.lng = pinLng;
         d.amenityIds.addAll(selected);
+        addRule();                                                    // a rule typed but not yet added is kept
+        d.rules.addAll(rules);
+        d.syncRules = editId != null && rulesColumn;                  // never write a column the database does not have yet
         d.syncAmenities = catalogLoaded;                              // never wipe a place's amenities when the catalog could not be read
         d.water = has("Free water"); d.electricity = has("Free electricity"); d.wifi = has("Free Wi-Fi");   // old columns stay in sync
         if (!catalogLoaded && editId != null) { d.water = freeFlags != null && freeFlags[0]; d.electricity = freeFlags != null && freeFlags[1]; d.wifi = freeFlags != null && freeFlags[2]; }

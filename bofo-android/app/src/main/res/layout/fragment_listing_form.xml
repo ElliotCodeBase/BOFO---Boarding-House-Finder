@@ -297,6 +297,43 @@
                     android:layout_height="wrap_content"
                     android:textColor="@color/bofo_text_2"
                     android:textSize="13sp" />
+
+                <TextView android:id="@+id/rules_label" style="@style/Text.Form.Label" android:text="@string/form_rules" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/form_rules_hint"
+                    android:textColor="@color/bofo_text_2"
+                    android:textSize="13sp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <EditText
+                        android:id="@+id/rule_input"
+                        style="@style/Widget.Form.Input"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:autofillHints="no"
+                        android:hint="@string/form_rules_input"
+                        android:imeOptions="actionDone"
+                        android:inputType="textCapSentences"
+                        android:maxLength="100" />
+                    <Button
+                        android:id="@+id/rule_add"
+                        style="@style/Widget.Bofo.Button.Tint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/form_rules_add" />
+                </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/rules_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="vertical" />
             </LinearLayout>
 
             <!-- page 4: contact and review -->
