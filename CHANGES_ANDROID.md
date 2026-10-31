@@ -1,3 +1,8 @@
+# v2.0.68 - Android: blank Home map reloads itself (watchdog)
+- **Fixed:** after leaving a place page the Home map could stay light blue (no land, water or roads). The map reported "fully drawn" even though its tile source had failed, so v2.0.67 never retried.
+- **Now:** 6 s after the map style loads (and every time Home resumes) the map checks whether anything is actually drawn (land, water, roads, buildings). If nothing is, it loads the style again (up to 6 tries), which fetches the tiles again.
+- Files: `MapCardView.java` (`blankCheck`, `scheduleBlankCheck`), `build.gradle` (2.0.68 / 268). Not built or run by Claude.
+
 # v2.0.67 - Android: Home map refreshes by itself
 - **Fixed:** the Home map could stay blank (light blue, no roads / pins) after coming back from a place page, on slow internet, or after the internet dropped and returned.
 - **Now:** if the map did not finish drawing, it asks for the tiles again after 5 s (up to 6 tries, stops as soon as it is fully drawn); it also reloads at once when the internet comes back, and re-checks when you return to the screen. Pins, radius ring and route are redrawn; the camera does not jump.

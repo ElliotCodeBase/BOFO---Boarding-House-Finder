@@ -225,6 +225,20 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private static final int MAX_STYLE_RETRIES = 6;
     private static final long REFRESH_DELAY_MS = 5000;
     private final Runnable refreshMap = this::reloadStyle;
+    private static final long BLANK_CHECK_MS = 6000;
+    /** v2.0.68: a failed tile source still counts as "fully rendered", so also look at what is on screen: no land / water / road drawn = blank map = load it again. */
+    private final Runnable blankCheck = () -> {
+        if (map == null || mapView == null || style == null || mapView.getWidth() == 0) return;
+        java.util.List<Feature> drawn = map.queryRenderedFeatures(new android.graphics.RectF(0, 0, mapView.getWidth(), mapView.getHeight()),
+                "landcover", "park", "landuse", "water", "waterway", "building", "road-minor", "road-major");
+        if (drawn.isEmpty()) { if (styleRetries < MAX_STYLE_RETRIES) reloadStyle(); }
+        else styleRetries = 0;
+    };
+
+    private void scheduleBlankCheck() {
+        removeCallbacks(blankCheck);
+        postDelayed(blankCheck, BLANK_CHECK_MS);
+    }
 
     private void scheduleRefresh() {
         if (map == null || styleRetries >= MAX_STYLE_RETRIES) return;
@@ -238,7 +252,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         String json = loadStyle(getContext());
         if (json == null) return;
         styleRetries++;
-        map.setStyle(new Style.Builder().fromJson(json), st -> { style = st; addLayers(st); render(); });
+        map.setStyle(new Style.Builder().fromJson(json), st -> { style = st; addLayers(st); render(); scheduleBlankCheck(); });
     }
 
     private static void capCache(Context app) {
@@ -270,7 +284,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         });      // pins / clusters / labels depend on the zoom
         String json = loadStyle(getContext());
         if (json == null) return;
-        m.setStyle(new Style.Builder().fromJson(json), st -> { style = st; addLayers(st); render(); post(this::applyCamera); });
+        m.setStyle(new Style.Builder().fromJson(json), st -> { style = st; addLayers(st); render(); post(this::applyCamera); scheduleBlankCheck(); });
     }
 
     /** Lag test only (map.mode=raster): one raster layer of ready-made picture tiles, like the JavaFX app shows. OpenStreetMap tiles are for TESTING; pick a licensed raster plan before release. */
@@ -998,14 +1012,14 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     // ---- lifecycle ---------------------------------------------------------------------------------------------
 
     @Override public void onStart(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onStart(); }
-    @Override public void onResume(@NonNull LifecycleOwner o) { if (mapView != null) { mapView.onResume(); if (map != null && style != null && !renderedFully) scheduleRefresh(); } startRipples(); applyRouteOpacity(); }   // picks up the Settings switch
+    @Override public void onResume(@NonNull LifecycleOwner o) { if (mapView != null) { mapView.onResume(); if (map != null && style != null) { if (!renderedFully) scheduleRefresh(); styleRetries = 0; scheduleBlankCheck(); } } startRipples(); applyRouteOpacity(); }   // picks up the Settings switch
     @Override public void onPause(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onPause(); stopRipples(); }
     @Override public void onStop(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onStop(); }
 
     @Override
     public void onDestroy(@NonNull LifecycleOwner o) {
         o.getLifecycle().removeObserver(this);
-        removeCallbacks(refreshMap);
+        removeCallbacks(refreshMap); removeCallbacks(blankCheck);
         stopRipples(); stopLocatePulse();
         if (pop != null) pop.cancel();
         if (found != null) found.cancel();
