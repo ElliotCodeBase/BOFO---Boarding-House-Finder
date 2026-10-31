@@ -1,3 +1,7 @@
+# v2.0.47 - Android port: Directions card refreshes by itself (JavaFX app stays v1.20.0)
+- Place > Directions: if the route cannot be worked out (weak signal, slow server) the card now keeps loading and **tries again by itself** (up to 5 times, 2 s, 4 s, 6 s...) instead of stopping at an empty box with a Retry button. The Retry button only shows after the 5th failure.
+- Changed: `DirectionsCardView.java`, `build.gradle` (2.0.47 / 247). Not built by Claude.
+
 # v2.0.46 - Android port: locate button zooms out fast (JavaFX app stays v1.20.0)
 - Dashboard map: the round locate button is now a toggle. First tap = fly to you (uses the saved position at once), second tap = zoom back out to all your places. Before, there was no quick way back out.
 - Map camera jumps (`moveTo`) now take a fixed 0.5 s instead of the slow default fly time (also used by Home and the Create map).

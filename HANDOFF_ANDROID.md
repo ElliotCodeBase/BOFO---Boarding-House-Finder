@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.47 Directions auto-retry (2026-10-31)
+- **PR title:** `v2.0.47 - Android: Directions card retries by itself`
+- `DirectionsCardView.runPlan(t, my, from, to, tries)`; guarded by `token` and `planning`. If the user means "update as the phone moves", that already happens through `onFix` / `startWatching`.
+
+---
+
 # Handoff (Android) - v2.0.46 locate toggle (2026-10-31)
 - **PR title:** `v2.0.46 - Android: Dashboard locate button toggles you / all places, faster camera moves`
 - If the user still finds it slow: the first tap with no saved fix waits for GPS (`LocationHelper.requestOnce`); consider `lastKnown` first.
