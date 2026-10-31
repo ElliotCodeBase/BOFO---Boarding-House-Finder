@@ -143,6 +143,19 @@ public class BofoChatOverlay extends FrameLayout {
 
     public void setOnAction(@Nullable BofoActionListener l) { actionListener = l; }
 
+    /** Result of asking for the phone position: ok = a position is now known; reasonRes = a string explaining why not (0 = none). */
+    public interface GateResult { void done(boolean ok, int reasonRes); }
+    /** The host (ShellFragment) turns location on when a question needs it: permission, phone Location popup, then one position read. */
+    public interface LocationGate { void ensure(GateResult r); }
+    private LocationGate locationGate;
+    public void setLocationGate(@Nullable LocationGate g) { locationGate = g; }
+
+    private static final java.util.regex.Pattern WANTS_LOCATION = java.util.regex.Pattern.compile(
+            "near|closest|malapit|lapit|layo|\\bfar\\b|distance|walk|to me\\b|from me\\b|my location|sa akin|sa akon", java.util.regex.Pattern.CASE_INSENSITIVE);
+    private static boolean haveLocation() {
+        return (BrowseState.nearMe && BrowseState.userLat != null && BrowseState.userLng != null) || (BrowseState.deviceLat != null && BrowseState.deviceLng != null);
+    }
+
     private final List<BofoAiService.Turn> history = new ArrayList<>();     // last 6 turns, memory only
     private BofoActionListener actionListener;
     private View typing, chipsRow;
@@ -166,6 +179,17 @@ public class BofoChatOverlay extends FrameLayout {
         b.mascot.idle(BofoMascot.Idle.THINKING);
         showTyping();
         final int my = ++token;
+        if (locationGate != null && !haveLocation() && WANTS_LOCATION.matcher(q).find()) {
+            // "nearest ..." with no position yet: turn location on now (permission + phone popup), then ask.
+            locationGate.ensure((ok, reasonRes) -> {
+                if (my != token) return;
+                if (!ok && reasonRes != 0 && BrowseState.collegeId == null) { finish(); reply(getContext().getString(reasonRes)); return; }   // nothing to measure from
+                call(q, past, lastIds, my);                                                                                             // position found, or a campus is chosen
+            });
+        } else call(q, past, lastIds, my);
+    }
+
+    private void call(String q, List<BofoAiService.Turn> past, List<String> lastIds, int my) {
         final String college = BrowseState.collegeId;
         Async.run(() -> new BofoAiService().ask(q, past, college), (BofoAnswer a) -> {
             if (my != token) return;
@@ -324,12 +348,25 @@ public class BofoChatOverlay extends FrameLayout {
         return new ArrayList<>();
     }
 
+    /** **word** becomes bold text; leftover markdown marks (an unmatched **, backticks) are dropped so no symbols show. */
+    private static CharSequence bold(String t) {
+        String[] parts = t.replace("`", "").split("\\*\\*", -1);
+        android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder();
+        for (int i = 0; i < parts.length; i++) {
+            int start = sb.length();
+            sb.append(parts[i]);
+            boolean closed = i % 2 == 1 && i < parts.length - 1;       // between a pair of ** **
+            if (closed) sb.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), start, sb.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        return sb;
+    }
+
     private void say(String text, boolean mine) {
         LayoutInflater in = LayoutInflater.from(getContext());
         View root; TextView body;
         if (mine) { ItemMsgMineBinding m = ItemMsgMineBinding.inflate(in, b.chatBox, false); root = m.getRoot(); body = m.body; m.meta.setVisibility(View.GONE); }
         else { ItemMsgTheirsBinding m = ItemMsgTheirsBinding.inflate(in, b.chatBox, false); root = m.getRoot(); body = m.body; m.meta.setVisibility(View.GONE); }
-        body.setText(text);
+        body.setText(mine ? text : bold(text));                   // the AI marks names and prices with **...**: show them bold, never the asterisks
         b.chatBox.addView(root);
         b.scroll.post(() -> b.scroll.fullScroll(View.FOCUS_DOWN));
     }

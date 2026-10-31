@@ -33,6 +33,8 @@ public final class BrowseState {
     /** "Near me" (Stage 5): distances are measured from the phone's position instead of a campus. Memory only, never saved. */
     public static boolean nearMe;
     public static Double userLat, userLng;
+    /** The phone's last known position, read when Ask BOFO opens (permission + Settings > Use my location). Sent to the chat only; never changes the campus or Near me. Memory only. */
+    public static Double deviceLat, deviceLng;
     public static Double minPrice, maxPrice;
     public static final Set<String> amenityIds = new LinkedHashSet<>();
     /** Step 9: Explore sort (ExploreRules.SORT_*) and amenities picked from the built-in fallback list (matched by name on the cards). */
@@ -103,7 +105,7 @@ public final class BrowseState {
     /** New sign-in: forget the previous user. */
     public static void reset() {
         loaded = false; me = null; collegeId = null; colleges = new ArrayList<>();
-        nearMe = false; userLat = null; userLng = null;
+        nearMe = false; userLat = null; userLng = null; deviceLat = null; deviceLng = null;
         radiusKm = RADIUS_DEFAULT; clearFilters();
     }
 }

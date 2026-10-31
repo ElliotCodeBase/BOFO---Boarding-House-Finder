@@ -26,9 +26,12 @@ public final class BofoAiService {
     /** Full answer: reply + real listings + compare table + actions. Sends the campus / Near me position and the last 6 turns. */
     public BofoAnswer ask(String message, List<Turn> history, String collegeId) throws Exception {
         JSONObject body = new JSONObject().put("message", message).put("college_id", collegeId == null ? JSONObject.NULL : collegeId);
-        boolean near = BrowseState.nearMe && BrowseState.userLat != null && BrowseState.userLng != null;
+        // The phone's position is sent automatically when known (Near me fix first, else the one read when the chat opened).
+        Double lat = BrowseState.nearMe && BrowseState.userLat != null ? BrowseState.userLat : BrowseState.deviceLat;
+        Double lng = BrowseState.nearMe && BrowseState.userLng != null ? BrowseState.userLng : BrowseState.deviceLng;
+        boolean near = lat != null && lng != null;
         body.put("near_me", near).put("radius_km", BrowseState.radiusKm);
-        if (near) body.put("lat", BrowseState.userLat).put("lng", BrowseState.userLng);
+        if (near) body.put("lat", lat).put("lng", lng);
         JSONArray h = new JSONArray();
         List<String> lastIds = List.of();
         int from = Math.max(0, history.size() - 6);

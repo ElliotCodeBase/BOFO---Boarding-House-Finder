@@ -21,6 +21,8 @@ import com.bofo.finder.databinding.FragmentShellBinding;
 import com.bofo.finder.model.BofoAnswer;
 import com.bofo.finder.service.ChatService;
 import com.bofo.finder.util.Async;
+import com.bofo.finder.util.AppPrefs;
+import com.bofo.finder.util.LocationHelper;
 import com.bofo.finder.util.BrowseState;
 import com.bofo.finder.util.ExploreHandoff;
 import com.bofo.finder.util.Favorites;
@@ -44,10 +46,13 @@ public class ShellFragment extends Fragment {
     private int selectedTab = 0;
     private OnBackPressedCallback closeBofo;      // Back closes the Ask BOFO card first
     private boolean owner, admin;
+    private LocationHelper loc;                   // reads the phone position for Ask BOFO
+    private boolean askedLocation;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        loc = new LocationHelper(this);
         // A fresh shell means a fresh sign-in: forget the previous user's campus, filters and saved places.
         if (savedInstanceState == null) {
             BrowseState.reset();
@@ -108,6 +113,7 @@ public class ShellFragment extends Fragment {
         });
         binding.bofoFab.setOnClickListener(v -> openBofo());
         binding.bofoChat.setOnAction(this::runBofoAction);
+        binding.bofoChat.setLocationGate(this::ensureLocationForChat);
 
         binding.dock.setListener(new DockBarView.Listener() {
             @Override public void onTab(int id) { showTab(id); refreshBadge(); }
@@ -181,9 +187,51 @@ public class ShellFragment extends Fragment {
         FloatingBofoView f = binding.bofoFab;
         float cx = f.getLeft() + f.getTranslationX() + f.getWidth() / 2f;
         float cy = f.getTop() + f.getTranslationY() + f.getHeight() / 2f;
+        refreshDeviceLocation();
         f.setChatOpen(true);
         binding.bofoChat.open(cx, cy);
         closeBofo.setEnabled(true);
+    }
+
+    /**
+     * Gives Ask BOFO the phone's position without the user doing anything. Respects Settings > Use my location and the permission:
+     * only reads when the permission is already granted. The permission and the phone's Location popup come from ensureLocationForChat. Failures are silent.
+     */
+    private void refreshDeviceLocation() {
+        if (getContext() == null || loc == null) return;
+        if (!AppPrefs.useLocation(requireContext())) { BrowseState.deviceLat = null; BrowseState.deviceLng = null; return; }
+        if (!LocationHelper.granted(requireContext())) return;        // never asks here: the chat asks when a question needs the position
+        if (askedLocation && BrowseState.deviceLat == null) return;
+        askedLocation = true;
+        loc.requestOnce(new LocationHelper.Callback() {
+            @Override public void got(double lat, double lng) { BrowseState.deviceLat = lat; BrowseState.deviceLng = lng; }
+            @Override public void off() { }
+            @Override public void denied() { }
+            @Override public void failed() { }
+        });
+    }
+
+    /** A question needs the phone position and none is known: ask for the permission, show the phone's \"Turn on location?\" popup, read one position. */
+    private void ensureLocationForChat(BofoChatOverlay.GateResult r) {
+        if (getContext() == null || loc == null) { r.done(false, 0); return; }
+        final boolean[] fin = {false};
+        final android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+        final Runnable[] timeout = new Runnable[1];
+        final java.util.function.BiConsumer<Boolean, Integer> finish = (ok, res) -> {
+            if (fin[0]) return;
+            fin[0] = true; h.removeCallbacks(timeout[0]);
+            r.done(ok, res);
+        };
+        timeout[0] = () -> finish.accept(false, R.string.loc_failed);          // never leave the chat waiting
+        h.postDelayed(timeout[0], 20_000);
+        askedLocation = true;
+        loc.requestOnce(new LocationHelper.Callback() {
+            @Override public void got(double lat, double lng) { BrowseState.deviceLat = lat; BrowseState.deviceLng = lng; finish.accept(true, 0); }
+            @Override public void off() { finish.accept(false, R.string.loc_off); }
+            @Override public void denied() { finish.accept(false, R.string.loc_denied); }
+            @Override public void failed() { finish.accept(false, R.string.loc_failed); }
+            @Override public void servicesOff() { finish.accept(false, R.string.loc_services_off); }
+        });
     }
 
     /** Ask BOFO action chips / result cards. The chat card closes first, then the app navigates (map with only those pins, detail, Explore with filters). */
@@ -259,6 +307,7 @@ public class ShellFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        if (loc != null) loc.stop();
         binding = null;
         super.onDestroyView();
     }
