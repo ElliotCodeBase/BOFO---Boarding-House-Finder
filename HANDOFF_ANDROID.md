@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.77 Home header
+- **PR title:** `v2.0.77 - Android: nicer Home header (avatar ring, soft bell, floating search bar)`
+- Layout / drawables only, no Java change: `fragment_home.xml` greeting row + `search_pill` (ids unchanged), new `bg_avatar_ring`, `bg_icon_soft`, reworked `bg_bell_button`, `bg_search_pill` (radius 28 dp, shared with `fragment_explore.xml`). No Supabase change. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.76 One map credit
 - **PR title:** `v2.0.76 - Android: remove the duplicate blue map (i)`
 - `MapCardView.onMapReady`: `setAttributionEnabled(false)` (the native MapLibre button duplicated our `setupAttribution` credit). No Supabase change. Not built or run by Claude.
