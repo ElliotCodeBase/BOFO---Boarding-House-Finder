@@ -1,3 +1,9 @@
+# v2.0.58 - Android: Ask BOFO no longer shows the AI's thinking in the chat
+- Cause (seen in a screenshot after "List all BH"): the free model is a reasoning model and returned its own thinking ("The user wants to list all boarding houses. I have 5 results. I need to present them...") as the answer. The reply was cut at the token limit, so it ended mid-sentence.
+- `bofo-chat/index.ts` (**redeploy**): the request now asks OpenRouter to leave the reasoning out; `<think>` blocks are stripped; an answer that looks like thinking (starts with "The user wants / I need to / I must ..." or repeats the prompt rules) is thrown away, the next model is tried, and then the code template answers (real listings, correct names and prices). The wording prompt also says "output only the final reply". The bad answer is logged in Supabase > Edge Functions > Logs.
+- "List all BH" (also "lahat", "tanan") now returns up to 5 places instead of 3.
+- Files: `supabase/functions/bofo-chat/index.ts` (**redeploy**), `build.gradle` (2.0.58 / 258). Not built or run by Claude (the leak check was tested on the screenshot text and 4 normal replies with Node).
+
 # v2.0.57 - Android: Ask BOFO answers much faster
 - Cause: every question made TWO model calls one after the other (understand, then word the answer), each up to 12 s per model and up to every model in `LLM_MODELS`; the chat also waited up to 20 s for the phone position even with a college chosen.
 - `bofo-chat/index.ts` (**redeploy**): the rules answer most questions with no model call at all (the model is only asked when the rules cannot place the message); the answer is worded by the code template (set secret `LLM_WORDING=1` to let the model word every answer again); at most 2 models, 5-6 s each instead of 12 s.

@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.58 Ask BOFO reasoning leak
+- **PR title:** `v2.0.58 - Android: Ask BOFO no longer shows the AI's thinking in the chat`
+- Only `bofo-chat/index.ts` (+ build.gradle 2.0.58 / 258). `callLLM(..., accept)` strips `<think>` blocks and rejects answers where `looksLikeReasoning()` is true (next model, then template); request body has `reasoning: { exclude: true }`; `parseLocal` sets `limit = 5` for "all / lahat / tanan". **`supabase functions deploy bofo-chat` required.** If it still leaks, check Edge Function logs for "unusable answer" and consider removing the reasoning model from `LLM_MODELS`. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.57 faster Ask BOFO
 - **PR title:** `v2.0.57 - Android: Ask BOFO answers much faster`
 - `bofo-chat/index.ts`: `fast = parseLocal()` first, LLM classify only when `fast.intent === "unknown"`; wording LLM only for chit-chat unless `LLM_WORDING=1`; `callLLM` timeout 5-6 s, max 2 models. `BofoChatOverlay`: location gate skipped when `BrowseState.collegeId != null`. **`supabase functions deploy bofo-chat` required.** Not built or run by Claude.
