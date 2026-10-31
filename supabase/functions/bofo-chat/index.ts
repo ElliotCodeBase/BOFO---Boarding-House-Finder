@@ -95,9 +95,9 @@ function matchNames(names: string[], pool: Card[]): { found: Card[]; missing: { 
 
 // ------------------------------------------------------------------ LLM (OpenRouter, free models with automatic fallback)
 async function callLLM(system: string, user: string, maxTokens: number): Promise<string | null> {
-  const key = Deno.env.get("OPENROUTER_API_KEY");
+  const key = (Deno.env.get("OPENROUTER_API_KEY") ?? "").trim();
   const models = (Deno.env.get("LLM_MODELS") ?? "").split(",").map((m) => m.trim()).filter(Boolean);
-  if (!key || !models.length) return null;
+  if (!key || !models.length) { console.error("bofo-chat: OPENROUTER_API_KEY or LLM_MODELS is not set (secrets missing) -> rule-based answers only"); return null; }
   for (const model of models) {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 8000);
@@ -107,11 +107,11 @@ async function callLLM(system: string, user: string, maxTokens: number): Promise
         headers: { "content-type": "application/json", authorization: `Bearer ${key}`, "X-Title": "BOFO Finder" },
         body: JSON.stringify({ model, max_tokens: maxTokens, temperature: 0.2, messages: [{ role: "system", content: system }, { role: "user", content: user }] }),
       });
-      if (!r.ok) continue;                                   // 429 / 5xx / bad model id -> next model
+      if (!r.ok) { console.error(`bofo-chat: model ${model} -> HTTP ${r.status} ${(await r.text()).slice(0, 200)}`); continue; }   // 429 / 5xx / bad model id -> next model
       const out = await r.json();
       const text = out?.choices?.[0]?.message?.content;
       if (typeof text === "string" && text.trim()) return text;
-    } catch (_e) { /* timeout / network -> next model */ } finally { clearTimeout(timer); }
+    } catch (e) { console.error(`bofo-chat: model ${model} failed: ${String(e).slice(0, 150)}`); /* timeout / network -> next model */ } finally { clearTimeout(timer); }
   }
   return null;
 }
