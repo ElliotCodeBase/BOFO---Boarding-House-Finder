@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bofo_close">Close</string>
+    <string name="bofo_note">BOFO can make mistakes. Check details with the owner.</string>
+</resources>

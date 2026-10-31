@@ -13,35 +13,39 @@ import com.bofo.finder.R;
 import com.bofo.finder.databinding.FragmentHomeBinding;
 import com.bofo.finder.model.BoardingHouse;
 import com.bofo.finder.model.College;
+import com.bofo.finder.model.Profile;
 import com.bofo.finder.service.BhService;
 import com.bofo.finder.util.AppPrefs;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BrowseState;
 import com.bofo.finder.util.Connectivity;
+import com.bofo.finder.util.CampusMatch;
 import com.bofo.finder.util.ErrorText;
 import com.bofo.finder.util.Favorites;
+import com.bofo.finder.util.ExploreHandoff;
 import com.bofo.finder.util.ListRules;
 import com.bofo.finder.util.LocationHelper;
 import com.bofo.finder.util.PriceRange;
-import com.bofo.finder.util.Regions;
-import com.google.android.material.chip.Chip;
+import com.bumptech.glide.Glide;
 import com.google.android.material.slider.Slider;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-/** Home: campus row, New / Hot / Best rated tabs, rent range, radius slider and the card grid. */
+/** Home: greeting row, one search bar (campus dropdown), New / Hot / Best rated tabs, rent range, radius slider and the card grid. */
 public class HomeFragment extends Fragment {
 
     private static final BhService.Tab[] TABS = {BhService.Tab.NEW, BhService.Tab.HOT, BhService.Tab.BEST};
-    private static final int CAMPUS_CHIPS = 8;
 
     private record Result(List<BoardingHouse> list, PriceRange range) { }
 
     private FragmentHomeBinding b;
     private BhAdapter adapter;
     private ListArea area;
+    private HomeSearchBar search;
+    private String paintedPhoto = "";
     private int token;
     private int lastChange = -1;
     private int tab;
@@ -69,7 +73,13 @@ public class HomeFragment extends Fragment {
         b.tabs.addTab(b.tabs.newTab().setText(R.string.home_tab_best));
         ListArea.onTab(b.tabs, pos -> { tab = pos; reload(); });
 
-        b.campusBtn.setOnClickListener(v -> new CampusPickerSheet().show(getChildFragmentManager(), "campus"));
+        // Greeting row + the ONE search bar (Step 3, v2.0.21)
+        search = new HomeSearchBar(this, b, new HomeSearchBar.Host() {
+            @Override public void nearMe() { askNearMe(); }
+            @Override public void searchPlace(String text) { openExplore(text); }
+        });
+        b.bell.setOnClickListener(v -> say(R.string.home_bell_toast));
+        paintGreeting();
         b.radius.addOnChangeListener((s, value, fromUser) -> paintRadiusLabel(value));
         b.radius.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
             @Override public void onStartTrackingTouch(@NonNull Slider s) { }
@@ -130,10 +140,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void paintCampus() {
-        College campus = BrowseState.campus();
         boolean ref = BrowseState.hasRef();
-        b.campusBtn.setText(campus != null ? getString(R.string.home_campus_set, campus.name())
-                : BrowseState.nearMe ? getString(R.string.home_near_you) : getString(R.string.home_campus_none));
         b.sectionTitle.setText(ref ? R.string.home_nearby : R.string.home_all);
         b.radiusBox.setVisibility(ref ? View.VISIBLE : View.GONE);
         if (ref) {
@@ -141,25 +148,33 @@ public class HomeFragment extends Fragment {
             if (b.radius.getValue() != v) b.radius.setValue(v);
             paintRadiusLabel(v);
         }
-        // nearest colleges first: from the chosen campus, else from the phone (Near me), else from the middle of the user's region, else A-Z
-        Double lat = BrowseState.refLat();
-        Double lng = BrowseState.refLng();
-        if (lat == null && BrowseState.me != null) {
-            Regions.Region r = Regions.byKey(BrowseState.me.region());
-            if (r != null) { lat = r.lat(); lng = r.lng(); }
+        if (search != null) search.syncFromState();       // the search bar shows the chosen campus / Near me
+        paintGreeting();                                  // the profile may have arrived with this load
+    }
+
+    /** "Good morning" / "Good afternoon" / "Good evening", first name (or "there"), avatar photo or initials. */
+    private void paintGreeting() {
+        if (b == null || !isAdded()) return;
+        int h = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        b.greetingHello.setText(h < 12 ? R.string.home_good_morning : h < 18 ? R.string.home_good_afternoon : R.string.home_good_evening);
+        Profile me = BrowseState.me;
+        String full = me == null ? "" : me.fullName();
+        String first = CampusMatch.firstName(full);
+        b.greetingName.setText(first.isEmpty() ? getString(R.string.home_name_there) : first);
+        b.avatarInitials.setText(CampusMatch.initialsOf(full));
+        String url = me == null || me.photoUrl() == null ? "" : me.photoUrl().trim();
+        if (!url.equals(paintedPhoto)) {
+            paintedPhoto = url;
+            if (url.isEmpty()) { Glide.with(b.avatarImg).clear(b.avatarImg); b.avatarImg.setImageDrawable(null); }
+            else Glide.with(b.avatarImg).load(url).circleCrop().into(b.avatarImg);
         }
-        List<College> near = ListRules.nearestFirst(BrowseState.colleges, lat, lng);
-        b.campusChips.removeAllViews();
-        Chip me = Chips.create(b.campusChips, getString(R.string.home_chip_near_me), true, BrowseState.nearMe);
-        me.setOnClickListener(v -> { if (BrowseState.nearMe) BrowseState.clearNearMe(); else askNearMe(); });
-        b.campusChips.addView(me);
-        for (int i = 0; i < Math.min(CAMPUS_CHIPS, near.size()); i++) {
-            final College col = near.get(i);
-            boolean on = col.id().equals(BrowseState.collegeId);
-            Chip chip = Chips.create(b.campusChips, col.name(), true, on);
-            chip.setOnClickListener(v -> BrowseState.setCampus(on ? null : col));
-            b.campusChips.addView(chip);
-        }
+    }
+
+    /** Enter on text that is not a campus: Explore opens with it already typed in. */
+    private void openExplore(String text) {
+        ExploreHandoff.set(text);
+        Fragment p = getParentFragment();
+        if (p instanceof ShellFragment) ((ShellFragment) p).openExplore();
     }
 
     // ---- location + map (Stage 5) ----------------------------------------------------------------------------
@@ -245,6 +260,7 @@ public class HomeFragment extends Fragment {
         token++;                       // late results are ignored
         loc.stop();
         if (area != null) area.destroy();
+        search = null;
         b = null;
         super.onDestroyView();
     }

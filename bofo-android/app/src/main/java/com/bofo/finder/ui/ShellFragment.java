@@ -8,6 +8,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -28,6 +29,7 @@ public class ShellFragment extends Fragment {
     private FragmentShellBinding binding;
     /** Last tab shown by this instance (0 = none yet). Lets Back from a pushed screen (detail, edit profile) return to the same tab. */
     private int selectedTab = 0;
+    private OnBackPressedCallback closeBofo;      // Back closes the Ask BOFO card first
     private boolean owner, admin;          // owners get My places / Chats / Profile (8b); admins get Queue / Reports / Payments / Profile (8h)
 
     @Override
@@ -37,6 +39,7 @@ public class ShellFragment extends Fragment {
         if (savedInstanceState == null) {
             BrowseState.reset();
             Favorites.reset();
+            FloatingBofoView.forgetPosition();
         }
     }
 
@@ -62,6 +65,8 @@ public class ShellFragment extends Fragment {
                 FrameLayout.LayoutParams fab = (FrameLayout.LayoutParams) binding.bofoFab.getLayoutParams();
                 fab.bottomMargin = Math.round(96 * dp) + bars.bottom;
                 binding.bofoFab.setLayoutParams(fab);
+                binding.bofoFab.setBounds(Math.round(8 * dp), Math.round(90 * dp) + bars.bottom);   // stays above the tab bar
+                binding.bofoChat.setBottomOffset(Math.round(90 * dp) + bars.bottom);
             }
             return insets;
         });
@@ -72,7 +77,15 @@ public class ShellFragment extends Fragment {
             binding.bottomNav.getMenu().clear(); binding.bottomNav.inflateMenu(R.menu.bottom_nav_admin);
             binding.bofoFab.setVisibility(View.GONE);                  // the Ask BOFO assistant is for students looking for a place
         }
-        binding.bofoFab.setOnClickListener(v -> new BofoPanelSheet().show(getChildFragmentManager(), "bofo"));
+        closeBofo = new OnBackPressedCallback(false) {
+            @Override public void handleOnBackPressed() { if (binding != null) binding.bofoChat.close(); }
+        };
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), closeBofo);
+        binding.bofoChat.setOnClosed(() -> {
+            closeBofo.setEnabled(false);
+            if (binding != null) binding.bofoFab.setChatOpen(false);   // the button pops back
+        });
+        binding.bofoFab.setOnClickListener(v -> openBofo());
         binding.bottomNav.setOnItemSelectedListener(item -> {
             showTab(item.getItemId());
             return true;
@@ -83,6 +96,22 @@ public class ShellFragment extends Fragment {
         } else if (savedInstanceState == null) {
             binding.bottomNav.setSelectedItemId(admin ? R.id.tab_queue : owner ? R.id.tab_listings : R.id.tab_home);       // first open
         }                                                              // after rotation the system restores both
+    }
+
+    /** Home search bar: Enter on a place name switches to the Explore tab (Explore reads ExploreHandoff when it opens). */
+    void openExplore() {
+        if (binding != null) binding.bottomNav.setSelectedItemId(R.id.tab_explore);
+    }
+
+    /** Tap on the floating button: it fades out and the chat card pops from where it was. */
+    private void openBofo() {
+        if (binding == null || binding.bofoChat.isOpen()) return;
+        FloatingBofoView f = binding.bofoFab;
+        float cx = f.getLeft() + f.getTranslationX() + f.getWidth() / 2f;
+        float cy = f.getTop() + f.getTranslationY() + f.getHeight() / 2f;
+        f.setChatOpen(true);
+        binding.bofoChat.open(cx, cy);
+        closeBofo.setEnabled(true);
     }
 
     private void showTab(int id) {
