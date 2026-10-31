@@ -2,6 +2,7 @@ package com.bofo.finder.ui;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -11,6 +12,7 @@ import android.view.animation.OvershootInterpolator;
 import android.graphics.Typeface;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -43,6 +45,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.google.android.material.chip.Chip;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -92,7 +95,7 @@ public class BofoChatOverlay extends FrameLayout {
         if (shown) return;
         shown = true;
         setVisibility(VISIBLE); MainActivity.keepAppStill = true; MainActivity.imeListener = () -> applyCardSize(getWidth(), getHeight()); androidx.core.view.ViewCompat.requestApplyInsets(this);
-        if (!greeted) { greeted = true; say(getContext().getString(R.string.bofo_hello), false); }
+        if (!greeted) { greeted = true; say(getContext().getString(R.string.bofo_hello), false); addStarters(); }
         b.card.setPivotX(cx - b.card.getLeft());
         b.card.setPivotY(cy - b.card.getTop());
         b.card.setScaleX(.15f); b.card.setScaleY(.15f); b.card.setAlpha(0f);
@@ -218,6 +221,7 @@ public class BofoChatOverlay extends FrameLayout {
     private void finish() {
         waiting = false;
         b.mascot.endIdle();
+        removeCallbacks(dotsTick); typingBody = null;
         if (typing != null) { b.chatBox.removeView(typing); typing = null; }
     }
 
@@ -228,7 +232,7 @@ public class BofoChatOverlay extends FrameLayout {
         String text = a.reply().isEmpty() ? BofoAiService.faq("") : a.reply();
         say(text, false);
         LayoutInflater in = LayoutInflater.from(getContext());
-        for (BofoAnswer.Result r : a.results()) addResult(in, r, a);
+        if (!a.results().isEmpty()) addResults(in, a);
         if (a.compare() != null && a.compare().rows().size() > 0) addCompare(in, a);
         if (a.degraded()) {
             TextView t = new TextView(getContext());
@@ -252,54 +256,179 @@ public class BofoChatOverlay extends FrameLayout {
 
     private void fire(BofoAnswer.Action action, BofoAnswer a) { if (actionListener != null) actionListener.onAction(action, a); }
 
-    private void addResult(LayoutInflater in, BofoAnswer.Result r, BofoAnswer a) {
-        ItemBofoResultBinding v = ItemBofoResultBinding.inflate(in, b.chatBox, false);
-        v.name.setText(r.name());
-        v.price.setText(Money.perMonth(r.price()));
-        List<String> meta = new ArrayList<>();
-        if (r.distanceKm() != null) meta.add(Geo.walkText(r.distanceKm()));
-        meta.add(r.reviewCount() > 0 ? "\u2605 " + ListRules.ratingText(r.rating(), r.reviewCount()) : getContext().getString(R.string.bofo_no_reviews));
-        meta.add(r.availableBeds() == 1 ? getContext().getString(R.string.bofo_bed_one) : getContext().getString(R.string.bofo_beds, r.availableBeds()));
-        v.meta.setText(String.join(" \u00B7 ", meta));
-        v.verified.setVisibility(r.verified() ? View.VISIBLE : View.GONE);
-        String url = r.photoUrl();
-        Glide.with(v.photo).load(url == null || url.isEmpty() ? (String) null : url)
-                .transform(new CenterCrop(), new RoundedCorners(Math.round(10 * dp))).placeholder(R.color.bofo_skeleton).into(v.photo);
-        v.getRoot().setOnClickListener(x -> fire(new BofoAnswer.Action("open_detail", r.id(), new ArrayList<>()), a));
-        b.chatBox.addView(v.getRoot());
+    /** Small fade + slide-up when a piece of an answer appears (i = position, so the pieces come one after the other). */
+    private void pop(View v, int i) {
+        v.setAlpha(0f); v.setTranslationY(10 * dp);
+        v.animate().alpha(1f).translationY(0f).setStartDelay(Math.min(i, 5) * 70L).setDuration(220).start();
     }
 
-    /** Side-by-side table: first column = row label, then one column per place; the best cell of a row is highlighted. Scrolls sideways if too wide. */
+    private static boolean fromMe(BofoAnswer a) {
+        for (BofoAnswer.Action x : a.actions()) if ("directions".equals(x.type()) && x.ids() != null && x.ids().contains("me")) return true;
+        return false;
+    }
+
+    /** The listings as cards in a row you swipe sideways (one result = one full-width card). */
+    private void addResults(LayoutInflater in, BofoAnswer a) {
+        List<BofoAnswer.Result> rs = a.results();
+        HorizontalScrollView hs = new HorizontalScrollView(getContext());
+        hs.setHorizontalScrollBarEnabled(false);
+        hs.setOverScrollMode(OVER_SCROLL_NEVER);
+        hs.setClipToPadding(false);
+        hs.setPadding(Math.round(12 * dp), 0, Math.round(4 * dp), 0);
+        LinearLayout row = new LinearLayout(getContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        hs.addView(row, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        int cardPx = b.card.getWidth() > 0 ? b.card.getWidth() : Math.round(320 * dp);
+        int w = rs.size() == 1 ? Math.max(Math.round(236 * dp), cardPx - Math.round(28 * dp) - Math.round(16 * dp)) : Math.round(236 * dp);
+        for (int i = 0; i < rs.size(); i++) row.addView(resultCard(in, row, rs.get(i), i, rs.size(), w, a));
+        b.chatBox.addView(hs);
+        pop(hs, 0);
+    }
+
+    private View resultCard(LayoutInflater in, ViewGroup row, BofoAnswer.Result r, int i, int n, int w, BofoAnswer a) {
+        Context c = getContext();
+        ItemBofoResultBinding v = ItemBofoResultBinding.inflate(in, row, false);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(w, ViewGroup.LayoutParams.MATCH_PARENT);
+        lp.setMarginEnd(Math.round(8 * dp)); lp.topMargin = Math.round(4 * dp); lp.bottomMargin = Math.round(4 * dp);
+        v.getRoot().setLayoutParams(lp);
+
+        v.name.setText(r.name());
+        v.price.setText(Money.perMonth(r.price()));
+
+        // rank badge on the photo: what the question asked for on the first card, then #2, #3 ...
+        String badge = null;
+        if (i == 0 && "nearest".equals(a.intent())) badge = c.getString(R.string.bofo_badge_nearest);
+        else if (i == 0 && "cheapest".equals(a.intent())) badge = c.getString(R.string.bofo_badge_cheapest);
+        else if (i == 0 && "best_rated".equals(a.intent())) badge = c.getString(R.string.bofo_badge_top);
+        else if (n > 1) badge = "#" + (i + 1);
+        v.badge.setVisibility(badge == null ? View.GONE : View.VISIBLE);
+        if (badge != null) v.badge.setText(badge);
+        v.verified.setVisibility(r.verified() ? View.VISIBLE : View.GONE);
+
+        if (r.distanceKm() != null) { v.chipDist.setText(Geo.walkText(r.distanceKm())); v.chipDist.setVisibility(View.VISIBLE); }
+        else v.chipDist.setVisibility(View.GONE);
+        if (r.reviewCount() > 0) {
+            v.chipRating.setText("\u2605 " + ListRules.ratingText(r.rating(), r.reviewCount()));
+            v.chipRating.setBackgroundResource(R.drawable.bg_bofo_pill_amber);
+        } else {
+            v.chipRating.setText(R.string.bofo_no_reviews);
+            v.chipRating.setBackgroundResource(R.drawable.bg_bofo_pill);
+            v.chipRating.setTextColor(c.getColor(R.color.bofo_text_2));
+        }
+        v.chipBeds.setText(r.availableBeds() == 1 ? c.getString(R.string.bofo_bed_one) : c.getString(R.string.bofo_beds, r.availableBeds()));
+
+        List<String> free = new ArrayList<>();
+        if (r.water()) free.add(c.getString(R.string.bofo_amen_water));
+        if (r.electricity()) free.add(c.getString(R.string.bofo_amen_power));
+        if (r.wifi()) free.add(c.getString(R.string.bofo_amen_wifi));
+        v.amen.setText(String.join("  ", free));
+        v.amen.setVisibility(free.isEmpty() ? View.GONE : View.VISIBLE);
+
+        String addr = r.address() == null ? "" : r.address().trim();
+        v.addr.setText(addr);
+        v.addr.setVisibility(addr.isEmpty() ? View.GONE : View.VISIBLE);
+
+        String url = r.photoUrl();
+        Glide.with(v.photo).load(url == null || url.isEmpty() ? (String) null : url).centerCrop().placeholder(R.color.bofo_skeleton).into(v.photo);
+
+        v.getRoot().setOnClickListener(x -> fire(new BofoAnswer.Action("open_detail", r.id(), new ArrayList<>()), a));
+        v.btnMap.setOnClickListener(x -> fire(new BofoAnswer.Action("show_on_map", r.id(), new ArrayList<>(Collections.singletonList(r.id()))), a));
+        v.btnRoute.setOnClickListener(x -> fire(new BofoAnswer.Action("directions", r.id(),
+                fromMe(a) ? new ArrayList<>(Collections.singletonList("me")) : new ArrayList<String>()), a));
+        return v.getRoot();
+    }
+
+    /** Side-by-side table: tinted header with the place names (tap = open the place), one column per place that share the width,
+     *  alternate row shading, the best cell of a row in green with a check mark, and a line saying which place wins most rows. */
     private void addCompare(LayoutInflater in, BofoAnswer a) {
         ItemBofoCompareBinding v = ItemBofoCompareBinding.inflate(in, b.chatBox, false);
         List<String> ids = a.compare().ids().isEmpty() ? a.resultIds() : a.compare().ids();
+        int n = Math.max(1, ids.size());
+        int labelPx = Math.round(84 * dp);
+        int cardPx = b.card.getWidth() > 0 ? b.card.getWidth() : Math.round(320 * dp);
+        int avail = cardPx - Math.round(28 * dp) - Math.round(24 * dp);                    // card padding + the table's own side margins
+        int colPx = Math.max(Math.round(96 * dp), (avail - labelPx) / n);
+
         LinearLayout head = new LinearLayout(getContext());
         head.setOrientation(LinearLayout.HORIZONTAL);
-        head.addView(cell("", 72, false, false));
-        for (String id : ids) { BofoAnswer.Result r = a.result(id); head.addView(cell(r == null ? "" : r.name(), 88, true, false)); }
+        head.setBackgroundResource(R.drawable.bg_bofo_table_head);
+        head.addView(cell("", labelPx, false, false, false));
+        for (String id : ids) {
+            BofoAnswer.Result r = a.result(id);
+            TextView h = cell(r == null ? "" : r.name(), colPx, true, false, true);
+            h.setTextColor(getContext().getColor(R.color.bofo_primary_dark));
+            h.setMaxLines(2); h.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            if (r != null) {
+                h.setBackgroundResource(android.R.drawable.list_selector_background);
+                h.setClickable(true);
+                h.setOnClickListener(x -> fire(new BofoAnswer.Action("open_detail", r.id(), new ArrayList<>()), a));
+            }
+            head.addView(h);
+        }
         v.table.addView(head);
+
+        int[] wins = new int[n];
+        int scored = 0, shade = 0;
         for (BofoAnswer.Row row : a.compare().rows()) {
             LinearLayout line = new LinearLayout(getContext());
             line.setOrientation(LinearLayout.HORIZONTAL);
-            TextView label = cell(row.label(), 72, false, false);
+            line.setMinimumHeight(Math.round(38 * dp));
+            line.setGravity(Gravity.CENTER_VERTICAL);
+            if (shade++ % 2 == 1) line.setBackgroundResource(R.drawable.bg_bofo_row_alt);
+            TextView label = cell(row.label(), labelPx, true, false, false);
             label.setTextColor(getContext().getColor(R.color.bofo_text_2)); label.setTextSize(11);
             line.addView(label);
-            for (int i = 0; i < ids.size(); i++) line.addView(cell(i < row.values().size() ? row.values().get(i) : "", 88, false, i == row.best()));
+            for (int i = 0; i < ids.size(); i++) {
+                boolean best = i == row.best();
+                String val = i < row.values().size() ? row.values().get(i) : "";
+                line.addView(cell(best ? "\u2713 " + val : val, colPx, false, best, true));
+            }
+            if (row.best() >= 0 && row.best() < n) { wins[row.best()]++; scored++; }
             v.table.addView(line);
         }
+
+        // who wins the most rows (only when there is a clear leader)
+        int top = 0, leader = -1;
+        for (int i = 0; i < n; i++) if (wins[i] > top) { top = wins[i]; leader = i; }
+        int ties = 0;
+        for (int i = 0; i < n; i++) if (wins[i] == top) ties++;
+        BofoAnswer.Result lead = leader >= 0 && leader < ids.size() ? a.result(ids.get(leader)) : null;
+        if (lead != null && top > 0 && ties == 1) {
+            TextView t = new TextView(getContext());
+            t.setText(getContext().getString(R.string.bofo_wins, lead.name(), top, scored));
+            t.setTextSize(12); t.setTypeface(null, Typeface.BOLD);
+            t.setTextColor(getContext().getColor(R.color.bofo_success));
+            t.setBackgroundResource(R.drawable.bg_bofo_pill_green);
+            t.setPadding(Math.round(10 * dp), Math.round(6 * dp), Math.round(10 * dp), Math.round(6 * dp));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.setMargins(Math.round(8 * dp), Math.round(6 * dp), Math.round(8 * dp), Math.round(8 * dp));
+            v.table.addView(t, lp);
+        }
         b.chatBox.addView(v.getRoot());
+        pop(v.getRoot(), 0);
     }
 
-    private TextView cell(String text, int widthDp, boolean bold, boolean best) {
+    private TextView cell(String text, int widthPx, boolean bold, boolean best, boolean center) {
         TextView t = new TextView(getContext());
-        t.setLayoutParams(new LinearLayout.LayoutParams(Math.round(widthDp * dp), ViewGroup.LayoutParams.WRAP_CONTENT));
+        t.setLayoutParams(new LinearLayout.LayoutParams(widthPx, ViewGroup.LayoutParams.WRAP_CONTENT));
         t.setText(text);
         t.setTextSize(12);
-        t.setPadding(Math.round(6 * dp), Math.round(5 * dp), Math.round(6 * dp), Math.round(5 * dp));
-        t.setTextColor(getContext().getColor(best ? R.color.bofo_primary : R.color.bofo_text));
+        t.setGravity(center ? Gravity.CENTER : Gravity.CENTER_VERTICAL | Gravity.START);
+        t.setPadding(Math.round(6 * dp), Math.round(7 * dp), Math.round(6 * dp), Math.round(7 * dp));
+        t.setTextColor(getContext().getColor(best ? R.color.bofo_success : R.color.bofo_text));
         t.setTypeface(null, bold || best ? Typeface.BOLD : Typeface.NORMAL);
-        if (best) t.setBackgroundResource(R.drawable.bg_bofo_best);
+        if (best) t.setBackgroundResource(R.drawable.bg_bofo_best_green);
         return t;
+    }
+
+    /** First chips of an empty chat: the questions people ask most. */
+    private void addStarters() {
+        ItemBofoChipsBinding v = ItemBofoChipsBinding.inflate(LayoutInflater.from(getContext()), b.chatBox, false);
+        int[] ids = { R.string.bofo_start_nearest, R.string.bofo_start_cheapest, R.string.bofo_start_rated, R.string.bofo_start_all };
+        for (int id : ids) { final String q = getContext().getString(id); chip(v.chips, q, () -> send(q)); }
+        chipsRow = v.getRoot();                                    // send() removes it as soon as the user goes on
+        b.chatBox.addView(chipsRow);
+        pop(chipsRow, 1);
     }
 
     /** Action chips (Show on map / Directions / Open / Compare ...) then the suggested questions. */
@@ -326,6 +455,7 @@ public class BofoChatOverlay extends FrameLayout {
         if (v.chips.getChildCount() == 0) return;
         chipsRow = v.getRoot();
         b.chatBox.addView(chipsRow);
+        pop(chipsRow, 3);
     }
 
     private void chip(ViewGroup row, String text, Runnable onTap) {
@@ -337,11 +467,27 @@ public class BofoChatOverlay extends FrameLayout {
         row.addView(c, lp);
     }
 
+    private static final String[] DOTS = { "\u25CF  \u25CB  \u25CB", "\u25CB  \u25CF  \u25CB", "\u25CB  \u25CB  \u25CF" };
+    private TextView typingBody;
+    private int dotStep;
+    private final Runnable dotsTick = new Runnable() {
+        @Override public void run() {
+            if (typingBody == null) return;
+            dotStep = (dotStep + 1) % DOTS.length;
+            typingBody.setText(DOTS[dotStep]);
+            postDelayed(this, 380);
+        }
+    };
+
     private void showTyping() {
         ItemMsgTheirsBinding m = ItemMsgTheirsBinding.inflate(LayoutInflater.from(getContext()), b.chatBox, false);
-        m.body.setText(R.string.bofo_typing);
-        m.body.setTextColor(getContext().getColor(R.color.bofo_muted));
+        m.body.setText(DOTS[0]);
+        m.body.setTextColor(getContext().getColor(R.color.bofo_primary));
+        m.body.setTextSize(13);
+        m.body.setContentDescription(getContext().getString(R.string.bofo_typing));
         m.meta.setVisibility(View.GONE);
+        typingBody = m.body; dotStep = 0;
+        removeCallbacks(dotsTick); postDelayed(dotsTick, 380);
         typing = m.getRoot();
         b.chatBox.addView(typing);
         b.scroll.post(() -> b.scroll.fullScroll(View.FOCUS_DOWN));
@@ -377,12 +523,14 @@ public class BofoChatOverlay extends FrameLayout {
         else { ItemMsgTheirsBinding m = ItemMsgTheirsBinding.inflate(in, b.chatBox, false); root = m.getRoot(); body = m.body; m.meta.setVisibility(View.GONE); }
         body.setText(mine ? text : bold(text));                   // the AI marks names and prices with **...**: show them bold, never the asterisks
         b.chatBox.addView(root);
+        pop(root, 0);
         b.scroll.post(() -> b.scroll.fullScroll(View.FOCUS_DOWN));
     }
 
     @Override
     protected void onDetachedFromWindow() {
         token++;                                                  // a late answer must not touch a dead screen
+        removeCallbacks(dotsTick);
         waiting = false;
         MainActivity.keepAppStill = false; MainActivity.imeListener = null; super.onDetachedFromWindow();
     }

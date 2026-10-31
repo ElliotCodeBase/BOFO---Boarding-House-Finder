@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.0.60: Ask BOFO listing card (photo on top, clipped to the rounded corners). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/bofo_white" />
+    <corners android:radius="16dp" />
+    <stroke android:width="1dp" android:color="@color/bofo_border" />
+</shape>

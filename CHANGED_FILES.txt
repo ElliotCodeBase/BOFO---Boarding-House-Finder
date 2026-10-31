@@ -1,6 +1,12 @@
-BOFO-android-v2.0.59-changes.zip  (unzip into the repo root C:\Users\user\bofo-finder, overwrite; includes v2.0.58)
+BOFO-android-v2.0.60-changes.zip  (unzip into the repo root C:\Users\user\bofo-finder, overwrite; this version needs no new deploy, but the zip also carries the v2.0.58 + v2.0.59 bofo-chat/index.ts: run `supabase functions deploy bofo-chat` once if you have not yet)
 changed  bofo-android/app/build.gradle
-changed  supabase/functions/bofo-chat/index.ts   (then: supabase functions deploy bofo-chat)
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/BofoChatOverlay.java
+changed  bofo-android/app/src/main/res/layout/item_bofo_result.xml
+changed  bofo-android/app/src/main/res/layout/item_bofo_compare.xml
+changed  bofo-android/app/src/main/res/layout/view_bofo_chat.xml
+changed  bofo-android/app/src/main/res/values/strings_bofo.xml
+new      bofo-android/app/src/main/res/drawable/bg_bofo_result_card.xml, bg_bofo_pill.xml, bg_bofo_pill_green.xml, bg_bofo_pill_amber.xml, bg_bofo_badge.xml, bg_bofo_verified.xml, bg_bofo_btn.xml, bg_bofo_table_head.xml, bg_bofo_best_green.xml, bg_bofo_row_alt.xml
 changed  CHANGES_ANDROID.md
 changed  HANDOFF_ANDROID.md
 changed  CHANGED_FILES.txt
+changed  supabase/functions/bofo-chat/index.ts   (v2.0.58 + v2.0.59, unchanged in v2.0.60)
