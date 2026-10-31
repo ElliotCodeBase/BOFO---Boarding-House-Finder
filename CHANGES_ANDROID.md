@@ -1,3 +1,9 @@
+# v2.0.41 - Android port: OpenGL ES map engine (JavaFX app stays v1.20.0)
+- MapLibre 13 draws with Vulkan by default (new, some open issues). The app now uses the OpenGL ES build `org.maplibre.gl:android-sdk-opengl:13.0.0` (same API, no code change). Pan / zoom was still choppy on a realme 14 Pro+ after v2.0.37-40.
+- Changed: `build.gradle` (2.0.41 / 241). Not built or run by Claude.
+
+---
+
 # v2.0.40 - Android port, lag test switch (JavaFX app stays v1.20.0)
 - New `map.mode` in `assets/config.properties`: `vector` (normal), `raster` (one layer of ready-made picture tiles, like the JavaFX app; OpenStreetMap tiles, for TESTING only) or `off` (no map). Used to find whether the lag comes from live vector drawing or from the rest of Home.
 - Changed: `MapCardView`, `assets/config.properties`, `build.gradle` (2.0.40 / 240). Not built or run by Claude.

@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.41 OpenGL ES engine (2026-10-31)
+- **PR title:** `v2.0.41 - Android: MapLibre OpenGL ES build instead of Vulkan`
+- Sync Gradle after pulling. If STILL choppy: the user must report `map.mode=off` and `map.mode=raster` results (assets/config.properties) before more changes.
+
+---
+
 # Handoff (Android) - v2.0.40 lag test switch (2026-10-31)
 - **PR title:** `v2.0.40 - Android: map.mode test switch (vector / raster / off)`
 - Why: JavaFX paints each OpenFreeMap vector tile once into a 512 px bitmap (`VectorTileRetriever`) and then only slides bitmaps; Android MapLibre redraws the vector layers on the GPU every frame. Bisect on the realme 14 Pro+: `off` still laggy = not the map (look at Home scroll / SurfaceView in AppBar / list images); `raster` smooth but `vector` laggy = live vector drawing; both laggy = something else on the main thread.
