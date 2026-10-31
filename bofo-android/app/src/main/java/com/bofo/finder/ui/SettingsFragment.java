@@ -43,6 +43,8 @@ public class SettingsFragment extends Fragment {
         b.switchRole.setOnClickListener(v -> switchRole());
         b.useLocation.setChecked(AppPrefs.useLocation(requireContext()));
         b.useLocation.setOnCheckedChangeListener((btn, on) -> AppPrefs.setUseLocation(requireContext(), on));
+        b.pathFade.setChecked(AppPrefs.seeThroughPath(requireContext()));
+        b.pathFade.setOnCheckedChangeListener((btn, on) -> AppPrefs.setSeeThroughPath(requireContext(), on));
         b.terms.setOnClickListener(v -> LegalSheet.show(getParentFragmentManager(), LegalText.Doc.TERMS));
         b.privacy.setOnClickListener(v -> LegalSheet.show(getParentFragmentManager(), LegalText.Doc.PRIVACY));
         b.ownerAgreement.setOnClickListener(v -> LegalSheet.show(getParentFragmentManager(), LegalText.Doc.OWNER));

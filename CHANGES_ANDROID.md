@@ -1,3 +1,7 @@
+# v2.0.63 - Android: See-through path switch
+- **Settings > Preferences > "See-through path":** when on, the route line on the map (white outline, purple line and the dashed estimate) is drawn 80% transparent, so you can see the road underneath and check the path follows it. Off by default; saved on the phone; the map updates when you return to it.
+- Files: `AppPrefs.java`, `SettingsFragment.java`, `MapCardView.java`, `fragment_settings.xml`, `strings.xml`, `build.gradle` (2.0.63 / 263). Not built or run by Claude.
+
 # v2.0.62 - Android: path follows the real road, refreshes by itself
 - **More accurate path:** `Router` no longer thins the road to 400 evenly spaced points (that cut corners off the road). It now keeps every bend (Douglas-Peucker, 2 m tolerance, up to 1500 points). If the first server's road is more than 2.5x the straight distance (bad snap), the next server is asked too and the shorter real road wins. Third fallback for vehicle routes: the public OSRM demo.
 - **Auto refresh:** on the map path, when it starts at your phone and you move 40 m, the road is redrawn from your new spot (at most every 8 s; the old road stays until the new one is ready, never swapped for a dashed guess; no camera jump). The Directions card re-asks every 15 s while any option is still a straight-line guess.
