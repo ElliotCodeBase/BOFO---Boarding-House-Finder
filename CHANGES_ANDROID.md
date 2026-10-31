@@ -1,3 +1,7 @@
+# v2.0.26 - Android port, "Turn on location?" popup (JavaFX app stays v1.20.0)
+- Tapping Locate or Near me while the phone's Location switch is off now shows Google's system popup ("For a better experience, turn on device location"); Yes switches it on and the position is read straight away, No shows the "location is turned off" message. The live dot never asks by itself.
+- Needs Google Play services (phones and Play emulator images); without them the old message shows. Not built or run by Claude. Profile > About shows 2.0.26.
+
 # v2.0.25 - Android port, current location fix (JavaFX app stays v1.20.0)
 - If Google's fused location returns nothing (no Play services, emulator with no mock position, first fix slow), the app now falls back to Android's own LocationManager: last known fix from any provider, else one fresh fix (12 s). Failures are logged with tag `BOFO`.
 - New toast when the phone's Location switch is off: "Location is turned off on your phone..." instead of the generic failure message.

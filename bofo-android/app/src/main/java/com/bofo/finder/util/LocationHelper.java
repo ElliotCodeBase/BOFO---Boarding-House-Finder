@@ -1,6 +1,7 @@
 package com.bofo.finder.util;
 
 import android.Manifest;
+import android.app.Activity;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -12,15 +13,18 @@ import android.os.Looper;
 import android.util.Log;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.IntentSenderRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
 import androidx.core.location.LocationManagerCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationTokenSource;
@@ -46,7 +50,8 @@ public final class LocationHelper {
 
     private final Fragment fragment;
     private final ActivityResultLauncher<String[]> permission;
-    private Callback pending;
+    private final ActivityResultLauncher<IntentSenderRequest> resolver;
+    private Callback pending, resolving;
     private boolean pendingWatch;
     private FusedLocationProviderClient client;
     private LocationCallback watcher;
@@ -58,8 +63,15 @@ public final class LocationHelper {
             Callback cb = pending; boolean watch = pendingWatch;
             pending = null;
             if (cb == null) return;
-            if (granted(fragment.requireContext())) { if (watch) startWatch(cb); else readOnce(cb); }
+            if (granted(fragment.requireContext())) { if (watch) startWatch(cb); else ensureSettings(cb); }
             else cb.denied();
+        });
+        // Google's \"Turn on location?\" popup (the same one other apps show): Yes = Location switches on, then we read the position
+        this.resolver = fragment.registerForActivityResult(new ActivityResultContracts.StartIntentSenderForResult(), r -> {
+            Callback cb = resolving;
+            resolving = null;
+            if (cb == null || !fragment.isAdded()) return;
+            if (r.getResultCode() == Activity.RESULT_OK) readOnce(cb); else cb.servicesOff();
         });
     }
 
@@ -83,7 +95,33 @@ public final class LocationHelper {
             permission.launch(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION});
             return;
         }
-        if (watch) startWatch(cb); else readOnce(cb);
+        if (watch) startWatch(cb); else ensureSettings(cb);      // the live dot never asks by itself; a tap on Locate / Near me may show the popup
+    }
+
+    /** One-time reads: if the phone's Location switch is off, show the system popup that turns it on with one tap. No Play services / not resolvable: read as before (the fallback then says \"location is off\"). */
+    private void ensureSettings(Callback cb) {
+        Context c = fragment.getContext();
+        if (c == null) return;
+        LocationRequest req = new LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 5_000).build();
+        LocationSettingsRequest sr = new LocationSettingsRequest.Builder().addLocationRequest(req).build();
+        try {
+            LocationServices.getSettingsClient(c).checkLocationSettings(sr)
+                    .addOnSuccessListener(r -> { if (fragment.isAdded()) readOnce(cb); })
+                    .addOnFailureListener(e -> {
+                        if (!fragment.isAdded()) return;
+                        if (e instanceof ResolvableApiException) {
+                            try {
+                                resolving = cb;
+                                resolver.launch(new IntentSenderRequest.Builder(((ResolvableApiException) e).getResolution()).build());
+                                return;
+                            } catch (Exception ex) { resolving = null; Log.w("BOFO", "Location popup not shown", ex); }
+                        }
+                        readOnce(cb);
+                    });
+        } catch (Exception e) {
+            Log.w("BOFO", "Location settings check failed", e);
+            readOnce(cb);
+        }
     }
 
     @SuppressLint("MissingPermission")   // checked in begin() / the permission result

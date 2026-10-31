@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.26 location-on popup (2026-10-31)
+- **PR title:** `v2.0.26 - Android: "Turn on location?" popup when Location is off`
+- `LocationHelper.ensureSettings()` (SettingsClient.checkLocationSettings + ResolvableApiException via a StartIntentSenderForResult launcher registered in the constructor). Used for requestOnce only.
+
+---
+
 # Handoff (Android) - v2.0.25 current location (2026-10-31)
 - **PR title:** `v2.0.25 - Android: current location fallback (LocationManager) + clear "location is off" message`
 - `LocationHelper.platform()` fallback, `Callback.servicesOff()` (default = failed()), Home overrides it. Emulator: set a position in Extended controls > Location. Real cause not confirmed: check which toast shows and `adb logcat -s BOFO`.
