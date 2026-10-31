@@ -1,15 +1,12 @@
-BOFO Android v2.0.26 (includes v2.0.22 Step 4 + map lag fix) (inline map card, Home one scrolling page, radius pill). Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
-changed  bofo-android/app/build.gradle  (version 2.0.26 / 226)
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/HomeFragment.java
+BOFO Android v2.0.27 - Step 5: radar dot, location states, overview. Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
+changed  bofo-android/app/build.gradle  (version 2.0.27 / 227, shown in Profile > About)
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/HomeFragment.java
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/HomeSearchBar.java
-changed  bofo-android/app/src/main/res/layout/fragment_home.xml
-changed  bofo-android/app/src/main/res/layout/view_map_card.xml
-changed  bofo-android/app/src/main/assets/bofo-map-style.json  (lighter style)
 changed  bofo-android/app/src/main/java/com/bofo/finder/util/LocationHelper.java
-new      bofo-android/app/src/main/res/values/strings_location.xml
-new      bofo-android/app/src/main/java/com/bofo/finder/ui/CornerMaskView.java
-new      bofo-android/app/src/main/res/drawable/bg_radius_pill.xml, bg_radius_chip.xml, bg_attribution.xml
-new      bofo-android/app/src/main/res/values/strings_map_card.xml
+changed  bofo-android/app/src/main/res/layout/view_map_card.xml
+new      bofo-android/app/src/main/res/drawable/bg_glass_pill.xml
+new      bofo-android/app/src/main/res/drawable/bg_map_button_on.xml
+new      bofo-android/app/src/main/res/values/strings_radar.xml
 changed  CHANGES_ANDROID.md, HANDOFF_ANDROID.md, REVERT_PROGRESS.md, REVERT_PROMPT.md
-unused now (delete in Step 11, nothing to do yet): strings home_view_list, home_view_map; BofoPanelSheet.java, sheet_bofo.xml
+DELETE   nothing

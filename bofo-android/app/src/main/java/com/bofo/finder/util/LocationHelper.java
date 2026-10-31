@@ -80,6 +80,11 @@ public final class LocationHelper {
                 || ContextCompat.checkSelfPermission(c, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
+    /** Precise (fine) location allowed; false = the phone only gave the approximate one. */
+    public static boolean precise(Context c) {
+        return ContextCompat.checkSelfPermission(c, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
     /** One position (used by "Near me"). */
     public void requestOnce(Callback cb) { begin(cb, false); }
 

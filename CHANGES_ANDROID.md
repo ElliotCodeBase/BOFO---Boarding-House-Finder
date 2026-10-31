@@ -1,3 +1,10 @@
+# v2.0.27 - Android port, Step 5: radar dot, location states, overview (JavaFX app stays v1.20.0)
+- **Radar dot (LiveDot):** blue (#2F6FED) core in a white ring with a soft shadow; TWO staggered ripple rings grow 0.5 -> 2.7x and fade linearly, looping (2.4 s, ~30 fps, paused when the map is off screen, in the background or with animations off); a soft view cone points the way you are moving (shown after the phone has moved ~8 m); the first fix grows in from 82 %; Locate landing = one bigger "found you" ring + a small pop.
+- **Glass pill (top-left):** "Finding your location...", "Your location", "Approximate location" (only coarse permission), "Location is off". Hidden while the radius pill is shown (campus or Near me chosen). The Locate icon pulses while finding; extra taps are ignored.
+- **Overview** (no campus / Near me and the search is empty): the map zooms out to fit every pin and you in ~90 % of the card; the Locate button is purple while it is on. Tap = fly to me (overview off); tap again = back to the overview. Clearing the search or the campus brings it back; your first fix joins the overview once.
+- New: `bg_glass_pill`, `bg_map_button_on`, `strings_radar.xml`. Changed: `MapCardView`, `HomeFragment`, `HomeSearchBar` (searchChanged hook, isEmpty), `LocationHelper.precise()`, `view_map_card.xml`, `build.gradle` (2.0.27 / 227).
+- Not built or run by Claude (parse-checked only). Profile > About shows 2.0.27.
+
 # v2.0.26 - Android port, "Turn on location?" popup (JavaFX app stays v1.20.0)
 - Tapping Locate or Near me while the phone's Location switch is off now shows Google's system popup ("For a better experience, turn on device location"); Yes switches it on and the position is read straight away, No shows the "location is turned off" message. The live dot never asks by itself.
 - Needs Google Play services (phones and Play emulator images); without them the old message shows. Not built or run by Claude. Profile > About shows 2.0.26.
