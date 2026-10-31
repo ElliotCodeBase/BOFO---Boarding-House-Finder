@@ -1,3 +1,15 @@
+# Handoff (Android) - v2.0.46 locate toggle (2026-10-31)
+- **PR title:** `v2.0.46 - Android: Dashboard locate button toggles you / all places, faster camera moves`
+- If the user still finds it slow: the first tap with no saved fix waits for GPS (`LocationHelper.requestOnce`); consider `lastKnown` first.
+
+---
+
+# Handoff (Android) - v2.0.45 Dashboard UI polish (2026-10-31)
+- **PR title:** `v2.0.45 - Android: owner Dashboard UI (hero card, stat cards, place cards with photo and chips)`
+- User screenshot showed flat stat tiles (old `bg_dir_option` is only a hairline) and plain text place rows; fixed with the `bg_dash_*` drawables. If the user wants more: same card style for My places (`ListingsFragment` still uses a plain list) and the Create wizard.
+
+---
+
 # Handoff (Android) - v2.0.44 owner Create wizard (2026-10-31)
 - **PR title:** `v2.0.44 - Android: Create / Edit place as a 4-step wizard (map pin + route, amenity picker, photo thumbnails, review)`
 - **Owner port is now COMPLETE (update 1 = v2.0.43 Dashboard, update 2 = v2.0.44 Create).** Everything from the JavaFX `DashboardView` and `ListingFormView` exists on Android, plus everything that was already there (stats, My places menu, Boost, edit mode).
