@@ -44,7 +44,8 @@ final class ListArea {
         b.skeleton.setVisibility(View.VISIBLE);
         if (pulse == null) {
             pulse = ObjectAnimator.ofFloat(b.skeleton, View.ALPHA, 1f, 0.45f);
-            pulse.setDuration(700);
+            pulse.setDuration(900);
+            pulse.setInterpolator(new android.view.animation.PathInterpolator(0.42f, 0f, 0.58f, 1f));
             pulse.setRepeatMode(ObjectAnimator.REVERSE);
             pulse.setRepeatCount(ObjectAnimator.INFINITE);
         }

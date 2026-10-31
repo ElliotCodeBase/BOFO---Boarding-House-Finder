@@ -85,6 +85,9 @@ public class ExploreFragment extends Fragment {
         b.filterBtn.setOnClickListener(v -> new FilterSheet().show(getChildFragmentManager(), "filter"));
         paintFilterButton();
 
+        String handoff = com.bofo.finder.util.ExploreHandoff.take();          // typed in the Home search bar (not a campus)
+        if (handoff != null) { query = handoff; b.search.setText(handoff); b.search.setSelection(handoff.length()); }
+
         Favorites.load(null);
         Favorites.IDS.observe(getViewLifecycleOwner(), ids -> adapter.setFavorites(ids));
         BrowseState.CHANGED.observe(getViewLifecycleOwner(), n -> { if (n == null || n == lastChange) return; lastChange = n; paintFilterButton(); reload(); });

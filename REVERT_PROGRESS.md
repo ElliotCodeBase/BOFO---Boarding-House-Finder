@@ -1,10 +1,15 @@
 # Revert-to-original-UI progress (bofo-android)
+## v2.0.21 - Step 1b + Step 3 done
+- **Ask BOFO button (Step 1b):** `FloatingBofoView` replaces the fixed mascot in `fragment_shell.xml`: drag anywhere (kept above the tab bar), snaps to the nearest side edge with a small bounce, remembers its place while you stay signed in, soft float (bob + tilt) all the time, and after 4-10 s of quiet a random idle move (wiggle, two hops with squash, look around, coin flip, loop-the-loop, think, sleep with "Zz"), never the same twice in a row. Idle stops on touch, while the chat is open, when hidden / app in background, and when system animations are off. Tap = `BofoChatOverlay`: a white card (max 380 x 500 dp, above the tab bar) pops out of the button and shrinks back into it; tap outside, X or Back closes. Same chat logic as the old sheet (bofo-chat Edge Function, FAQ fallback, mascot thinks while waiting, not saved).
+- **Home header + search (Step 3):** removed the "Home" title, the campus chip row and the "Campus:" button. Added: dark offline strip, greeting row (46 dp avatar with photo or initials, Good morning / afternoon / evening, bold first name, bell -> toast "No new notifications"), and ONE white search pill ("Search campus or place", clear X, arrow). Dropdown floats over the page (5 rows max, bold match, "Name" + "Campus - City" lines, nearest first, same `BrowseState.colleges`), pick = `BrowseState.setCampus`. X on the campus name clears the campus. Enter picks the best match, or on text that is not a campus opens Explore with it typed in. "Near me" is the first dropdown row (until the Step 5 locate button).
+- New: `FloatingBofoView`, `BofoChatOverlay`, `HomeSearchBar`, `util/CampusMatch` (+ `CampusMatchTest`), `util/ExploreHandoff`, layouts `view_bofo_chat`, `item_campus_option`, drawables, `strings_bofo.xml`, `strings_home.xml`. Changed: `ShellFragment`, `fragment_shell.xml`, `HomeFragment`, `fragment_home.xml`, `ExploreFragment` (reads the hand-off once), `build.gradle` (2.0.21 / 221).
+- Not built or run by Claude. `BofoPanelSheet` / `sheet_bofo.xml` are unused now (delete in Step 11).
+## v2.0.20 - Step 2 done: splash + loading animation
+- Splash is now the dark ink screen with the WHITE BOFO mascot jumping (2 jumps per 2.4 s loop, squash/stretch on the soles, hat pops off with spark bursts, ground shadow that shrinks in the air), "BOFO", "Boarding House Finder", three pulsing dots, "Getting things ready".
+- New views: `SplashStageView` (mascot, drawn on the 200-unit art grid, clock-driven so it plays even with animations off), `SplashDotsView`.
+- Splash shows one full loop (2400 ms, was 1200); status/navigation bar icons turn white on it and back to dark when it leaves. Retry state kept.
+- Home list skeleton now pulses like the original (900 ms, 1 -> 0.45, ease in-out). Chats skeleton rows come in Step 10.
+- Login, list card and everything else untouched. Not built or run by Claude.
 ## v2.0.19 - Step 1 done: floating tab bar + mascot button
-- Tab bar is now a floating white rounded pill (68 dp, 16 dp side margins, soft shadow, no divider) with a lavender highlight behind the active tab.
-- Mascot button floats just above the bar, bottom-right.
-- Bar and button are lifted above the system gesture area (insets listener in ShellFragment).
-- Owner and admin menus untouched (same BottomNavigationView, same menus).
-- Not built or run by Claude. Version bumped to 2.0.19 / 219 (your emulator showed 2.0.18).
-## Next: Step 2 (splash + loading animation).
-**To continue in any AI:** upload your latest project zip, then paste the whole of `REVERT_PROMPT.md` (in this folder, repo root) and say "Do Step 2".
-Note: the bar highlight is Material's own indicator (fades/animates); the exact sliding highlight from the JavaFX dock can come in the final pass.
+## Next: Step 4 (inline map card; Home becomes one scrolling page; radius pill on the map).
+**To continue in any AI:** upload your latest project zip, then paste the whole of `REVERT_PROMPT.md` (repo root) and say "Do Step 4".

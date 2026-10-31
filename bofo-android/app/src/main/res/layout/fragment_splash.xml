@@ -1,41 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- v2.0.20: dark ink background + white jumping mascot (original SplashView). Ids status / retry unchanged. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bofo_bg"
+    android:background="@color/bofo_ink"
     android:gravity="center"
     android:orientation="vertical"
     android:padding="24dp">
 
-    <ImageView
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:contentDescription="@string/cd_mascot"
-        android:src="@drawable/mascot_happy" />
+    <com.bofo.finder.ui.SplashStageView
+        android:layout_width="230dp"
+        android:layout_height="250dp"
+        android:contentDescription="@string/cd_mascot" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="10dp"
         android:text="@string/splash_title"
-        android:textAppearance="@style/Text.Bofo.Splash" />
+        android:textColor="@color/bofo_white"
+        android:textSize="38sp"
+        android:textStyle="bold" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="10dp"
         android:text="@string/splash_subtitle"
-        android:textAppearance="@style/Text.Bofo.Secondary" />
+        android:textColor="@color/bofo_primary_tint"
+        android:textSize="15sp" />
+
+    <com.bofo.finder.ui.SplashDotsView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp" />
 
     <TextView
         android:id="@+id/status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="10dp"
         android:gravity="center"
         android:text="@string/splash_status"
-        android:textAppearance="@style/Text.Bofo.Secondary"
-        android:textColor="@color/bofo_muted" />
+        android:textColor="@color/bofo_muted"
+        android:textSize="13sp" />
 
     <Button
         android:id="@+id/retry"

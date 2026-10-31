@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Step 3 (v2.0.21): Home header + search bar. -->
+<resources>
+    <string name="home_good_morning">Good morning</string>
+    <string name="home_good_afternoon">Good afternoon</string>
+    <string name="home_good_evening">Good evening</string>
+    <string name="home_name_there">there</string>
+    <string name="home_search_hint">Search campus or place</string>
+    <string name="home_offline_strip">No connection. Showing saved places.</string>
+    <string name="home_bell_toast">No new notifications</string>
+    <string name="home_near_me_row">Near me</string>
+    <string name="home_near_me_sub">Places closest to your phone</string>
+    <string name="cd_notifications">Notifications</string>
+    <string name="cd_clear_search">Clear search</string>
+    <string name="cd_show_campuses">Show all campuses</string>
+    <string name="cd_profile_photo">Your profile photo</string>
+</resources>
