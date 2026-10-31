@@ -175,6 +175,11 @@
             android:id="@+id/map_card"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+
+        <com.bofo.finder.ui.CornerMaskView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:importantForAccessibility="no" />
     </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.tabs.TabLayout

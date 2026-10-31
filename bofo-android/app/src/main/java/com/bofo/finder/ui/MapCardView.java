@@ -34,7 +34,6 @@ import org.maplibre.android.camera.CameraUpdateFactory;
 import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.geometry.LatLngBounds;
 import org.maplibre.android.maps.MapLibreMap;
-import org.maplibre.android.maps.MapLibreMapOptions;
 import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.Style;
 import org.maplibre.android.offline.OfflineManager;
@@ -86,6 +85,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private Double ringLat, ringLng, campusLat, campusLng, userLat, userLng;
     private double ringKm;
     private boolean fitPending, pillShown;
+    private long lastGlide;
     private double[][] routePts;        // Stage 6: the drawn route, {lat, lng} pairs
     private boolean routeApprox, fitRoutePending, tapsEnabled = true, blockParentScroll;
     private double[] target;           // {lat, lng, zoom}
@@ -121,14 +121,20 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     }
 
     /** Step 4: while the pill is dragged, ease the camera so the whole (live) circle stays in view. */
-    public void glideToRing() {
+    public void glideToRing() { glideToRing(false); }
+
+    /** force = the finger lifted: always frame the final circle. */
+    public void glideToRing(boolean force) {
         if (map == null || ringLat == null || ringKm <= 0) return;
+        long now = android.os.SystemClock.uptimeMillis();
+        if (!force && now - lastGlide < 160) return;                 // at most ~6 camera moves a second while dragging
+        lastGlide = now;
         double[] bb = MapGeo.ringBounds(ringLat, ringLng, ringKm);
         if (bb == null) return;
         float d = getResources().getDisplayMetrics().density;
         int pad = Math.round(36 * d), top = Math.round((pillShown ? 80 : 36) * d);
         try {
-            map.easeCamera(CameraUpdateFactory.newLatLngBounds(LatLngBounds.from(bb[2], bb[3], bb[0], bb[1]), pad, top, pad, pad), 180);
+            map.easeCamera(CameraUpdateFactory.newLatLngBounds(LatLngBounds.from(bb[2], bb[3], bb[0], bb[1]), pad, top, pad, pad), 150);
         } catch (Exception e) {
             Log.w("BOFO", "Map glide", e);
         }
@@ -143,7 +149,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         MapLibre.getInstance(app);
         capCache(app);
         owner = lifecycleOwner;
-        mapView = new MapView(getContext(), MapLibreMapOptions.createFromAttributes(getContext(), null).textureMode(true));   // TextureView: clips to the rounded card and sits under the dropdown
+        mapView = new MapView(getContext());      // default fast surface; the rounded corners are drawn by CornerMaskView
         b.mapHost.addView(mapView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         mapView.onCreate(null);
         owner.getLifecycle().addObserver(this);        // replays onStart / onResume if the screen is already showing
@@ -274,13 +280,13 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     }
 
     /** The radius ring (null centre or km <= 0 removes it). */
-    public void setRing(Double lat, Double lng, double km) { ringLat = lat; ringLng = lng; ringKm = km; render(); }
+    public void setRing(Double lat, Double lng, double km) { ringLat = lat; ringLng = lng; ringKm = km; if (style != null) set("radius-src", MapGeo.circleJson(ringLat, ringLng, ringKm, 64)); }
 
     /** The campus dot (null removes it). */
-    public void setCampusDot(Double lat, Double lng) { campusLat = lat; campusLng = lng; render(); }
+    public void setCampusDot(Double lat, Double lng) { campusLat = lat; campusLng = lng; if (style != null) set("campus-src", MapGeo.pointJson(campusLat, campusLng)); }
 
     /** The live "you are here" dot (null removes it). */
-    public void setUser(Double lat, Double lng) { userLat = lat; userLng = lng; render(); }
+    public void setUser(Double lat, Double lng) { userLat = lat; userLng = lng; if (style != null) set("user-src", MapGeo.pointJson(userLat, userLng)); }
 
     /** Stage 6: draws a route ({lat, lng} pairs; approximate = dashed straight-line estimate). Fewer than 2 points removes it. */
     public void setRoute(double[][] pts, boolean approximate) {

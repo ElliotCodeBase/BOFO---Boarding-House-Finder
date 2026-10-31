@@ -100,7 +100,7 @@ public class HomeFragment extends Fragment {
         b.mapCard.setListener(new MapCardView.Listener() {
             @Override public void openPlace(String id) { BhDetailFragment.open(HomeFragment.this, id); }
             @Override public void locate() { locateMe(); }
-            @Override public void radiusChanged(float km, boolean settled) { onRadiusPill(km); }
+            @Override public void radiusChanged(float km, boolean settled) { onRadiusPill(km, settled); }
         });
         b.mapCard.activate(getViewLifecycleOwner());
 
@@ -230,12 +230,12 @@ public class HomeFragment extends Fragment {
     }
 
     /** Radius pill moved: the circle and the zoom follow live, the list reloads once it has settled. */
-    private void onRadiusPill(float km) {
+    private void onRadiusPill(float km, boolean settled) {
         if (b == null) return;
         pendingKm = km;
         BrowseState.radiusKm = km;
         b.mapCard.setRing(BrowseState.refLat(), BrowseState.refLng(), km);
-        b.mapCard.glideToRing();
+        b.mapCard.glideToRing(settled);
         ui.removeCallbacks(settleRadius);
         ui.postDelayed(settleRadius, RADIUS_SETTLE_MS);
     }

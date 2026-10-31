@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.23 map lag fix (2026-10-31)
+- **PR title:** `v2.0.23 - Android: fix laggy Home map (no texture mode, per-layer updates, throttled radius glide)`
+- `MapCardView`: default MapView again; `setRing/setCampusDot/setUser` update one source; `glideToRing(force)` throttled 160 ms. New `CornerMaskView` in `fragment_home.xml`. Step 5 is still next.
+
+---
+
 # Handoff (Android) - v2.0.22 revert Step 4, inline map card (2026-10-31)
 - **PR title:** `v2.0.22 - Android: Home is one scrolling page with an inline map card and radius pill`
 

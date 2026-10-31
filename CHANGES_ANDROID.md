@@ -1,3 +1,7 @@
+# v2.0.23 - Android port, map lag fix (JavaFX app stays v1.20.0)
+- The Home map was slow: texture mode (added in v2.0.22 for the rounded corners) is back to the default fast surface; the rounded corners are drawn by a new `CornerMaskView` on top. Dragging the radius pill now only redraws the circle (not every layer) and moves the camera at most ~6 times a second, with one final move when you let go. Live location and campus dot also update only their own layer.
+- Not built or run by Claude. Profile > About shows 2.0.23.
+
 # v2.0.22 - Android port, revert Step 4: inline map card (JavaFX app stays v1.20.0)
 - Home is now ONE scrolling page: offline strip, greeting, search, rounded map card, New / Hot / Best rated, rent line, title and the card grid all scroll together (CoordinatorLayout + AppBarLayout; the list recycles as before; pull-to-refresh only at the very top).
 - Removed from Home: the List / Map toggle, the full-screen map button and the old radius slider row.

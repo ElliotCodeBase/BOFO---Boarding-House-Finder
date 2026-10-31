@@ -1,4 +1,5 @@
 # Revert-to-original-UI progress (bofo-android)
+## v2.0.23 - map lag fix: default MapView + CornerMaskView, per-layer updates, throttled radius glide.
 ## v2.0.22 - Step 4 done: inline map card
 - Home is one scrolling page (CoordinatorLayout + AppBarLayout, header scrolls with the list; swipe-refresh only at offset 0; dropdown closes on scroll). List/Map toggle, full-screen map button and the old radius slider row are gone from Home.
 - Map card in a 28 dp MaterialCardView (thin outline), height 42% of screen clamped 200-440 dp, texture-mode MapView, round white locate button bottom-right, attribution pill bottom-left. Radius pill top-centre (0.5-5 km, step 0.5, chip "1.0 km"), live circle + eased zoom while dragging, list reloads 350 ms after it settles. Shown when a campus or Near me is the centre. Map fits only when the centre changes.
