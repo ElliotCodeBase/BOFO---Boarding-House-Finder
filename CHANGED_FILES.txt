@@ -1,11 +1,5 @@
 changed bofo-android/app/build.gradle
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
 changed bofo-android/app/src/main/java/com/bofo/finder/ui/DashboardFragment.java
-changed bofo-android/app/src/main/res/layout/fragment_dashboard.xml
-changed bofo-android/app/src/main/res/values/strings.xml
-new     bofo-android/app/src/main/res/drawable/bg_dash_card.xml
-new     bofo-android/app/src/main/res/drawable/bg_dash_hero.xml
-new     bofo-android/app/src/main/res/drawable/bg_dash_chip.xml
-new     bofo-android/app/src/main/res/drawable/bg_dash_chip_amber.xml
-new     bofo-android/app/src/main/res/drawable/bg_dash_chip_green.xml
 changed CHANGES_ANDROID.md
 changed HANDOFF_ANDROID.md

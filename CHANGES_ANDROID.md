@@ -1,3 +1,8 @@
+# v2.0.46 - Android port: locate button zooms out fast (JavaFX app stays v1.20.0)
+- Dashboard map: the round locate button is now a toggle. First tap = fly to you (uses the saved position at once), second tap = zoom back out to all your places. Before, there was no quick way back out.
+- Map camera jumps (`moveTo`) now take a fixed 0.5 s instead of the slow default fly time (also used by Home and the Create map).
+- Changed: `MapCardView.java`, `DashboardFragment.java`, `build.gradle` (2.0.46 / 246). Not built by Claude.
+
 # v2.0.45 - Android port: nicer owner Dashboard (JavaFX app stays v1.20.0)
 - Purple **hero card** (places, boosted, big total of views); stat tiles are now white rounded cards (before they were flat text, so they looked empty); **place cards** have the photo, name, price, an amber "Boosted" tag and chips (views, saved, chats, free beds, rating); amber verification banner; more space at the bottom so the floating tab bar never covers the last card.
 - Changed: `DashboardFragment.java`, `fragment_dashboard.xml`, `strings.xml`, `build.gradle` (2.0.45 / 245); new drawables `bg_dash_card`, `bg_dash_hero`, `bg_dash_chip`, `bg_dash_chip_amber`, `bg_dash_chip_green`. Not built by Claude.

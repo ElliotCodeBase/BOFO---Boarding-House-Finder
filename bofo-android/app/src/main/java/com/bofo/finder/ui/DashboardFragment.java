@@ -304,14 +304,20 @@ public class DashboardFragment extends Fragment {
         b.getRoot().postDelayed(() -> { if (b != null && map == m && isAdded()) { m.activate(getViewLifecycleOwner()); m.fit(); } }, 300);
     }
 
+    private boolean atMe;                          // locate button is a toggle: you, then back to all your places
+
     private void locateMe() {
-        if (me != null && map != null) { map.moveTo(me[0], me[1], 15); return; }
+        if (map == null) return;
+        if (atMe) { atMe = false; map.setLocateActive(false); map.fit(); return; }          // second tap: zoom back out to every place
+        if (me != null) { atMe = true; map.setLocateActive(true); map.moveTo(me[0], me[1], 15); return; }
         location.requestOnce(new LocationHelper.Callback() {
             @Override public void got(double lat, double lng) {
                 if (b == null || map == null) return;
                 me = new double[]{lat, lng};
                 map.setUser(lat, lng);
                 map.setLocState(LocationHelper.precise(requireContext()) ? MapCardView.Loc.EXACT : MapCardView.Loc.APPROX);
+                atMe = true;
+                map.setLocateActive(true);
                 map.moveTo(lat, lng, 15);
             }
             @Override public void off() { ListArea.toast(DashboardFragment.this, getString(R.string.loc_off)); }

@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.46 locate toggle (2026-10-31)
+- **PR title:** `v2.0.46 - Android: Dashboard locate button toggles you / all places, faster camera moves`
+- If the user still finds it slow: the first tap with no saved fix waits for GPS (`LocationHelper.requestOnce`); consider `lastKnown` first.
+
+---
+
 # Handoff (Android) - v2.0.45 Dashboard UI polish (2026-10-31)
 - **PR title:** `v2.0.45 - Android: owner Dashboard UI (hero card, stat cards, place cards with photo and chips)`
 - User screenshot showed flat stat tiles (old `bg_dir_option` is only a hairline) and plain text place rows; fixed with the `bg_dash_*` drawables. If the user wants more: same card style for My places (`ListingsFragment` still uses a plain list) and the Create wizard.
