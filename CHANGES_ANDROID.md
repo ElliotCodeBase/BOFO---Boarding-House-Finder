@@ -1,3 +1,8 @@
+# v2.0.69 - Android: Home map remembers where it was
+- **Fixed:** after leaving a place page the Home map opened at the empty start view (lat 0 / lng 0, open sea) and showed nothing. The camera (centre + zoom) is now saved when the map stops moving and when the screen closes, and put back when Home opens the map again.
+- Only Home uses it for now (`rememberCamera("home")`); other maps are unchanged. A new campus / radius / Near me still moves the camera as before.
+- Files: `MapCardView.java` (`rememberCamera`, `saveCamera`, restore in `onMapReady`), `HomeFragment.java` (1 line), `build.gradle` (2.0.69 / 269). Not built or run by Claude.
+
 # v2.0.68 - Android: blank Home map reloads itself (watchdog)
 - **Fixed:** after leaving a place page the Home map could stay light blue (no land, water or roads). The map reported "fully drawn" even though its tile source had failed, so v2.0.67 never retried.
 - **Now:** 6 s after the map style loads (and every time Home resumes) the map checks whether anything is actually drawn (land, water, roads, buildings). If nothing is, it loads the style again (up to 6 tries), which fetches the tiles again.

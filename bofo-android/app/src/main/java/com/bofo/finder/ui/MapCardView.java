@@ -42,6 +42,7 @@ import com.bofo.finder.util.Money;
 import com.google.android.material.slider.Slider;
 
 import org.maplibre.android.MapLibre;
+import org.maplibre.android.camera.CameraPosition;
 import org.maplibre.android.camera.CameraUpdateFactory;
 import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.geometry.LatLngBounds;
@@ -225,6 +226,22 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private static final int MAX_STYLE_RETRIES = 6;
     private static final long REFRESH_DELAY_MS = 5000;
     private final Runnable refreshMap = this::reloadStyle;
+    // v2.0.69: a new MapView starts at lat 0 / lng 0 (open sea = blank map). A screen that asks for it gets the last camera back.
+    private static final java.util.Map<String, double[]> SAVED_CAMERA = new java.util.HashMap<>();
+    private String cameraKey;
+
+    /** Call before {@link #activate}: the camera is saved under this key when it stops moving or the screen closes, and restored when the map opens again. */
+    public void rememberCamera(String key) { cameraKey = key; }
+
+    private void saveCamera() {
+        if (cameraKey == null || map == null) return;
+        try {
+            CameraPosition cp = map.getCameraPosition();
+            if (cp.target == null || (cp.target.getLatitude() == 0 && cp.target.getLongitude() == 0)) return;     // never remember the empty start view
+            SAVED_CAMERA.put(cameraKey, new double[]{cp.target.getLatitude(), cp.target.getLongitude(), cp.zoom});
+        } catch (Throwable t) { Log.w("BOFO", "Camera not saved", t); }
+    }
+
     private static final long BLANK_CHECK_MS = 6000;
     /** v2.0.68: a failed tile source still counts as "fully rendered", so also look at what is on screen: no land / water / road drawn = blank map = load it again. */
     private final Runnable blankCheck = () -> {
@@ -275,9 +292,12 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         m.getUiSettings().setTiltGesturesEnabled(false);
         m.getUiSettings().setLogoEnabled(false);          // the attribution text stays visible (licence)
         m.addOnMapClickListener(this::onTap);
+        double[] saved = cameraKey == null ? null : SAVED_CAMERA.get(cameraKey);
+        if (saved != null) m.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(saved[0], saved[1]), saved[2]));     // back where it was
         m.addOnCameraMoveStartedListener(reason -> { camMoving = true; removeCallbacks(idleRebuild); if (radar != null) radar.setMoving(true); });
         m.addOnCameraIdleListener(() -> {
             camMoving = false;
+            saveCamera();
             removeCallbacks(idleRebuild);
             refreshRadar();                         // exact position again: the ripples come back
             postDelayed(idleRebuild, 160);          // fling / double-tap / pinch fire several idles in a row: rebuild once, after the hand is off
@@ -1019,6 +1039,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     @Override
     public void onDestroy(@NonNull LifecycleOwner o) {
         o.getLifecycle().removeObserver(this);
+        saveCamera();
         removeCallbacks(refreshMap); removeCallbacks(blankCheck);
         stopRipples(); stopLocatePulse();
         if (pop != null) pop.cancel();

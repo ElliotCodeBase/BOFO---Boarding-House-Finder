@@ -134,6 +134,7 @@ public class HomeFragment extends Fragment {
         paintLocate();
         // MapLibre start-up (native libs, style parse) is heavy: do it after the first frame, not inside the same frame as the list
         final View root = b.getRoot();
+        b.mapCard.rememberCamera("home");                  // v2.0.69: coming back from a place page the map opens where it was
         root.postDelayed(() -> { if (b != null && isAdded()) b.mapCard.activate(getViewLifecycleOwner()); }, 300);
 
         // The header scrolls away with the list: pull-to-refresh only at the very top, an open dropdown closes
