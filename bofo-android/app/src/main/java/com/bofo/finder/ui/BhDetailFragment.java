@@ -190,34 +190,90 @@ public class BhDetailFragment extends Fragment {
         });
     }
 
+    /** Amenities as two-column tiles: the app's own line icon in a tinted circle + the name. */
     private void showAmenities(JSONArray list) {
         b.amenities.removeAllViews();
+        List<Amenity> items = new ArrayList<>();
         if (list != null) for (int i = 0; i < list.length(); i++) {
             JSONObject row = list.optJSONObject(i);
             JSONObject am = row == null ? null : row.optJSONObject("amenities");
             if (am == null) continue;
-            try {
-                Chip c = Chips.create(b.amenities, Amenity.from(am).label(), false, false);
-                b.amenities.addView(c);
-            } catch (Exception ignored) { /* a malformed amenity row is skipped */ }
+            try { items.add(Amenity.from(am)); } catch (Exception ignored) { /* a malformed amenity row is skipped */ }
         }
-        int vis = b.amenities.getChildCount() == 0 ? View.GONE : View.VISIBLE;
+        float dp = getResources().getDisplayMetrics().density;
+        for (int i = 0; i < items.size(); i += 2) {
+            android.widget.LinearLayout row = new android.widget.LinearLayout(requireContext());
+            row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            android.widget.LinearLayout.LayoutParams rp = new android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            if (i > 0) rp.topMargin = (int) (8 * dp);
+            for (int k = 0; k < 2; k++) {
+                android.widget.LinearLayout.LayoutParams cp = new android.widget.LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+                if (k == 1) cp.setMarginStart((int) (8 * dp));
+                if (i + k < items.size()) row.addView(amenityTile(items.get(i + k), dp), cp);
+                else row.addView(new View(requireContext()), cp);
+            }
+            b.amenities.addView(row, rp);
+        }
+        int vis = items.isEmpty() ? View.GONE : View.VISIBLE;
         b.amenities.setVisibility(vis);
         b.amenitiesTitle.setVisibility(vis);
+        if (!items.isEmpty()) b.free.setVisibility(View.GONE);          // the "Free Wi-Fi" line under the tiles would only repeat them
+    }
+
+    private View amenityTile(Amenity a, float dp) {
+        android.widget.LinearLayout tile = new android.widget.LinearLayout(requireContext());
+        tile.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        tile.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        tile.setBackgroundResource(R.drawable.bg_amenity_tile);
+        int pad = (int) (10 * dp);
+        tile.setPadding(pad, pad, pad, pad);
+        android.widget.FrameLayout bubble = new android.widget.FrameLayout(requireContext());
+        bubble.setBackgroundResource(R.drawable.bg_icon_circle_tint);
+        android.widget.ImageView icon = new android.widget.ImageView(requireContext());
+        icon.setImageResource(AmenityIcons.res(a.name()));
+        icon.setImageTintList(android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.bofo_primary)));
+        int s = (int) (18 * dp);
+        bubble.addView(icon, new android.widget.FrameLayout.LayoutParams(s, s, android.view.Gravity.CENTER));
+        int bs = (int) (34 * dp);
+        tile.addView(bubble, new android.widget.LinearLayout.LayoutParams(bs, bs));
+        android.widget.TextView t = new android.widget.TextView(requireContext());
+        t.setText(a.name());
+        t.setTextSize(14f);
+        t.setMaxLines(2);
+        t.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.bofo_text));
+        android.widget.LinearLayout.LayoutParams tp = new android.widget.LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        tp.setMarginStart((int) (10 * dp));
+        tile.addView(t, tp);
+        return tile;
     }
 
     /** House rules written by the owner: one bullet per line; the whole block is hidden when there are none. */
     private void showRules(JSONArray rules) {
         b.rulesList.removeAllViews();
+        float dp = getResources().getDisplayMetrics().density;
         if (rules != null) for (int i = 0; i < rules.length(); i++) {
             String r = rules.optString(i, "").trim();
             if (r.isEmpty()) continue;
+            android.widget.LinearLayout row = new android.widget.LinearLayout(requireContext());
+            row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            row.setGravity(android.view.Gravity.TOP);
+            android.widget.ImageView ic = new android.widget.ImageView(requireContext());
+            ic.setImageResource(R.drawable.ic_am_rule);
+            ic.setImageTintList(android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.bofo_primary)));
+            int s = (int) (20 * dp);
+            android.widget.LinearLayout.LayoutParams ip = new android.widget.LinearLayout.LayoutParams(s, s);
+            ip.topMargin = (int) (1 * dp);
+            row.addView(ic, ip);
             android.widget.TextView t = new android.widget.TextView(requireContext());
-            t.setText("\u2022  " + r);
+            t.setText(r);
             t.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.bofo_text));
             t.setTextSize(14f);
-            t.setPadding(0, (int) (3 * getResources().getDisplayMetrics().density), 0, 0);
-            b.rulesList.addView(t);
+            android.widget.LinearLayout.LayoutParams tp = new android.widget.LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            tp.setMarginStart((int) (10 * dp));
+            row.addView(t, tp);
+            android.widget.LinearLayout.LayoutParams rp = new android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            if (b.rulesList.getChildCount() > 0) rp.topMargin = (int) (10 * dp);
+            b.rulesList.addView(row, rp);
         }
         int vis = b.rulesList.getChildCount() == 0 ? View.GONE : View.VISIBLE;
         b.rulesList.setVisibility(vis);

@@ -1,3 +1,8 @@
+# v2.0.65 - Android: own amenity icons, cleaner place page
+- **Amenity icons:** emoji replaced by the app's own line icons (water drop, bolt, Wi-Fi, snowflake, shower, pot, washing machine, P sign, camera, book, flame, fan, bed, closet, lock, people, moon, paw, venus / mars, TV, fridge, shield). Used on the place page, the owner's amenity picker and the Explore filter. Amenities with an unknown name (owner-made) get a sparkle icon.
+- **Place page:** amenities are tiles with an icon bubble, House rules is a card with check marks, no repeated rating / "Free Wi-Fi" lines, more space between sections.
+- Files: `AmenityIcons.java` (new), `Chips.java`, `BhDetailFragment.java`, `ListingFormFragment.java`, `FilterSheet.java`, `fragment_bh_detail.xml`, `bg_amenity_tile.xml` (new), 25 `ic_am_*.xml` (new), `build.gradle` (2.0.65 / 265). Not built or run by Claude.
+
 # v2.0.64 - Android: house rules
 - **Owners:** the Add / Edit place form has a new "House rules" section (last step with photos and amenities): type a rule, tap Add, remove with the cross. Up to 20 rules.
 - **Students:** the place page shows a "House rules" list under Amenities (hidden when the owner added none).
