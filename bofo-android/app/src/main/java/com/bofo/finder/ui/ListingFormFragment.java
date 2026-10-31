@@ -506,7 +506,7 @@ public class ListingFormFragment extends Fragment {
         for (String id : selected) {
             Amenity a = byId.get(id);
             if (a == null) continue;
-            Chip c = Chips.create(b.amenSelected, a.label() + "  ✕", false, false);
+            Chip c = Chips.create(b.amenSelected, a, "  ✕", false, false);
             c.setClickable(true);
             c.setOnClickListener(v -> { selected.remove(id); renderAmenities(); refresh(); });
             b.amenSelected.addView(c);
@@ -531,7 +531,7 @@ public class ListingFormFragment extends Fragment {
             }
         }
         for (Amenity a : show) {
-            Chip c = Chips.create(b.amenities, a.label(), false, false);
+            Chip c = Chips.create(b.amenities, a, "", false, false);
             c.setClickable(true);
             c.setOnClickListener(v -> { selected.add(a.id()); b.amenSearch.setText(""); renderAmenities(); refresh(); });
             b.amenities.addView(c);

@@ -91,7 +91,8 @@
                     android:drawableStart="@drawable/ic_star"
                     android:drawablePadding="6dp"
                     android:gravity="center_vertical"
-                    android:textColor="@color/bofo_text_2" />
+                    android:textColor="@color/bofo_text_2"
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/address"
@@ -210,17 +211,39 @@
                     android:id="@+id/amenities_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="20dp"
                     android:text="@string/detail_amenities"
                     android:textColor="@color/bofo_text"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
-                <com.google.android.material.chip.ChipGroup
+                <LinearLayout
                     android:id="@+id/amenities"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp" />
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/rules_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="@string/detail_rules"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/rules_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_amenity_tile"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/rules_title"
@@ -244,7 +267,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="20dp"
                     android:text="@string/detail_contact"
                     android:textColor="@color/bofo_text"
                     android:textSize="16sp"

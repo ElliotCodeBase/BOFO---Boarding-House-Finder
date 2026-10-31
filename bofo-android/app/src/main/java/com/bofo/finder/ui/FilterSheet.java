@@ -155,7 +155,7 @@ public class FilterSheet extends BottomSheetDialogFragment {
             List<Amenity> sorted = new ArrayList<>(list);
             if (!q.isEmpty()) sorted.sort((x, y) -> score.get(y.id()) - score.get(x.id()));
             for (Amenity a : sorted) {
-                Chip c = Chips.create(b.amenityChips, a.label(), true, selected.contains(a.id()));
+                Chip c = Chips.create(b.amenityChips, a, "", true, selected.contains(a.id()));
                 c.setOnCheckedChangeListener((v, on) -> { if (on) selected.add(a.id()); else selected.remove(a.id()); });
                 b.amenityChips.addView(c);
             }
