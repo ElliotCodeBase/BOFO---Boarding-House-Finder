@@ -1,4 +1,13 @@
 changed bofo-android/app/build.gradle
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/DirectionsCardView.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/ListArea.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/HomeFragment.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/ExploreFragment.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/SavedFragment.java
+changed bofo-android/app/src/main/res/layout/view_list_area.xml
+changed bofo-android/app/src/main/res/layout/fragment_home.xml
+changed bofo-android/app/src/main/res/values/strings.xml
+new     bofo-android/app/src/main/res/values/strings_net.xml
+new     bofo-android/app/src/main/res/drawable/ic_wifi_off.xml
+new     bofo-android/app/src/main/res/drawable/bg_map_note.xml
 changed CHANGES_ANDROID.md
 changed HANDOFF_ANDROID.md

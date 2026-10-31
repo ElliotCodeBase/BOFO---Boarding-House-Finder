@@ -1,3 +1,9 @@
+# v2.0.48 - Android port: no more blank Home when the network is slow or gone (JavaFX app stays v1.20.0)
+- Home / Explore / Saved: the skeleton cards stay up while loading, and after 5 s a "Slow network. Still loading..." note appears over them. No network and no saved copy now shows a wifi-off icon, "No internet connection", one line of help and Try again (before: a long "No connection to the server..." line, or nothing). It reloads by itself when the connection comes back.
+- Home map: a small note in the middle of the map says "Map can't load without internet" or "Slow network. The map may take a while...".
+- `list_offline` reworded everywhere (toasts and messages): "No internet connection. Check your Wi-Fi or mobile data and try again."
+- Changed: `ListArea.java`, `HomeFragment.java`, `ExploreFragment.java`, `SavedFragment.java`, `view_list_area.xml`, `fragment_home.xml`, `strings.xml`, `build.gradle` (2.0.48 / 248). New: `strings_net.xml`, `ic_wifi_off.xml`, `bg_map_note.xml`. Not built by Claude.
+
 # v2.0.47 - Android port: Directions card refreshes by itself (JavaFX app stays v1.20.0)
 - Place > Directions: if the route cannot be worked out (weak signal, slow server) the card now keeps loading and **tries again by itself** (up to 5 times, 2 s, 4 s, 6 s...) instead of stopping at an empty box with a Retry button. The Retry button only shows after the 5th failure.
 - Changed: `DirectionsCardView.java`, `build.gradle` (2.0.47 / 247). Not built by Claude.

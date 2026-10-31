@@ -198,7 +198,8 @@ public class ExploreFragment extends Fragment {
     private void fail(int my, Throwable e) {
         if (my != token || b == null) return;
         b.resultCount.setText("");
-        area.showMessage(Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.list_error), e), true);
+        if (Connectivity.isNetworkError(e)) area.showOffline();
+        else area.showMessage(ErrorText.full(getString(R.string.list_error), e), true);
     }
 
     @Override

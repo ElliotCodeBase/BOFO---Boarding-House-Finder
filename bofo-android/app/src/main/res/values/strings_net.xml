@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- v2.0.48: what Home / Explore / Saved show instead of an empty area -->
+    <string name="net_offline_title">No internet connection</string>
+    <string name="net_offline_body">Check your Wi-Fi or mobile data, then try again. This page reloads by itself when you are back online.</string>
+    <string name="net_slow">Slow network. Still loading…</string>
+    <string name="net_map_offline">Map can\'t load without internet</string>
+    <string name="net_map_slow">Slow network. The map may take a while…</string>
+</resources>

@@ -63,7 +63,8 @@ public class SavedFragment extends Fragment {
             show();
         }, e -> {
             if (my != token || b == null) return;
-            area.showMessage(Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.saved_error), e), true);
+            if (Connectivity.isNetworkError(e)) area.showOffline();
+            else area.showMessage(ErrorText.full(getString(R.string.saved_error), e), true);
         });
     }
 

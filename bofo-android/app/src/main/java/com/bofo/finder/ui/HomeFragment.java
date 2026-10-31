@@ -147,9 +147,23 @@ public class HomeFragment extends Fragment {
 
         Favorites.load(null);
         Favorites.IDS.observe(getViewLifecycleOwner(), ids -> adapter.setFavorites(ids));
-        Connectivity.OFFLINE.observe(getViewLifecycleOwner(), off -> b.offlineBanner.setVisibility(Boolean.TRUE.equals(off) ? View.VISIBLE : View.GONE));
+        Connectivity.OFFLINE.observe(getViewLifecycleOwner(), off -> {
+            b.offlineBanner.setVisibility(Boolean.TRUE.equals(off) ? View.VISIBLE : View.GONE);
+            paintMapNote();
+        });
+        area.setSlowListener(slow -> { mapSlow = Boolean.TRUE.equals(slow); paintMapNote(); });
         // The first emission is the initial load; later ones come from the campus picker / radius slider.
         BrowseState.CHANGED.observe(getViewLifecycleOwner(), n -> { if (n == null || n == lastChange) return; lastChange = n; reload(); });
+    }
+
+    private boolean mapSlow;
+
+    /** v2.0.48: the map is blank when there is no internet or the network is slow: say so instead of showing nothing. */
+    private void paintMapNote() {
+        if (b == null) return;
+        boolean off = Boolean.TRUE.equals(Connectivity.OFFLINE.getValue());
+        b.mapNote.setText(off ? R.string.net_map_offline : R.string.net_map_slow);
+        b.mapNote.setVisibility(off || mapSlow ? View.VISIBLE : View.GONE);
     }
 
     private void reload() {
@@ -224,7 +238,8 @@ public class HomeFragment extends Fragment {
     private void fail(int my, Throwable e) {
         if (my != token || b == null) return;
         paintRent(null, false);
-        area.showMessage(Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.list_error), e), true);
+        if (Connectivity.isNetworkError(e)) area.showOffline();
+        else area.showMessage(ErrorText.full(getString(R.string.list_error), e), true);
     }
 
     /** Background thread. No campus: the whole list. Campus: nearest first within the radius. Best rated reads the rent range from the unfiltered list. */
