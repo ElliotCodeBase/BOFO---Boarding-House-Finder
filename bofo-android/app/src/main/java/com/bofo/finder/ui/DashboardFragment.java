@@ -54,6 +54,7 @@ public class DashboardFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
         b = FragmentDashboardBinding.inflate(inflater, container, false);
         b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
+        if (getParentFragment() instanceof ShellFragment) b.back.setVisibility(View.GONE);      // as an owner tab there is nothing to go back to
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
         b.swipe.setOnRefreshListener(this::reload);
         reload();
