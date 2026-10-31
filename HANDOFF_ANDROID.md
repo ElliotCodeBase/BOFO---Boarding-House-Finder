@@ -2,6 +2,7 @@
 - **PR title:** `v2.0.53 - Android: tab bar icons no longer hidden under the bar; bofo-chat logs why the LLM fails`
 - `DockBarView`: bar had elevation 10 dp, tabs 0, so the bar painted over the icons. Highlight and cells now use the same elevation (drawn in child order).
 - `bofo-chat/index.ts`: logs HTTP status / timeout / missing secrets per model. "Offline mode" text reworded (it means the LLM failed, not the phone).
+- Ask BOFO reads the phone position (permission + phone Location popup) when a question needs it and sends it to bofo-chat; falls back to the campus.
 - Needs `OPENROUTER_API_KEY` and current `LLM_MODELS` set with `supabase secrets set`. Not built or run by Claude.
 
 ---
@@ -631,4 +632,5 @@ You are taking over a native Android (Java only, XML + Fragments, Material 3, Gr
 Start by telling me in 3 lines what the handoff says is done and what you will do now, then do it.
 
 ---
+
 
