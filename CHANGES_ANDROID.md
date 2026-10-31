@@ -1,3 +1,8 @@
+# v2.0.35 - Android port, lag fix 2 (JavaFX app stays v1.20.0)
+- Pin / cluster / label rebuild now runs once, 160 ms after the map stops (it ran on every idle and copied every label bitmap from the map each time).
+- Lighter drawing: map pixel ratio 1.75 (was 2), max zoom 16 (was 17), buildings only from zoom 15, minor roads from zoom 14, no blur on the location-dot shadow.
+- Changed: `MapCardView`, `assets/bofo-map-style.json`, `build.gradle` (2.0.35 / 235). Pins and labels look about 12% smaller on 3x phones. Not built or run by Claude.
+
 # v2.0.34 - Android port, lag fix (JavaFX app stays v1.20.0)
 - Cause found in the screen recording (about 17 unique frames/s): the radar ripples redrew the whole map ~30 times a second forever, and 5-6 layer properties each frame.
 - Now: ripples run at ~12 fps, update only the 2 ripple layers, and pause while the map is panning/zooming/gliding or the page is scrolling. Changed: `MapCardView`, `build.gradle` (2.0.34 / 234). Not built or run by Claude.

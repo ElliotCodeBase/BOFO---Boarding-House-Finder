@@ -122,6 +122,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private boolean overviewPending;
 
     // ---- Step 6: clusters, labels, campus dots, price glow ----
+    private final java.util.Map<String, float[]> imgSize = new java.util.HashMap<>();   // label bitmap sizes: style.getImage() copies the whole bitmap
     private final Set<String> imgs = new HashSet<>();      // bitmaps already added to the style (labels, cluster bubbles)
     private List<College> colleges = new ArrayList<>();
     private String glowId, routeLabel;
@@ -189,7 +190,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         capCache(app);
         owner = lifecycleOwner;
         mapView = new MapView(getContext(), MapLibreMapOptions.createFromAttributes(getContext(), null)
-                .pixelRatio(Math.min(2f, getResources().getDisplayMetrics().density)));   // 3x screens draw 2.25x the pixels for no visible gain; the rounded corners are drawn by CornerMaskView
+                .pixelRatio(Math.min(1.75f, getResources().getDisplayMetrics().density)));   // 3x screens draw 2.25x the pixels for no visible gain; the rounded corners are drawn by CornerMaskView
         b.mapHost.addView(mapView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         mapView.onCreate(null);
         owner.getLifecycle().addObserver(this);        // replays onStart / onResume if the screen is already showing
@@ -210,14 +211,18 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private void onMapReady(@NonNull MapLibreMap m) {
         map = m;
         m.setMinZoomPreference(6);                         // same range as the JavaFX map (it fits down to zoom 6; the tiles stop at 14)
-        m.setMaxZoomPreference(17);
+        m.setMaxZoomPreference(16);
         m.setPrefetchZoomDelta(1);                         // default 4 loads lower zoom levels in advance on every zoom: the stutter the JavaFX flyTo also avoids
         m.getUiSettings().setRotateGesturesEnabled(false);
         m.getUiSettings().setTiltGesturesEnabled(false);
         m.getUiSettings().setLogoEnabled(false);          // the attribution text stays visible (licence)
         m.addOnMapClickListener(this::onTap);
-        m.addOnCameraMoveStartedListener(reason -> camMoving = true);
-        m.addOnCameraIdleListener(() -> { camMoving = false; rebuildPlaces(); rebuildColleges(); });      // pins / clusters / labels depend on the zoom
+        m.addOnCameraMoveStartedListener(reason -> { camMoving = true; removeCallbacks(idleRebuild); });
+        m.addOnCameraIdleListener(() -> {
+            camMoving = false;
+            removeCallbacks(idleRebuild);
+            postDelayed(idleRebuild, 160);          // fling / double-tap / pinch fire several idles in a row: rebuild once, after the hand is off
+        });      // pins / clusters / labels depend on the zoom
         String json = loadStyle(getContext());
         if (json == null) return;
         m.setStyle(new Style.Builder().fromJson(json), st -> { style = st; addLayers(st); render(); post(this::applyCamera); });
@@ -303,7 +308,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
                 PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true)));
         st.addLayer(new CircleLayer("user-shadow", "user-src").withProperties(
-                PropertyFactory.circleRadius(13f), PropertyFactory.circleColor(0xFF17142A), PropertyFactory.circleOpacity(0.22f), PropertyFactory.circleBlur(0.9f)));
+                PropertyFactory.circleRadius(13f), PropertyFactory.circleColor(0xFF17142A), PropertyFactory.circleOpacity(0.22f)));
         st.addLayer(new CircleLayer("user-ring", "user-src").withProperties(
                 PropertyFactory.circleRadius(10f), PropertyFactory.circleColor(0xFFFFFFFF)));
         st.addLayer(new CircleLayer("user-dot", "user-src").withProperties(
@@ -496,6 +501,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         ripples.start();
     }
 
+    private final Runnable idleRebuild = () -> { if (!camMoving) { rebuildPlaces(); rebuildColleges(); } };
     private static final long RIPPLE_FRAME_MS = 80;
     private final android.graphics.Rect visRect = new android.graphics.Rect();
     private int lastTop = Integer.MIN_VALUE, lastH = -1;
@@ -668,9 +674,13 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 String text = clip(p.name(), 22);
                 if (text.isEmpty()) continue;
                 String key = "lb|" + text;
-                if (imgs.add(key)) style.addImage(key, label(text, 0xFF17142A, 11));
-                Bitmap bm = style.getImage(key);
-                float w = bm == null ? 80 * d : bm.getWidth(), h = bm == null ? 16 * d : bm.getHeight();
+                if (imgs.add(key)) {
+                    Bitmap lb = label(text, 0xFF17142A, 11);
+                    imgSize.put(key, new float[]{lb.getWidth(), lb.getHeight()});
+                    style.addImage(key, lb);
+                }
+                float[] wh = imgSize.get(key);
+                float w = wh == null ? 80 * d : wh[0], h = wh == null ? 16 * d : wh[1];
                 RectF r = new RectF(sp[i].x - w / 2, sp[i].y + 2 * d, sp[i].x + w / 2, sp[i].y + 2 * d + h);
                 boolean clash = false;
                 for (RectF t : taken) if (RectF.intersects(t, r)) { clash = true; break; }
