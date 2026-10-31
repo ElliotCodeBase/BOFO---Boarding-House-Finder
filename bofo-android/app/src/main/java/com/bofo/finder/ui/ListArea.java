@@ -81,11 +81,13 @@ final class ListArea {
     /** "Show more (n)" under the cards; null removes it. */
     void setMore(String text, Runnable action) { footer.set(text, action); }
 
-    void showList(List<BoardingHouse> l) {
+    void showList(List<BoardingHouse> l) { showList(l, false); }
+
+    void showList(List<BoardingHouse> l, boolean toTop) {
         stopLoading();
         b.emptyBox.setVisibility(View.GONE);
         b.list.setVisibility(View.VISIBLE);
-        adapter.submitList(l);
+        adapter.submitList(l, toTop ? () -> b.list.scrollToPosition(0) : null);
     }
 
     /** Empty result or error (retry = true shows the Try again button). */

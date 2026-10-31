@@ -72,7 +72,7 @@ public class HomeFragment extends Fragment {
     // Step 5: overview mode (no campus, search empty) + location states
     private int routeToken;
     private double[] me;                                    // last known position of the phone {lat, lng}
-    private boolean ovOn = true, ovFit = true, hadRef, finding, haveFix;
+    private boolean ovOn = true, ovFit = true, hadRef, finding, haveFix, toTop;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
@@ -93,7 +93,7 @@ public class HomeFragment extends Fragment {
         TextView[] chips = {b.chipNew, b.chipHot, b.chipBest};
         for (int i = 0; i < chips.length; i++) {
             final int pos = i;
-            chips[i].setOnClickListener(v -> { if (tab == pos) return; tab = pos; paintChips(); reload(); liftToChips(); });
+            chips[i].setOnClickListener(v -> { if (tab == pos) return; tab = pos; paintChips(); toTop = true; reload(); });
         }
         paintChips();
         b.rentCard.setListener(new RentCardView.Listener() {
@@ -178,40 +178,17 @@ public class HomeFragment extends Fragment {
 
     /** Batches of 15 + "Show more (n)". */
     private void renderList(BhService.Tab t) {
-        if (current.isEmpty()) { area.showMessage(getString(t == BhService.Tab.BEST ? R.string.home_empty_best : R.string.home_empty), false); return; }
+        if (current.isEmpty()) { toTop = false; area.showMessage(getString(t == BhService.Tab.BEST ? R.string.home_empty_best : R.string.home_empty), false); return; }
         int n = Math.min(shown, current.size());
-        area.showList(new ArrayList<>(current.subList(0, n)));
+        area.showList(new ArrayList<>(current.subList(0, n)), toTop); toTop = false;
         int left = current.size() - n;
         area.setMore(left > 0 ? getString(R.string.home_show_more, left) : null, () -> { shown += BATCH; renderList(t); });
     }
 
-    /** Tab chips pressed: slide the page up (never down) until the chip row is at the top of the screen, so the new list fills the view. */
-    private void liftToChips() {
+    /** Tab chips pressed: put the listing back on its first card, so nobody has to scroll up by hand. */
+    private void listToTop() {
         if (b == null) return;
         b.area.list.scrollToPosition(0);
-        androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams lp = (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) b.appBar.getLayoutParams();
-        if (!(lp.getBehavior() instanceof com.google.android.material.appbar.AppBarLayout.Behavior)) return;
-        final com.google.android.material.appbar.AppBarLayout.Behavior beh = (com.google.android.material.appbar.AppBarLayout.Behavior) lp.getBehavior();
-        int[] a = new int[2], c = new int[2];
-        b.appBar.getLocationInWindow(a);
-        b.chipNew.getLocationInWindow(c);
-        int dp8 = Math.round(8 * getResources().getDisplayMetrics().density);
-        int rowTop = c[1] - a[1];
-        int cur = -beh.getTopAndBottomOffset();
-        int dy = Math.min(rowTop - dp8, b.appBar.getTotalScrollRange()) - cur;
-        if (dy <= dp8) return;
-        final int[] done = {0};
-        android.animation.ValueAnimator va = android.animation.ValueAnimator.ofInt(0, dy);
-        va.setDuration(280);
-        va.setInterpolator(new android.view.animation.DecelerateInterpolator());
-        va.addUpdateListener(an -> {
-            if (b == null) return;
-            int step = (int) an.getAnimatedValue() - done[0];
-            if (step <= 0) return;
-            done[0] += step;
-            beh.onNestedPreScroll((androidx.coordinatorlayout.widget.CoordinatorLayout) b.appBar.getParent(), b.appBar, b.area.swipe, 0, step, new int[2], androidx.core.view.ViewCompat.TYPE_TOUCH);
-        });
-        va.start();
     }
 
     private void paintChips() {
