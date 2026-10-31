@@ -1,3 +1,6 @@
+# v2.0.51 - Android: Ask BOFO chat header uses the JavaFX mascot animation
+- `view_bofo_chat.xml` header `MascotView` -> `BofoMascot`; `BofoChatOverlay` plays the THINKING pose while waiting, `endIdle()` on reply. Only these 2 files + build.gradle. Not built by Claude.
+
 # v2.0.50 - Android port: the Ask BOFO button uses the JavaFX mascot animation (JavaFX app stays v1.20.0)
 - New `BofoMascot` = a line-by-line port of the JavaFX `Mascot.java`: same shapes on the 200 grid, same four poses (**thinking**: hand on chin, foot tap, eyes look around, bubble; **sitting**: plops down, feet swing, blinks; **running**: leans, arms pump, feet stride, speed lines; **sleeping**: slumped, nodding, hat droops, z z z) and the same **squash-and-hop** between poses. Same numbers and easing curves as the JavaFX Timelines.
 - `FloatingBofoView` now works like `BofoPanel`: white round 56 dp button with a thin border, mascot in a fixed 46 dp box, plain 1.2 s bob (no tilt), first pose after 4-10 s, never the same pose twice, lengths 7 s / 8 s / 5.4 s / 12-16 s, tap or drag ends it. The old wiggle / hop / flip / dash moves and the "Zz" text are gone.

@@ -122,7 +122,7 @@ public class BofoChatOverlay extends FrameLayout {
         b.input.setText("");
         say(q, true);
         waiting = true;
-        b.mascot.setMood(MascotView.Mood.THINKING);
+        b.mascot.idle(BofoMascot.Idle.THINKING);
         final int my = ++token;
         String college = BrowseState.collegeId;
         Async.run(() -> new BofoAiService().ask(q, college).reply(), (String reply) -> {
@@ -136,7 +136,7 @@ public class BofoChatOverlay extends FrameLayout {
 
     private void done(String text) {
         waiting = false;
-        b.mascot.setMood(MascotView.Mood.SITTING);
+        b.mascot.endIdle();
         say(text, false);
     }
 
