@@ -1,10 +1,11 @@
-BOFO Android v2.0.23 (includes v2.0.22 Step 4 + map lag fix) (inline map card, Home one scrolling page, radius pill). Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
-changed  bofo-android/app/build.gradle  (version 2.0.23 / 223)
+BOFO Android v2.0.24 (includes v2.0.22 Step 4 + map lag fix) (inline map card, Home one scrolling page, radius pill). Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
+changed  bofo-android/app/build.gradle  (version 2.0.24 / 224)
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/HomeFragment.java
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/HomeSearchBar.java
 changed  bofo-android/app/src/main/res/layout/fragment_home.xml
 changed  bofo-android/app/src/main/res/layout/view_map_card.xml
+changed  bofo-android/app/src/main/assets/bofo-map-style.json  (lighter style)
 new      bofo-android/app/src/main/java/com/bofo/finder/ui/CornerMaskView.java
 new      bofo-android/app/src/main/res/drawable/bg_radius_pill.xml, bg_radius_chip.xml, bg_attribution.xml
 new      bofo-android/app/src/main/res/values/strings_map_card.xml

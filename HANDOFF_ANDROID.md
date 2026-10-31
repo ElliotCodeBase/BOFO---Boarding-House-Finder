@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.24 map speed (2026-10-31)
+- **PR title:** `v2.0.24 - Android: faster Home map (2x pixel cap, lighter style, dots when zoomed out, delayed start)`
+- `MapCardView`: pixelRatio cap, zoom 6-17, prefetch delta 1, `places-dots` layer (maxzoom 12.5) + `places` symbols (minzoom 12.5), per-source updates. `bofo-map-style.json` trimmed. `HomeFragment` activates the map after 300 ms. If it is STILL laggy: ask whether it is an emulator (software GL) or a phone, and whether the lag is panning the map, dragging the radius pill or scrolling the page.
+
+---
+
 # Handoff (Android) - v2.0.23 map lag fix (2026-10-31)
 - **PR title:** `v2.0.23 - Android: fix laggy Home map (no texture mode, per-layer updates, throttled radius glide)`
 - `MapCardView`: default MapView again; `setRing/setCampusDot/setUser` update one source; `glideToRing(force)` throttled 160 ms. New `CornerMaskView` in `fragment_home.xml`. Step 5 is still next.

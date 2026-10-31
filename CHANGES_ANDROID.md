@@ -1,3 +1,8 @@
+# v2.0.24 - Android port, map speed: do what the JavaFX map does (JavaFX app stays v1.20.0)
+- Why JavaFX is smooth: it paints each OpenFreeMap tile ONCE into a 512 px picture (only land, parks, water, buildings, roads; no labels, no blending), caches it, then pans/zooms just move pictures; zoomed out the pins are small dots, zoom 15+ reuses the zoom 14 tile, and camera moves avoid drawing every zoom level on the way. The Android map re-draws vector geometry every frame at full screen density.
+- Now: map capped at 2x pixel density (3x phones drew 2.25x the pixels); style trimmed (no opacity blending, no minor-road outlines, no fade transition); zoom limited to 6-17 like JavaFX; tile prefetch delta 4 -> 1; zoomed out (below 12.5) pins are small dots, full pins only when zoomed in; pins/selection redraw only the pins layer; the map starts 300 ms after the page, not in the same frame as the list.
+- Not built or run by Claude. Profile > About shows 2.0.24.
+
 # v2.0.23 - Android port, map lag fix (JavaFX app stays v1.20.0)
 - The Home map was slow: texture mode (added in v2.0.22 for the rounded corners) is back to the default fast surface; the rounded corners are drawn by a new `CornerMaskView` on top. Dragging the radius pill now only redraws the circle (not every layer) and moves the camera at most ~6 times a second, with one final move when you let go. Live location and campus dot also update only their own layer.
 - Not built or run by Claude. Profile > About shows 2.0.23.

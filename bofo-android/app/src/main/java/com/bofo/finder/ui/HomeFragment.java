@@ -102,7 +102,9 @@ public class HomeFragment extends Fragment {
             @Override public void locate() { locateMe(); }
             @Override public void radiusChanged(float km, boolean settled) { onRadiusPill(km, settled); }
         });
-        b.mapCard.activate(getViewLifecycleOwner());
+        // MapLibre start-up (native libs, style parse) is heavy: do it after the first frame, not inside the same frame as the list
+        final View root = b.getRoot();
+        root.postDelayed(() -> { if (b != null && isAdded()) b.mapCard.activate(getViewLifecycleOwner()); }, 300);
 
         // The header scrolls away with the list: pull-to-refresh only at the very top, an open dropdown closes
         b.appBar.addOnOffsetChangedListener((bar, offset) -> {

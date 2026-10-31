@@ -1,4 +1,5 @@
 # Revert-to-original-UI progress (bofo-android)
+## v2.0.24 - map speed (JavaFX-style): 2x pixel cap, lighter style, dots zoomed out, zoom 6-17, delayed map start.
 ## v2.0.23 - map lag fix: default MapView + CornerMaskView, per-layer updates, throttled radius glide.
 ## v2.0.22 - Step 4 done: inline map card
 - Home is one scrolling page (CoordinatorLayout + AppBarLayout, header scrolls with the list; swipe-refresh only at offset 0; dropdown closes on scroll). List/Map toggle, full-screen map button and the old radius slider row are gone from Home.
