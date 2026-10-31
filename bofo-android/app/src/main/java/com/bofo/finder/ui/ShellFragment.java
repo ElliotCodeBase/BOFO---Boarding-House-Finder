@@ -247,8 +247,10 @@ public class ShellFragment extends Fragment {
                 else MapFragment.open(this, ids.toArray(new String[0]));
                 break;
             }
+            case "directions":                      // "show me the path": drawn on the main map, from the chosen college (ids = ["me"] -> from the phone)
+                if (a.id() != null) MapFragment.openRoute(this, a.id(), a.ids() != null && a.ids().contains("me"));
+                break;
             case "open_detail":
-            case "directions":                      // the place screen holds the directions card (walk / transit from the campus or the phone)
                 if (a.id() != null) BhDetailFragment.open(this, a.id());
                 break;
             case "apply_filters":

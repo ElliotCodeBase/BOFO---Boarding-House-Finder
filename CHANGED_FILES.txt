@@ -1,15 +1,11 @@
+BOFO-android-v2.0.54-changes.zip  (unzip into the repo root C:\Users\user\bofo-finder, overwrite)
 changed  bofo-android/app/build.gradle
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/BofoChatOverlay.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/MapFragment.java
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
-changed  bofo-android/app/src/main/res/values/strings.xml
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/BofoChatOverlay.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/util/BofoIntentLocal.java
 changed  bofo-android/app/src/main/res/values/strings_bofo.xml
-new      bofo-android/app/src/main/res/layout/item_bofo_result.xml
-new      bofo-android/app/src/main/res/layout/item_bofo_compare.xml
-new      bofo-android/app/src/main/res/layout/item_bofo_chips.xml
-new      bofo-android/app/src/main/res/drawable/bg_bofo_result.xml
-new      bofo-android/app/src/main/res/drawable/bg_bofo_best.xml
+changed  supabase/functions/bofo-chat/index.ts   (then: supabase functions deploy bofo-chat)
 changed  CHANGES_ANDROID.md
 changed  HANDOFF_ANDROID.md
-changed  BOFO-AI-STEPS.md
-new      BOFO-AI-CHANGELOG.md
-(Steps 1 and 2 files are in their own zips: unzip step1, step2, then this one.)
+changed  CHANGED_FILES.txt

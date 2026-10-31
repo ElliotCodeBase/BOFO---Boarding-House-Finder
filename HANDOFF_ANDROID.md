@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.54 Ask BOFO uses the chosen college + path drawn on the map
+- **PR title:** `v2.0.54 - Android: Ask BOFO stays inside the chosen college area; "show me the path" draws on the map`
+- `bofo-chat/index.ts`: origin = chosen college > phone (unless "near me" is said); list intents are limited to `radius_km` around the college (`campusScoped`, note `empty_area:`); `PATH_RE` / `SUGGEST_RE` force intent `directions` / `search`; `directions` action comes first and carries `ids:["me"]` when it should start at the phone. **Run `supabase functions deploy bofo-chat`.**
+- App: `MapFragment.openRoute(from, id, fromMe)` shows one pin + `Router` path (+ `setRouteLabel`); `ShellFragment` `directions` -> map (open_detail still -> place screen); `BofoChatOverlay` auto-runs the `directions` action 1.2 s after a `directions` answer. Offline `BofoIntentLocal` mirrors the college scope and path words.
+- Test on phone: pick a college, ask "suggest boarding house here" (only places in the radius), "show me the path to <name>" (map + line, not the place screen), "near me" (measures from phone), radius too small (friendly empty message). Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.53 tab bar visible again + Ask BOFO diagnostics
 - **PR title:** `v2.0.53 - Android: tab bar icons no longer hidden under the bar; bofo-chat logs why the LLM fails`
 - `DockBarView`: bar had elevation 10 dp, tabs 0, so the bar painted over the icons. Highlight and cells now use the same elevation (drawn in child order).

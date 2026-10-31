@@ -19,6 +19,8 @@ import com.bofo.finder.util.AppPrefs;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BrowseState;
 import com.bofo.finder.util.Connectivity;
+import com.bofo.finder.util.Geo;
+import com.bofo.finder.util.Router;
 import com.bofo.finder.util.LocationHelper;
 import com.google.android.material.slider.Slider;
 
@@ -31,7 +33,7 @@ import java.util.Locale;
  */
 public class MapFragment extends Fragment {
 
-    public static final String ARG_ID = "focusId", ARG_LAT = "focusLat", ARG_LNG = "focusLng", ARG_IDS = "focusIds";
+    public static final String ARG_ID = "focusId", ARG_LAT = "focusLat", ARG_LNG = "focusLng", ARG_IDS = "focusIds", ARG_ROUTE = "route", ARG_FROM_ME = "routeFromMe";
 
     /** All listings, centred on the campus ring or the default area. */
     public static void open(Fragment from) {
@@ -54,6 +56,18 @@ public class MapFragment extends Fragment {
         NavHostFragment.findNavController(from).navigate(R.id.mapFragment, a);
     }
 
+    /**
+     * Ask BOFO "show me the path": only this place, with the walking path drawn on THIS map (not the place screen).
+     * Starts at the chosen college; fromMe (or no college chosen) starts at the phone.
+     */
+    public static void openRoute(Fragment from, String id, boolean fromMe) {
+        Bundle a = new Bundle();
+        a.putStringArray(ARG_IDS, new String[]{id});
+        a.putBoolean(ARG_ROUTE, true);
+        a.putBoolean(ARG_FROM_ME, fromMe);
+        NavHostFragment.findNavController(from).navigate(R.id.mapFragment, a);
+    }
+
     private final LocationHelper loc = new LocationHelper(this);    // registers the permission launcher: must be created with the Fragment
     private FragmentMapBinding b;
     private int token;
@@ -62,6 +76,8 @@ public class MapFragment extends Fragment {
     private String focusId;
     private Double focusLat, focusLng;
     private String[] focusIds;
+    private boolean routeMode, routeFromMe;
+    private int routeToken;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
@@ -79,6 +95,7 @@ public class MapFragment extends Fragment {
             focusLng = (double) a.getFloat(ARG_LNG);
         }
         if (a != null && a.getStringArray(ARG_IDS) != null && a.getStringArray(ARG_IDS).length > 0) focusIds = a.getStringArray(ARG_IDS);
+        if (a != null && focusIds != null && a.getBoolean(ARG_ROUTE)) { routeMode = true; routeFromMe = a.getBoolean(ARG_FROM_ME); }
         b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
         b.campusBtn.setOnClickListener(v -> new CampusPickerSheet().show(getChildFragmentManager(), "campus"));
         b.radius.addOnChangeListener((s, value, fromUser) -> paintRadiusLabel(value));
@@ -123,6 +140,7 @@ public class MapFragment extends Fragment {
                 if (idsOnly) {
                     if (list.size() == 1) b.map.moveTo(list.get(0).lat(), list.get(0).lng(), 16); else b.map.fit();
                     if (firstLoad) b.map.select(list.get(0).id());
+                    if (routeMode && list.size() == 1) drawRoute(list.get(0));
                 } else if (firstLoad && focusId != null) {
                     b.map.moveTo(focusLat, focusLng, 16);
                     b.map.select(focusId);              // no-op when the place is outside the radius (it is then just centred)
@@ -133,6 +151,37 @@ public class MapFragment extends Fragment {
                 startLive();
             }, e -> fail(my, e));
         }, e -> fail(my, e));
+    }
+
+    /** Start of the path: the phone when asked (or when no college is chosen), else the chosen college. null = nothing to start from. */
+    private double[] routeStart() {
+        College c = BrowseState.campus();
+        Double la = BrowseState.nearMe && BrowseState.userLat != null ? BrowseState.userLat : BrowseState.deviceLat;
+        Double ln = BrowseState.nearMe && BrowseState.userLng != null ? BrowseState.userLng : BrowseState.deviceLng;
+        boolean phone = la != null && ln != null;
+        if ((routeFromMe || c == null) && phone) { b.map.setUser(la, ln); return new double[]{la, ln}; }
+        if (c != null) return new double[]{c.lat(), c.lng()};
+        return null;
+    }
+
+    /** A straight guide line shows at once, then the real road path replaces it. */
+    private void drawRoute(BoardingHouse bh) {
+        final double[] from = routeStart();
+        if (from == null) { b.map.clearRoute(); say(R.string.bofo_route_no_start); return; }
+        final double tl = bh.lat(), tg = bh.lng();
+        final int my = ++routeToken;
+        Router.Route known = Router.peek(from[0], from[1], tl, tg);
+        if (known == null) known = Router.estimate(from[0], from[1], tl, tg);
+        showRoute(known);
+        Async.run(() -> Router.walk(from[0], from[1], tl, tg), (Router.Route r) -> { if (my == routeToken && b != null) showRoute(r); }, e -> { });
+    }
+
+    private void showRoute(Router.Route r) {
+        double km = r.meters() / 1000.0;
+        b.map.setRoute(r.pts(), r.approximate());
+        b.map.setRouteLabel(getString(r.approximate() ? R.string.bofo_route_label_est : R.string.bofo_route_label,
+                Geo.fmt(km), Geo.fmtTime(Math.max(1, Geo.walkMinutes(km)))));
+        b.map.fitRoute();
     }
 
     private void fail(int my, Throwable e) {
@@ -196,6 +245,7 @@ public class MapFragment extends Fragment {
     @Override
     public void onDestroyView() {
         token++;                       // late results are ignored
+        routeToken++;
         loc.stop();
         b = null;
         super.onDestroyView();

@@ -239,6 +239,15 @@ public class BofoChatOverlay extends FrameLayout {
         addChips(in, a);
         remember(false, text, a.resultIds());
         b.scroll.post(() -> b.scroll.fullScroll(View.FOCUS_DOWN));
+        // "show me the path / directions": after a moment to read the answer, go straight to the map and draw it (no extra tap)
+        if ("directions".equals(a.intent()) && !a.results().isEmpty()) {
+            for (BofoAnswer.Action act : a.actions()) {
+                if (!"directions".equals(act.type())) continue;
+                final int mine = token;
+                postDelayed(() -> { if (mine == token && isAttachedToWindow()) fire(act, a); }, 1200);
+                break;
+            }
+        }
     }
 
     private void fire(BofoAnswer.Action action, BofoAnswer a) { if (actionListener != null) actionListener.onAction(action, a); }

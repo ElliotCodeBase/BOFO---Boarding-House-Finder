@@ -14,5 +14,8 @@
     <string name="bofo_verified">Verified owner</string>
     <string name="bofo_no_reviews">No reviews yet</string>
     <string name="bofo_act_filters">See in Explore</string>
+    <string name="bofo_route_no_start">Choose a campus or turn on Near me to see the path from where you start.</string>
+    <string name="bofo_route_label">%1$s · %2$s</string>
+    <string name="bofo_route_label_est">%1$s · %2$s (estimate)</string>
     <string name="bofo_typing">BOFO is typing…</string>
 </resources>

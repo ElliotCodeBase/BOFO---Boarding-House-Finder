@@ -6,6 +6,7 @@ import com.bofo.finder.model.BofoAnswer.Action;
 import com.bofo.finder.model.BofoAnswer.Compare;
 import com.bofo.finder.model.BofoAnswer.Result;
 import com.bofo.finder.model.BofoAnswer.Row;
+import com.bofo.finder.model.College;
 
 import org.json.JSONObject;
 
@@ -29,13 +30,14 @@ public final class BofoIntentLocal {
     private static final Pattern PRIVATE = Pattern.compile("id photos?|selfies?|passwords?|service.?role|api.?keys?|system prompt|other users?'? (chats?|messages?)");
     private static final Pattern COMPARE = Pattern.compile("compare|ikumpara|pagkumpara|kumpara|versus|\\bvs\\b");
     private static final Pattern MAP = Pattern.compile("\\bmap\\b|mapa|where is|\\bsaan\\b|\\basa\\b|locate");
+    private static final Pattern PATH = Pattern.compile("\\b(path|route|routes|ruta|daan|dalan|directions?|how (?:do|can|to) i (?:get|go)|how to get|way to|show me the way|take me|guide me|lead me|paano pumunta|unsaon pag)\\b");
     private static final Pattern DIRECTIONS = Pattern.compile("direction|how far|how long|paano pumunta|how do i get|\\broute\\b|\\blayo\\b|unsaon pag");
     private static final Pattern CHEAP = Pattern.compile("cheap|pinakamura|barato|\\bmura\\b|baratilyo|pinakabarato|lowest price");
     private static final Pattern NEAR = Pattern.compile("nearest|closest|\\bnear\\b|nearby|malapit|\\blapit\\b|pinakamalapit");
     private static final Pattern BEST = Pattern.compile("best.?rated|top.?rated|rating|\\brated\\b|pinakamaganda|pinakamaayo|reviews?|highest");
     private static final Pattern AVAIL = Pattern.compile("available|vacant|bakante|\\bbeds?\\b|\\bkama\\b");
     private static final Pattern DETAILS = Pattern.compile("details|tell me about|more about|info (on|about)");
-    private static final Pattern SEARCH = Pattern.compile("find|search|looking for|hanap|gusto ko|boarding|bh\\b|apartment|room");
+    private static final Pattern SEARCH = Pattern.compile("find|search|looking for|hanap|gusto ko|boarding|bh\\b|apartment|room|suggest|recommend|irekomenda|mungkahi|\\bhere\\b|\\bdito\\b|\\bdiri\\b");
     private static final Pattern THOSE = Pattern.compile("\\b(those|them|these|sila|iyan|yan|ito|niini|top \\d)\\b");
     private static final Pattern FIL = Pattern.compile("\\b(ang|mga|sa|ng|po|ba|nga|pinaka\\w*|malapit|barato|mura|saan|paano|kaayo|unsa|asa|ko|ako|gusto|hanap|may|lang|sang|kag)\\b");
 
@@ -67,6 +69,7 @@ public final class BofoIntentLocal {
 
         String intent;
         if (COMPARE.matcher(m).find()) intent = "compare";
+        else if (PATH.matcher(m).find()) intent = "directions";
         else if (MAP.matcher(m).find()) intent = "map";
         else if (DIRECTIONS.matcher(m).find()) intent = "directions";
         else if (CHEAP.matcher(m).find()) intent = "cheapest";
@@ -90,7 +93,7 @@ public final class BofoIntentLocal {
             }
             if (missing != null) return BofoAnswer.text(missing);
             if (found.isEmpty()) for (BoardingHouse b : pool) if (!refIds.isEmpty() || last.contains(b.id())) found.add(b);
-            if (found.isEmpty() && intent.equals("map")) { found = new ArrayList<>(pool); found.sort(Comparator.<BoardingHouse>comparingDouble(b -> hasRef ? Geo.km(lat, lng, b.lat(), b.lng()) : 0)); }
+            if (found.isEmpty() && (intent.equals("map") || intent.equals("directions"))) { found = new ArrayList<>(pool); found.sort(Comparator.<BoardingHouse>comparingDouble(b -> hasRef ? Geo.km(lat, lng, b.lat(), b.lng()) : 0)); }
             if (found.isEmpty()) return BofoAnswer.text(fil ? "Anong lugar ang tinutukoy mo?" : "Which place do you mean? Ask for the nearest or cheapest first.");
             if (intent.equals("compare") && found.size() < 2)
                 return BofoAnswer.text(fil ? "Kailangan ko ng dalawang pangalan para maikumpara." : "I need two place names to compare, for example: compare Casa Verde and Lola's Place.");
@@ -102,7 +105,7 @@ public final class BofoIntentLocal {
             switch (intent) {
                 case "compare": cmp = compare(rs); reply = fil ? "Heto ang paghahambing. Pinakamura: " + cheapest(rs).name() + "." : "Here's the side by side. Cheapest: " + cheapest(rs).name() + "."; break;
                 case "map": acts.add(new Action("show_on_map", null, ids)); reply = fil ? "Ipinapakita ko ang " + n + " lugar sa mapa." : "Showing " + n + " place" + (n > 1 ? "s" : "") + " on the map."; break;
-                case "directions": acts.add(new Action("directions", ids.get(0), new ArrayList<>())); reply = line(rs.get(0)) + (fil ? ". I-tap ang Directions." : ". Tap Directions."); break;
+                case "directions": acts.add(new Action("directions", ids.get(0), new ArrayList<>())); reply = line(rs.get(0)) + (fil ? ". Ipinapakita ko ang daan sa mapa." : ". Showing the path on the map."); break;
                 default: acts.add(new Action("open_detail", ids.get(0), new ArrayList<>())); reply = line(rs.get(0)) + "."; break;
             }
             if (!intent.equals("map") && !ids.isEmpty()) acts.add(0, new Action("show_on_map", null, ids));
@@ -118,6 +121,10 @@ public final class BofoIntentLocal {
             if (elec && !b.electricity()) continue;
             out.add(b);
         }
+        // A chosen college limits every list answer to the app's radius around it.
+        final College campus = BrowseState.campus();
+        final double areaKm = Math.max(0.5, BrowseState.radiusKm);
+        if (campus != null && refIds.isEmpty()) out.removeIf(b -> Geo.km(campus.lat(), campus.lng(), b.lat(), b.lng()) > areaKm);
         final Double fLat = lat, fLng = lng;
         Comparator<BoardingHouse> byDist = Comparator.comparingDouble(b -> hasRef ? Geo.km(fLat, fLng, b.lat(), b.lng()) : 0);
         switch (intent) {
@@ -129,6 +136,11 @@ public final class BofoIntentLocal {
         }
         boolean needRef = intent.equals("nearest") && !hasRef;
         if (needRef) return BofoAnswer.text(fil ? "Pumili muna ng campus o i-on ang Near me para masukat ko ang layo." : "Pick a campus or turn on Near me so I can measure the distance.");
+        if (out.isEmpty() && campus != null && refIds.isEmpty()) {
+            String km = String.format(Locale.US, areaKm % 1 == 0 ? "%.0f" : "%.1f", areaKm);
+            return BofoAnswer.text(fil ? "Walang tugmang boarding house sa loob ng " + km + " km ng " + campus.name() + ". Subukang palakihin ang radius o pumili ng ibang campus."
+                    : "I couldn't find a matching boarding house within " + km + " km of " + campus.name() + ". Try a bigger radius on the map or another campus.");
+        }
         if (out.isEmpty()) return BofoAnswer.text(fil ? "Wala akong nakitang tugma. Subukan ang mas mataas na budget o mas kaunting filter." : "I couldn't find a place that matches. Try a higher budget or fewer filters.");
         List<Result> rs = results(out.subList(0, Math.min(3, out.size())), lat, lng);
         StringBuilder list3 = new StringBuilder();
