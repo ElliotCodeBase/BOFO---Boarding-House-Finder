@@ -1,3 +1,10 @@
+# v2.0.42 - Android port: Student / Owner / Admin force-login buttons are back (JavaFX app stays v1.20.0)
+- The login screen has a "Developer: test accounts" row with **Student / Owner / Admin** buttons, like the JavaFX app. Each one does a real Supabase password sign-in (genuine session, so the posted boarding houses, favorites, chat, listings and admin queues all work) and then goes through the normal routing.
+- The accounts are the same `dev.student|owner|admin.email` / `.password` keys of the git-ignored `src/main/resources/com/bofo/finder/config.local.properties` that the JavaFX buttons use: nothing to retype. `app/build.gradle` reads that file and puts the values into the **debug** build only; a release APK has them empty, so the buttons are hidden and no test password is inside the APK.
+- Changed: `build.gradle` (2.0.42 / 242, dev BuildConfig fields), `AppConfig`, `AuthService.devSignIn`, `LoginFragment`, `fragment_login.xml`, `strings.xml`. Not built or run by Claude.
+
+---
+
 # v2.0.41 - Android port: OpenGL ES map engine (JavaFX app stays v1.20.0)
 - MapLibre 13 draws with Vulkan by default (new, some open issues). The app now uses the OpenGL ES build `org.maplibre.gl:android-sdk-opengl:13.0.0` (same API, no code change). Pan / zoom was still choppy on a realme 14 Pro+ after v2.0.37-40.
 - Changed: `build.gradle` (2.0.41 / 241). Not built or run by Claude.

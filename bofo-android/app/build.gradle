@@ -2,10 +2,12 @@ plugins {
     id 'com.android.application'
 }
 
-// Public config comes from the desktop app's config.properties (same Supabase project), and
-// local.properties (git-ignored, optional) overrides it. Never put a service_role key anywhere.
+// Public config comes from the desktop app's config.properties (same Supabase project). Two git-ignored files may
+// override it: the desktop config.local.properties (its dev.<role>.email / .password test accounts are the ones the JavaFX
+// login buttons use) and bofo-android/local.properties. Never put a service_role key anywhere.
 def cfgProps = new Properties()
 [rootProject.file('../src/main/resources/com/bofo/finder/config.properties'),
+ rootProject.file('../src/main/resources/com/bofo/finder/config.local.properties'),
  rootProject.file('local.properties')].each { f ->
     if (f.exists()) f.withInputStream { cfgProps.load(it) }
 }
@@ -32,13 +34,20 @@ android {
         minSdk 26
         targetSdk 36
         // Version rule: stage N = v2.0.N, versionCode = 200 + N. Bump in EVERY stage / pull request.
-        versionCode 241
-        versionName '2.0.41'
+        versionCode 242
+        versionName '2.0.42'
 
         buildConfigField 'String', 'SUPABASE_URL', "\"${cfg('supabase.url')}\""
         buildConfigField 'String', 'SUPABASE_ANON_KEY', "\"${cfg('supabase.anonKey')}\""
         buildConfigField 'String', 'GOOGLE_WEB_CLIENT_ID', "\"${cfg('google.webClientId')}\""
         buildConfigField 'String', 'AUTH_REDIRECT', "\"${cfg('auth.redirect.android') ?: 'bofo://auth-callback'}\""
+
+        // v2.0.42: test accounts for the Student / Owner / Admin buttons on the login screen. Empty here (= buttons hidden);
+        // only the DEBUG build below fills them, so a release APK never contains a test password.
+        ['STUDENT', 'OWNER', 'ADMIN'].each { r ->
+            buildConfigField 'String', "DEV_${r}_EMAIL", '""'
+            buildConfigField 'String', "DEV_${r}_PASSWORD", '""'
+        }
     }
 
     signingConfigs {
@@ -53,6 +62,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            ['student', 'owner', 'admin'].each { r ->
+                buildConfigField 'String', "DEV_${r.toUpperCase()}_EMAIL", "\"${cfg('dev.' + r + '.email')}\""
+                buildConfigField 'String', "DEV_${r.toUpperCase()}_PASSWORD", "\"${cfg('dev.' + r + '.password')}\""
+            }
+        }
         release {
             minifyEnabled true        // Stage 9: R8 (shrink + obfuscate), rules in proguard-rules.pro
             shrinkResources true

@@ -1,3 +1,11 @@
+# Handoff (Android) - v2.0.42 force-login buttons (2026-10-31)
+- **PR title:** `v2.0.42 - Android: Student / Owner / Admin test-login buttons on the login screen (debug builds)`
+- Sync Gradle, then run a DEBUG build from Android Studio. Buttons need `dev.student|owner|admin.email` / `.password` in `C:\Users\user\bofo-finder\src\main\resources\com\bofo\finder\config.local.properties` (git-ignored, the JavaFX file); `bofo-android/local.properties` can override them. No keys = no buttons.
+- `AuthService.devSignIn(Role)` = `signInPassword` with the role's test account; `AppConfig.devEmail/devPassword/hasDevAccounts` read the debug-only `BuildConfig.DEV_*` fields. Release builds have them empty (never ship a test password).
+- If a button shows an error: "Wrong email or password" = the test user changed in Supabase (Auth > Users); "No dev.<role>..." = key missing or Gradle not synced. Test accounts were created 2026-10-23 and not re-checked.
+
+---
+
 # Handoff (Android) - v2.0.41 OpenGL ES engine (2026-10-31)
 - **PR title:** `v2.0.41 - Android: MapLibre OpenGL ES build instead of Vulkan`
 - Sync Gradle after pulling. If STILL choppy: the user must report `map.mode=off` and `map.mode=raster` results (assets/config.properties) before more changes.

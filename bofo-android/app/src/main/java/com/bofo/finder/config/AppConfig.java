@@ -34,6 +34,29 @@ public final class AppConfig {
     public static boolean googleNative() { return !googleWebClientId().isEmpty(); }
     public static String redirectUri() { return BuildConfig.AUTH_REDIRECT; }
 
+    /** DEBUG builds only: test account for a role ("student" | "owner" | "admin") from dev.<role>.email / .password in the desktop
+     *  config.local.properties (same accounts as the JavaFX buttons). Release builds have these empty. */
+    public static String devEmail(String role) {
+        switch (role) {
+            case "student": return BuildConfig.DEV_STUDENT_EMAIL.trim();
+            case "owner":   return BuildConfig.DEV_OWNER_EMAIL.trim();
+            case "admin":   return BuildConfig.DEV_ADMIN_EMAIL.trim();
+            default:        return "";
+        }
+    }
+    public static String devPassword(String role) {
+        switch (role) {
+            case "student": return BuildConfig.DEV_STUDENT_PASSWORD.trim();
+            case "owner":   return BuildConfig.DEV_OWNER_PASSWORD.trim();
+            case "admin":   return BuildConfig.DEV_ADMIN_PASSWORD.trim();
+            default:        return "";
+        }
+    }
+    /** True when at least one test account is configured: the login screen then shows the Student / Owner / Admin buttons. */
+    public static boolean hasDevAccounts() {
+        return !devEmail("student").isEmpty() || !devEmail("owner").isEmpty() || !devEmail("admin").isEmpty();
+    }
+
     /** Walking-route service (OSRM style). {lng1},{lat1};{lng2},{lat2} are filled in. Override with route.url. */
     public static String routeUrl() { String u = get("route.url").trim(); return u.isEmpty() ? "https://routing.openstreetmap.de/routed-foot/route/v1/foot/{lng1},{lat1};{lng2},{lat2}?overview=full&geometries=geojson" : u; }
     /** route.online=false skips the routing service and always draws a straight line. */

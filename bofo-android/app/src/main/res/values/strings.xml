@@ -51,6 +51,11 @@
     <string name="login_need_code">Enter the code from the e-mail.</string>
     <string name="login_google_cancelled">Google sign-in was cancelled.</string>
     <string name="login_google_missing">Google sign-in is not set up in this build (no web client id). Use e-mail instead.</string>
+    <string name="login_dev_title">Developer: test accounts</string>
+    <string name="login_dev_student">Student</string>
+    <string name="login_dev_owner">Owner</string>
+    <string name="login_dev_admin">Admin</string>
+    <string name="login_dev_signing">Signing in as %1$s...</string>
     <string name="login_legal">By continuing you agree to the Terms and the Privacy Policy.</string>
 
     <string name="role_title">How will you use BOFO?</string>
