@@ -1,9 +1,8 @@
-BOFO Android v2.0.17 - changes zip. Unzip over the repo root C:\Users\user\bofo-finder; paths are relative to it.
-changed  CHANGES_ANDROID.md  (the Android changelog; named CHANGES.md in older zips)
-changed  HANDOFF_ANDROID.md
-changed  bofo-android/README.md
-changed  bofo-android/app/build.gradle
-changed  bofo-android/app/src/main/res/values/strings.xml
-changed  bofo-android/app/src/main/res/values/styles.xml
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/MascotView.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/LoginFragment.java
+BOFO Android v2.0.19 - Step 1 (floating tab bar). Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
+changed  bofo-android/app/build.gradle  (version 2.0.19 / 219)
+changed  bofo-android/app/src/main/res/layout/fragment_shell.xml
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
+new      bofo-android/app/src/main/res/drawable/bg_tab_bar.xml
+new      bofo-android/app/src/main/res/values/styles_tabbar.xml
+new      REVERT_PROGRESS.md
+new      REVERT_PROMPT.md  (the continue-here prompt: rules, target look, Steps 2-11)

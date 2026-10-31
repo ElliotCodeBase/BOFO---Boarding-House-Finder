@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Step 1: lavender highlight behind the active tab (the original DockTab highlight). -->
+    <style name="Widget.Bofo.TabBar.Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/bofo_primary_tint</item>
+        <item name="android:width">64dp</item>
+        <item name="android:height">34dp</item>
+    </style>
+</resources>

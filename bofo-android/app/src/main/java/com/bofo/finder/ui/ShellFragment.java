@@ -4,9 +4,14 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.bofo.finder.R;
@@ -46,6 +51,20 @@ public class ShellFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        // Floating tab bar: lift the bar and the mascot button above the system gesture area (Step 1, v2.0.19).
+        final float dp = getResources().getDisplayMetrics().density;
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            if (binding != null) {
+                LinearLayout.LayoutParams nav = (LinearLayout.LayoutParams) binding.bottomNav.getLayoutParams();
+                nav.bottomMargin = Math.round(12 * dp) + bars.bottom;
+                binding.bottomNav.setLayoutParams(nav);
+                FrameLayout.LayoutParams fab = (FrameLayout.LayoutParams) binding.bofoFab.getLayoutParams();
+                fab.bottomMargin = Math.round(96 * dp) + bars.bottom;
+                binding.bofoFab.setLayoutParams(fab);
+            }
+            return insets;
+        });
         owner = AuthRouter.role == com.bofo.finder.model.Role.OWNER;
         admin = AuthRouter.role == com.bofo.finder.model.Role.ADMIN;
         if (owner) { binding.bottomNav.getMenu().clear(); binding.bottomNav.inflateMenu(R.menu.bottom_nav_owner); }

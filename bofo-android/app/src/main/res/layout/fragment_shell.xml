@@ -2,42 +2,50 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-<LinearLayout android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:clipChildren="false">
 
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/tab_container"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_height="match_parent"
+        android:clipChildren="false"
+        android:orientation="vertical">
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/bofo_border" />
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/tab_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_nav"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/bofo_white"
-        app:itemIconTint="@color/nav_item_icon"
-        app:itemTextColor="@color/nav_item_text"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/bottom_nav_student" />
-</LinearLayout>
+        <!-- Floating white pill bar (original look). The divider line is gone; the page colour shows around the bar. -->
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_nav"
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_tab_bar"
+            android:elevation="10dp"
+            android:outlineProvider="background"
+            app:itemActiveIndicatorStyle="@style/Widget.Bofo.TabBar.Indicator"
+            app:itemIconTint="@color/nav_item_icon"
+            app:itemTextColor="@color/nav_item_text"
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/bottom_nav_student"
+            app:paddingBottomSystemWindowInsets="false" />
+    </LinearLayout>
 
+    <!-- Mascot button: floats just above the bar, bottom-right. -->
     <com.bofo.finder.ui.MascotView
         android:id="@+id/bofo_fab"
         android:layout_width="52dp"
         android:layout_height="52dp"
         android:layout_gravity="bottom|end"
-        android:layout_marginEnd="14dp"
-        android:layout_marginBottom="84dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="96dp"
         android:background="@drawable/bg_circle_white"
-        android:elevation="4dp"
+        android:elevation="6dp"
         android:padding="4dp" />
 </FrameLayout>

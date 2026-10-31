@@ -9,5 +9,5 @@ Build from a terminal: `gradlew.bat assembleDebug` (Windows) / `./gradlew assemb
 
 Config: `supabase.url`, `supabase.anonKey`, `google.webClientId`, `auth.redirect.android` are read from `../src/main/resources/com/bofo/finder/config.properties`, overridden by `local.properties` (git-ignored). Never commit secrets or a service_role key.
 
-Version line: v2.0.N per stage (`versionName` / `versionCode` in `app/build.gradle`, code = 200 + N). Current: **2.0.17** (first successful build). Release build and signing: `docs/RELEASE.md`.
+Version line: v2.0.N per stage (`versionName` / `versionCode` in `app/build.gradle`, code = 200 + N). Current: **2.0.18** (login errors visible). Release build and signing: `docs/RELEASE.md`.
 Package root: `app/src/main/java/com/bofo/finder/{app,config,model,service,util,ui}`.
