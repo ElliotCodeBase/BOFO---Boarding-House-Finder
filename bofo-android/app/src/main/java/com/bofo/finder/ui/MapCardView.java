@@ -113,11 +113,13 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** What the glass pill says. NONE hides it. */
     public enum Loc { NONE, FINDING, EXACT, APPROX, OFF }
     private static final int BLUE = 0xFF2F6FED;
-    private static final long RIPPLE_MS = 2400;
     private Loc locState = Loc.NONE;
-    private ValueAnimator ripples, pop, found, locatePulse;
-    private float rippleT, popT = 1f, foundT = -1f;
-    private long lastFrame;
+    private ValueAnimator pop, found, locatePulse;
+    private float popT = 1f, foundT = -1f;
+    private long lastPopPaint;
+    private RadarOverlayView radar;        // ripples + found ring drawn on a plain Canvas above the map (the map stays idle)
+    private int placesVer, collegesVer;    // bumped when the data changes: lets a pure pan skip the rebuild
+    private String placesSig, collegesSig;
     private Double heading;                // degrees, from the last two fixes (null until the phone has moved)
     private boolean overviewPending;
 
@@ -192,6 +194,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         mapView = new MapView(getContext(), MapLibreMapOptions.createFromAttributes(getContext(), null)
                 .pixelRatio(Math.min(1.75f, getResources().getDisplayMetrics().density)));   // 3x screens draw 2.25x the pixels for no visible gain; the rounded corners are drawn by CornerMaskView
         b.mapHost.addView(mapView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        radar = new RadarOverlayView(getContext(), Math.min(1.75f, getResources().getDisplayMetrics().density));   // same unit as the map's pixelRatio
+        b.mapHost.addView(radar, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         mapView.onCreate(null);
         owner.getLifecycle().addObserver(this);        // replays onStart / onResume if the screen is already showing
         mapView.getMapAsync(this::onMapReady);
@@ -217,10 +221,11 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         m.getUiSettings().setTiltGesturesEnabled(false);
         m.getUiSettings().setLogoEnabled(false);          // the attribution text stays visible (licence)
         m.addOnMapClickListener(this::onTap);
-        m.addOnCameraMoveStartedListener(reason -> { camMoving = true; removeCallbacks(idleRebuild); });
+        m.addOnCameraMoveStartedListener(reason -> { camMoving = true; removeCallbacks(idleRebuild); if (radar != null) radar.setMoving(true); });
         m.addOnCameraIdleListener(() -> {
             camMoving = false;
             removeCallbacks(idleRebuild);
+            refreshRadar();                         // exact position again: the ripples come back
             postDelayed(idleRebuild, 160);          // fling / double-tap / pinch fire several idles in a row: rebuild once, after the hand is off
         });      // pins / clusters / labels depend on the zoom
         String json = loadStyle(getContext());
@@ -296,13 +301,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         st.addLayer(new CircleLayer("campus-dot", "campus-src").withProperties(
                 PropertyFactory.circleRadius(8f), PropertyFactory.circleColor(amber),
                 PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeColor(0xFFFFFFFF)));
-        // Step 5: the radar dot (LiveDot): two staggered ripple rings, a "found you" ring, the view cone, then shadow + white ring + blue core
-        for (String rid : new String[]{"user-ripple1", "user-ripple2"})
-            st.addLayer(new CircleLayer(rid, "user-src").withProperties(
-                    PropertyFactory.circleRadius(10f), PropertyFactory.circleColor(BLUE), PropertyFactory.circleOpacity(0f)));
-        st.addLayer(new CircleLayer("user-found", "user-src").withProperties(
-                PropertyFactory.circleRadius(10f), PropertyFactory.circleOpacity(0f), PropertyFactory.circleStrokeColor(BLUE),
-                PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeOpacity(0f)));
+        // Step 5: the radar dot (LiveDot): the view cone, then shadow + white ring + blue core
+        // (the two ripple rings and the "found you" ring are drawn by RadarOverlayView: changing a map layer every frame re-renders the whole map)
         st.addLayer(new SymbolLayer("user-cone", "cone-src").withProperties(
                 PropertyFactory.iconImage("user-cone"), PropertyFactory.iconRotate(Expression.get("b")),
                 PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
@@ -385,9 +385,12 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     // ---- data in -----------------------------------------------------------------------------------------------
 
     public void setPlaces(List<BoardingHouse> list) {
-        places = list == null ? new ArrayList<>() : new ArrayList<>(list);
+        List<BoardingHouse> next = list == null ? new ArrayList<>() : new ArrayList<>(list);
+        if (next.equals(places)) return;                     // the list screen reloads often with the same houses: nothing to redraw
+        places = next;
+        placesVer++;
         if (selectedId != null && findPlace(selectedId) == null) { selectedId = null; b.peek.setVisibility(View.GONE); }
-        if (style != null) rebuildPlaces();
+        if (style != null) rebuildPlaces(true);
     }
 
     /** The radius ring (null centre or km <= 0 removes it). */
@@ -406,6 +409,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         } else if (lat == null) heading = null;
         userLat = lat; userLng = lng;
         if (style != null) { set("user-src", MapGeo.pointJson(userLat, userLng)); set("cone-src", coneJson()); }
+        refreshRadar();
         if (lat == null) { stopRipples(); return; }
         if (first) popIn();
         startRipples();
@@ -459,20 +463,28 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         if (found != null) found.cancel();
         found = ValueAnimator.ofFloat(0f, 1f);
         found.setDuration(750);
-        found.addUpdateListener(a -> { foundT = (float) a.getAnimatedValue(); paintUser(); });
+        found.addUpdateListener(a -> { foundT = (float) a.getAnimatedValue(); if (radar != null) radar.setFound(foundT); });
         found.addListener(new android.animation.AnimatorListenerAdapter() {
-            @Override public void onAnimationEnd(android.animation.Animator an) { foundT = -1f; paintUser(); }
+            @Override public void onAnimationEnd(android.animation.Animator an) { foundT = -1f; if (radar != null) radar.setFound(-1f); }
         });
         found.start();
     }
 
     private void popIn() {
         if (pop != null) pop.cancel();
-        if (style == null || !animationsOn()) { popT = 1f; return; }
+        if (style == null || !animationsOn()) { popT = 1f; if (radar != null) radar.setPop(1f); return; }
         popT = 0f;
         pop = ValueAnimator.ofFloat(0f, 1f);
         pop.setDuration(320);
-        pop.addUpdateListener(a -> { popT = (float) a.getAnimatedValue(); paintUser(); });
+        pop.addUpdateListener(a -> {
+            popT = (float) a.getAnimatedValue();
+            if (radar != null) radar.setPop(popT);
+            long now = android.os.SystemClock.uptimeMillis();
+            if (now - lastPopPaint >= 33) { lastPopPaint = now; paintUser(); }      // 3 layer updates per frame re-render the map: ~30 fps is plenty for a 0.3 s pop
+        });
+        pop.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(android.animation.Animator an) { if (pop == an) { popT = 1f; if (radar != null) radar.setPop(1f); paintUser(); } }
+        });
         pop.start();
     }
 
@@ -481,43 +493,26 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         catch (Exception e) { return true; }
     }
 
+    /** The ripples live in RadarOverlayView (plain Canvas): the map itself is idle between gestures. */
     private void startRipples() {
-        if (ripples != null || userLat == null || owner == null || !isAttachedToWindow()) return;
-        if (!animationsOn()) { rippleT = 0.35f; return; }
-        ripples = ValueAnimator.ofFloat(0f, 1f);
-        ripples.setDuration(RIPPLE_MS);
-        ripples.setInterpolator(new LinearInterpolator());
-        ripples.setRepeatCount(ValueAnimator.INFINITE);
-        ripples.addUpdateListener(a -> {
-            long now = android.os.SystemClock.uptimeMillis();
-            if (now - lastFrame < RIPPLE_FRAME_MS) return;                     // ~12 frames a second: every map redraw costs a lot on slow phones / emulators
-            if (camMoving || owner == null) return;                            // never compete with a pan / zoom / radius glide
-            if (!getGlobalVisibleRect(visRect)) return;                        // map scrolled off screen: no work
-            if (visRect.top != lastTop || visRect.height() != lastH) { lastTop = visRect.top; lastH = visRect.height(); return; }   // page is scrolling: wait until it stops
-            lastFrame = now;
-            rippleT = (float) a.getAnimatedValue();
-            paintRipples();
-        });
-        ripples.start();
+        if (radar == null || userLat == null || owner == null || !isAttachedToWindow()) return;
+        radar.start(animationsOn());
+        refreshRadar();
     }
 
     private volatile boolean camMoving;
-    private final Runnable idleRebuild = () -> { if (!camMoving) { rebuildPlaces(); rebuildColleges(); } };
-    private static final long RIPPLE_FRAME_MS = 80;
-    private final android.graphics.Rect visRect = new android.graphics.Rect();
-    private int lastTop = Integer.MIN_VALUE, lastH = -1;
+    private final Runnable idleRebuild = () -> { if (!camMoving) { rebuildPlaces(false); rebuildColleges(false); } };      // false = skip when nothing but the position changed
 
-    /** Only the two ripple rings (the dot, ring and shadow do not change while the ripples loop). */
-    private void paintRipples() {
-        if (style == null || userLat == null) return;
-        float scale = (0.82f + 0.18f * popT) * (foundT >= 0 ? 1f + 0.25f * (float) Math.sin(Math.PI * foundT) : 1f);
-        float p1 = rippleT, p2 = (rippleT + 0.5f) % 1f;
-        layerCircle("user-ripple1", 10f * (0.5f + 2.2f * p1) * scale, 0.34f * (1f - p1) * popT);
-        layerCircle("user-ripple2", 10f * (0.5f + 2.2f * p2) * scale, 0.34f * (1f - p2) * popT);
+    /** Puts the overlay on the dot's current screen spot (cheap: one projection call). Called when the map is idle, a fix arrives or the card is resized. */
+    private void refreshRadar() {
+        if (radar == null) return;
+        if (map == null || userLat == null) { radar.setCenter(null); radar.setMoving(false); return; }
+        radar.setCenter(map.getProjection().toScreenLocation(new LatLng(userLat, userLng)));
+        radar.setMoving(false);
     }
 
     private void stopRipples() {
-        if (ripples != null) { ripples.cancel(); ripples = null; }
+        if (radar != null) radar.stop();
         if (style != null) paintUser();
     }
 
@@ -526,37 +521,28 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         if (l != null) l.setProperties(PropertyFactory.circleRadius(radius), PropertyFactory.circleOpacity(opacity));
     }
 
-    /** Draws the radar dot for the current animation state (ripples, first-fix pop, found ring). Only paint properties change. */
+    /** Draws the dot (shadow, white ring, blue core) for the first-fix pop. Ripples and the found ring are RadarOverlayView's job. */
     private void paintUser() {
         if (style == null) return;
         if (userLat == null) {
-            for (String id : new String[]{"user-ripple1", "user-ripple2", "user-shadow", "user-ring", "user-dot"}) layerCircle(id, 1f, 0f);
+            for (String id : new String[]{"user-shadow", "user-ring", "user-dot"}) layerCircle(id, 1f, 0f);
             return;
         }
-        float scale = (0.82f + 0.18f * popT) * (foundT >= 0 ? 1f + 0.25f * (float) Math.sin(Math.PI * foundT) : 1f);
+        float scale = 0.82f + 0.18f * popT;
         float a = popT;
-        float p1 = rippleT, p2 = (rippleT + 0.5f) % 1f;
-        layerCircle("user-ripple1", 10f * (0.5f + 2.2f * p1) * scale, 0.34f * (1f - p1) * a);       // 0.5 -> 2.7 x, fading linearly
-        layerCircle("user-ripple2", 10f * (0.5f + 2.2f * p2) * scale, 0.34f * (1f - p2) * a);
         layerCircle("user-shadow", 13f * scale, 0.22f * a);
         layerCircle("user-ring", 10f * scale, a);
         layerCircle("user-dot", 7f * scale, a);
-        Layer f = style.getLayer("user-found");
-        if (f != null) {
-            boolean on = foundT >= 0;
-            f.setProperties(PropertyFactory.circleRadius(10f * (1f + 3.5f * Math.max(0f, foundT))),
-                    PropertyFactory.circleStrokeOpacity(on ? 0.85f * (1f - foundT) : 0f));
-        }
     }
 
     /** Stage 6: draws a route ({lat, lng} pairs; approximate = dashed straight-line estimate). Fewer than 2 points removes it. */
     public void setRoute(double[][] pts, boolean approximate) {
         routePts = pts != null && pts.length >= 2 ? pts : null;
         routeApprox = approximate;
-        render();
+        paintRoute(); paintRouteLabel();
     }
 
-    public void clearRoute() { routePts = null; routeLabel = null; fitRoutePending = false; render(); }
+    public void clearRoute() { routePts = null; routeLabel = null; fitRoutePending = false; paintRoute(); paintRouteLabel(); }
 
     /** Step 8: "1.7 km · 21 min" chip just above the end of the route (null removes it). */
     public void setRouteLabel(@Nullable String text) { routeLabel = text; paintRouteLabel(); }
@@ -585,14 +571,14 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     public void select(String id) {
         BoardingHouse p = id == null ? null : findPlace(id);
         selectedId = p == null ? null : id;
-        if (p == null) { b.peek.setVisibility(View.GONE); if (style != null) rebuildPlaces(); return; }
+        if (p == null) { b.peek.setVisibility(View.GONE); if (style != null) rebuildPlaces(true); return; }
         b.peekName.setText(p.name());
         b.peekPrice.setText(Money.perMonth(p.price()));
         StringBuilder info = new StringBuilder("\u2605 ").append(ListRules.ratingText(p.avgRating(), p.reviewCount()));
         if (p.distanceKm() > 0) info.append("  \u00B7  ").append(Geo.fmt(p.distanceKm()));
         b.peekInfo.setText(info);
         b.peek.setVisibility(View.VISIBLE);
-        if (style != null) rebuildPlaces();
+        if (style != null) rebuildPlaces(true);
     }
 
     private void userSelect(String id) {
@@ -616,6 +602,13 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         set("user-src", MapGeo.pointJson(userLat, userLng));
         set("cone-src", coneJson());
         paintUser();
+        paintRoute();
+        refreshRadar();
+    }
+
+    /** Only the route sources (a new / cleared route no longer re-renders pins, colleges and the radar). */
+    private void paintRoute() {
+        if (style == null) return;
         set("route-src", MapGeo.lineJson(routePts, routeApprox));
         boolean has = routePts != null;
         set("route-start-src", has ? MapGeo.pointJson(routePts[0][0], routePts[0][1]) : MapGeo.EMPTY);
@@ -628,7 +621,13 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     }
 
     /** Step 6: every campus (orange dots + names when zoomed in). Tap one = Listener.campusTapped. */
-    public void setColleges(List<College> list) { colleges = list == null ? new ArrayList<>() : new ArrayList<>(list); rebuildColleges(); }
+    public void setColleges(List<College> list) {
+        List<College> next = list == null ? new ArrayList<>() : new ArrayList<>(list);
+        if (next.equals(colleges)) return;
+        colleges = next;
+        collegesVer++;
+        rebuildColleges(true);
+    }
 
     /** Step 6: lights one house's circle (the rent card's Lowest / Middle / Highest); null turns it off. */
     public void setGlow(String id) { glowId = id; paintGlow(); }
@@ -650,8 +649,14 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private static String clip(String t, int n) { t = t == null ? "" : t.trim(); return t.length() > n ? t.substring(0, n - 1) + "\u2026" : t; }
 
     /** Pins zoomed in (names that do not collide), small dots zoomed out; dots closer than 30 dp merge into a numbered bubble (tap = zoom to the group). */
-    private void rebuildPlaces() {
+    private void rebuildPlaces() { rebuildPlaces(true); }
+
+    /** force = false (after a camera move): skipped when the data, selection, zoom and card size are all unchanged, because a pure pan moves every pin the same way (clusters and label clashes do not change). */
+    private void rebuildPlaces(boolean force) {
         if (style == null || map == null) return;
+        String sig = placesVer + "|" + selectedId + "|" + Math.round(map.getCameraPosition().zoom * 20) + "|" + getWidth() + "x" + getHeight();
+        if (!force && sig.equals(placesSig)) return;
+        placesSig = sig;
         float d = getResources().getDisplayMetrics().density;
         int n = places.size();
         PointF[] sp = new PointF[n];
@@ -720,10 +725,15 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         set("labels-src", collection(labels));
     }
 
-    private void rebuildColleges() {
+    private void rebuildColleges() { rebuildColleges(true); }
+
+    private void rebuildColleges(boolean force) {
         if (style == null || map == null) return;
-        StringBuilder dots = new StringBuilder(), names = new StringBuilder();
         boolean showNames = map.getCameraPosition().zoom >= 11f;
+        String sig = collegesVer + "|" + showNames;
+        if (!force && sig.equals(collegesSig)) return;      // the campus list is the same and the names are still on / off: nothing to send
+        collegesSig = sig;
+        StringBuilder dots = new StringBuilder(), names = new StringBuilder();
         for (College c : colleges) {
             if (dots.length() > 0) dots.append(',');
             dots.append(feat(c.lat(), c.lng(), "\"kind\":\"college\",\"id\":\"" + esc(c.id()) + "\""));
@@ -907,6 +917,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         } catch (Exception ex) { Log.w("BOFO", "Cluster zoom", ex); }
     }
 
+    @Override protected void onSizeChanged(int w, int h, int ow, int oh) { super.onSizeChanged(w, h, ow, oh); if (radar != null) post(this::refreshRadar); }
+
     @Override protected void onAttachedToWindow() { super.onAttachedToWindow(); startRipples(); }
     @Override protected void onDetachedFromWindow() { stopRipples(); super.onDetachedFromWindow(); }
 
@@ -933,7 +945,9 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         stopRipples(); stopLocatePulse();
         if (pop != null) pop.cancel();
         if (found != null) found.cancel();
+        if (radar != null) { radar.stop(); b.mapHost.removeView(radar); radar = null; }
         if (mapView != null) { mapView.onDestroy(); b.mapHost.removeView(mapView); }
         mapView = null; map = null; style = null; owner = null;
+        placesSig = null; collegesSig = null;
     }
 }

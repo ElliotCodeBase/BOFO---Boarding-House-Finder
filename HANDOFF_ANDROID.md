@@ -1,3 +1,10 @@
+# Handoff (Android) - v2.0.37 lag fix 3 (2026-10-31)
+- **PR title:** `v2.0.37 - Android: map idle between gestures (ripples on a Canvas overlay, no rebuild on pan)`
+- `RadarOverlayView` (new) draws ripples + found ring; `MapCardView.refreshRadar()` places it (on camera idle, on a fix, on resize); `rebuildPlaces(force)` / `rebuildColleges(force)` skip when only the position changed; `paintRoute()` split out of `render()`.
+- If STILL laggy: (1) ask phone model / emulator; (2) A/B the renderer: swap to `org.maplibre.gl:android-sdk-opengl:13.0.0` (commented line in `build.gradle`); (3) lower `pixelRatio` to 1.5 (scale the circle radii and `RadarOverlayView.unit`); (4) cap FPS.
+
+---
+
 # Handoff (Android) - v2.0.35 lag fix 2 (2026-10-31)
 - **PR title:** `v2.0.35 - Android: lighter map drawing and debounced pin rebuild`
 - `MapCardView.idleRebuild` (160 ms), `imgSize` cache, pixelRatio 1.75, max zoom 16. Style: building minzoom 15, road-minor 14. If STILL laggy: ask the phone model; next steps = cap FPS, replace the ripple GL layers with a View overlay, or lower pixelRatio to 1.5 (and scale the circle radii).
