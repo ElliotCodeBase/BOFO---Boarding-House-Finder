@@ -34,6 +34,7 @@ import com.bofo.finder.databinding.ViewMapCardBinding;
 import com.bofo.finder.model.BoardingHouse;
 import com.bofo.finder.model.College;
 import com.bofo.finder.util.AppPrefs;
+import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.Geo;
 import com.bofo.finder.util.ListRules;
 import com.bofo.finder.util.MapGeo;
@@ -205,6 +206,39 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         mapView.onCreate(null);
         owner.getLifecycle().addObserver(this);        // replays onStart / onResume if the screen is already showing
         mapView.getMapAsync(this::onMapReady);
+        // v2.0.67: blank / half-drawn map heals itself: tiles that did not arrive are asked for again, and the map reloads the moment the internet is back
+        mapView.addOnDidFailLoadingMapListener(msg -> scheduleRefresh());
+        mapView.addOnDidFinishRenderingMapListener(fully -> {
+            renderedFully = fully;
+            if (fully) { styleRetries = 0; removeCallbacks(refreshMap); }
+            else if (style != null && !camMoving) scheduleRefresh();
+        });
+        Connectivity.OFFLINE.observe(owner, off -> {
+            boolean isOff = Boolean.TRUE.equals(off);
+            if (wasOffline && !isOff) { styleRetries = 0; reloadStyle(); }
+            wasOffline = isOff;
+        });
+    }
+
+    private boolean renderedFully, wasOffline;
+    private int styleRetries;
+    private static final int MAX_STYLE_RETRIES = 6;
+    private static final long REFRESH_DELAY_MS = 5000;
+    private final Runnable refreshMap = this::reloadStyle;
+
+    private void scheduleRefresh() {
+        if (map == null || styleRetries >= MAX_STYLE_RETRIES) return;
+        removeCallbacks(refreshMap);
+        postDelayed(refreshMap, REFRESH_DELAY_MS);
+    }
+
+    /** Sets the same style again: MapLibre then asks for every tile again. Pins, ring and route are redrawn; the camera stays where it is. */
+    private void reloadStyle() {
+        if (map == null) return;
+        String json = loadStyle(getContext());
+        if (json == null) return;
+        styleRetries++;
+        map.setStyle(new Style.Builder().fromJson(json), st -> { style = st; addLayers(st); render(); });
     }
 
     private static void capCache(Context app) {
@@ -964,13 +998,14 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     // ---- lifecycle ---------------------------------------------------------------------------------------------
 
     @Override public void onStart(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onStart(); }
-    @Override public void onResume(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onResume(); startRipples(); applyRouteOpacity(); }   // picks up the Settings switch
+    @Override public void onResume(@NonNull LifecycleOwner o) { if (mapView != null) { mapView.onResume(); if (map != null && style != null && !renderedFully) scheduleRefresh(); } startRipples(); applyRouteOpacity(); }   // picks up the Settings switch
     @Override public void onPause(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onPause(); stopRipples(); }
     @Override public void onStop(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onStop(); }
 
     @Override
     public void onDestroy(@NonNull LifecycleOwner o) {
         o.getLifecycle().removeObserver(this);
+        removeCallbacks(refreshMap);
         stopRipples(); stopLocatePulse();
         if (pop != null) pop.cancel();
         if (found != null) found.cancel();

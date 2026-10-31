@@ -1,3 +1,8 @@
+# v2.0.67 - Android: Home map refreshes by itself
+- **Fixed:** the Home map could stay blank (light blue, no roads / pins) after coming back from a place page, on slow internet, or after the internet dropped and returned.
+- **Now:** if the map did not finish drawing, it asks for the tiles again after 5 s (up to 6 tries, stops as soon as it is fully drawn); it also reloads at once when the internet comes back, and re-checks when you return to the screen. Pins, radius ring and route are redrawn; the camera does not jump.
+- Files: `MapCardView.java` (new `reloadStyle` / `scheduleRefresh`, listeners in `activate`, small edits in `onResume` / `onDestroy`), `build.gradle` (2.0.67 / 267). Not built or run by Claude.
+
 # v2.0.66 - Android: Home list refreshes after leaving the place page
 - **Fixed:** after opening a boarding house (BH info page) and going back, the Home list under "Nearby boarding houses" stayed empty. Home now reloads the list by itself every time you come back to it (skeleton shows, then the cards). Also picks up new favourites, new listings and changed rent made while you were away.
 - **Cause:** the tab Fragment is kept while its view is rebuilt; it remembered the last change tick (`lastChange`) and skipped the reload. `onDestroyView` now resets it to -1.
