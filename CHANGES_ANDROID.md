@@ -1,3 +1,8 @@
+# v2.0.77 - Android: nicer Home header (greeting + search bar)
+- **Greeting row:** bigger avatar (50 dp) with an indigo gradient and a white ring (initials in white; photo sits inside the ring), name 22 sp with slightly tighter spacing, bell is a 46 dp white circle with a thin border, ripple and soft shadow.
+- **Search bar:** 56 dp tall, fully rounded, soft shadow, thin lavender border (purple while focused, as before). The search icon sits in a lavender circle; the dropdown arrow is a lavender circle with an indigo arrow. Same ids, so the code is unchanged.
+- Files: `fragment_home.xml`, `bg_avatar_ring.xml` (new), `bg_icon_soft.xml` (new), `bg_bell_button.xml`, `bg_search_pill.xml` (also used by Explore: slightly rounder), `build.gradle` (2.0.77 / 277). Not built or run by Claude.
+
 # v2.0.76 - Android: only one map credit (i)
 - **Fixed:** a second, blue round (i) showed at the bottom of the map. It was MapLibre's built-in attribution button, shown on top of our own credit.
 - **Now:** the built-in one is turned off (`setAttributionEnabled(false)`); the credit pill / small (i) from v2.0.75 is the only one, so the licence text is still shown.
