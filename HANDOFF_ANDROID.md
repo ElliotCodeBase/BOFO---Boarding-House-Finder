@@ -1,3 +1,15 @@
+# Handoff (Android) - v2.0.18 login errors visible (2026-10-31)
+- **PR title:** `v2.0.18 - Android port: show login errors (scroll into view, hide keyboard, Logcat)`
+
+## Done
+- `LoginFragment.message()` now hides the keyboard and scrolls to the message; `fail()` and the Credential Manager `onError` log with tag `BOFO`.
+- Found on the user's Realme phone (Android 16, API 36): Continue with Google shows the account chooser, then returns to the login screen with no visible error. Real cause not yet known: read the message now shown on screen or `adb logcat -d -s BOFO`.
+
+## Next
+Get the Google sign-in error text. Likely suspects: Supabase Google provider "Authorized Client IDs" does not include the web client ID, or the token request is rejected. Then `assembleDebug` / release as before.
+
+---
+
 # Handoff (Android) - v2.0.17 first successful build (2026-10-31)
 - **PR title:** `v2.0.17 - Android port: first successful Gradle build (fix duplicate string, form style parent, Google sign-in catch)`
 

@@ -1,3 +1,7 @@
+# v2.0.18 - Android port, login errors are now visible (JavaFX app stays v1.20.0)
+- Google sign-in on a real phone returned to the login screen with no message: the error text sits below the buttons, hidden behind the keyboard. Now any login message closes the keyboard and scrolls to it, and failures are also written to Logcat (tag `BOFO`).
+- No Supabase, library or other code change. Profile > About and Settings show 2.0.18.
+
 # v2.0.17 - Android port, first successful build (JavaFX app stays v1.20.0)
 - First time the Android code was compiled in Android Studio / Gradle: `testDebugUnitTest` passes (BUILD SUCCESSFUL).
 - Fixed 3 build errors: duplicate string `cd_mascot` (second one renamed `cd_mascot_ask`, used by `MascotView`); style `Widget.Form.Input` had no parent and Android looked for `Widget.Form` (now `parent=""`); `LoginFragment` caught `GoogleIdTokenParsingException`, which the current Google ID library no longer throws (now `catch (Exception e)`).

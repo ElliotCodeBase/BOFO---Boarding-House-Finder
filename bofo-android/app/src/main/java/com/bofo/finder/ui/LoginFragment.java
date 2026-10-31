@@ -93,6 +93,19 @@ public class LoginFragment extends Fragment {
         if (b == null) return;
         b.message.setVisibility(text == null || text.isEmpty() ? View.GONE : View.VISIBLE);
         b.message.setText(text == null ? "" : text);
+        if (text != null && !text.isEmpty()) showMessageNow();
+    }
+
+    /** The message sits below the buttons: close the keyboard and scroll to it so an error is never hidden. */
+    private void showMessageNow() {
+        View root = b.getRoot();
+        android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager)
+                requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+        if (imm != null) imm.hideSoftInputFromWindow(root.getWindowToken(), 0);
+        root.post(() -> {
+            if (b != null && b.getRoot() instanceof android.widget.ScrollView)
+                ((android.widget.ScrollView) b.getRoot()).smoothScrollTo(0, b.message.getBottom());
+        });
     }
 
     private String email() { return b.email.getText() == null ? "" : b.email.getText().toString().trim(); }
@@ -169,6 +182,7 @@ public class LoginFragment extends Fragment {
                     }
                     @Override public void onError(GetCredentialException e) {
                         if (b == null) return;
+                        android.util.Log.e("BOFO", "Google credential error", e);
                         setBusy(false);
                         if (e instanceof GetCredentialCancellationException) { message(getString(R.string.login_google_cancelled)); return; }
                         // NoCredentialException = no Google account on the phone, or the Android OAuth client / SHA-1 is not set up.
@@ -198,6 +212,7 @@ public class LoginFragment extends Fragment {
     }
 
     private void fail(String headline, Throwable e) {
+        android.util.Log.e("BOFO", headline, e);
         setBusy(false);
         message(ErrorText.full(headline, e));
     }
