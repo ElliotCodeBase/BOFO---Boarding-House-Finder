@@ -1,3 +1,9 @@
+# v2.0.40 - Android port, lag test switch (JavaFX app stays v1.20.0)
+- New `map.mode` in `assets/config.properties`: `vector` (normal), `raster` (one layer of ready-made picture tiles, like the JavaFX app; OpenStreetMap tiles, for TESTING only) or `off` (no map). Used to find whether the lag comes from live vector drawing or from the rest of Home.
+- Changed: `MapCardView`, `assets/config.properties`, `build.gradle` (2.0.40 / 240). Not built or run by Claude.
+
+---
+
 # v2.0.39 - Android port, lag fix 5: 120 Hz screens (JavaFX app stays v1.20.0)
 - The map is capped at 60 fps (`setMaximumFps(60)`) and the ripple overlay repaints at ~30 fps. A 120 Hz phone (realme 14 Pro+, Snapdragon 7s Gen 3 / Adreno 710) would otherwise draw the map up to 120 times a second while panning.
 - Changed: `MapCardView`, `RadarOverlayView`, `build.gradle` (2.0.39 / 239). Not built or run by Claude.

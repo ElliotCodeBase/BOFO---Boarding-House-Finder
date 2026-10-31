@@ -1,4 +1,5 @@
 # Revert-to-original-UI progress (bofo-android)
+## v2.0.40 - lag test: `map.mode` = vector / raster / off in assets/config.properties. Not built or run by Claude.
 ## v2.0.39 - lag fix 5: map max 60 fps, ripple overlay ~30 fps (120 Hz phones). Not built or run by Claude.
 ## v2.0.38 - lag fix 4: CornerMaskView = four corner pieces (no full-card inverse fill), ripple overlay repaints only around the dot. Not built or run by Claude.
 ## v2.0.37 - lag fix 3: ripples + found ring moved off the map renderer into `RadarOverlayView` (Canvas overlay), no pin/campus rebuild on a pure pan, route updates touch only route layers, pop at ~30 fps. Not built or run by Claude.

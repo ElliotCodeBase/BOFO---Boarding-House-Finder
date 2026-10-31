@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.40 lag test switch (2026-10-31)
+- **PR title:** `v2.0.40 - Android: map.mode test switch (vector / raster / off)`
+- Why: JavaFX paints each OpenFreeMap vector tile once into a 512 px bitmap (`VectorTileRetriever`) and then only slides bitmaps; Android MapLibre redraws the vector layers on the GPU every frame. Bisect on the realme 14 Pro+: `off` still laggy = not the map (look at Home scroll / SurfaceView in AppBar / list images); `raster` smooth but `vector` laggy = live vector drawing; both laggy = something else on the main thread.
+
+---
+
 # Handoff (Android) - v2.0.39 lag fix 5 (2026-10-31)
 - **PR title:** `v2.0.39 - Android: cap map at 60 fps, ripples at 30 fps (120 Hz phones)`
 - User phone: realme 14 Pro+ (Snapdragon 7s Gen 3, Adreno 710, 1272x2800, 120 Hz). Lag "everywhere, all the time" even after v2.0.37/38. If still laggy: measure (Developer options > Profile HWUI rendering > On screen as bars; or `adb shell dumpsys gfxinfo com.bofo.finder framestats`), A/B `android-sdk-opengl`, release vs debug build.

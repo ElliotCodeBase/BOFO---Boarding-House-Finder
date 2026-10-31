@@ -29,6 +29,7 @@ import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.bofo.finder.R;
+import com.bofo.finder.config.AppConfig;
 import com.bofo.finder.databinding.ViewMapCardBinding;
 import com.bofo.finder.model.BoardingHouse;
 import com.bofo.finder.model.College;
@@ -187,6 +188,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** Creates the MapView (first call only) and ties it to the lifecycle. Call with the Fragment's view lifecycle owner. */
     public void activate(@NonNull LifecycleOwner lifecycleOwner) {
         if (mapView != null) return;
+        if ("off".equalsIgnoreCase(AppConfig.get("map.mode").trim())) return;      // lag test: no map at all (assets/config.properties: map.mode=off)
         Context app = getContext().getApplicationContext();
         MapLibre.getInstance(app);
         capCache(app);
@@ -234,7 +236,14 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         m.setStyle(new Style.Builder().fromJson(json), st -> { style = st; addLayers(st); render(); post(this::applyCamera); });
     }
 
+    /** Lag test only (map.mode=raster): one raster layer of ready-made picture tiles, like the JavaFX app shows. OpenStreetMap tiles are for TESTING; pick a licensed raster plan before release. */
+    private static final String RASTER_TEST_STYLE = "{\"version\":8,\"name\":\"BOFO raster test\",\"transition\":{\"duration\":0,\"delay\":0},"
+            + "\"sources\":{\"raster-test\":{\"type\":\"raster\",\"tiles\":[\"https://tile.openstreetmap.org/{z}/{x}/{y}.png\"],\"tileSize\":256,\"maxzoom\":19,"
+            + "\"attribution\":\"\\u00a9 OpenStreetMap contributors\"}},"
+            + "\"layers\":[{\"id\":\"background\",\"type\":\"background\",\"paint\":{\"background-color\":\"#F5F6FC\"}},{\"id\":\"raster-test\",\"type\":\"raster\",\"source\":\"raster-test\"}]}";
+
     private static String loadStyle(Context c) {
+        if ("raster".equalsIgnoreCase(AppConfig.get("map.mode").trim())) return RASTER_TEST_STYLE;
         if (styleJson != null) return styleJson;
         try (InputStream in = c.getAssets().open(STYLE_ASSET)) {
             java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
