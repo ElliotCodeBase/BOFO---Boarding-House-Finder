@@ -501,11 +501,11 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         ripples.start();
     }
 
+    private volatile boolean camMoving;
     private final Runnable idleRebuild = () -> { if (!camMoving) { rebuildPlaces(); rebuildColleges(); } };
     private static final long RIPPLE_FRAME_MS = 80;
     private final android.graphics.Rect visRect = new android.graphics.Rect();
     private int lastTop = Integer.MIN_VALUE, lastH = -1;
-    private volatile boolean camMoving;
 
     /** Only the two ripple rings (the dot, ring and shadow do not change while the ripples loop). */
     private void paintRipples() {

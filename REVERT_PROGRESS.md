@@ -1,4 +1,5 @@
 # Revert-to-original-UI progress (bofo-android)
+## v2.0.36 - build fix: `camMoving` declared before `idleRebuild` (illegal forward reference in v2.0.35). Not built or run by Claude.
 ## v2.0.35 - lag fix 2: pin/label rebuild waits 160 ms after the gesture, label sizes cached (no bitmap copies), map drawn at 1.75x, zoom max 16, buildings from zoom 15, minor roads from 14, no blur on the dot shadow. Not built or run by Claude.
 ## v2.0.34 - lag fix: radar ripples now ~12 fps, only the two ripple layers are updated, and they pause while the map moves or the page scrolls. Not built or run by Claude.
 ## v2.0.33 - Step 11 done (final pass): removed the unused old BOFO sheet (`BofoPanelSheet`, `sheet_bofo.xml`) and 23 unused strings. All other layouts and drawables are in use. Revert plan complete. Not built or run by Claude.
