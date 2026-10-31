@@ -102,7 +102,7 @@ public class DockBarView extends ViewGroup {
         addView(bar);
 
         highlight = new View(context);
-        highlight.setBackgroundResource(R.drawable.bg_dock_highlight);
+        highlight.setBackgroundResource(R.drawable.bg_dock_highlight); highlight.setElevation(10.5f * dp); highlight.setOutlineProvider(null);
         highlight.setVisibility(INVISIBLE);
         addView(highlight);
     }
@@ -131,7 +131,7 @@ public class DockBarView extends ViewGroup {
             final Tab t = tabs.get(i);
             final int idx = i;
             FrameLayout cell = new FrameLayout(ctx);
-            cell.setClipChildren(false);
+            cell.setClipChildren(false); cell.setElevation(10.5f * dp);
             cell.setClickable(true);
             cell.setFocusable(true);
             cell.setContentDescription(t.label);
