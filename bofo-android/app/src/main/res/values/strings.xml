@@ -350,6 +350,12 @@
     <string name="dash_reviews">Reviews</string>
     <string name="dash_beds">Free beds</string>
     <string name="dash_boosted">%1$d boosted</string>
+    <string name="dash_views_total">total views</string>
+    <string name="dash_boost_tag">Boosted</string>
+    <string name="dash_chip_views">%1$d views</string>
+    <string name="dash_chip_saved">%1$d saved</string>
+    <string name="dash_chip_chats">%1$d chats</string>
+    <string name="dash_chip_beds">%1$d free beds</string>
     <string name="dash_map_title">Your places on the map</string>
     <string name="dash_per_place">Your places</string>
     <string name="dash_row">%1$d views  -  %2$d saved  -  %3$d chats\nRating %4$s (%5$d reviews)  -  %6$d free beds</string>

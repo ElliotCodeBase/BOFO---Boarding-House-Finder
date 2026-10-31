@@ -863,7 +863,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 return;
             }
             if (target != null) {
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(target[0], target[1]), target[2]));
+                map.easeCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(target[0], target[1]), target[2]), 500);
                 target = null;
                 return;
             }
