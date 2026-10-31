@@ -164,23 +164,47 @@ public class MapFragment extends Fragment {
         return null;
     }
 
-    /** A straight guide line shows at once, then the real road path replaces it. */
+    /** Up to this many quick tries (1.5 s apart, growing), then one quiet try every 15 s until the real road path is on the map. */
+    private static final int QUICK_TRIES = 5;
+    private static final long SLOW_RETRY_MS = 15_000L;
+    private BoardingHouse routeHouse;
+    private double[] routeFrom;
+
+    private static boolean walkable(double[] from, BoardingHouse h) { return Geo.km(from[0], from[1], h.lat(), h.lng()) <= 3; }
+
+    /** A straight guide line shows at once, then the real road path replaces it by itself (it keeps retrying while the line is only an estimate). */
     private void drawRoute(BoardingHouse bh) {
         final double[] from = routeStart();
         if (from == null) { b.map.clearRoute(); say(R.string.bofo_route_no_start); return; }
-        final double tl = bh.lat(), tg = bh.lng();
+        routeHouse = bh; routeFrom = from;
         final int my = ++routeToken;
-        Router.Route known = Router.peek(from[0], from[1], tl, tg);
-        if (known == null) known = Router.estimate(from[0], from[1], tl, tg);
-        showRoute(known);
-        Async.run(() -> Router.walk(from[0], from[1], tl, tg), (Router.Route r) -> { if (my == routeToken && b != null) showRoute(r); }, e -> { });
+        Router.Route known = Router.peek(from[0], from[1], bh.lat(), bh.lng());
+        if (known == null) known = Router.estimate(from[0], from[1], bh.lat(), bh.lng());
+        showRoute(known, walkable(from, bh));
+        if (known.approximate()) fetchRoute(my, from, bh, 0);
     }
 
-    private void showRoute(Router.Route r) {
+    /** Close places: the walking path. Far places: the road path for vehicles (nobody walks 100 km). */
+    private void fetchRoute(int my, double[] from, BoardingHouse h, int tries) {
+        final boolean walk = walkable(from, h);
+        Async.run(() -> walk ? Router.walk(from[0], from[1], h.lat(), h.lng()) : Router.drive(from[0], from[1], h.lat(), h.lng()), (Router.Route r) -> {
+            if (my != routeToken || b == null) return;
+            showRoute(r, walk);
+            if (r.approximate()) retryLater(my, from, h, tries);
+        }, e -> { if (my == routeToken && b != null) retryLater(my, from, h, tries); });
+    }
+
+    private void retryLater(int my, double[] from, BoardingHouse h, int tries) {
+        if (b == null) return;
+        long delay = tries < QUICK_TRIES ? 1500L * (tries + 1) : SLOW_RETRY_MS;
+        b.getRoot().postDelayed(() -> { if (my == routeToken && b != null && isResumed()) fetchRoute(my, from, h, tries + 1); }, delay);
+    }
+
+    private void showRoute(Router.Route r, boolean walk) {
         double km = r.meters() / 1000.0;
+        int min = (int) Math.max(1, Math.round(r.meters() / (walk ? 80.0 : 500.0)));      // 80 m/min walking, about 30 km/h by road
         b.map.setRoute(r.pts(), r.approximate());
-        b.map.setRouteLabel(getString(r.approximate() ? R.string.bofo_route_label_est : R.string.bofo_route_label,
-                Geo.fmt(km), Geo.fmtTime(Math.max(1, Geo.walkMinutes(km)))));
+        b.map.setRouteLabel(getString(r.approximate() ? R.string.bofo_route_label_est : R.string.bofo_route_label, Geo.fmt(km), Geo.fmtTime(min)));
         b.map.fitRoute();
     }
 
@@ -238,6 +262,16 @@ public class MapFragment extends Fragment {
 
     @Override
     public void onStart() { super.onStart(); if (!firstLoad) startLive(); }
+
+    /** Back on this screen with only the estimate drawn (e.g. the phone slept, or the network was off): try for the road path again. */
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (b != null && routeMode && routeHouse != null && routeFrom != null) {
+            Router.Route known = Router.peek(routeFrom[0], routeFrom[1], routeHouse.lat(), routeHouse.lng());
+            if (known == null) fetchRoute(++routeToken, routeFrom, routeHouse, 0);
+        }
+    }
 
     @Override
     public void onStop() { loc.stop(); super.onStop(); }

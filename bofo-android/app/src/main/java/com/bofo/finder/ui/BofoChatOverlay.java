@@ -130,8 +130,8 @@ public class BofoChatOverlay extends FrameLayout {
     /** Same sizing as the original: at most 380 x 500, 12 dp from the sides, never taller than the free space above the tab bar. */
     private void applyCardSize(int w, int h) {
         if (w <= 0 || h <= 0) return;
-        int cw = Math.round(Math.min(380 * dp, w - 24 * dp));
-        int bm = bottomOffset; if (shown && MainActivity.imeBottom > 0) { int[] loc = new int[2]; getLocationInWindow(loc); int over = loc[1] + h - (getRootView().getHeight() - MainActivity.imeBottom); if (over > 0) bm = Math.max(bm, over + Math.round(8 * dp)); } int ch = Math.round(Math.max(220 * dp, Math.min(500 * dp, h - bm - 24 * dp)));
+        int cw = Math.round(Math.min(400 * dp, w - 20 * dp));
+        int bm = bottomOffset; if (shown && MainActivity.imeBottom > 0) { int[] loc = new int[2]; getLocationInWindow(loc); int over = loc[1] + h - (getRootView().getHeight() - MainActivity.imeBottom); if (over > 0) bm = Math.max(bm, over + Math.round(8 * dp)); } int ch = Math.round(Math.max(260 * dp, Math.min(620 * dp, h - bm - 24 * dp)));
         FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) b.card.getLayoutParams();
         if (lp.width != cw || lp.height != ch || lp.bottomMargin != bm) {
             lp.width = cw; lp.height = ch; lp.bottomMargin = bm;

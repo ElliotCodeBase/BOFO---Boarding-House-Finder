@@ -322,10 +322,36 @@ function faq(m: string): string {
 }
 const isFil = (m: string) => /\b(ang|mga|sa|ng|po|ba|nga|pinaka\w*|malapit|barato|mura|saan|paano|kaayo|unsa|asa|ko|ako|akong|gusto|hanap|may|naman|lang|sang|kag|sina)\b/i.test(m);
 
+/** "850 m · 11 min walk" for short distances, "19.6 km away" for the rest (nobody walks 20 km). "" when there is no origin. */
+function distText(r: Result): string {
+  if (r.distance_km === null) return "";
+  return r.distance_km <= 3 && r.walk_min !== null ? `${fmtKm(r.distance_km)} · ${r.walk_min} min walk` : `${fmtKm(r.distance_km)} away`;
+}
+
 function line(r: Result): string {
-  let s = `**${r.name}** (**${peso(r.price)}**`;
-  if (r.distance_km !== null) s += `, ${fmtKm(r.distance_km)}` + (r.walk_min !== null && r.walk_min <= 90 ? `, ${r.walk_min} min walk` : "");
-  return s + ")";
+  const d = distText(r);
+  return `**${r.name}** (**${peso(r.price)}**/mo${d ? ", " + d : ""})`;
+}
+
+// One place per line, numbered, so a list is easy to scan (name, price per month, distance). The cards below carry the rest.
+function lines(rs: Result[]): string {
+  return rs.map((r, i) => {
+    const d = distText(r);
+    const extra = r.available_beds > 0 ? "" : " · full";
+    return `${i + 1}. **${r.name}** · **${peso(r.price)}**/mo${d ? " · " + d : ""}${extra}`;
+  }).join("\n");
+}
+
+/** "near Silliman University" / "near you" when the distances exist, else "". */
+function nearWhere(rs: Result[], where: string, fil: boolean): string {
+  if (!rs.some((r) => r.distance_km !== null)) return "";
+  return where ? (fil ? ` malapit sa ${where}` : ` near ${where}`) : (fil ? " malapit sa iyo" : " near you");
+}
+
+/** The headline + the numbered list + one helpful next step. */
+function listReply(head: string, rs: Result[], extra: string, fil: boolean): string {
+  const next = rs.length > 1 ? (fil ? "\n\nGusto mo bang ikumpara ang mga ito o ipakita sa mapa?" : "\n\nWant me to compare them or show them on the map?") : (fil ? "\n\nIpakita ko ba ang daan papunta rito?" : "\n\nWant the path there on the map?");
+  return `${head}\n\n${lines(rs)}${next}${extra ? "\n" + extra : ""}`;
 }
 
 function template(msg: string, intent: Intent, rs: Result[], note: string, p: Params, where = ""): string {
@@ -340,18 +366,21 @@ function template(msg: string, intent: Intent, rs: Result[], note: string, p: Pa
   if (["nearest", "cheapest", "best_rated", "search", "availability"].includes(intent) && !rs.length)
     return fil ? "Wala akong nakitang tugma. Subukan ang mas mataas na budget o mas kaunting filter." : "I couldn't find a place that matches. Try a higher budget or fewer filters.";
   switch (intent) {
-    case "nearest": return (fil ? "Pinakamalapit: " : "Nearest places" + (where ? ` to ${where}` : "") + ": ") + list + "." + extra;
-    case "cheapest": return (fil ? "Pinakamura: " : "Cheapest I found: ") + list + "." + extra;
-    case "best_rated": return (fil ? "Pinakamataas ang rating: " : "Top rated: ") + list + "." + extra;
-    case "availability": return (fil ? "May bakanteng kama: " : "These still have beds: ") + list + "." + extra;
-    case "search": return (fil ? `May ${rs.length} na tugma: ` : `I found ${rs.length} match${rs.length > 1 ? "es" : ""}: `) + list + "." + extra;
+    case "nearest": return listReply(fil ? `Pinakamalapit na ${rs.length > 1 ? rs.length + " lugar" : "lugar"}${nearWhere(rs, where, fil)}:` : `The ${rs.length > 1 ? rs.length + " closest places" : "closest place"}${nearWhere(rs, where, fil).replace(" near you", " to you").replace(" near ", " to ")}:`, rs, extra, fil);
+    case "cheapest": return listReply(fil ? `Pinakamura${nearWhere(rs, where, fil)}, mula sa pinakamababa:` : `${rs.length > 1 ? "The " + rs.length + " cheapest places" : "The cheapest place"}${nearWhere(rs, where, fil)}, lowest first:`, rs, extra, fil);
+    case "best_rated": return listReply(fil ? `Pinakamataas ang rating${nearWhere(rs, where, fil)}:` : `Best rated${nearWhere(rs, where, fil)}:`, rs, extra, fil);
+    case "availability": return listReply(fil ? `May bakanteng kama${nearWhere(rs, where, fil)}:` : `These still have free beds${nearWhere(rs, where, fil)}:`, rs, extra, fil);
+    case "search": return listReply(fil ? `May ${rs.length} na tugma${nearWhere(rs, where, fil)}:` : `I found ${rs.length} match${rs.length > 1 ? "es" : ""}${nearWhere(rs, where, fil)}:`, rs, extra, fil);
     case "compare": {
       const cheapest = [...rs].sort((a, b) => a.price - b.price)[0];
-      return (fil ? "Heto ang paghahambing. Pinakamura: " : "Here's the side by side. Cheapest: ") + (cheapest ? cheapest.name : "-") + ".";
+      const closest = rs.filter((r) => r.distance_km !== null).sort((a, b) => a.distance_km! - b.distance_km!)[0];
+      const top = [...rs].filter((r) => r.review_count > 0).sort((a, b) => b.rating - a.rating)[0];
+      const picks = [cheapest ? `**${cheapest.name}** is the cheapest (**${peso(cheapest.price)}**/mo)` : "", closest ? `**${closest.name}** is the closest (${fmtKm(closest.distance_km!)})` : "", top ? `**${top.name}** has the best rating (${top.rating.toFixed(1)})` : ""].filter(Boolean);
+      return (fil ? "Heto ang paghahambing. Pinakamura: " + (cheapest ? `**${cheapest.name}**` : "-") + "." : `Here's the side by side.\n\n${picks.map((x) => "• " + x).join("\n")}\n\nThe green cells in the table are the best value in each row.`);
     }
-    case "locate_map": return rs.length ? (fil ? `Ipinapakita ko ang ${rs.length} lugar sa mapa.` : `Showing ${rs.length} place${rs.length > 1 ? "s" : ""} on the map.`) : (fil ? "Wala akong mapakita sa mapa pa. Magtanong muna ng hinahanap." : "I have nothing to show yet. Ask me for a place first.");
-    case "directions": return rs.length ? (rs[0].distance_km !== null ? `${rs[0].name} is ${fmtKm(rs[0].distance_km)} from ${where || "you"} (about ${rs[0].walk_min} min walk). Showing the path on the map.` : `Showing the path to ${rs[0].name} on the map.`) : "Tell me which place you want the path to.";
-    case "details": return rs.length ? `${rs[0].name}: ${peso(rs[0].price)}/month, ${rs[0].review_count ? rs[0].rating.toFixed(1) + " stars" : "no reviews yet"}, ${rs[0].available_beds} bed(s) free.` : "Which place do you mean?";
+    case "locate_map": return rs.length ? (fil ? `Ipinapakita ko ang ${rs.length} lugar sa mapa.` : `Showing ${rs.length} place${rs.length > 1 ? "s" : ""} on the map. Tap a pin to see its price and the path.`) : (fil ? "Wala akong mapakita sa mapa pa. Magtanong muna ng hinahanap." : "I have nothing to show yet. Ask me for a place first.");
+    case "directions": return rs.length ? (rs[0].distance_km !== null ? `**${rs[0].name}** is ${distText(rs[0]).replace(" away", "")} from ${where || "you"}. Opening the path on the map now, it updates by itself until the road route appears.` : `Opening the path to **${rs[0].name}** on the map now.`) : "Tell me which place you want the path to.";
+    case "details": return rs.length ? `**${rs[0].name}**\n• **${peso(rs[0].price)}**/month\n• ${rs[0].review_count ? rs[0].rating.toFixed(1) + " stars (" + rs[0].review_count + " reviews)" : "No reviews yet"}\n• ${rs[0].available_beds > 0 ? rs[0].available_beds + " bed(s) free" : "No free beds right now"}${distText(rs[0]) ? "\n• " + distText(rs[0]) : ""}` : "Which place do you mean?";
     case "app_help": return faq(msg);
     default: return fil ? "Kaya kong maghanap ng pinakamalapit, pinakamura o pinakamataas ang rating, magkumpara ng lugar, at ipakita sa mapa." : "I can find the nearest, cheapest or best rated boarding house, compare places, and show them on the map.";
   }

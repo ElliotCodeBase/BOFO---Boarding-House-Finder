@@ -144,13 +144,14 @@ public final class BofoIntentLocal {
         if (out.isEmpty()) return BofoAnswer.text(fil ? "Wala akong nakitang tugma. Subukan ang mas mataas na budget o mas kaunting filter." : "I couldn't find a place that matches. Try a higher budget or fewer filters.");
         List<Result> rs = results(out.subList(0, Math.min(3, out.size())), lat, lng);
         StringBuilder list3 = new StringBuilder();
-        for (Result r : rs) { if (list3.length() > 0) list3.append("; "); list3.append(line(r)); }
+        int n = 0;
+        for (Result r : rs) { if (list3.length() > 0) list3.append("\n"); list3.append(++n).append(". ").append(line(r)); }
         String head = switch (intent) {
-            case "nearest" -> fil ? "Pinakamalapit: " : "Nearest places: ";
-            case "cheapest" -> fil ? "Pinakamura: " : "Cheapest I found: ";
-            case "best" -> fil ? "Pinakamataas ang rating: " : "Top rated: ";
-            case "avail" -> fil ? "May bakanteng kama: " : "These still have beds: ";
-            default -> fil ? "Heto ang nahanap ko: " : "Here is what I found: ";
+            case "nearest" -> fil ? "Pinakamalapit:" : "Closest places:";
+            case "cheapest" -> fil ? "Pinakamura:" : "Cheapest places, lowest first:";
+            case "best" -> fil ? "Pinakamataas ang rating:" : "Best rated:";
+            case "avail" -> fil ? "May bakanteng kama:" : "These still have free beds:";
+            default -> fil ? "Heto ang nahanap ko:" : "Here is what I found:";
         };
         List<Action> acts = new ArrayList<>();
         acts.add(new Action("show_on_map", null, ids(rs)));
@@ -166,7 +167,7 @@ public final class BofoIntentLocal {
         List<String> sug = new ArrayList<>();
         if (rs.size() >= 2) sug.add("Compare them");
         sug.add("Show on map");
-        return new BofoAnswer(head + list3 + "." + (hasRef ? "" : (fil ? " (Pumili ng campus para makita ang layo.)" : " (Pick a campus to see distances.)")), intent, rs, null, acts, f.length() > 0 ? f : null, sug, true);
+        return new BofoAnswer(head + "\n\n" + list3 + (hasRef ? "" : (fil ? "\n\nPumili ng campus para makita ang layo." : "\n\nPick a campus to see distances.")), intent, rs, null, acts, f.length() > 0 ? f : null, sug, true);
     }
 
     // ------------------------------------------------------------------ helpers
@@ -217,9 +218,9 @@ public final class BofoIntentLocal {
     private static String peso(double v) { return "₱" + String.format(Locale.US, "%,.0f", v); }
 
     private static String line(Result r) {
-        String s = r.name() + " (" + peso(r.price());
-        if (r.distanceKm() != null) s += ", " + Geo.fmt(r.distanceKm()) + ", " + r.walkMin() + " min walk";
-        return s + ")";
+        String s = "**" + r.name() + "** \u00B7 **" + peso(r.price()) + "**/mo";
+        if (r.distanceKm() != null) s += " \u00B7 " + (r.distanceKm() <= 3 ? Geo.fmt(r.distanceKm()) + " \u00B7 " + Math.max(1, r.walkMin()) + " min walk" : Geo.fmt(r.distanceKm()) + " away");
+        return s;
     }
 
     private static Compare compare(List<Result> rs) {

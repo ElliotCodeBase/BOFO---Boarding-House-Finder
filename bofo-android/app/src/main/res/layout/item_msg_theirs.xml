@@ -26,9 +26,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_bubble_theirs"
-        android:maxWidth="290dp"
+        android:lineSpacingMultiplier="1.15"
+        android:maxWidth="320dp"
         android:paddingHorizontal="14dp"
-        android:paddingVertical="9dp"
+        android:paddingVertical="10dp"
         android:textColor="@color/bofo_text"
         android:textIsSelectable="false"
         android:textSize="15sp" />
