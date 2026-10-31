@@ -1,3 +1,8 @@
+# v2.0.78 - Android: smoother locate button animation
+- **Fixed:** while "Finding your location" the round locate button grew inside its small box and was clipped, so it flickered between a circle and a rounded square, and it faded to 65 % (looked washed out).
+- **Now:** a soft indigo ring grows out of the button (44 dp -> ~62 dp, fading as it grows) and the button breathes by 5 % while the phone is being found. When the location is found the ring stops and the button pops (1.16x) and settles with a small overshoot. Pressing the button shrinks it to 88 % and springs back. The white and purple backgrounds cross-fade (200 ms) and the icon colour fades with them instead of swapping in one frame. Nothing animates if the phone's animations are off.
+- Files: `MapCardView.java` (`startLocatePulse`, `stopLocatePulse`, `setupLocatePress`, `setLocateActive`), `view_map_card.xml` (ring view `locate_ring`, `clipChildren=false`), `bg_locate_ring.xml` (new), `build.gradle` (2.0.78 / 278). Not built or run by Claude.
+
 # v2.0.77 - Android: nicer Home header (greeting + search bar)
 - **Greeting row:** bigger avatar (50 dp) with an indigo gradient and a white ring (initials in white; photo sits inside the ring), name 22 sp with slightly tighter spacing, bell is a 46 dp white circle with a thin border, ripple and soft shadow.
 - **Search bar:** 56 dp tall, fully rounded, soft shadow, thin lavender border (purple while focused, as before). The search icon sits in a lavender circle; the dropdown arrow is a lavender circle with an indigo arrow. Same ids, so the code is unchanged.

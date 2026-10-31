@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.78 Locate button animation
+- **PR title:** `v2.0.78 - Android: smoother locate button (ring pulse, found pop, press spring, colour fade)`
+- `MapCardView`: pulse is a single `ValueAnimator` driving `locate_ring` scale / alpha + button breathing; `stopLocatePulse` pops and settles; `setupLocatePress` (touch listener returns false); `setLocateActive` uses a `TransitionDrawable` + `ArgbEvaluator` colour filter. `view_map_card.xml`: locate button wrapped in a 44 dp `FrameLayout` with `clipChildren=false` (also on the root and the button column). No Supabase change. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.77 Home header
 - **PR title:** `v2.0.77 - Android: nicer Home header (avatar ring, soft bell, floating search bar)`
 - Layout / drawables only, no Java change: `fragment_home.xml` greeting row + `search_pill` (ids unchanged), new `bg_avatar_ring`, `bg_icon_soft`, reworked `bg_bell_button`, `bg_search_pill` (radius 28 dp, shared with `fragment_explore.xml`). No Supabase change. Not built or run by Claude.
