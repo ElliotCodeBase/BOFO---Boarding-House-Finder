@@ -1,3 +1,11 @@
+# Handoff (Android) - v2.0.27 Step 5 radar + location states + overview (2026-10-31)
+- **PR title:** `v2.0.27 - Android: radar dot, location pill and overview mode on the Home map`
+- `MapCardView`: user layers are now ripple1/ripple2/found/cone/shadow/ring/dot (all paint-only updates from `paintUser()`, ripples ~30 fps, skipped when `getGlobalVisibleRect` is empty); `setUser` computes heading; `setLocState(Loc)`, `setLocateActive`, `foundYou()`, `overview()`. `HomeFragment`: `ovOn/ovFit/overviewActive()`, `onLocateTap()`, `locateMe()` with FINDING/EXACT/APPROX/OFF. `HomeSearchBar.Host.searchChanged()`.
+- Defaults I chose: status pill hidden while the radius pill shows; "approximate" = only ACCESS_COARSE_LOCATION granted; cone appears after ~8 m of movement.
+- Check on the emulator if anything looks off: dot position vs. camera, pill text, ripple smoothness (if laggy, raise the 33 ms throttle in `startRipples`). Next: Step 6 (pins, clusters, campus dots, circle edge label, preview card).
+
+---
+
 # Handoff (Android) - v2.0.26 location-on popup (2026-10-31)
 - **PR title:** `v2.0.26 - Android: "Turn on location?" popup when Location is off`
 - `LocationHelper.ensureSettings()` (SettingsClient.checkLocationSettings + ResolvableApiException via a StartIntentSenderForResult launcher registered in the constructor). Used for requestOnce only.

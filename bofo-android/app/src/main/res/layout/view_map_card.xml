@@ -51,6 +51,21 @@
             android:src="@drawable/ic_my_location" />
     </LinearLayout>
 
+    <!-- Step 5: glass pill with the location state, top-left (hidden while the radius pill is shown) -->
+    <TextView
+        android:id="@+id/loc_pill"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="10dp"
+        android:background="@drawable/bg_glass_pill"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="6dp"
+        android:textColor="@color/bofo_ink"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
     <!-- Radius pill, top-centre, shown when a campus (or Near me) is the centre -->
     <LinearLayout
         android:id="@+id/radius_pill"

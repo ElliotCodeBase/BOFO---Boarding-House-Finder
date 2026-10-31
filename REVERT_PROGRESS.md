@@ -1,4 +1,5 @@
 # Revert-to-original-UI progress (bofo-android)
+## v2.0.27 - Step 5 done: radar dot (2 ripples, cone, pop-in, found ring), glass pill states, overview + locate toggle. Not built or run by Claude.
 ## v2.0.26 - Turn on location popup (LocationHelper.ensureSettings).
 ## v2.0.25 - current location: LocationManager fallback + location-off toast.
 ## v2.0.24 - map speed (JavaFX-style): 2x pixel cap, lighter style, dots zoomed out, zoom 6-17, delayed map start.
@@ -21,5 +22,5 @@
 - Home list skeleton now pulses like the original (900 ms, 1 -> 0.45, ease in-out). Chats skeleton rows come in Step 10.
 - Login, list card and everything else untouched. Not built or run by Claude.
 ## v2.0.19 - Step 1 done: floating tab bar + mascot button
-## Next: Step 5 (radar dot + location states + overview).
+## Next: Step 6 (pins, clusters, campus dots, circle edge label, preview card).
 **To continue in any AI:** upload your latest project zip, then paste the whole of `REVERT_PROMPT.md` (repo root) and say "Do Step 4".

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="loc_pill_finding">Finding your location…</string>
+    <string name="loc_pill_exact">Your location</string>
+    <string name="loc_pill_approx">Approximate location</string>
+    <string name="loc_pill_off">Location is off</string>
+</resources>

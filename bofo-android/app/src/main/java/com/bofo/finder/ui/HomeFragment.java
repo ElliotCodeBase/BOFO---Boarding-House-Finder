@@ -62,6 +62,8 @@ public class HomeFragment extends Fragment {
         BrowseState.bump();
     };
     private List<BoardingHouse> current = new ArrayList<>();
+    // Step 5: overview mode (no campus, search empty) + location states
+    private boolean ovOn = true, ovFit = true, hadRef, finding, haveFix;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
@@ -87,6 +89,7 @@ public class HomeFragment extends Fragment {
         search = new HomeSearchBar(this, b, new HomeSearchBar.Host() {
             @Override public void nearMe() { askNearMe(); }
             @Override public void searchPlace(String text) { openExplore(text); }
+            @Override public void searchChanged() { onSearchChanged(); }
         });
         b.bell.setOnClickListener(v -> say(R.string.home_bell_toast));
         paintGreeting();
@@ -99,9 +102,12 @@ public class HomeFragment extends Fragment {
         b.mapCard.setParentScrollBlocked(true);
         b.mapCard.setListener(new MapCardView.Listener() {
             @Override public void openPlace(String id) { BhDetailFragment.open(HomeFragment.this, id); }
-            @Override public void locate() { locateMe(); }
+            @Override public void locate() { onLocateTap(); }
             @Override public void radiusChanged(float km, boolean settled) { onRadiusPill(km, settled); }
         });
+        b.mapCard.setLocState(!AppPrefs.useLocation(requireContext()) ? MapCardView.Loc.OFF
+                : LocationHelper.granted(requireContext()) ? MapCardView.Loc.FINDING : MapCardView.Loc.NONE);   // the live dot resolves it
+        paintLocate();
         // MapLibre start-up (native libs, style parse) is heavy: do it after the first frame, not inside the same frame as the list
         final View root = b.getRoot();
         root.postDelayed(() -> { if (b != null && isAdded()) b.mapCard.activate(getViewLifecycleOwner()); }, 300);
@@ -164,6 +170,9 @@ public class HomeFragment extends Fragment {
         boolean ref = BrowseState.hasRef();
         b.sectionTitle.setText(ref ? R.string.home_nearby : R.string.home_all);
         b.mapCard.setRadiusPill(ref, BrowseState.radiusKm);
+        if (!ref && hadRef) { ovOn = true; ovFit = true; }      // the campus / Near me was cleared: the overview comes back
+        hadRef = ref;
+        paintLocate();
         if (search != null) search.syncFromState();       // the search bar shows the chosen campus / Near me
         paintGreeting();                                  // the profile may have arrived with this load
     }
@@ -206,30 +215,74 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    /** Locate button on the map: show the dot, move there, keep the dot live. */
+    // ---- Step 5: overview + locate ------------------------------------------------------------------------------
+
+    /** Overview = no campus / Near me and nothing typed: the map shows every pin (and the phone) in ~90 % of the card. */
+    private boolean overviewActive() { return ovOn && !BrowseState.hasRef() && (search == null || search.isEmpty()); }
+
+    private void paintLocate() { if (b != null) b.mapCard.setLocateActive(overviewActive()); }
+
+    /** The search text changed or was cleared: clearing it (with no campus) brings the overview back. */
+    private void onSearchChanged() {
+        if (b == null) return;
+        if (!BrowseState.hasRef() && search != null && search.isEmpty()) { ovOn = true; b.mapCard.overview(); }
+        paintLocate();
+    }
+
+    /** Locate button: overview on = fly to me (overview off); overview off with nothing chosen = back to the overview; otherwise fly to me. */
+    private void onLocateTap() {
+        if (b == null || finding) return;                       // extra taps while finding are ignored
+        if (overviewActive()) { ovOn = false; paintLocate(); locateMe(); return; }
+        if (!BrowseState.hasRef() && search != null && search.isEmpty()) { ovOn = true; b.mapCard.overview(); paintLocate(); return; }
+        locateMe();
+    }
+
+    private MapCardView.Loc fixState() {
+        return LocationHelper.precise(requireContext()) ? MapCardView.Loc.EXACT : MapCardView.Loc.APPROX;
+    }
+
+    /** Locate button on the map: show the dot, move there, "found you" ring, keep the dot live. */
     private void locateMe() {
+        finding = true;
+        b.mapCard.setLocState(MapCardView.Loc.FINDING);
         loc.requestOnce(new LocationHelper.Callback() {
             @Override public void got(double lat, double lng) {
                 if (b == null) return;
+                finding = false; haveFix = true;
                 b.mapCard.setUser(lat, lng);
+                b.mapCard.setLocState(fixState());
                 b.mapCard.moveTo(lat, lng, 15);
+                ui.postDelayed(() -> { if (b != null) b.mapCard.foundYou(); }, 450);
                 startLive();
             }
-            @Override public void off() { say(R.string.loc_off); }
-            @Override public void denied() { say(R.string.loc_denied); }
-            @Override public void failed() { say(R.string.loc_failed); }
-            @Override public void servicesOff() { say(R.string.loc_services_off); }
+            @Override public void off() { locFailed(R.string.loc_off); }
+            @Override public void denied() { locFailed(R.string.loc_denied); }
+            @Override public void failed() { locFailed(R.string.loc_failed); }
+            @Override public void servicesOff() { locFailed(R.string.loc_services_off); }
         });
+    }
+
+    private void locFailed(int msg) {
+        finding = false;
+        if (b != null) b.mapCard.setLocState(MapCardView.Loc.OFF);
+        say(msg);
     }
 
     /** Live dot, only when the permission is already granted and Settings > Use my location is on (never asks by itself). */
     private void startLive() {
         if (getContext() == null || !LocationHelper.granted(requireContext()) || !AppPrefs.useLocation(requireContext())) return;
         loc.startWatching(new LocationHelper.Callback() {
-            @Override public void got(double lat, double lng) { if (b != null) b.mapCard.setUser(lat, lng); }
-            @Override public void off() { }
+            @Override public void got(double lat, double lng) {
+                if (b == null) return;
+                boolean first = !haveFix;
+                haveFix = true; finding = false;
+                b.mapCard.setUser(lat, lng);
+                b.mapCard.setLocState(fixState());
+                if (first && overviewActive()) b.mapCard.overview();      // the first fix joins the overview once
+            }
+            @Override public void off() { if (b != null) b.mapCard.setLocState(MapCardView.Loc.OFF); }
             @Override public void denied() { }
-            @Override public void failed() { }
+            @Override public void failed() { if (b != null && !haveFix) b.mapCard.setLocState(MapCardView.Loc.OFF); }
         });
     }
 
@@ -252,7 +305,11 @@ public class HomeFragment extends Fragment {
         b.mapCard.setRing(BrowseState.refLat(), BrowseState.refLng(), BrowseState.radiusKm);
         b.mapCard.setCampusDot(campus == null ? null : campus.lat(), campus == null ? null : campus.lng());
         String key = BrowseState.refLat() + "," + BrowseState.refLng();
-        if (!key.equals(lastRef)) { lastRef = key; b.mapCard.fit(); }
+        boolean changed = !key.equals(lastRef);
+        lastRef = key;
+        if (overviewActive()) {
+            if (changed || ovFit) { if (!current.isEmpty()) ovFit = false; b.mapCard.overview(); }
+        } else if (changed) b.mapCard.fit();
     }
 
     private void say(int res) { ListArea.toast(this, getString(res)); }
@@ -278,6 +335,7 @@ public class HomeFragment extends Fragment {
         loc.stop();
         if (area != null) area.destroy();
         search = null;
+        finding = false; haveFix = false;
         b = null;
         super.onDestroyView();
     }

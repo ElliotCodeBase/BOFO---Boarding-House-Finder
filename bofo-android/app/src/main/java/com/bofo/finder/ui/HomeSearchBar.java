@@ -47,6 +47,8 @@ final class HomeSearchBar {
         void nearMe();
         /** Enter on text that matches no campus: search for it in Explore. */
         void searchPlace(String text);
+        /** Step 5: the text was typed in or cleared (the map's overview mode depends on the search being empty). */
+        default void searchChanged() { }
     }
 
     private static final int ROW_DP = 64, MAX_ROWS = 5;
@@ -80,6 +82,7 @@ final class HomeSearchBar {
                 if (settingText) return;
                 paintClear();
                 showFor(s.toString(), true);
+                host.searchChanged();
             }
         });
         b.searchInput.setOnFocusChangeListener((v, has) -> {
@@ -112,6 +115,9 @@ final class HomeSearchBar {
 
     boolean isOpen() { return open; }
 
+    /** Step 5: nothing typed (a chosen campus / Near me counts as text). */
+    boolean isEmpty() { return text().trim().isEmpty(); }
+
     /** The header scrolls with the list (Step 4): an open dropdown would be left behind, so it closes. */
     void closeOnScroll() { if (open) dismiss(true); }
 
@@ -134,6 +140,7 @@ final class HomeSearchBar {
         else if (wasNear) { syncedNear = false; BrowseState.clearNearMe(); }
         b.searchInput.requestFocus();
         showFor("", true);
+        host.searchChanged();
     }
 
     private void pick(College c) {

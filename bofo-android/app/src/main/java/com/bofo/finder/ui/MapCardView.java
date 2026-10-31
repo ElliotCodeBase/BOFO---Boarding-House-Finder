@@ -1,16 +1,23 @@
 package com.bofo.finder.ui;
 
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.RadialGradient;
+import android.graphics.Shader;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.location.Location;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.animation.LinearInterpolator;
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -40,6 +47,7 @@ import org.maplibre.android.maps.Style;
 import org.maplibre.android.offline.OfflineManager;
 import org.maplibre.android.style.expressions.Expression;
 import org.maplibre.android.style.layers.CircleLayer;
+import org.maplibre.android.style.layers.Layer;
 import org.maplibre.android.style.layers.FillLayer;
 import org.maplibre.android.style.layers.LineLayer;
 import org.maplibre.android.style.layers.Property;
@@ -53,6 +61,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A BOFO map: boarding-house pins, the radius ring, the campus dot, the live "you are here" dot, a peek card for the tapped pin,
@@ -92,6 +101,18 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private boolean routeApprox, fitRoutePending, tapsEnabled = true, blockParentScroll;
     private double[] target;           // {lat, lng, zoom}
 
+    // ---- Step 5: radar dot, location pill, overview ----
+    /** What the glass pill says. NONE hides it. */
+    public enum Loc { NONE, FINDING, EXACT, APPROX, OFF }
+    private static final int BLUE = 0xFF2F6FED;
+    private static final long RIPPLE_MS = 2400;
+    private Loc locState = Loc.NONE;
+    private ValueAnimator ripples, pop, found, locatePulse;
+    private float rippleT, popT = 1f, foundT = -1f;
+    private long lastFrame;
+    private Double heading;                // degrees, from the last two fixes (null until the phone has moved)
+    private boolean overviewPending;
+
     public MapCardView(@NonNull Context c) { this(c, null); }
 
     public MapCardView(@NonNull Context c, @Nullable AttributeSet a) {
@@ -117,6 +138,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     public void setRadiusPill(boolean show, double km) {
         pillShown = show;
         b.radiusPill.setVisibility(show ? View.VISIBLE : View.GONE);
+        paintLocPill();
         float v = (float) (Math.round(Math.max(0.5, Math.min(5, km)) * 2) / 2.0);
         if (b.radiusSlider.getValue() != v) b.radiusSlider.setValue(v);
         b.radiusValue.setText(getContext().getString(R.string.map_radius_value, v));
@@ -206,6 +228,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         st.addSource(new GeoJsonSource("radius-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("campus-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("user-src", MapGeo.EMPTY));
+        st.addSource(new GeoJsonSource("cone-src", MapGeo.EMPTY));
+        st.addImage("user-cone", cone());
         st.addSource(new GeoJsonSource("places-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("route-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("route-start-src", MapGeo.EMPTY));
@@ -235,11 +259,23 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         st.addLayer(new CircleLayer("campus-dot", "campus-src").withProperties(
                 PropertyFactory.circleRadius(8f), PropertyFactory.circleColor(amber),
                 PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeColor(0xFFFFFFFF)));
-        st.addLayer(new CircleLayer("user-halo", "user-src").withProperties(
-                PropertyFactory.circleRadius(16f), PropertyFactory.circleColor(primary), PropertyFactory.circleOpacity(0.18f)));
+        // Step 5: the radar dot (LiveDot): two staggered ripple rings, a "found you" ring, the view cone, then shadow + white ring + blue core
+        for (String rid : new String[]{"user-ripple1", "user-ripple2"})
+            st.addLayer(new CircleLayer(rid, "user-src").withProperties(
+                    PropertyFactory.circleRadius(10f), PropertyFactory.circleColor(BLUE), PropertyFactory.circleOpacity(0f)));
+        st.addLayer(new CircleLayer("user-found", "user-src").withProperties(
+                PropertyFactory.circleRadius(10f), PropertyFactory.circleOpacity(0f), PropertyFactory.circleStrokeColor(BLUE),
+                PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeOpacity(0f)));
+        st.addLayer(new SymbolLayer("user-cone", "cone-src").withProperties(
+                PropertyFactory.iconImage("user-cone"), PropertyFactory.iconRotate(Expression.get("b")),
+                PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
+                PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true)));
+        st.addLayer(new CircleLayer("user-shadow", "user-src").withProperties(
+                PropertyFactory.circleRadius(13f), PropertyFactory.circleColor(0xFF17142A), PropertyFactory.circleOpacity(0.22f), PropertyFactory.circleBlur(0.9f)));
+        st.addLayer(new CircleLayer("user-ring", "user-src").withProperties(
+                PropertyFactory.circleRadius(10f), PropertyFactory.circleColor(0xFFFFFFFF)));
         st.addLayer(new CircleLayer("user-dot", "user-src").withProperties(
-                PropertyFactory.circleRadius(7f), PropertyFactory.circleColor(primary),
-                PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeColor(0xFFFFFFFF)));
+                PropertyFactory.circleRadius(7f), PropertyFactory.circleColor(BLUE)));
         // zoomed out: small round dots (cheap, and full pins would pile up); zoomed in: the full pins (same idea as the JavaFX PinLayer)
         CircleLayer dots = new CircleLayer("places-dots", "places-src").withProperties(
                 PropertyFactory.circleRadius(Expression.switchCase(
@@ -256,6 +292,19 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                         Expression.eq(Expression.get("sel"), Expression.literal(1)), Expression.literal(1.3f), Expression.literal(1f))));
         pins.setMinZoom(PIN_ZOOM);
         st.addLayer(pins);
+    }
+
+    /** View cone: a soft blue wedge pointing up from the centre of a 64 dp square (rotated to the direction of travel by the layer). */
+    private Bitmap cone() {
+        float d = getResources().getDisplayMetrics().density;
+        int n = Math.round(64 * d);
+        Bitmap bmp = Bitmap.createBitmap(n, n, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmp);
+        float cx = n / 2f, r = n / 2f;
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setShader(new RadialGradient(cx, cx, r, new int[]{0x662F6FED, 0x002F6FED}, new float[]{0.15f, 1f}, Shader.TileMode.CLAMP));
+        c.drawArc(new RectF(0, 0, n, n), -90 - 32, 64, true, p);        // 64 degree wedge around "up"
+        return bmp;
     }
 
     /** Teardrop pin with a white edge and a white dot, 30 x 40 dp. */
@@ -300,8 +349,142 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** The campus dot (null removes it). */
     public void setCampusDot(Double lat, Double lng) { campusLat = lat; campusLng = lng; if (style != null) set("campus-src", MapGeo.pointJson(campusLat, campusLng)); }
 
-    /** The live "you are here" dot (null removes it). */
-    public void setUser(Double lat, Double lng) { userLat = lat; userLng = lng; if (style != null) set("user-src", MapGeo.pointJson(userLat, userLng)); }
+    /** The live "you are here" dot (null removes it). The first fix grows in from 82 %; the direction of travel comes from the last two fixes. */
+    public void setUser(Double lat, Double lng) {
+        boolean first = userLat == null && lat != null;
+        if (lat != null && userLat != null) {
+            float[] r = new float[3];
+            Location.distanceBetween(userLat, userLng, lat, lng, r);
+            if (r[0] > 8) heading = (double) ((r[1] % 360 + 360) % 360);
+        } else if (lat == null) heading = null;
+        userLat = lat; userLng = lng;
+        if (style != null) { set("user-src", MapGeo.pointJson(userLat, userLng)); set("cone-src", coneJson()); }
+        if (lat == null) { stopRipples(); return; }
+        if (first) popIn();
+        startRipples();
+        paintUser();
+    }
+
+    private String coneJson() {
+        if (userLat == null || heading == null) return MapGeo.EMPTY;
+        return String.format(Locale.US, "{\"type\":\"Feature\",\"geometry\":{\"type\":\"Point\",\"coordinates\":[%.6f,%.6f]},\"properties\":{\"b\":%.1f}}", userLng, userLat, heading);
+    }
+
+    /** Step 5: the glass pill ("Finding your location…", "Your location", "Approximate location", "Location is off"). Hidden while the radius pill is up. */
+    public void setLocState(Loc s) {
+        locState = s == null ? Loc.NONE : s;
+        paintLocPill();
+        if (locState == Loc.FINDING) startLocatePulse(); else stopLocatePulse();
+    }
+
+    private void paintLocPill() {
+        int res = locState == Loc.FINDING ? R.string.loc_pill_finding : locState == Loc.EXACT ? R.string.loc_pill_exact
+                : locState == Loc.APPROX ? R.string.loc_pill_approx : locState == Loc.OFF ? R.string.loc_pill_off : 0;
+        if (res != 0) b.locPill.setText(res);
+        b.locPill.setVisibility(res != 0 && !pillShown ? View.VISIBLE : View.GONE);
+    }
+
+    private void startLocatePulse() {
+        if (locatePulse != null) return;
+        locatePulse = ObjectAnimator.ofPropertyValuesHolder(b.locate,
+                PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.14f), PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.14f), PropertyValuesHolder.ofFloat(View.ALPHA, 1f, 0.65f));
+        locatePulse.setDuration(650);
+        locatePulse.setRepeatMode(ValueAnimator.REVERSE);
+        locatePulse.setRepeatCount(ValueAnimator.INFINITE);
+        locatePulse.start();
+    }
+
+    private void stopLocatePulse() {
+        if (locatePulse == null) return;
+        locatePulse.cancel(); locatePulse = null;
+        b.locate.setScaleX(1f); b.locate.setScaleY(1f); b.locate.setAlpha(1f);
+    }
+
+    /** Step 5: purple locate button while the overview is on. */
+    public void setLocateActive(boolean on) {
+        b.locate.setBackgroundResource(on ? R.drawable.bg_map_button_on : R.drawable.bg_map_button);
+        if (on) b.locate.setColorFilter(0xFFFFFFFF); else b.locate.clearColorFilter();
+    }
+
+    /** Step 5: the locate button found the phone: one bigger "found you" ring and a small pop. */
+    public void foundYou() {
+        if (userLat == null || !animationsOn()) return;
+        if (found != null) found.cancel();
+        found = ValueAnimator.ofFloat(0f, 1f);
+        found.setDuration(750);
+        found.addUpdateListener(a -> { foundT = (float) a.getAnimatedValue(); paintUser(); });
+        found.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(android.animation.Animator an) { foundT = -1f; paintUser(); }
+        });
+        found.start();
+    }
+
+    private void popIn() {
+        if (pop != null) pop.cancel();
+        if (style == null || !animationsOn()) { popT = 1f; return; }
+        popT = 0f;
+        pop = ValueAnimator.ofFloat(0f, 1f);
+        pop.setDuration(320);
+        pop.addUpdateListener(a -> { popT = (float) a.getAnimatedValue(); paintUser(); });
+        pop.start();
+    }
+
+    private boolean animationsOn() {
+        try { return android.provider.Settings.Global.getFloat(getContext().getContentResolver(), android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f; }
+        catch (Exception e) { return true; }
+    }
+
+    private void startRipples() {
+        if (ripples != null || userLat == null || owner == null || !isAttachedToWindow()) return;
+        if (!animationsOn()) { rippleT = 0.35f; return; }
+        ripples = ValueAnimator.ofFloat(0f, 1f);
+        ripples.setDuration(RIPPLE_MS);
+        ripples.setInterpolator(new LinearInterpolator());
+        ripples.setRepeatCount(ValueAnimator.INFINITE);
+        ripples.addUpdateListener(a -> {
+            long now = android.os.SystemClock.uptimeMillis();
+            if (now - lastFrame < 33) return;                                  // ~30 frames a second is plenty for a soft ring
+            android.graphics.Rect vis = new android.graphics.Rect();
+            if (!getGlobalVisibleRect(vis)) return;                            // map scrolled off screen: no work
+            lastFrame = now;
+            rippleT = (float) a.getAnimatedValue();
+            paintUser();
+        });
+        ripples.start();
+    }
+
+    private void stopRipples() {
+        if (ripples != null) { ripples.cancel(); ripples = null; }
+        if (style != null) paintUser();
+    }
+
+    private void layerCircle(String id, float radius, float opacity) {
+        Layer l = style.getLayer(id);
+        if (l != null) l.setProperties(PropertyFactory.circleRadius(radius), PropertyFactory.circleOpacity(opacity));
+    }
+
+    /** Draws the radar dot for the current animation state (ripples, first-fix pop, found ring). Only paint properties change. */
+    private void paintUser() {
+        if (style == null) return;
+        if (userLat == null) {
+            for (String id : new String[]{"user-ripple1", "user-ripple2", "user-shadow", "user-ring", "user-dot"}) layerCircle(id, 1f, 0f);
+            return;
+        }
+        float scale = (0.82f + 0.18f * popT) * (foundT >= 0 ? 1f + 0.25f * (float) Math.sin(Math.PI * foundT) : 1f);
+        float a = popT;
+        float p1 = rippleT, p2 = (rippleT + 0.5f) % 1f;
+        layerCircle("user-ripple1", 10f * (0.5f + 2.2f * p1) * scale, 0.34f * (1f - p1) * a);       // 0.5 -> 2.7 x, fading linearly
+        layerCircle("user-ripple2", 10f * (0.5f + 2.2f * p2) * scale, 0.34f * (1f - p2) * a);
+        layerCircle("user-shadow", 13f * scale, 0.22f * a);
+        layerCircle("user-ring", 10f * scale, a);
+        layerCircle("user-dot", 7f * scale, a);
+        Layer f = style.getLayer("user-found");
+        if (f != null) {
+            boolean on = foundT >= 0;
+            f.setProperties(PropertyFactory.circleRadius(10f * (1f + 3.5f * Math.max(0f, foundT))),
+                    PropertyFactory.circleStrokeOpacity(on ? 0.85f * (1f - foundT) : 0f));
+        }
+    }
 
     /** Stage 6: draws a route ({lat, lng} pairs; approximate = dashed straight-line estimate). Fewer than 2 points removes it. */
     public void setRoute(double[][] pts, boolean approximate) {
@@ -347,6 +530,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         set("radius-src", MapGeo.circleJson(ringLat, ringLng, ringKm, 64));
         set("campus-src", MapGeo.pointJson(campusLat, campusLng));
         set("user-src", MapGeo.pointJson(userLat, userLng));
+        set("cone-src", coneJson());
+        paintUser();
         set("route-src", MapGeo.lineJson(routePts, routeApprox));
         boolean has = routePts != null;
         set("route-start-src", has ? MapGeo.pointJson(routePts[0][0], routePts[0][1]) : MapGeo.EMPTY);
@@ -363,6 +548,9 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** Zoom to the ring if there is one, else to all pins, else to the default area. */
     public void fit() { fitPending = true; target = null; post(this::applyCamera); }
 
+    /** Step 5 overview: zoom out so every pin (and the phone, if known) fills ~90 % of the card. */
+    public void overview() { overviewPending = true; fitPending = false; target = null; post(this::applyCamera); }
+
     public void moveTo(double lat, double lng, double zoom) { target = new double[]{lat, lng, zoom}; fitPending = false; post(this::applyCamera); }
 
     private void applyCamera() {
@@ -372,6 +560,20 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 fitRoutePending = false;
                 double[] rb = MapGeo.pathBounds(routePts);
                 if (rb != null) { target = null; fitBounds(rb, 40); return; }
+            }
+            if (overviewPending) {
+                overviewPending = false;
+                target = null;
+                double[] bb = MapGeo.bounds(places);
+                if (userLat != null) bb = bb == null ? new double[]{userLat, userLng, userLat, userLng}
+                        : new double[]{Math.min(bb[0], userLat), Math.min(bb[1], userLng), Math.max(bb[2], userLat), Math.max(bb[3], userLng)};
+                if (bb == null) map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(MapGeo.DEFAULT_LAT, MapGeo.DEFAULT_LNG), 12));
+                else if (bb[0] == bb[2] && bb[1] == bb[3]) map.easeCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(bb[0], bb[1]), 15), 500);
+                else {
+                    int pad = Math.round(0.05f * Math.min(getWidth(), getHeight()));        // 5 % each side = ~90 % of the card
+                    map.easeCamera(CameraUpdateFactory.newLatLngBounds(LatLngBounds.from(bb[2], bb[3], bb[0], bb[1]), pad), 600);
+                }
+                return;
             }
             if (target != null) {
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(target[0], target[1]), target[2]));
@@ -417,6 +619,9 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         return false;
     }
 
+    @Override protected void onAttachedToWindow() { super.onAttachedToWindow(); startRipples(); }
+    @Override protected void onDetachedFromWindow() { stopRipples(); super.onDetachedFromWindow(); }
+
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (blockParentScroll && getParent() != null) {
@@ -430,13 +635,16 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     // ---- lifecycle ---------------------------------------------------------------------------------------------
 
     @Override public void onStart(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onStart(); }
-    @Override public void onResume(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onResume(); }
-    @Override public void onPause(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onPause(); }
+    @Override public void onResume(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onResume(); startRipples(); }
+    @Override public void onPause(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onPause(); stopRipples(); }
     @Override public void onStop(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onStop(); }
 
     @Override
     public void onDestroy(@NonNull LifecycleOwner o) {
         o.getLifecycle().removeObserver(this);
+        stopRipples(); stopLocatePulse();
+        if (pop != null) pop.cancel();
+        if (found != null) found.cancel();
         if (mapView != null) { mapView.onDestroy(); b.mapHost.removeView(mapView); }
         mapView = null; map = null; style = null; owner = null;
     }
