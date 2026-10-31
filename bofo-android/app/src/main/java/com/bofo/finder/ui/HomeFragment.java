@@ -93,7 +93,7 @@ public class HomeFragment extends Fragment {
         TextView[] chips = {b.chipNew, b.chipHot, b.chipBest};
         for (int i = 0; i < chips.length; i++) {
             final int pos = i;
-            chips[i].setOnClickListener(v -> { if (tab == pos) return; tab = pos; paintChips(); reload(); });
+            chips[i].setOnClickListener(v -> { if (tab == pos) return; tab = pos; paintChips(); reload(); liftToChips(); });
         }
         paintChips();
         b.rentCard.setListener(new RentCardView.Listener() {
@@ -183,6 +183,35 @@ public class HomeFragment extends Fragment {
         area.showList(new ArrayList<>(current.subList(0, n)));
         int left = current.size() - n;
         area.setMore(left > 0 ? getString(R.string.home_show_more, left) : null, () -> { shown += BATCH; renderList(t); });
+    }
+
+    /** Tab chips pressed: slide the page up (never down) until the chip row is at the top of the screen, so the new list fills the view. */
+    private void liftToChips() {
+        if (b == null) return;
+        b.area.list.scrollToPosition(0);
+        androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams lp = (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) b.appBar.getLayoutParams();
+        if (!(lp.getBehavior() instanceof com.google.android.material.appbar.AppBarLayout.Behavior)) return;
+        final com.google.android.material.appbar.AppBarLayout.Behavior beh = (com.google.android.material.appbar.AppBarLayout.Behavior) lp.getBehavior();
+        int[] a = new int[2], c = new int[2];
+        b.appBar.getLocationInWindow(a);
+        b.chipNew.getLocationInWindow(c);
+        int dp8 = Math.round(8 * getResources().getDisplayMetrics().density);
+        int rowTop = c[1] - a[1];
+        int cur = -beh.getTopAndBottomOffset();
+        int dy = Math.min(rowTop - dp8, b.appBar.getTotalScrollRange()) - cur;
+        if (dy <= dp8) return;
+        final int[] done = {0};
+        android.animation.ValueAnimator va = android.animation.ValueAnimator.ofInt(0, dy);
+        va.setDuration(280);
+        va.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        va.addUpdateListener(an -> {
+            if (b == null) return;
+            int step = (int) an.getAnimatedValue() - done[0];
+            if (step <= 0) return;
+            done[0] += step;
+            beh.onNestedPreScroll((androidx.coordinatorlayout.widget.CoordinatorLayout) b.appBar.getParent(), b.appBar, b.area.swipe, 0, step, new int[2], androidx.core.view.ViewCompat.TYPE_TOUCH);
+        });
+        va.start();
     }
 
     private void paintChips() {
