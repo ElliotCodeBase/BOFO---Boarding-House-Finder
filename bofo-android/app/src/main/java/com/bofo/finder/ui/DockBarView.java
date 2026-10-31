@@ -103,6 +103,9 @@ public class DockBarView extends ViewGroup {
 
         highlight = new View(context);
         highlight.setBackgroundResource(R.drawable.bg_dock_highlight);
+        // Same elevation as the bar (so it is drawn after it, in child order) but no shadow of its own.
+        highlight.setElevation(10 * dp);
+        highlight.setOutlineProvider(null);
         highlight.setVisibility(INVISIBLE);
         addView(highlight);
     }
@@ -132,6 +135,9 @@ public class DockBarView extends ViewGroup {
             final int idx = i;
             FrameLayout cell = new FrameLayout(ctx);
             cell.setClipChildren(false);
+            // The bar has elevation 10 dp. A sibling with lower elevation is drawn UNDER it, which hid every icon and label.
+            // Equal elevation = drawn in child order (bar, highlight, cells). No background means no extra shadow.
+            cell.setElevation(10 * dp);
             cell.setClickable(true);
             cell.setFocusable(true);
             cell.setContentDescription(t.label);

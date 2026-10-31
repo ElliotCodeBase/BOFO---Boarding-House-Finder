@@ -3,7 +3,7 @@
     <string name="bofo_close">Close</string>
     <string name="bofo_note">BOFO can make mistakes. Check details with the owner.</string>
     <string name="bofo_rate_limit">You\'re asking a lot! Please wait a minute and try again.</string>
-    <string name="bofo_degraded">Offline mode: simple answers only.</string>
+    <string name="bofo_degraded">Smart replies are unavailable right now, so these are simple answers.</string>
     <string name="bofo_act_map">Show on map</string>
     <string name="bofo_act_compare">Compare</string>
     <string name="bofo_act_directions">Directions</string>
