@@ -1,7 +1,9 @@
-changed bofo-android/app/src/main/java/com/bofo/finder/util/AppPrefs.java
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/SettingsFragment.java
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
-changed bofo-android/app/src/main/res/layout/fragment_settings.xml
+new supabase/migrations/011_rules.sql
+changed bofo-android/app/src/main/java/com/bofo/finder/service/BhService.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/ListingFormFragment.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/BhDetailFragment.java
+changed bofo-android/app/src/main/res/layout/fragment_listing_form.xml
+changed bofo-android/app/src/main/res/layout/fragment_bh_detail.xml
 changed bofo-android/app/src/main/res/values/strings.xml
 changed bofo-android/app/build.gradle
 changed HANDOFF_ANDROID.md

@@ -134,6 +134,7 @@ public class BhDetailFragment extends Fragment {
 
         showPhotos(d, bh);
         showAmenities(d.optJSONArray("amenity_list"));
+        showRules(d.optJSONArray("rules"));
         showContact(d.optJSONArray("contact"));
         showReviews(reviews);
         b.directions.bind(this, location, bh);
@@ -203,6 +204,24 @@ public class BhDetailFragment extends Fragment {
         int vis = b.amenities.getChildCount() == 0 ? View.GONE : View.VISIBLE;
         b.amenities.setVisibility(vis);
         b.amenitiesTitle.setVisibility(vis);
+    }
+
+    /** House rules written by the owner: one bullet per line; the whole block is hidden when there are none. */
+    private void showRules(JSONArray rules) {
+        b.rulesList.removeAllViews();
+        if (rules != null) for (int i = 0; i < rules.length(); i++) {
+            String r = rules.optString(i, "").trim();
+            if (r.isEmpty()) continue;
+            android.widget.TextView t = new android.widget.TextView(requireContext());
+            t.setText("\u2022  " + r);
+            t.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.bofo_text));
+            t.setTextSize(14f);
+            t.setPadding(0, (int) (3 * getResources().getDisplayMetrics().density), 0, 0);
+            b.rulesList.addView(t);
+        }
+        int vis = b.rulesList.getChildCount() == 0 ? View.GONE : View.VISIBLE;
+        b.rulesList.setVisibility(vis);
+        b.rulesTitle.setVisibility(vis);
     }
 
     private void showContact(JSONArray contact) {

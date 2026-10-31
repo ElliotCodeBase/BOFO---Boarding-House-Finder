@@ -161,6 +161,13 @@
 
     <string name="detail_verified">Verified owner</string>
     <string name="detail_amenities">Amenities</string>
+    <string name="detail_rules">House rules</string>
+    <string name="form_rules">House rules</string>
+    <string name="form_rules_hint">Optional. Add the rules of your boarding house (for example: curfew 10 PM, no visitors after 8 PM). Students see them on the place page.</string>
+    <string name="form_rules_input">Type a rule</string>
+    <string name="form_rules_add">Add</string>
+    <string name="form_rules_max">You can add up to %1$d rules.</string>
+    <string name="form_rules_remove">Remove rule</string>
     <string name="detail_contact">Contact</string>
     <string name="detail_no_contact">The owner has not added contact details.</string>
     <string name="detail_call">Call %1$s</string>

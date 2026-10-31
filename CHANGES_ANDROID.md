@@ -1,10 +1,13 @@
-<<<<<<< HEAD
+# v2.0.64 - Android: house rules
+- **Owners:** the Add / Edit place form has a new "House rules" section (last step with photos and amenities): type a rule, tap Add, remove with the cross. Up to 20 rules.
+- **Students:** the place page shows a "House rules" list under Amenities (hidden when the owner added none).
+- **Supabase:** run `supabase/migrations/011_rules.sql` once (new column `rules` on `boarding_houses`).
+- Files: `011_rules.sql`, `BhService.java`, `ListingFormFragment.java`, `BhDetailFragment.java`, `fragment_listing_form.xml`, `fragment_bh_detail.xml`, `strings.xml`, `build.gradle` (2.0.64 / 264). Not built or run by Claude.
+
 # v2.0.63 - Android: See-through path switch
 - **Settings > Preferences > "See-through path":** when on, the route line on the map (white outline, purple line and the dashed estimate) is drawn 80% transparent, so you can see the road underneath and check the path follows it. Off by default; saved on the phone; the map updates when you return to it.
 - Files: `AppPrefs.java`, `SettingsFragment.java`, `MapCardView.java`, `fragment_settings.xml`, `strings.xml`, `build.gradle` (2.0.63 / 263). Not built or run by Claude.
 
-=======
->>>>>>> origin/main
 # v2.0.62 - Android: path follows the real road, refreshes by itself
 - **More accurate path:** `Router` no longer thins the road to 400 evenly spaced points (that cut corners off the road). It now keeps every bend (Douglas-Peucker, 2 m tolerance, up to 1500 points). If the first server's road is more than 2.5x the straight distance (bad snap), the next server is asked too and the shorter real road wins. Third fallback for vehicle routes: the public OSRM demo.
 - **Auto refresh:** on the map path, when it starts at your phone and you move 40 m, the road is redrawn from your new spot (at most every 8 s; the old road stays until the new one is ready, never swapped for a dashed guess; no camera jump). The Directions card re-asks every 15 s while any option is still a straight-line guess.

@@ -150,8 +150,13 @@ public final class BhService {
         var contact = CompletableFuture.supplyAsync(() -> call(() -> api.select("bh_contacts", "boarding_house_id=eq." + id + "&select=*")), pool);
         var amen = CompletableFuture.supplyAsync(() -> call(() -> api.select("bh_amenities", "boarding_house_id=eq." + id + "&select=amenities(id,name,icon,is_popular)")), pool)
                 .exceptionally(ex -> new JSONArray());          // amenities are optional: a place must still open if that table is missing or fails
+        var rules = CompletableFuture.supplyAsync(() -> call(() -> api.select("boarding_houses", "id=eq." + id + "&select=rules")), pool)
+                .exceptionally(ex -> null);                     // rules are optional: a place must still open if 011_rules.sql has not been run
         try {
             JSONObject bh = card.get().getJSONObject(0);
+            JSONArray rr = rules.get();
+            if (rr != null && rr.length() > 0 && rr.optJSONObject(0) != null && rr.getJSONObject(0).optJSONArray("rules") != null)
+                bh.put("rules", rr.getJSONObject(0).getJSONArray("rules"));   // key only present when the column exists
             bh.put("photos", photos.get()).put("rooms", rooms.get()).put("contact", contact.get()).put("amenity_list", amen.get());
             Async.bg(() -> { try { api.rpc("bump_view", new JSONObject().put("bh", id)); } catch (Exception ignored) {} });   // fire-and-forget
             return bh;
@@ -213,6 +218,8 @@ public final class BhService {
         public String priceMode = "per_bed"; // or per_room
         public boolean water, electricity, wifi;                 // kept in sync with the "Free water / electricity / Wi-Fi" amenities
         public List<String> amenityIds = new ArrayList<>();
+        public List<String> rules = new ArrayList<>();           // house rules, one text each (needs 011_rules.sql)
+        public boolean syncRules;                                // editing: write the rules even when empty (only if the place came back with a rules column)
         public List<RoomDraft> rooms = new ArrayList<>();
         public List<byte[]> photos = new ArrayList<>();          // NEW photos (when editing: added after the existing ones)
         public boolean syncAmenities;                            // editing: replace the place's amenities with amenityIds (only when the catalog was loaded)
@@ -253,6 +260,7 @@ public final class BhService {
                     .put("lat", d.lat).put("lng", d.lng).put("price", d.price).put("price_mode", d.priceMode)
                     .put("free_water", d.water).put("free_electricity", d.electricity).put("free_wifi", d.wifi)
                     .put("status", "active");
+            if (!d.rules.isEmpty()) bh.put("rules", new JSONArray(d.rules));   // only sent when used, so publishing still works before 011_rules.sql is run
             id = api.insert("boarding_houses", bh).getJSONObject(0).getString("id");
             step = "saving the rooms";
             JSONArray roomRows = new JSONArray();                       // one request for all rooms, not one per room
@@ -314,6 +322,7 @@ public final class BhService {
             JSONArray done = api.update("boarding_houses", "id=eq." + id, new JSONObject().put("name", d.name).put("address", d.address)
                     .put("lat", d.lat).put("lng", d.lng).put("price", d.price).put("price_mode", d.priceMode)
                     .put("free_water", d.water).put("free_electricity", d.electricity).put("free_wifi", d.wifi));
+            if (d.syncRules) api.update("boarding_houses", "id=eq." + id, new JSONObject().put("rules", new JSONArray(d.rules)));
             if (done.length() == 0) throw new IllegalStateException("Nothing was changed. The place is gone, or this account may not edit it (it must be a verified owner).");
             step = "saving the rooms";
             api.delete("rooms", "boarding_house_id=eq." + id);

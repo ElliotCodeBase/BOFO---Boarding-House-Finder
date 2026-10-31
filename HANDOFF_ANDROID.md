@@ -1,10 +1,12 @@
-<<<<<<< HEAD
+# Handoff (Android) - v2.0.64 House rules
+- **PR title:** `v2.0.64 - Android: owners can list house rules, students see them on the place page`
+- **Supabase: run `supabase/migrations/011_rules.sql` once** (adds `boarding_houses.rules text[]`, max 20). Until then the app still works: `BhService.publish` only sends `rules` when the list is not empty, `detailOnline` reads `rules` in its own optional request, and `updateListing` writes it only when `Draft.syncRules` (the place came back with a rules key).
+- `ListingFormFragment` page 3: "House rules" (input + Add, list with remove, max 20, 100 chars each; a typed-but-not-added rule is added on publish). `BhDetailFragment.showRules` + `rules_title` / `rules_list` in `fragment_bh_detail.xml` (hidden when empty). Rules are on the place page, not on the small list cards. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.63 See-through path switch
 - **PR title:** `v2.0.63 - Android: Settings switch makes the map path 80% transparent`
 - `AppPrefs.seeThroughPath` (key `path_see_through`, default off) + new row `path_fade` in `fragment_settings.xml` / `SettingsFragment`. `MapCardView.applyRouteOpacity()` sets `lineOpacity` 0.2 on `route-casing`, `route-line`, `route-dash`; runs from `paintRoute()` and `onResume` (so it updates when you come back from Settings). No Supabase change. Not built or run by Claude.
 ---
-=======
->>>>>>> origin/main
 # Handoff (Android) - v2.0.62 accurate road path + auto refresh
 - **PR title:** `v2.0.62 - Android: path follows the real road and refreshes by itself`
 - `Router.simplify` (Douglas-Peucker) replaces even thinning; `fetch` tries OSRM, Valhalla, OSRM demo (drive only) and keeps the shorter believable road. `MapFragment.maybeReroute` (40 m / 8 s, `routeLive`, `rerouting`); `DirectionsCardView.runPlan` re-runs every 15 s while an option is approximate. No Supabase change. Not built or run by Claude.
