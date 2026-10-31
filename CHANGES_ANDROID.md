@@ -1,3 +1,9 @@
+# v2.0.52 - Android: Ask BOFO answers with real listings (nearest, cheapest, compare, map)
+- Ask BOFO is now a real assistant. The Edge Function `bofo-chat` (rewritten, Step 1) understands the question with a free OpenRouter model, then the CODE runs the query on `bh_cards` (distance, sort, filters, compare) and the model only words the answer. Answers carry real listings, a compare table and actions.
+- App: result cards in the chat (tap = open place), compare table (best cell highlighted, scrolls sideways), chips (Show on map / Directions / Open / Compare / See in Explore + suggested questions), typing bubble, in-memory history (last 6 turns) so "which of those is cheapest?" works. Offline or function down: rule-based answers from the loaded list (`BofoIntentLocal`), then the old FAQ. 429 shows a friendly wait message.
+- Map: `MapFragment.open(from, String[] ids)` shows only those pins, fitted, first one selected.
+- New: `BofoAnswer`, `BofoIntentLocal`, `item_bofo_result/compare/chips.xml`, `bg_bofo_result/best.xml`. Changed: `BofoAiService`, `BofoChatOverlay`, `ShellFragment`, `MapFragment`, `strings.xml`, `strings_bofo.xml`, `build.gradle` (2.0.52 / 252), `supabase/functions/bofo-chat/index.ts`. Not built by Claude.
+
 # v2.0.51 - Android: Ask BOFO chat header uses the JavaFX mascot animation
 - `view_bofo_chat.xml` header `MascotView` -> `BofoMascot`; `BofoChatOverlay` plays the THINKING pose while waiting, `endIdle()` on reply. Only these 2 files + build.gradle. Not built by Claude.
 

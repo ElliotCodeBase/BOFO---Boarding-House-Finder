@@ -31,7 +31,7 @@ import java.util.Locale;
  */
 public class MapFragment extends Fragment {
 
-    public static final String ARG_ID = "focusId", ARG_LAT = "focusLat", ARG_LNG = "focusLng";
+    public static final String ARG_ID = "focusId", ARG_LAT = "focusLat", ARG_LNG = "focusLng", ARG_IDS = "focusIds";
 
     /** All listings, centred on the campus ring or the default area. */
     public static void open(Fragment from) {
@@ -47,6 +47,13 @@ public class MapFragment extends Fragment {
         NavHostFragment.findNavController(from).navigate(R.id.mapFragment, a);
     }
 
+    /** Only these places (Ask BOFO "show them on the map"): pins fitted to the screen, the first one selected, no radius limit. */
+    public static void open(Fragment from, String[] ids) {
+        Bundle a = new Bundle();
+        a.putStringArray(ARG_IDS, ids);
+        NavHostFragment.findNavController(from).navigate(R.id.mapFragment, a);
+    }
+
     private final LocationHelper loc = new LocationHelper(this);    // registers the permission launcher: must be created with the Fragment
     private FragmentMapBinding b;
     private int token;
@@ -54,6 +61,7 @@ public class MapFragment extends Fragment {
     private boolean firstLoad = true;
     private String focusId;
     private Double focusLat, focusLng;
+    private String[] focusIds;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
@@ -70,6 +78,7 @@ public class MapFragment extends Fragment {
             focusLat = (double) a.getFloat(ARG_LAT);
             focusLng = (double) a.getFloat(ARG_LNG);
         }
+        if (a != null && a.getStringArray(ARG_IDS) != null && a.getStringArray(ARG_IDS).length > 0) focusIds = a.getStringArray(ARG_IDS);
         b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
         b.campusBtn.setOnClickListener(v -> new CampusPickerSheet().show(getChildFragmentManager(), "campus"));
         b.radius.addOnChangeListener((s, value, fromUser) -> paintRadiusLabel(value));
@@ -96,14 +105,25 @@ public class MapFragment extends Fragment {
             paintTop();
             final Double lat = BrowseState.refLat(), lng = BrowseState.refLng();
             final double radius = BrowseState.radiusKm;
-            Async.run(() -> new BhService().list(BhService.Tab.NEW, lat, lng, lat == null ? null : radius, null), (List<BoardingHouse> list) -> {
+            final String[] only = focusIds;                      // a list of ids ignores the radius
+            Async.run(() -> new BhService().list(BhService.Tab.NEW, lat, lng, lat == null || only != null ? null : radius, null), (List<BoardingHouse> all) -> {
                 if (my != token || b == null) return;
                 b.status.setVisibility(View.GONE);
+                List<BoardingHouse> list = all;
+                boolean idsOnly = false;
+                if (only != null) {
+                    List<BoardingHouse> keep = new java.util.ArrayList<>();
+                    for (BoardingHouse p : all) for (String id : only) if (p.id().equals(id)) { keep.add(p); break; }
+                    if (!keep.isEmpty()) { list = keep; idsOnly = true; }     // none left (e.g. no free beds any more): show everything instead of an empty map
+                }
                 College campus = BrowseState.campus();
                 b.map.setPlaces(list);
-                b.map.setRing(lat, lng, radius);
+                b.map.setRing(idsOnly ? null : lat, idsOnly ? null : lng, radius);
                 b.map.setCampusDot(campus == null ? null : campus.lat(), campus == null ? null : campus.lng());
-                if (firstLoad && focusId != null) {
+                if (idsOnly) {
+                    if (list.size() == 1) b.map.moveTo(list.get(0).lat(), list.get(0).lng(), 16); else b.map.fit();
+                    if (firstLoad) b.map.select(list.get(0).id());
+                } else if (firstLoad && focusId != null) {
                     b.map.moveTo(focusLat, focusLng, 16);
                     b.map.select(focusId);              // no-op when the place is outside the radius (it is then just centred)
                 } else {

@@ -1,3 +1,12 @@
+# Handoff (Android) - v2.0.52 Ask BOFO AI assistant
+- **PR title:** `v2.0.52 - Android: Ask BOFO answers with real listings (nearest, cheapest, compare, map)`
+- Delivered in 3 steps (see `BOFO-AI-STEPS.md`, full docs in `BOFO-AI-CHANGELOG.md`). Backend must be DEPLOYED for the new answers: until then the app falls back to the rule-based answers (`BofoIntentLocal`) because the old function returns no `results`.
+- Wiring: `BofoChatOverlay.send()` -> `BofoAiService.ask(msg, history, college)` -> `BofoAnswer`; actions go to `ShellFragment.runBofoAction` (map ids / detail / Explore filters). Directions = opens the place screen (it holds `DirectionsCardView`).
+- Likely first problems if the build fails: binding names `ItemBofoResultBinding` / `ItemBofoCompareBinding` / `ItemBofoChipsBinding` (ids: result `photo,name,price,meta,verified`; compare `table`; chips `chips`), Glide `RoundedCorners` import, `Chips.create` + `setClickable(true)`.
+- Not done / ideas: Tagalog `values-fil` strings (project has none), suggestion chips are sent as English text, a dedicated "directions" screen from the chat.
+
+---
+
 # Handoff (Android) - v2.0.51 chat header mascot
 - **PR title:** `v2.0.51 - Android: Ask BOFO chat header uses the JavaFX mascot animation`
 - Rebuilt on top of the real `main` (v2.0.50). An earlier attempt was made from a different folder snapshot (DockBarView with extra elevation, 56 dp button, other DashboardFragment) and the tab bar went invisible: do NOT bring those files along. Only `view_bofo_chat.xml`, `BofoChatOverlay.java`, `build.gradle`.

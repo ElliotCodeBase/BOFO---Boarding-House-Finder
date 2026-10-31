@@ -8,7 +8,10 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
+import android.graphics.Typeface;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -16,13 +19,33 @@ import androidx.annotation.Nullable;
 
 import com.bofo.finder.R;
 import com.bofo.finder.app.MainActivity;
+import com.bofo.finder.databinding.ItemBofoChipsBinding;
+import com.bofo.finder.databinding.ItemBofoCompareBinding;
+import com.bofo.finder.databinding.ItemBofoResultBinding;
 import com.bofo.finder.databinding.ItemMsgMineBinding;
 import com.bofo.finder.databinding.ItemMsgTheirsBinding;
 import com.bofo.finder.databinding.ViewBofoChatBinding;
+import com.bofo.finder.model.BoardingHouse;
+import com.bofo.finder.model.BofoAnswer;
+import com.bofo.finder.service.BhService;
 import com.bofo.finder.service.BofoAiService;
+import com.bofo.finder.service.SupabaseClient;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BrowseState;
+import com.bofo.finder.util.BofoIntentLocal;
 import com.bofo.finder.util.ChatRules;
+import com.bofo.finder.util.Geo;
+import com.bofo.finder.util.ListRules;
+import com.bofo.finder.util.Money;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.google.android.material.chip.Chip;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Ask BOFO as a floating card over the screen (original: the chat card of BofoPanel). It pops out of the floating button and shrinks back into it;
@@ -115,29 +138,190 @@ public class BofoChatOverlay extends FrameLayout {
 
     // ------------------------------------------------------------------ chat (moved from BofoPanelSheet)
 
+    /** The host (ShellFragment) runs the actions: it owns navigation. The chat card closes itself first. */
+    public interface BofoActionListener { void onAction(BofoAnswer.Action action, BofoAnswer answer); }
+
+    public void setOnAction(@Nullable BofoActionListener l) { actionListener = l; }
+
+    private final List<BofoAiService.Turn> history = new ArrayList<>();     // last 6 turns, memory only
+    private BofoActionListener actionListener;
+    private View typing, chipsRow;
+
     private void ask() {
         if (waiting) return;
         String q = ChatRules.outgoing(b.input.getText().toString(), 300);
         if (q.isEmpty()) return;
         b.input.setText("");
+        send(q);
+    }
+
+    private void send(String q) {
+        if (waiting) return;
+        if (chipsRow != null) { b.chatBox.removeView(chipsRow); chipsRow = null; }      // old chips are stale once the user goes on
         say(q, true);
+        final List<BofoAiService.Turn> past = new ArrayList<>(history);
+        remember(true, q, null);
+        final List<String> lastIds = lastIds(past);
         waiting = true;
         b.mascot.idle(BofoMascot.Idle.THINKING);
+        showTyping();
         final int my = ++token;
-        String college = BrowseState.collegeId;
-        Async.run(() -> new BofoAiService().ask(q, college).reply(), (String reply) -> {
+        final String college = BrowseState.collegeId;
+        Async.run(() -> new BofoAiService().ask(q, past, college), (BofoAnswer a) -> {
             if (my != token) return;
-            done(reply.isEmpty() ? BofoAiService.faq(q) : reply);
+            if (a.reply().isEmpty() && a.results().isEmpty()) offline(q, lastIds, my); else show(a);
         }, e -> {
             if (my != token) return;
-            done(BofoAiService.faq(q));                          // offline / rate-limited
+            if (e instanceof SupabaseClient.ApiException ex && ex.status == 429) { finish(); reply(getContext().getString(R.string.bofo_rate_limit)); }
+            else offline(q, lastIds, my);                          // no network / function down: rule-based answer, then the FAQ
         });
     }
 
-    private void done(String text) {
+    /** Offline or server error: answer from the list the app already has (BofoIntentLocal), else the built-in FAQ. */
+    private void offline(String q, List<String> lastIds, int my) {
+        Async.run(() -> {
+            List<BoardingHouse> list = new BhService().list(BhService.Tab.NEW, BrowseState.refLat(), BrowseState.refLng(), null, null);
+            return BofoIntentLocal.answer(q, list, lastIds);
+        }, (BofoAnswer a) -> {
+            if (my != token) return;
+            if (a == null) { finish(); reply(BofoAiService.faq(q)); } else show(a);
+        }, e2 -> {
+            if (my != token) return;
+            finish(); reply(BofoAiService.faq(q));
+        });
+    }
+
+    private void finish() {
         waiting = false;
         b.mascot.endIdle();
+        if (typing != null) { b.chatBox.removeView(typing); typing = null; }
+    }
+
+    private void reply(String text) { say(text, false); remember(false, text, null); }
+
+    private void show(BofoAnswer a) {
+        finish();
+        String text = a.reply().isEmpty() ? BofoAiService.faq("") : a.reply();
         say(text, false);
+        LayoutInflater in = LayoutInflater.from(getContext());
+        for (BofoAnswer.Result r : a.results()) addResult(in, r, a);
+        if (a.compare() != null && a.compare().rows().size() > 0) addCompare(in, a);
+        if (a.degraded()) {
+            TextView t = new TextView(getContext());
+            t.setText(R.string.bofo_degraded); t.setTextSize(11); t.setTextColor(getContext().getColor(R.color.bofo_muted));
+            t.setPadding(Math.round(14 * dp), Math.round(2 * dp), Math.round(14 * dp), 0);
+            b.chatBox.addView(t);
+        }
+        addChips(in, a);
+        remember(false, text, a.resultIds());
+        b.scroll.post(() -> b.scroll.fullScroll(View.FOCUS_DOWN));
+    }
+
+    private void fire(BofoAnswer.Action action, BofoAnswer a) { if (actionListener != null) actionListener.onAction(action, a); }
+
+    private void addResult(LayoutInflater in, BofoAnswer.Result r, BofoAnswer a) {
+        ItemBofoResultBinding v = ItemBofoResultBinding.inflate(in, b.chatBox, false);
+        v.name.setText(r.name());
+        v.price.setText(Money.perMonth(r.price()));
+        List<String> meta = new ArrayList<>();
+        if (r.distanceKm() != null) meta.add(Geo.walkText(r.distanceKm()));
+        meta.add(r.reviewCount() > 0 ? "\u2605 " + ListRules.ratingText(r.rating(), r.reviewCount()) : getContext().getString(R.string.bofo_no_reviews));
+        meta.add(r.availableBeds() == 1 ? getContext().getString(R.string.bofo_bed_one) : getContext().getString(R.string.bofo_beds, r.availableBeds()));
+        v.meta.setText(String.join(" \u00B7 ", meta));
+        v.verified.setVisibility(r.verified() ? View.VISIBLE : View.GONE);
+        String url = r.photoUrl();
+        Glide.with(v.photo).load(url == null || url.isEmpty() ? (String) null : url)
+                .transform(new CenterCrop(), new RoundedCorners(Math.round(10 * dp))).placeholder(R.color.bofo_skeleton).into(v.photo);
+        v.getRoot().setOnClickListener(x -> fire(new BofoAnswer.Action("open_detail", r.id(), new ArrayList<>()), a));
+        b.chatBox.addView(v.getRoot());
+    }
+
+    /** Side-by-side table: first column = row label, then one column per place; the best cell of a row is highlighted. Scrolls sideways if too wide. */
+    private void addCompare(LayoutInflater in, BofoAnswer a) {
+        ItemBofoCompareBinding v = ItemBofoCompareBinding.inflate(in, b.chatBox, false);
+        List<String> ids = a.compare().ids().isEmpty() ? a.resultIds() : a.compare().ids();
+        LinearLayout head = new LinearLayout(getContext());
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        head.addView(cell("", 72, false, false));
+        for (String id : ids) { BofoAnswer.Result r = a.result(id); head.addView(cell(r == null ? "" : r.name(), 88, true, false)); }
+        v.table.addView(head);
+        for (BofoAnswer.Row row : a.compare().rows()) {
+            LinearLayout line = new LinearLayout(getContext());
+            line.setOrientation(LinearLayout.HORIZONTAL);
+            TextView label = cell(row.label(), 72, false, false);
+            label.setTextColor(getContext().getColor(R.color.bofo_text_2)); label.setTextSize(11);
+            line.addView(label);
+            for (int i = 0; i < ids.size(); i++) line.addView(cell(i < row.values().size() ? row.values().get(i) : "", 88, false, i == row.best()));
+            v.table.addView(line);
+        }
+        b.chatBox.addView(v.getRoot());
+    }
+
+    private TextView cell(String text, int widthDp, boolean bold, boolean best) {
+        TextView t = new TextView(getContext());
+        t.setLayoutParams(new LinearLayout.LayoutParams(Math.round(widthDp * dp), ViewGroup.LayoutParams.WRAP_CONTENT));
+        t.setText(text);
+        t.setTextSize(12);
+        t.setPadding(Math.round(6 * dp), Math.round(5 * dp), Math.round(6 * dp), Math.round(5 * dp));
+        t.setTextColor(getContext().getColor(best ? R.color.bofo_primary : R.color.bofo_text));
+        t.setTypeface(null, bold || best ? Typeface.BOLD : Typeface.NORMAL);
+        if (best) t.setBackgroundResource(R.drawable.bg_bofo_best);
+        return t;
+    }
+
+    /** Action chips (Show on map / Directions / Open / Compare ...) then the suggested questions. */
+    private void addChips(LayoutInflater in, BofoAnswer a) {
+        ItemBofoChipsBinding v = ItemBofoChipsBinding.inflate(in, b.chatBox, false);
+        Set<String> seen = new LinkedHashSet<>();
+        for (BofoAnswer.Action act : a.actions()) {
+            int label = switch (act.type()) {
+                case "show_on_map" -> R.string.bofo_act_map;
+                case "directions" -> R.string.bofo_act_directions;
+                case "open_detail" -> R.string.bofo_act_open;
+                case "apply_filters" -> R.string.bofo_act_filters;
+                default -> 0;
+            };
+            if (label == 0 || !seen.add(getContext().getString(label))) continue;
+            chip(v.chips, getContext().getString(label), () -> fire(act, a));
+        }
+        String cmp = getContext().getString(R.string.bofo_compare_them);
+        if (a.results().size() >= 2 && a.compare() == null && seen.add(cmp)) chip(v.chips, getContext().getString(R.string.bofo_act_compare), () -> send(cmp));
+        for (String s : a.suggestions()) {
+            if (s.isEmpty() || s.equalsIgnoreCase(cmp) || !seen.add(s)) continue;
+            chip(v.chips, s, () -> send(s));
+        }
+        if (v.chips.getChildCount() == 0) return;
+        chipsRow = v.getRoot();
+        b.chatBox.addView(chipsRow);
+    }
+
+    private void chip(ViewGroup row, String text, Runnable onTap) {
+        Chip c = Chips.create(row, text, false, false);
+        c.setClickable(true);
+        c.setOnClickListener(x -> onTap.run());
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMarginEnd(Math.round(6 * dp));
+        row.addView(c, lp);
+    }
+
+    private void showTyping() {
+        ItemMsgTheirsBinding m = ItemMsgTheirsBinding.inflate(LayoutInflater.from(getContext()), b.chatBox, false);
+        m.body.setText(R.string.bofo_typing);
+        m.body.setTextColor(getContext().getColor(R.color.bofo_muted));
+        m.meta.setVisibility(View.GONE);
+        typing = m.getRoot();
+        b.chatBox.addView(typing);
+        b.scroll.post(() -> b.scroll.fullScroll(View.FOCUS_DOWN));
+    }
+
+    private void remember(boolean mine, String text, List<String> ids) {
+        history.add(new BofoAiService.Turn(mine, text, ids));
+        while (history.size() > 6) history.remove(0);
+    }
+
+    private static List<String> lastIds(List<BofoAiService.Turn> past) {
+        for (int i = past.size() - 1; i >= 0; i--) { List<String> ids = past.get(i).resultIds(); if (ids != null && !ids.isEmpty()) return ids; }
+        return new ArrayList<>();
     }
 
     private void say(String text, boolean mine) {
