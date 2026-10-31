@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/filter_title"
+        android:textAppearance="@style/Text.Bofo.Title" />
+
+    <TextView
+        android:id="@+id/price_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textColor="@color/bofo_text"
+        android:textStyle="bold" />
+
+    <com.google.android.material.slider.RangeSlider
+        android:id="@+id/price_slider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/cd_price_range"
+        android:stepSize="100"
+        android:valueFrom="0"
+        android:valueTo="10000" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/filter_amenities"
+        android:textColor="@color/bofo_text"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/amenity_search"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="6dp"
+        android:autofillHints="@null"
+        android:background="@drawable/bg_search"
+        android:hint="@string/filter_amenity_hint"
+        android:importantForAutofill="no"
+        android:inputType="text"
+        android:maxLines="1"
+        android:paddingHorizontal="14dp"
+        android:textColor="@color/bofo_text"
+        android:textColorHint="@color/bofo_muted"
+        android:textSize="14sp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_marginTop="6dp">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/amenity_chips"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/amenity_note"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/Text.Bofo.Secondary"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/reset"
+            style="@style/Widget.Bofo.Button.Tint"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:text="@string/filter_reset" />
+
+        <Button
+            android:id="@+id/apply"
+            style="@style/Widget.Bofo.Button.Primary"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/filter_apply" />
+    </LinearLayout>
+</LinearLayout>

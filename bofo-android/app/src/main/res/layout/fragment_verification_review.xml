@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bofo_bg"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/bofo_white"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="4dp">
+
+        <ImageButton
+            android:id="@+id/back"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cd_back"
+            android:src="@drawable/ic_back" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:text="@string/review_title"
+            android:textColor="@color/bofo_text"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/bofo_text"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/imgMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="8dp"
+                android:textAppearance="@style/Text.Bofo.Secondary"
+                android:visibility="gone" />
+
+            <TextView
+                android:textAppearance="@style/Text.Bofo.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/review_front" />
+
+            <ImageView
+                android:id="@+id/imgFront"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:background="@color/bofo_skeleton"
+                android:contentDescription="@string/review_front"
+                android:minHeight="120dp"
+                android:scaleType="fitCenter" />
+
+            <TextView
+                android:textAppearance="@style/Text.Bofo.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/review_back" />
+
+            <ImageView
+                android:id="@+id/imgBack"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:background="@color/bofo_skeleton"
+                android:contentDescription="@string/review_back"
+                android:minHeight="120dp"
+                android:scaleType="fitCenter" />
+
+            <TextView
+                android:textAppearance="@style/Text.Bofo.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/review_selfie" />
+
+            <ImageView
+                android:id="@+id/imgSelfie"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:background="@color/bofo_skeleton"
+                android:contentDescription="@string/review_selfie"
+                android:minHeight="120dp"
+                android:scaleType="fitCenter" />
+
+            <Button
+                android:id="@+id/approve"
+                style="@style/Widget.Bofo.Button.Cta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/review_approve" />
+
+            <Button
+                android:id="@+id/reject"
+                style="@style/Widget.Bofo.Button.Tint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/review_reject" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

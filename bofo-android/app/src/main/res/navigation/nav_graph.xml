@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/splashFragment">
+
+    <!-- Global actions clear the whole back stack: Back never returns to the splash, login or setup. -->
+    <action
+        android:id="@+id/action_global_login"
+        app:destination="@id/loginFragment"
+        app:popUpTo="@id/nav_graph"
+        app:popUpToInclusive="true" />
+    <action
+        android:id="@+id/action_global_role"
+        app:destination="@id/roleFragment"
+        app:popUpTo="@id/nav_graph"
+        app:popUpToInclusive="true" />
+    <action
+        android:id="@+id/action_global_setup"
+        app:destination="@id/profileSetupFragment"
+        app:popUpTo="@id/nav_graph"
+        app:popUpToInclusive="true" />
+    <action
+        android:id="@+id/action_global_shell"
+        app:destination="@id/shellFragment"
+        app:popUpTo="@id/nav_graph"
+        app:popUpToInclusive="true" />
+
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.bofo.finder.ui.SplashFragment"
+        android:label="Splash" />
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.bofo.finder.ui.LoginFragment"
+        android:label="Login" />
+
+    <fragment
+        android:id="@+id/roleFragment"
+        android:name="com.bofo.finder.ui.RoleFragment"
+        android:label="Role" />
+
+    <fragment
+        android:id="@+id/profileSetupFragment"
+        android:name="com.bofo.finder.ui.ProfileSetupFragment"
+        android:label="Profile setup">
+        <argument
+            android:name="edit"
+            android:defaultValue="false"
+            app:argType="boolean" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/shellFragment"
+        android:name="com.bofo.finder.ui.ShellFragment"
+        android:label="Shell" />
+
+    <fragment
+        android:id="@+id/bhDetailFragment"
+        android:name="com.bofo.finder.ui.BhDetailFragment"
+        android:label="Boarding house">
+        <argument
+            android:name="id"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="com.bofo.finder.ui.MapFragment"
+        android:label="Map">
+        <argument
+            android:name="focusId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="focusLat"
+            android:defaultValue="0"
+            app:argType="float" />
+        <argument
+            android:name="focusLng"
+            android:defaultValue="0"
+            app:argType="float" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.bofo.finder.ui.ChatFragment"
+        android:label="Chat">
+        <argument
+            android:name="convId"
+            app:argType="string" />
+        <argument
+            android:name="title"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="place"
+            android:defaultValue=""
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/listingFormFragment"
+        android:name="com.bofo.finder.ui.ListingFormFragment"
+        android:label="New place">
+        <argument
+            android:name="editId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/verificationFragment"
+        android:name="com.bofo.finder.ui.VerificationFragment"
+        android:label="Verification" />
+
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="com.bofo.finder.ui.DashboardFragment"
+        android:label="Dashboard" />
+
+    <fragment
+        android:id="@+id/boostFragment"
+        android:name="com.bofo.finder.ui.BoostFragment"
+        android:label="Boost">
+        <argument
+            android:name="bhId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/paymentsFragment"
+        android:name="com.bofo.finder.ui.PaymentsFragment"
+        android:label="Payments" />
+
+    <fragment
+        android:id="@+id/verificationReviewFragment"
+        android:name="com.bofo.finder.ui.VerificationReviewFragment"
+        android:label="Review verification">
+        <argument
+            android:name="vid"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="ownerName"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="idType"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="submitted"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="front"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="back"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="selfie"
+            android:defaultValue=""
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.bofo.finder.ui.SettingsFragment"
+        android:label="Settings" />
+
+    <fragment
+        android:id="@+id/debugFragment"
+        android:name="com.bofo.finder.ui.DebugFragment"
+        android:label="Debug" />
+</navigation>

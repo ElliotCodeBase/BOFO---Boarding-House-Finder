@@ -1,0 +1,4 @@
+{
+  "_help": "Hand-made jeepney / multicab / bus lines for places OpenStreetMap does not cover. Empty on purpose until someone has checked a real route and fare. Format and how to trace a route: docs/LOCAL_TRANSIT.md",
+  "lines": []
+}

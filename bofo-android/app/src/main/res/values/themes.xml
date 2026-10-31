@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Bofo" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/bofo_primary</item>
+        <item name="colorOnPrimary">@color/bofo_white</item>
+        <item name="colorPrimaryContainer">@color/bofo_primary_tint</item>
+        <item name="colorOnPrimaryContainer">@color/bofo_primary_dark</item>
+        <item name="colorSecondary">@color/bofo_amber</item>
+        <item name="colorOnSecondary">@color/bofo_ink</item>
+        <item name="colorSecondaryContainer">@color/bofo_primary_tint</item>
+        <item name="colorOnSecondaryContainer">@color/bofo_primary_dark</item>
+        <item name="colorSurface">@color/bofo_white</item>
+        <item name="colorOnSurface">@color/bofo_text</item>
+        <item name="colorOnSurfaceVariant">@color/bofo_text_2</item>
+        <item name="colorOutline">@color/bofo_muted</item>
+        <item name="colorOutlineVariant">@color/bofo_border</item>
+        <item name="android:colorBackground">@color/bofo_bg</item>
+        <item name="colorError">@color/bofo_error</item>
+        <item name="colorErrorContainer">@color/bofo_error_tint</item>
+        <item name="android:windowBackground">@color/bofo_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="shapeAppearanceSmallComponent">@style/Shape.Bofo.Small</item>
+        <item name="shapeAppearanceMediumComponent">@style/Shape.Bofo.Medium</item>
+        <item name="shapeAppearanceLargeComponent">@style/Shape.Bofo.Large</item>
+    </style>
+
+    <style name="Shape.Bofo.Small" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+    <style name="Shape.Bofo.Medium" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+    <style name="Shape.Bofo.Large" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">24dp</item>
+    </style>
+</resources>

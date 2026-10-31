@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/tab_queue" android:icon="@drawable/ic_nav_saved" android:title="@string/tab_queue" />
+    <item android:id="@+id/tab_reports" android:icon="@drawable/ic_nav_chats" android:title="@string/tab_reports" />
+    <item android:id="@+id/tab_admin_payments" android:icon="@drawable/ic_nav_home" android:title="@string/tab_admin_payments" />
+    <item android:id="@+id/tab_profile" android:icon="@drawable/ic_nav_profile" android:title="@string/tab_profile" />
+</menu>

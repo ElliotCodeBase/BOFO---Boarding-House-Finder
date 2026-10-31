@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bofo_bg">
+
+    <!-- The MapView is added here from code (after MapLibre is initialised). -->
+    <FrameLayout
+        android:id="@+id/map_host"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <TextView
+        android:id="@+id/attribution"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="6dp"
+        android:background="#CCFFFFFF"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="2dp"
+        android:text="@string/map_attribution"
+        android:textColor="@color/bofo_text_2"
+        android:textSize="10sp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="10dp"
+        android:orientation="vertical">
+
+        <ImageButton
+            android:id="@+id/locate"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_map_button"
+            android:contentDescription="@string/cd_locate"
+            android:src="@drawable/ic_my_location" />
+
+        <ImageButton
+            android:id="@+id/expand"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_map_button"
+            android:contentDescription="@string/cd_map_full"
+            android:src="@drawable/ic_expand"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/peek"
+        style="@style/Widget.Bofo.Card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="26dp"
+        android:layout_marginHorizontal="12dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/peek_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/peek_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textAppearance="@style/Text.Bofo.Secondary" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/peek_open"
+                style="@style/Widget.Bofo.Button.Tint"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:minHeight="0dp"
+                android:text="@string/map_view_place"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+</FrameLayout>

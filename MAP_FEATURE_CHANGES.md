@@ -8,6 +8,14 @@
 
 Patch (x.y.Z) for fixes, minor (x.Y.0) for new features. The v1.2.0 merge once left About showing v1.1.1: this rule exists so that never happens again.
 
+## Android line (bofo-android/, starts at v2.0.0)
+
+The native Android port has its own version line: **stage N ships as v2.0.N**. The JavaFX app keeps its own v1.x line. For every Android stage / pull request:
+
+1. Bump `versionName` and `versionCode` in `bofo-android/app/build.gradle`.
+2. Profile > About reads `BuildConfig.VERSION_NAME` (never hard-code it). Search the repo for the old Android version string and replace it everywhere (history entries excepted).
+3. Put the version in the PR title (`v2.0.N - short summary`) and add an entry at the top of `CHANGES.md` and `HANDOFF_ANDROID.md`.
+
 ---
 
 # v1.17.3 - Pinned spot is session-only (2026-10-29)

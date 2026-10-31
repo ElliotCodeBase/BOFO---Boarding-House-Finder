@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bofo_bg"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/bofo_white"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="4dp">
+
+        <ImageButton
+            android:id="@+id/back"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cd_back"
+            android:src="@drawable/ic_back" />
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:text="@string/form_title"
+            android:textColor="@color/bofo_text"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView style="@style/Text.Form.Label" android:text="@string/form_name" />
+            <EditText
+                android:id="@+id/name"
+                style="@style/Widget.Form.Input"
+                android:autofillHints="no"
+                android:inputType="textCapWords"
+                android:maxLength="120" />
+
+            <TextView style="@style/Text.Form.Label" android:text="@string/form_address" />
+            <EditText
+                android:id="@+id/address"
+                style="@style/Widget.Form.Input"
+                android:autofillHints="no"
+                android:inputType="textPostalAddress|textCapWords"
+                android:maxLength="250" />
+
+            <TextView style="@style/Text.Form.Label" android:text="@string/form_price" />
+            <EditText
+                android:id="@+id/price"
+                style="@style/Widget.Form.Input"
+                android:autofillHints="no"
+                android:inputType="numberDecimal" />
+            <RadioGroup
+                android:id="@+id/mode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <RadioButton
+                    android:id="@+id/mode_bed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/form_per_bed" />
+                <RadioButton
+                    android:id="@+id/mode_room"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="@string/form_per_room" />
+            </RadioGroup>
+
+            <TextView style="@style/Text.Form.Label" android:text="@string/form_rooms" />
+            <LinearLayout
+                android:id="@+id/rooms"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+            <Button
+                android:id="@+id/add_room"
+                style="@style/Widget.Bofo.Button.Tint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/form_add_room" />
+
+            <TextView style="@style/Text.Form.Label" android:text="@string/form_free" />
+            <CheckBox android:id="@+id/free_water" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/form_water" />
+            <CheckBox android:id="@+id/free_electricity" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/form_electricity" />
+            <CheckBox android:id="@+id/free_wifi" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/form_wifi" />
+
+            <TextView android:id="@+id/amenities_label" style="@style/Text.Form.Label" android:text="@string/form_amenities" />
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/amenities"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView style="@style/Text.Form.Label" android:text="@string/form_contact" />
+            <EditText
+                android:id="@+id/phone"
+                style="@style/Widget.Form.Input"
+                android:autofillHints="no"
+                android:hint="@string/form_phone"
+                android:inputType="phone" />
+            <EditText
+                android:id="@+id/facebook"
+                style="@style/Widget.Form.Input"
+                android:layout_marginTop="8dp"
+                android:autofillHints="no"
+                android:hint="@string/form_facebook"
+                android:inputType="textUri" />
+            <EditText
+                android:id="@+id/email"
+                style="@style/Widget.Form.Input"
+                android:layout_marginTop="8dp"
+                android:autofillHints="no"
+                android:hint="@string/form_email"
+                android:inputType="textEmailAddress" />
+
+            <TextView style="@style/Text.Form.Label" android:text="@string/form_location" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <EditText
+                    android:id="@+id/lat"
+                    style="@style/Widget.Form.Input"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:autofillHints="no"
+                    android:hint="@string/form_lat"
+                    android:inputType="numberDecimal|numberSigned" />
+                <EditText
+                    android:id="@+id/lng"
+                    style="@style/Widget.Form.Input"
+                    android:layout_width="0dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:autofillHints="no"
+                    android:hint="@string/form_lng"
+                    android:inputType="numberDecimal|numberSigned" />
+            </LinearLayout>
+            <Button
+                android:id="@+id/use_location"
+                style="@style/Widget.Bofo.Button.Tint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/form_use_location" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/form_location_hint"
+                android:textAppearance="@style/Text.Bofo.Secondary" />
+
+            <TextView style="@style/Text.Form.Label" android:text="@string/form_photos" />
+            <Button
+                android:id="@+id/add_photos"
+                style="@style/Widget.Bofo.Button.Tint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/form_add_photos" />
+            <TextView
+                android:id="@+id/photo_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/Text.Bofo.Secondary" />
+
+            <TextView
+                android:id="@+id/errors"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@color/bofo_error_tint"
+                android:padding="12dp"
+                android:textColor="@color/bofo_error"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/publish"
+                style="@style/Widget.Bofo.Button.Cta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="32dp"
+                android:text="@string/form_publish" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
