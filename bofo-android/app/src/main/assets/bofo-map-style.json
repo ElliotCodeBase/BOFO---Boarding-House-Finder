@@ -5,7 +5,7 @@
     "openmaptiles": {
       "type": "vector",
       "url": "https://tiles.openfreemap.org/planet",
-      "attribution": "<a href=\"https://openfreemap.org\">OpenFreeMap</a> \u00a9 <a href=\"https://www.openmaptiles.org/\">OpenMapTiles</a> Data from <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
+      "attribution": "<a href=\"https://openfreemap.org\">OpenFreeMap</a> © <a href=\"https://www.openmaptiles.org/\">OpenMapTiles</a> Data from <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
     }
   },
   "layers": [
@@ -13,7 +13,7 @@
       "id": "background",
       "type": "background",
       "paint": {
-        "background-color": "#F5F6FC"
+        "background-color": "#E8EAF2"
       }
     },
     {
@@ -29,7 +29,7 @@
         "farmland"
       ],
       "paint": {
-        "fill-color": "#E7F2EA"
+        "fill-color": "#D3E9D8"
       }
     },
     {
@@ -38,7 +38,7 @@
       "source": "openmaptiles",
       "source-layer": "park",
       "paint": {
-        "fill-color": "#DCEFE0"
+        "fill-color": "#C4E3CB"
       }
     },
     {
@@ -55,7 +55,7 @@
         "hospital"
       ],
       "paint": {
-        "fill-color": "#F0EFFE"
+        "fill-color": "#E0DFF3"
       }
     },
     {
@@ -64,7 +64,7 @@
       "source": "openmaptiles",
       "source-layer": "water",
       "paint": {
-        "fill-color": "#CFE3F7"
+        "fill-color": "#A9CDF0"
       }
     },
     {
@@ -73,8 +73,20 @@
       "source": "openmaptiles",
       "source-layer": "waterway",
       "paint": {
-        "line-color": "#CFE3F7",
-        "line-width": 1.2
+        "line-color": "#A9CDF0",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          10,
+          1,
+          16,
+          3
+        ]
       }
     },
     {
@@ -82,24 +94,55 @@
       "type": "fill",
       "source": "openmaptiles",
       "source-layer": "building",
-      "minzoom": 15,
+      "minzoom": 14,
       "paint": {
-        "fill-color": "#E5E3EF"
+        "fill-color": "#D2CFE5",
+        "fill-outline-color": "#BDB9D8"
       }
+    },
+    {
+      "id": "road-minor-casing",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "transportation",
+      "filter": [
+        "in",
+        "class",
+        "minor"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#C7C9DA",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          12.5,
+          1.2,
+          14,
+          2.6,
+          18,
+          10
+        ]
+      },
+      "minzoom": 12.5
     },
     {
       "id": "road-minor",
       "type": "line",
       "source": "openmaptiles",
       "source-layer": "transportation",
-      "minzoom": 14,
       "filter": [
         "in",
         "class",
-        "minor",
-        "service",
-        "track",
-        "path"
+        "minor"
       ],
       "layout": {
         "line-cap": "round",
@@ -115,12 +158,49 @@
           [
             "zoom"
           ],
-          13,
+          12.5,
+          0.5,
+          14,
+          1.6,
+          18,
+          7.5
+        ]
+      },
+      "minzoom": 12.5
+    },
+    {
+      "id": "road-service",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "transportation",
+      "filter": [
+        "in",
+        "class",
+        "service",
+        "track",
+        "path"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#FAFAFD",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          15,
           0.8,
           18,
-          7
+          4
         ]
-      }
+      },
+      "minzoom": 15
     },
     {
       "id": "road-major-casing",
@@ -141,7 +221,7 @@
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#D9D6EC",
+        "line-color": "#A9ABC6",
         "line-width": [
           "interpolate",
           [
@@ -151,11 +231,11 @@
             "zoom"
           ],
           8,
-          1.2,
+          1.8,
           14,
-          5,
+          6.5,
           18,
-          16
+          19
         ]
       }
     },
@@ -188,11 +268,11 @@
             "zoom"
           ],
           8,
-          0.6,
+          0.9,
           14,
-          3.5,
+          4.2,
           18,
-          13
+          14.5
         ]
       }
     }
