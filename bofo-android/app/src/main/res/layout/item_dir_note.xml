@@ -5,5 +5,5 @@
     android:layout_marginTop="8dp"
     android:background="@drawable/bg_dir_note"
     android:padding="10dp"
-    android:textColor="@color/bofo_text"
+    android:textColor="@color/bofo_text_2"
     android:textSize="13sp" />

@@ -217,7 +217,7 @@ public class DirectionsCardView extends MaterialCardView {
     // ---------------------------------------------------------------- what the card shows
 
     private void showLoading() {
-        b.loading.setVisibility(View.VISIBLE);
+        b.dirLoading.setVisibility(View.VISIBLE);
         b.messageBox.setVisibility(View.GONE);
         b.planBox.setVisibility(View.GONE);
     }
@@ -243,7 +243,7 @@ public class DirectionsCardView extends MaterialCardView {
     private void showError() { showMessage(getContext().getString(R.string.dir_error), false, false, true); }
 
     private void showMessage(String text, boolean locate, boolean instead, boolean retry) {
-        b.loading.setVisibility(View.GONE);
+        b.dirLoading.setVisibility(View.GONE);
         b.planBox.setVisibility(View.GONE);
         b.messageBox.setVisibility(View.VISIBLE);
         b.message.setText(text);
@@ -256,7 +256,7 @@ public class DirectionsCardView extends MaterialCardView {
     private void render(int t) {
         Context c = getContext();
         LayoutInflater inf = LayoutInflater.from(c);
-        b.loading.setVisibility(View.GONE);
+        b.dirLoading.setVisibility(View.GONE);
         b.messageBox.setVisibility(View.GONE);
         b.planBox.setVisibility(View.VISIBLE);
         b.notes.removeAllViews();
