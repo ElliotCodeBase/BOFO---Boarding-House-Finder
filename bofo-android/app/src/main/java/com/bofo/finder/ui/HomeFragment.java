@@ -7,6 +7,8 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -40,7 +42,7 @@ public class HomeFragment extends Fragment {
 
     private static final BhService.Tab[] TABS = {BhService.Tab.NEW, BhService.Tab.HOT, BhService.Tab.BEST};
 
-    private record Result(List<BoardingHouse> list, PriceRange range) { }
+    private record Result(List<BoardingHouse> list, PriceRange range, List<BoardingHouse> basis) { }
 
     private FragmentHomeBinding b;
     private BhAdapter adapter;
@@ -50,6 +52,8 @@ public class HomeFragment extends Fragment {
     private int token;
     private int lastChange = -1;
     private int tab;
+    private static final int BATCH = 15;
+    private int shown = BATCH;
     private final LocationHelper loc = new LocationHelper(this);   // registers the permission launcher: must be created with the Fragment
     private static final long RADIUS_SETTLE_MS = 350;      // the list reloads this long after the radius pill stops moving
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -80,10 +84,21 @@ public class HomeFragment extends Fragment {
         });
         area = new ListArea(this, b.area, adapter, this::reload);
 
-        b.tabs.addTab(b.tabs.newTab().setText(R.string.home_tab_new));
-        b.tabs.addTab(b.tabs.newTab().setText(R.string.home_tab_hot));
-        b.tabs.addTab(b.tabs.newTab().setText(R.string.home_tab_best));
-        ListArea.onTab(b.tabs, pos -> { tab = pos; reload(); });
+        // Step 7: chips New / Hot / Best rated (selected = ink fill) and the rent card
+        TextView[] chips = {b.chipNew, b.chipHot, b.chipBest};
+        for (int i = 0; i < chips.length; i++) {
+            final int pos = i;
+            chips[i].setOnClickListener(v -> { if (tab == pos) return; tab = pos; paintChips(); reload(); });
+        }
+        paintChips();
+        b.rentCard.setListener(new RentCardView.Listener() {
+            @Override public void glow(String houseId) { if (b != null) b.mapCard.setGlow(houseId); }
+            @Override public void choose() {
+                if (b == null || search == null) return;
+                b.appBar.setExpanded(true, true);
+                search.openDropdown();
+            }
+        });
 
         // Greeting row + the ONE search bar (Step 3, v2.0.21)
         search = new HomeSearchBar(this, b, new HomeSearchBar.Host() {
@@ -145,18 +160,58 @@ public class HomeFragment extends Fragment {
             Async.run(() -> load(t, lat, lng, radius), (Result r) -> {
                 if (my != token || b == null) return;
                 adapter.setShowDistance(lat != null);
-                paintRange(r.range());
+                paintRent(r.basis(), t == BhService.Tab.BEST);
                 current = r.list();
+                shown = BATCH;
                 pushMap();
-                if (r.list().isEmpty()) area.showMessage(getString(t == BhService.Tab.BEST ? R.string.home_empty_best : R.string.home_empty), false);
-                else area.showList(r.list());
+                paintSub();
+                renderList(t);
             }, e -> fail(my, e));
         }, e -> fail(my, e));
     }
 
+    /** Batches of 15 + "Show more (n)". */
+    private void renderList(BhService.Tab t) {
+        if (current.isEmpty()) { area.showMessage(getString(t == BhService.Tab.BEST ? R.string.home_empty_best : R.string.home_empty), false); return; }
+        int n = Math.min(shown, current.size());
+        area.showList(new ArrayList<>(current.subList(0, n)));
+        int left = current.size() - n;
+        area.setMore(left > 0 ? getString(R.string.home_show_more, left) : null, () -> { shown += BATCH; renderList(t); });
+    }
+
+    private void paintChips() {
+        if (b == null) return;
+        TextView[] chips = {b.chipNew, b.chipHot, b.chipBest};
+        int ink = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.bofo_ink);
+        for (int i = 0; i < chips.length; i++) {
+            boolean on = i == tab;
+            chips[i].setBackgroundResource(on ? R.drawable.bg_chip_on : R.drawable.bg_chip_off);
+            chips[i].setTextColor(on ? 0xFFFFFFFF : ink);
+        }
+    }
+
+    /** "Closest to you first · 7 places" / "Within 3.5 km of <campus> · 4 places" / "Choose a campus to see what is close". */
+    private void paintSub() {
+        if (b == null || !isAdded()) return;
+        College c = BrowseState.campus();
+        int n = current.size();
+        String places = getResources().getQuantityString(R.plurals.home_places, n, n);
+        String sub = c != null ? getString(R.string.home_sub_campus, String.format(Locale.US, "%.1f km", BrowseState.radiusKm), c.name(), places)
+                : BrowseState.hasRef() ? getString(R.string.home_sub_near, places) : getString(R.string.home_sub_none);
+        b.sectionSub.setText(sub);
+    }
+
+    /** Rent card: no campus = "Choose a campus to see rent near it"; otherwise Lowest / Middle / Highest over the line. */
+    private void paintRent(List<BoardingHouse> basis, boolean best) {
+        if (b == null) return;
+        b.mapCard.setGlow(null);
+        if (!BrowseState.hasRef()) b.rentCard.setNoCampus();
+        else b.rentCard.setData(basis, best);
+    }
+
     private void fail(int my, Throwable e) {
         if (my != token || b == null) return;
-        paintRange(null);
+        paintRent(null, false);
         area.showMessage(Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.list_error), e), true);
     }
 
@@ -166,7 +221,7 @@ public class HomeFragment extends Fragment {
         Double rad = lat == null ? null : radius;
         List<BoardingHouse> list = s.list(t, lat, lng, rad, null);
         List<BoardingHouse> basis = t == BhService.Tab.BEST ? s.list(BhService.Tab.NEW, lat, lng, rad, null) : list;
-        return new Result(list, PriceRange.of(ListRules.prices(basis)));
+        return new Result(list, PriceRange.of(ListRules.prices(basis)), basis);
     }
 
     private void paintCampus() {
@@ -176,6 +231,7 @@ public class HomeFragment extends Fragment {
         if (!ref && hadRef) { ovOn = true; ovFit = true; }      // the campus / Near me was cleared: the overview comes back
         hadRef = ref;
         paintLocate();
+        paintSub();
         if (search != null) search.syncFromState();       // the search bar shows the chosen campus / Near me
         paintGreeting();                                  // the profile may have arrived with this load
     }
@@ -296,6 +352,7 @@ public class HomeFragment extends Fragment {
         BrowseState.radiusKm = km;
         b.mapCard.setRing(BrowseState.refLat(), BrowseState.refLng(), km);
         b.mapCard.glideToRing(settled);
+        paintSub();
         ui.removeCallbacks(settleRadius);
         ui.postDelayed(settleRadius, RADIUS_SETTLE_MS);
     }
@@ -323,14 +380,6 @@ public class HomeFragment extends Fragment {
 
     @Override
     public void onStop() { loc.stop(); super.onStop(); }
-
-    private void paintRange(PriceRange r) {
-        if (r == null) { b.priceRange.setVisibility(View.GONE); return; }
-        StringBuilder sb = new StringBuilder();
-        for (String[] cell : r.cells()) { if (sb.length() > 0) sb.append("    "); sb.append(cell[0]).append(' ').append(cell[1]); }
-        b.priceRange.setText(sb.toString());
-        b.priceRange.setVisibility(View.VISIBLE);
-    }
 
     @Override
     public void onDestroyView() {

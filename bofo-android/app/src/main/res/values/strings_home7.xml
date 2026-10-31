@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_sub_near">Closest to you first · %1$s</string>
+    <string name="home_sub_campus">Within %1$s of %2$s · %3$s</string>
+    <string name="home_sub_none">Choose a campus to see what is close</string>
+    <plurals name="home_places">
+        <item quantity="one">%d place</item>
+        <item quantity="other">%d places</item>
+    </plurals>
+    <string name="home_show_more">Show more (%1$d)</string>
+    <string name="rent_choose_line">Choose a campus to see rent near it</string>
+    <string name="rent_choose">Choose</string>
+    <string name="rent_lowest">Lowest</string>
+    <string name="rent_middle">Middle</string>
+    <string name="rent_best">Best rated</string>
+    <string name="rent_highest">Highest</string>
+    <string name="rent_single">Rent</string>
+    <string name="rent_per_month">/mo</string>
+</resources>

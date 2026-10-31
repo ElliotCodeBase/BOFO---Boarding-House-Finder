@@ -182,23 +182,54 @@
             android:importantForAccessibility="no" />
     </com.google.android.material.card.MaterialCardView>
 
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabs"
+    <!-- Step 7: chips (selected = ink fill) and the rent card -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        app:tabIndicatorColor="@color/bofo_primary"
-        app:tabSelectedTextColor="@color/bofo_primary"
-        app:tabTextColor="@color/bofo_text_2" />
-
-    <TextView
-        android:id="@+id/price_range"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:paddingHorizontal="16dp"
-        android:paddingTop="10dp"
-        android:textColor="@color/bofo_text_2"
-        android:textSize="13sp"
+        android:paddingTop="12dp">
+        <TextView
+            android:id="@+id/chip_new"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="8dp"
+            android:gravity="center"
+            android:minWidth="64dp"
+            android:paddingHorizontal="16dp"
+            android:text="@string/home_tab_new"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/chip_hot"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="8dp"
+            android:gravity="center"
+            android:minWidth="64dp"
+            android:paddingHorizontal="16dp"
+            android:text="@string/home_tab_hot"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/chip_best"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="8dp"
+            android:gravity="center"
+            android:minWidth="64dp"
+            android:paddingHorizontal="16dp"
+            android:text="@string/home_tab_best"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <com.bofo.finder.ui.RentCardView
+        android:id="@+id/rent_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp"
         android:visibility="gone" />
 
     <LinearLayout
@@ -217,9 +248,18 @@
             android:layout_weight="1"
             android:text="@string/home_nearby"
             android:textColor="@color/bofo_text"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/section_sub"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="6dp"
+        android:textColor="@color/bofo_text_2"
+        android:textSize="13sp" />
 
 </LinearLayout>
 </com.google.android.material.appbar.AppBarLayout>

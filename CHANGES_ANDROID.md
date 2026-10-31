@@ -1,3 +1,11 @@
+# v2.0.29 - Android port, Step 7: chips, section header, rent card, list states (JavaFX app stays v1.20.0)
+- **Chips:** New / Hot / Best rated as pills (selected = ink fill, white text) instead of the tab strip.
+- **Section header:** bold "Nearby boarding houses" + subtitle: "Closest to you first - 7 places" (Near me), "Within 3.5 km of <campus> - 4 places" (follows the radius pill), "Choose a campus to see what is close" (nothing chosen).
+- **Rent card:** white, 18 dp corners, #ECE8FA border. With a campus / Near me: Lowest / Middle (Best rated on that tab) / Highest, bold value + small "/mo", a thin line with one marker per price at its real position. Tap a value or a marker = that house's circle glows on the map and the value turns red; tap again = off. No campus: "Choose a campus to see rent near it" + purple bold "Choose" (opens the dropdown). Reuses `PriceRange`.
+- **List:** cards unchanged (`item_bh_card`, 2 columns); batches of 15 with a full-width "Show more (n)" button; skeleton while loading; empty state with the mascot and "Nothing nearby yet".
+- New: `RentCardView`, `bg_chip_on`, `bg_chip_off`, `item_show_more.xml`, `strings_home7.xml`. Changed: `HomeFragment`, `HomeSearchBar` (openDropdown), `ListArea` (footer), `fragment_home.xml` (tabs + price_range removed), `strings.xml` (home_empty text), `build.gradle` (2.0.29 / 229).
+- Not built or run by Claude (parse-checked only). Profile > About shows 2.0.29.
+
 # v2.0.28 - Android port, Step 6: pins, clusters, campus dots, circle label, preview card (JavaFX app stays v1.20.0)
 - **Pins:** zoomed out (below 12.5) small purple dots; dots closer than 30 dp merge into numbered bubbles (tap = glide to a view of the whole group); zoomed in, full pins with the house name under them, labels that would collide are hidden (the selected one always shows). The selected pin grows and turns dark purple. Merging/unmerging is recomputed when the camera stops moving.
 - **Campus dots:** every campus is a small orange dot (names from zoom 11); tap = choose that campus. The chosen campus keeps its bigger dot.

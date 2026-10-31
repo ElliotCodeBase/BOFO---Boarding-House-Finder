@@ -115,6 +115,9 @@ final class HomeSearchBar {
 
     boolean isOpen() { return open; }
 
+    /** Step 7: the rent card's "Choose": focus the field and show the campus list. */
+    void openDropdown() { b.searchInput.requestFocus(); showFor("", true); }
+
     /** Step 5: nothing typed (a chosen campus / Near me counts as text). */
     boolean isEmpty() { return text().trim().isEmpty(); }
 
