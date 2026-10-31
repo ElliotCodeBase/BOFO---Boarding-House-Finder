@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chats_subtitle">Press and hold a chat (or right-click) to delete it</string>
+    <string name="chats_empty_title">No chats yet</string>
+    <string name="chats_empty_sub">Open a place and tap Chat with owner.</string>
+</resources>

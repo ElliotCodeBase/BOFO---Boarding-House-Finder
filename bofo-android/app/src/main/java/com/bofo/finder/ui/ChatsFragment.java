@@ -67,20 +67,42 @@ public class ChatsFragment extends Fragment {
     private void reload() {
         if (b == null) return;
         final int my = ++token;
-        if (adapter.getItemCount() == 0) { b.loading.setVisibility(View.VISIBLE); b.emptyBox.setVisibility(View.GONE); }
+        if (adapter.getItemCount() == 0) { showSkeleton(true); b.emptyBox.setVisibility(View.GONE); }
         Async.run(() -> new ChatService().inbox(), (List<Conversation> l) -> {
             if (my != token || b == null) return;
-            b.loading.setVisibility(View.GONE);
+            showSkeleton(false);
             b.swipe.setRefreshing(false);
-            if (l.isEmpty()) message(getString(R.string.chats_empty), false);
+            if (l.isEmpty()) message(getString(R.string.chats_empty_sub), false);
             else { b.emptyBox.setVisibility(View.GONE); b.list.setVisibility(View.VISIBLE); adapter.submitList(l); }
         }, e -> {
             if (my != token || b == null) return;
-            b.loading.setVisibility(View.GONE);
+            showSkeleton(false);
             b.swipe.setRefreshing(false);
             if (adapter.getItemCount() > 0) { ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : getString(R.string.chats_error)); return; }
             message(Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.chats_error), e), true);
         });
+    }
+
+    private android.animation.ObjectAnimator pulse;
+
+    /** Six grey rows shaped like the chat rows, pulsing like the Home skeleton (900 ms, 1 to 0.45). */
+    private void showSkeleton(boolean on) {
+        if (b == null) return;
+        b.skeleton.setVisibility(on ? View.VISIBLE : View.GONE);
+        if (on) {
+            b.list.setVisibility(View.GONE);
+            if (pulse == null) {
+                pulse = android.animation.ObjectAnimator.ofFloat(b.skeleton, View.ALPHA, 1f, 0.45f);
+                pulse.setDuration(900);
+                pulse.setInterpolator(new android.view.animation.PathInterpolator(0.42f, 0f, 0.58f, 1f));
+                pulse.setRepeatMode(android.animation.ObjectAnimator.REVERSE);
+                pulse.setRepeatCount(android.animation.ObjectAnimator.INFINITE);
+            }
+            if (!pulse.isStarted()) pulse.start();
+        } else if (pulse != null) {
+            pulse.cancel();
+            b.skeleton.setAlpha(1f);
+        }
     }
 
     private void message(String text, boolean retry) {
@@ -88,6 +110,7 @@ public class ChatsFragment extends Fragment {
         b.list.setVisibility(View.GONE);
         b.emptyBox.setVisibility(View.VISIBLE);
         b.emptyText.setText(text);
+        b.emptyTitle.setVisibility(retry ? View.GONE : View.VISIBLE);
         b.retry.setVisibility(retry ? View.VISIBLE : View.GONE);
     }
 
@@ -105,6 +128,7 @@ public class ChatsFragment extends Fragment {
     @Override
     public void onDestroyView() {
         token++;
+        if (pulse != null) { pulse.cancel(); pulse = null; }
         b = null;
         super.onDestroyView();
     }

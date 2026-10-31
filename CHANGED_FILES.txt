@@ -1,14 +1,12 @@
-BOFO Android v2.0.31 - Step 9: Explore + Filters sheet. Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
-changed  bofo-android/app/build.gradle  (version 2.0.31 / 231, shown in Profile > About)
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ExploreFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/FilterSheet.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/util/BrowseState.java
-changed  bofo-android/app/src/main/res/layout/fragment_explore.xml
-changed  bofo-android/app/src/main/res/layout/sheet_filter.xml
-new      bofo-android/app/src/main/java/com/bofo/finder/util/ExploreRules.java
-new      bofo-android/app/src/test/java/com/bofo/finder/util/ExploreRulesTest.java
-new      bofo-android/app/src/main/res/values/strings_explore.xml
-new      bofo-android/app/src/main/res/values/styles_explore.xml
-new      bofo-android/app/src/main/res/drawable/bg_ex_badge.xml, bg_ex_filter_btn.xml, bg_ex_filter_btn_on.xml, bg_ex_group.xml, bg_ex_icon_btn.xml, bg_ex_input.xml, bg_ex_seg_on.xml, bg_ex_seg_wrap.xml, ic_filter.xml, ic_x_dark.xml
+BOFO Android v2.0.32 - Step 10: Detail, Chat, Chats. Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
+changed  bofo-android/app/build.gradle  (version 2.0.32 / 232)
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ChatsFragment.java, ChatFragment.java, BhDetailFragment.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/util/ChatRules.java
+changed  bofo-android/app/src/test/java/com/bofo/finder/util/ChatRulesTest.java
+changed  bofo-android/app/src/main/res/layout/fragment_chats.xml, item_conversation.xml, fragment_chat.xml, item_msg_mine.xml, item_msg_theirs.xml, fragment_bh_detail.xml
+new      bofo-android/app/src/main/res/layout/item_chat_skeleton.xml
+new      bofo-android/app/src/main/res/values/strings_chats.xml, strings_chat.xml, strings_detail.xml
+new      bofo-android/app/src/main/res/drawable/bg_chat_row.xml, bg_avatar_tint.xml, bg_skeleton_circle.xml, bg_day_chip.xml, bg_send_off.xml, bg_quick_reply.xml
+new      BOFO_v2.0.32_CHANGELOG.md  (what changed, how to open each screen, fix guide)
 changed  CHANGES_ANDROID.md, HANDOFF_ANDROID.md, REVERT_PROGRESS.md, REVERT_PROMPT.md
 DELETE   nothing

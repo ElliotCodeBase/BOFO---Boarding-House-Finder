@@ -1,7 +1,7 @@
 # BOFO: revert the Android UI to the original (CONTINUE-HERE PROMPT)
 
 > HOW TO CONTINUE (any AI): open a new chat, upload the latest project zip (and the two screen recordings if the AI can read video), then paste EVERYTHING below this line.
-> STATUS: Steps 1-9 DONE (v2.0.19 floating tab bar + mascot button; v2.0.20 splash/loading animation; v2.0.21 floating draggable BOFO chat button + chat overlay, and Home header + search bar; v2.0.22 inline map card, Home one scrolling page, radius pill; v2.0.27 radar dot, location states, overview; v2.0.28 pins, clusters, campus dots, preview card; v2.0.29 chips, rent card, Show more; v2.0.30 route on pin select; v2.0.31 Explore + Filters sheet). NEXT: Step 10. Update the status line in REVERT_PROGRESS.md after every step.
+> STATUS: Steps 1-10 DONE (v2.0.19 floating tab bar + mascot button; v2.0.20 splash/loading animation; v2.0.21 floating draggable BOFO chat button + chat overlay, and Home header + search bar; v2.0.22 inline map card, Home one scrolling page, radius pill; v2.0.27 radar dot, location states, overview; v2.0.28 pins, clusters, campus dots, preview card; v2.0.29 chips, rent card, Show more; v2.0.30 route on pin select; v2.0.31 Explore + Filters sheet; v2.0.32 Detail, chat, chats). NEXT: Step 11. Update the status line in REVERT_PROGRESS.md after every step.
 
 ---
 
@@ -12,7 +12,7 @@ You are a senior Android engineer (Java 17, XML + ViewBinding, Material 3). The 
 1. First read `CLAUDE_ANDROID.md`, the top entry of `HANDOFF_ANDROID.md`, and `REVERT_PROGRESS.md`. Java only, Fragments, ViewBinding, Material 3.
 2. Never edit or delete the JavaFX source. Do not touch Supabase, auth, models or service logic unless a step says so.
 3. KEEP UNCHANGED: the Login screen (`LoginFragment`, `fragment_login.xml`) and the list card (`item_bh_card.xml`, `BhAdapter` look).
-4. Do ONLY the step I ask for. Deliver ONE changes-only zip `BOFO-android-v2.0.N-changes.zip` (paths relative to repo root `C:\Users\user\bofo-finder`) with `CHANGED_FILES.txt`. Bump `versionName`/`versionCode` in `bofo-android/app/build.gradle` (current: 2.0.31 / 231). Prefer NEW files over rewriting big shared ones (new `styles_*.xml`, etc.) so my local edits are not overwritten. Update `REVERT_PROGRESS.md` (status + next step), and ALWAYS include this `REVERT_PROMPT.md` with the status line changed. Never send the whole project.
+4. Do ONLY the step I ask for. Deliver ONE changes-only zip `BOFO-android-v2.0.N-changes.zip` (paths relative to repo root `C:\Users\user\bofo-finder`) with `CHANGED_FILES.txt`. Bump `versionName`/`versionCode` in `bofo-android/app/build.gradle` (current: 2.0.32 / 232). Prefer NEW files over rewriting big shared ones (new `styles_*.xml`, etc.) so my local edits are not overwritten. Update `REVERT_PROGRESS.md` (status + next step), and ALWAYS include this `REVERT_PROMPT.md` with the status line changed. Never send the whole project.
 5. Save tokens: grep first, read line ranges, targeted edits, no long recaps, no code pasted in chat.
 6. You cannot build. Never claim it works. End each step with a 3 to 6 item "Test on the emulator" list and the PowerShell unzip and git commands from `CLAUDE_ANDROID.md` section 6.
 7. Pick sensible defaults, state them in one line. If budget runs low, stop at a clean point and update `REVERT_PROGRESS.md`.
@@ -55,7 +55,7 @@ Tokens: keep `colors.xml` (primary #5B3BF0, ink #17142A, bg #F5F6FC, tint #ECE9F
 - **Step 7 (DONE v2.0.29): Chips, section header, rent card, list states.** As specified; reuse `PriceRange`; do NOT change `item_bh_card.xml`.
 - **Step 8 (DONE v2.0.30): Route + directions card.** Wire route to the preview selection; reuse `Router`, `TripPlanner`, `TransitRoutes`, `TransitMatch`, `DirectionsRules`; compare with the JavaFX results on 2 samples and fix only real differences; restyle `DirectionsCardView`.
 - **Step 9 (DONE v2.0.31): Explore + Filter sheet.** Restyle Explore; rebuild the filter sheet (replace the dotted range slider with price chips + custom field, Sort by, Amenities). Fix "Amenities could not be loaded": check `supabase/migrations/005_amenities.sql` and the amenity code in `BhService`; if unreachable, fall back to a built-in popular list (Free Wi-Fi, Free water, Free electricity, Aircon, Own bathroom, Kitchen, Laundry, Parking) and never show the error. Add a new migration only if needed and say so.
-- **Step 10: Detail, chat, chats.** Match the layouts above; fix the blank Chats screen (skeleton while loading, empty state after). Keep service calls and polling.
+- **Step 10 (DONE v2.0.32): Detail, chat, chats.** Match the layouts above; fix the blank Chats screen (skeleton while loading, empty state after). Keep service calls and polling.
 - **Step 11: Final pass.** Walk the whole app against this spec; list truly unused old layouts/strings as DELETE in `CHANGED_FILES.txt`; final handoff entry.
 
 ## When I say "Do Step N", do only that step.

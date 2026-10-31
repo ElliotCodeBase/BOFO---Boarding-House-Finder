@@ -1,3 +1,12 @@
+# Handoff (Android) - v2.0.32 Step 10 Detail, chat, chats (2026-10-31)
+- **PR title:** `v2.0.32 - Android: Detail, Chat and Chats screens restyled (skeleton rows, quick replies, day chip, pinned chat button)`
+- `ChatsFragment.showSkeleton` (900 ms pulse) replaces the ProgressBar (`loading` id is gone). `ChatFragment`: `quick1/quick2` call `send()`; quick bar shows only when the chat is empty; `Adapter.Holder` has a `day` chip computed from the previous item (`ChatRules.dayLabel`; queued messages have no date and never get a chip). `BhDetailFragment`: `info_chips`, `tile_*_value`, `no_photos`, `title_bar` + `chat_bar` are siblings of the ScrollView (back and heart moved there, same ids). Distance chip needs `bh.distanceKm() > 0` (the detail query may not set it).
+- Known small gap: when older messages load above, the first old item's day chip is not recomputed until the next render.
+- Unused now (delete in Step 11): strings `detail_stats`, `chat_hint`, `chat_empty`, `chats_empty`, `detail_verified` is still used.
+- Next: Step 11 (final pass, list unused layouts/strings as DELETE).
+
+---
+
 # Handoff (Android) - v2.0.31 Step 9 Explore + Filters sheet (2026-10-31)
 - **PR title:** `v2.0.31 - Android: Explore restyle (search pill, filter button, List | Map) and new Filters sheet`
 - `BrowseState.sort` (0 Nearest, 1 Lowest price, 2 Most beds) and `amenityNames` (fallback picks) join `minPrice/maxPrice/amenityIds`; `activeFilters()` counts price, sort and every amenity. `ExploreRules` = sort + `withAll(names)` + `parseMax`. `ExploreFragment` always loads `Tab.NEW` then sorts client-side (featured pinning is kept only for Nearest). `FilterSheet`: sheet is 90% of the screen, expanded, adjustResize.

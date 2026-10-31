@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chat_owner_role">Boarding house owner</string>
+    <string name="chat_hello_title">Say hello</string>
+    <string name="chat_hello_sub">Ask the owner about price, rooms or a visit.</string>
+    <string name="chat_quick_1">Is it still available?</string>
+    <string name="chat_quick_2">Can I visit this week?</string>
+    <string name="chat_hint_new">Write a message…</string>
+</resources>
