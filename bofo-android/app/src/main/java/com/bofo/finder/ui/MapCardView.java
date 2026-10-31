@@ -291,7 +291,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         m.setPrefetchZoomDelta(1);                         // default 4 loads lower zoom levels in advance on every zoom: the stutter the JavaFX flyTo also avoids
         m.getUiSettings().setRotateGesturesEnabled(false);
         m.getUiSettings().setTiltGesturesEnabled(false);
-        m.getUiSettings().setLogoEnabled(false);          // the attribution text stays visible (licence)
+        m.getUiSettings().setLogoEnabled(false);
+        m.getUiSettings().setAttributionEnabled(false);   // v2.0.76: MapLibre's own blue (i) is off; our own credit pill / (i) (setupAttribution) is the licence text
         m.addOnMapClickListener(this::onTap);
         double[] saved = cameraKey == null ? null : SAVED_CAMERA.get(cameraKey);
         if (saved != null) m.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(saved[0], saved[1]), saved[2]));     // back where it was

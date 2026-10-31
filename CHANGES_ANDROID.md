@@ -1,3 +1,8 @@
+# v2.0.76 - Android: only one map credit (i)
+- **Fixed:** a second, blue round (i) showed at the bottom of the map. It was MapLibre's built-in attribution button, shown on top of our own credit.
+- **Now:** the built-in one is turned off (`setAttributionEnabled(false)`); the credit pill / small (i) from v2.0.75 is the only one, so the licence text is still shown.
+- Files: `MapCardView.java` (`onMapReady`), `build.gradle` (2.0.76 / 276). Not built or run by Claude.
+
 # v2.0.75 - Android: nicer house dots + map credit as an (i) button
 - **Fixed:** the house dots on the map were black. Cause: the colour was given to the map as a plain number (`Expression.literal(int)`), which MapLibre does not read as a colour; it now uses `Expression.color(...)`.
 - **Now:** a house dot is indigo (dark indigo when selected) with a thick white ring and a soft indigo halo (new layer `places-dots-halo`). Taps are unchanged.
