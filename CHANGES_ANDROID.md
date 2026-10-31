@@ -1,3 +1,11 @@
+# v2.0.30 - Android port, Step 8: route on pin select (JavaFX app stays v1.20.0)
+- Tapping a pin on Home now also draws the route: start = the chosen campus, else the campus nearest to that house, else your position. Purple line, blue start dot, **red end dot**, a "1.7 km - 21 min" chip above the end (80 m/min on foot up to 3 km, 30 km/h by road beyond).
+- An instant straight-line estimate (or a saved road) is drawn first, then swapped for the real road route (`Router.walk` / `Router.drive`); if only a straight line came back it quietly retries up to 4 times (1.5 s, 3 s, ... apart).
+- The camera glides to fit the whole route and leaves room for the preview card at the bottom (and the radius pill at the top). Closing the card, tapping empty map, or the house leaving the list removes the route.
+- The red end dot also shows on the place screen's Directions map. The Directions card itself (From / To dots, lavender result tile, note, "Show BH -> Campus", "Open in OpenStreetMap", "More info") already matched the spec, so it is unchanged; the route logic (`TripPlanner`, `Router`, `TransitRoutes`) is untouched.
+- Changed: `MapCardView` (`placeSelected`, `setRouteLabel`, `fitRouteBounds`, red `route-end`), `HomeFragment` (`showRoute`, `fetchRoute`), `build.gradle` (2.0.30 / 230). No new files.
+- Not built or run by Claude (parse-checked only). I could not compare against the JavaFX results on 2 samples without running them: please compare one near and one far house and tell me any difference. Profile > About shows 2.0.30.
+
 # v2.0.29 - Android port, Step 7: chips, section header, rent card, list states (JavaFX app stays v1.20.0)
 - **Chips:** New / Hot / Best rated as pills (selected = ink fill, white text) instead of the tab strip.
 - **Section header:** bold "Nearby boarding houses" + subtitle: "Closest to you first - 7 places" (Near me), "Within 3.5 km of <campus> - 4 places" (follows the radius pill), "Choose a campus to see what is close" (nothing chosen).
