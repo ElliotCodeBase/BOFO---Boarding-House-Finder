@@ -1,13 +1,6 @@
-BOFO Android v2.0.29 - Step 7: chips, section header, rent card, list states. Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
-changed  bofo-android/app/build.gradle  (version 2.0.29 / 229, shown in Profile > About)
+BOFO Android v2.0.30 - Step 8: route on pin select. Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
+changed  bofo-android/app/build.gradle  (version 2.0.30 / 230, shown in Profile > About)
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/HomeFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/HomeSearchBar.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ListArea.java
-changed  bofo-android/app/src/main/res/layout/fragment_home.xml
-changed  bofo-android/app/src/main/res/values/strings.xml  (home_empty text only)
-new      bofo-android/app/src/main/java/com/bofo/finder/ui/RentCardView.java
-new      bofo-android/app/src/main/res/layout/item_show_more.xml
-new      bofo-android/app/src/main/res/drawable/bg_chip_on.xml, bg_chip_off.xml
-new      bofo-android/app/src/main/res/values/strings_home7.xml
 changed  CHANGES_ANDROID.md, HANDOFF_ANDROID.md, REVERT_PROGRESS.md, REVERT_PROMPT.md
 DELETE   nothing

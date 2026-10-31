@@ -1,3 +1,11 @@
+# Handoff (Android) - v2.0.30 Step 8 route on pin select (2026-10-31)
+- **PR title:** `v2.0.30 - Android: route, red end pin and distance/time chip when a Home pin is selected`
+- `MapCardView.Listener.placeSelected(id)` fires only for user taps (`userSelect`); `setRouteLabel`, `fitRouteBounds` (bottom padding = preview card height). `HomeFragment.showRoute/fetchRoute/drawRoute`, `routeToken` cancels stale answers, `me` = last phone fix.
+- Open for Step 8 follow-up: compare route times with JavaFX on 2 samples (not done: no way to run both here); `DirectionsCardView` unchanged on purpose.
+- Next: Step 9 (Explore restyle + filter sheet with price chips, Sort by, Amenities, built-in amenity fallback list; check `supabase/migrations/005_amenities.sql` and `BhService` amenity code).
+
+---
+
 # Handoff (Android) - v2.0.29 Step 7 chips, section header, rent card, list states (2026-10-31)
 - **PR title:** `v2.0.29 - Android: Home chips, section subtitle, rent card with map glow, Show more`
 - `RentCardView` (canvas): `setData(basis, best)` / `setNoCampus()`, `Listener.glow(id)` -> `MapCardView.setGlow`, `choose()` -> `HomeSearchBar.openDropdown()`. `HomeFragment`: `Result.basis`, `paintRent`, `paintSub`, `paintChips`, `renderList` (BATCH 15). `ListArea.setMore(text, action)` = ConcatAdapter footer (shared; Explore/Saved just never set it).

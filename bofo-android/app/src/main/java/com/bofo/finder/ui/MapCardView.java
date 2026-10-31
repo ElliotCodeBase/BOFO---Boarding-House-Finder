@@ -82,6 +82,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         default void radiusChanged(float km, boolean settled) { }
         /** Step 6: an orange campus dot was tapped. */
         default void campusTapped(String id) { }
+        /** Step 8: the person tapped a pin (id) or closed / left the preview (null). Not called for select() from code. */
+        default void placeSelected(@Nullable String id) { }
     }
 
     private static final float PIN_ZOOM = 12.5f;
@@ -122,7 +124,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     // ---- Step 6: clusters, labels, campus dots, price glow ----
     private final Set<String> imgs = new HashSet<>();      // bitmaps already added to the style (labels, cluster bubbles)
     private List<College> colleges = new ArrayList<>();
-    private String glowId;
+    private String glowId, routeLabel;
     private static final int DARK_PURPLE = 0xFF2A1C8F, GLOW = 0xFFF43F5E, CAMPUS_TEXT = 0xFFB45309;
 
     public MapCardView(@NonNull Context c) { this(c, null); }
@@ -141,7 +143,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             @Override public void onStopTrackingTouch(@NonNull Slider sl) { if (listener != null) listener.radiusChanged(sl.getValue(), true); }
         });
         b.radiusValue.setText(getContext().getString(R.string.map_radius_value, b.radiusSlider.getValue()));
-        b.peekClose.setOnClickListener(v -> select(null));
+        b.peekClose.setOnClickListener(v -> userSelect(null));
         b.peekOpen.setOnClickListener(v -> { if (listener != null && selectedId != null) listener.openPlace(selectedId); });
     }
 
@@ -251,6 +253,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         st.addSource(new GeoJsonSource("college-labels-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("ringlabel-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("glow-src", MapGeo.EMPTY));
+        st.addSource(new GeoJsonSource("routelabel-src", MapGeo.EMPTY));
         st.addImage("pin-sel", pin(DARK_PURPLE));
         st.addSource(new GeoJsonSource("route-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("route-start-src", MapGeo.EMPTY));
@@ -275,8 +278,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 PropertyFactory.circleRadius(7f), PropertyFactory.circleColor(0xFF2F6FED),
                 PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeColor(0xFFFFFFFF)));
         st.addLayer(new CircleLayer("route-end", "route-end-src").withProperties(
-                PropertyFactory.circleRadius(7f), PropertyFactory.circleColor(0xFFFFFFFF),
-                PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeColor(primary)));
+                PropertyFactory.circleRadius(8f), PropertyFactory.circleColor(0xFFE5484D),
+                PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeColor(0xFFFFFFFF)));        // red destination
         // Step 6: price glow (a house lit from the rent card), then every campus as a small orange dot (tap = choose it)
         st.addLayer(new CircleLayer("places-glow", "glow-src").withProperties(
                 PropertyFactory.circleRadius(18f), PropertyFactory.circleColor(GLOW), PropertyFactory.circleOpacity(0.32f),
@@ -325,6 +328,9 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             st.addLayer(new SymbolLayer(l[0], l[1]).withProperties(
                     PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAnchor(Property.ICON_ANCHOR_TOP),
                     PropertyFactory.iconOffset(new Float[]{0f, 2f}), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true)));
+        st.addLayer(new SymbolLayer("route-label", "routelabel-src").withProperties(
+                PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
+                PropertyFactory.iconOffset(new Float[]{0f, -12f}), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true)));
         st.addLayer(new SymbolLayer("ring-label", "ringlabel-src").withProperties(
                 PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true)));
     }
@@ -528,7 +534,19 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         render();
     }
 
-    public void clearRoute() { routePts = null; fitRoutePending = false; render(); }
+    public void clearRoute() { routePts = null; routeLabel = null; fitRoutePending = false; render(); }
+
+    /** Step 8: "1.7 km · 21 min" chip just above the end of the route (null removes it). */
+    public void setRouteLabel(@Nullable String text) { routeLabel = text; paintRouteLabel(); }
+
+    private void paintRouteLabel() {
+        if (style == null) return;
+        if (routeLabel == null || routePts == null) { set("routelabel-src", MapGeo.EMPTY); return; }
+        String key = "rt|" + routeLabel;
+        if (imgs.add(key)) style.addImage(key, chip(routeLabel));
+        double[] e = routePts[routePts.length - 1];
+        set("routelabel-src", collection(new StringBuilder(feat(e[0], e[1], "\"icon\":\"" + esc(key) + "\""))));
+    }
 
     /** Zooms to the whole route (runs when the map is ready if it is not yet). */
     public void fitRoute() { fitRoutePending = true; post(this::applyCamera); }
@@ -555,6 +573,13 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         if (style != null) rebuildPlaces();
     }
 
+    private void userSelect(String id) {
+        select(id);
+        if (listener != null) listener.placeSelected(selectedId);
+    }
+
+    @Nullable public String selectedId() { return selectedId; }
+
     private BoardingHouse findPlace(String id) {
         for (BoardingHouse p : places) if (p.id().equals(id)) return p;
         return null;
@@ -565,7 +590,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         rebuildPlaces();
         set("radius-src", MapGeo.circleJson(ringLat, ringLng, ringKm, 64));
         set("campus-src", MapGeo.pointJson(campusLat, campusLng));
-        paintRingLabel(); rebuildColleges(); paintGlow();
+        paintRingLabel(); rebuildColleges(); paintGlow(); paintRouteLabel();
         set("user-src", MapGeo.pointJson(userLat, userLng));
         set("cone-src", coneJson());
         paintUser();
@@ -770,7 +795,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             if (fitRoutePending) {                          // a route to show beats any pending moveTo
                 fitRoutePending = false;
                 double[] rb = MapGeo.pathBounds(routePts);
-                if (rb != null) { target = null; fitBounds(rb, 40); return; }
+                if (rb != null) { target = null; fitRouteBounds(rb); return; }
             }
             if (overviewPending) {
                 overviewPending = false;
@@ -801,6 +826,15 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         }
     }
 
+    /** Fits the whole route, leaving room at the bottom for the preview card (and at the top for the radius pill). Glides there. */
+    private void fitRouteBounds(double[] bb) {
+        if (bb[0] == bb[2] && bb[1] == bb[3]) { fitBounds(bb, 40); return; }
+        float d = getResources().getDisplayMetrics().density;
+        int bottom = Math.round(((b.peek.getVisibility() == View.VISIBLE ? Math.max(b.peek.getHeight() / d, 70) + 26 + 18 : 40)) * d);
+        int top = Math.round((pillShown ? 84 : 44) * d), side = Math.round(40 * d);
+        map.easeCamera(CameraUpdateFactory.newLatLngBounds(LatLngBounds.from(bb[2], bb[3], bb[0], bb[1]), side, top, side, bottom), 450);
+    }
+
     /** {minLat, minLng, maxLat, maxLng}: a single point gets zoom 15, anything else is fitted with {@code padDp} around it. */
     private void fitBounds(double[] bb, int padDp) { fitBounds(bb, padDp, 0); }
 
@@ -827,13 +861,13 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             if ("cluster".equals(kind)) { zoomToCluster(f); return true; }
             if ("college".equals(kind) && id != null) { if (listener != null) listener.campusTapped(id); return true; }
             if (id != null) {
-                select(id);
+                userSelect(id);
                 BoardingHouse p = findPlace(id);
                 if (p != null) map.easeCamera(CameraUpdateFactory.newLatLng(new LatLng(p.lat(), p.lng())), 300);
                 return true;
             }
         }
-        if (selectedId != null) select(null);
+        if (selectedId != null) userSelect(null);
         return false;
     }
 

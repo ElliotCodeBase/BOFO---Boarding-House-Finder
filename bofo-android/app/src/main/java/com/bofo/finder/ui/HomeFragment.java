@@ -28,7 +28,10 @@ import com.bofo.finder.util.CampusMatch;
 import com.bofo.finder.util.ErrorText;
 import com.bofo.finder.util.Favorites;
 import com.bofo.finder.util.ExploreHandoff;
+import com.bofo.finder.util.DirectionsRules;
+import com.bofo.finder.util.Geo;
 import com.bofo.finder.util.ListRules;
+import com.bofo.finder.util.Router;
 import com.bofo.finder.util.LocationHelper;
 import com.bofo.finder.util.PriceRange;
 import com.bumptech.glide.Glide;
@@ -67,6 +70,8 @@ public class HomeFragment extends Fragment {
     };
     private List<BoardingHouse> current = new ArrayList<>();
     // Step 5: overview mode (no campus, search empty) + location states
+    private int routeToken;
+    private double[] me;                                    // last known position of the phone {lat, lng}
     private boolean ovOn = true, ovFit = true, hadRef, finding, haveFix;
 
     @Nullable @Override
@@ -119,6 +124,7 @@ public class HomeFragment extends Fragment {
             @Override public void openPlace(String id) { BhDetailFragment.open(HomeFragment.this, id); }
             @Override public void locate() { onLocateTap(); }
             @Override public void radiusChanged(float km, boolean settled) { onRadiusPill(km, settled); }
+            @Override public void placeSelected(String id) { showRoute(id); }
             @Override public void campusTapped(String id) {
                 for (College c : BrowseState.colleges) if (c.id().equals(id)) { BrowseState.setCampus(c); return; }
             }
@@ -307,7 +313,7 @@ public class HomeFragment extends Fragment {
         loc.requestOnce(new LocationHelper.Callback() {
             @Override public void got(double lat, double lng) {
                 if (b == null) return;
-                finding = false; haveFix = true;
+                finding = false; haveFix = true; me = new double[]{lat, lng};
                 b.mapCard.setUser(lat, lng);
                 b.mapCard.setLocState(fixState());
                 b.mapCard.moveTo(lat, lng, 15);
@@ -334,7 +340,7 @@ public class HomeFragment extends Fragment {
             @Override public void got(double lat, double lng) {
                 if (b == null) return;
                 boolean first = !haveFix;
-                haveFix = true; finding = false;
+                haveFix = true; finding = false; me = new double[]{lat, lng};
                 b.mapCard.setUser(lat, lng);
                 b.mapCard.setLocState(fixState());
                 if (first && overviewActive()) b.mapCard.overview();      // the first fix joins the overview once
@@ -357,11 +363,60 @@ public class HomeFragment extends Fragment {
         ui.postDelayed(settleRadius, RADIUS_SETTLE_MS);
     }
 
+    // ---- Step 8: route to the selected pin ---------------------------------------------------------------------
+
+    /** Start = the chosen campus, else the campus nearest to the house, else the phone. */
+    private double[] routeStart(BoardingHouse p) {
+        College c = BrowseState.campus();
+        if (c == null && BrowseState.colleges != null && !BrowseState.colleges.isEmpty()) c = DirectionsRules.nearestCampus(BrowseState.colleges, p.lat(), p.lng());
+        if (c != null) return new double[]{c.lat(), c.lng()};
+        return me;
+    }
+
+    /** A pin was tapped (id) or the preview closed (null): purple line + blue start + red end + "1.7 km - 21 min", camera fits it above the card. */
+    private void showRoute(String id) {
+        if (b == null) return;
+        final int my = ++routeToken;
+        BoardingHouse p = null;
+        if (id != null) for (BoardingHouse x : current) if (id.equals(x.id())) { p = x; break; }
+        double[] from = p == null ? null : routeStart(p);
+        if (from == null) { b.mapCard.clearRoute(); return; }
+        final BoardingHouse house = p;
+        Router.Route known = Router.peek(from[0], from[1], house.lat(), house.lng());
+        if (known == null) known = Router.estimate(from[0], from[1], house.lat(), house.lng());       // instant straight-line guess first
+        drawRoute(known, from, house);
+        b.mapCard.fitRoute();
+        fetchRoute(my, from, house, 0, known.approximate());
+    }
+
+    private static boolean walkable(double[] from, BoardingHouse h) { return Geo.km(from[0], from[1], h.lat(), h.lng()) <= 3; }
+
+    /** The real road route; if only a straight line came back it quietly tries again (up to 4 more times). */
+    private void fetchRoute(int my, double[] from, BoardingHouse h, int tries, boolean needReal) {
+        if (!needReal) return;
+        Async.run(() -> walkable(from, h) ? Router.walk(from[0], from[1], h.lat(), h.lng()) : Router.drive(from[0], from[1], h.lat(), h.lng()), r -> {
+            if (my != routeToken || b == null) return;
+            drawRoute(r, from, h);
+            if (my == routeToken && !r.approximate()) b.mapCard.fitRoute();
+            else if (tries < 4) ui.postDelayed(() -> { if (my == routeToken && b != null) fetchRoute(my, from, h, tries + 1, true); }, 1500L * (tries + 1));
+        }, e -> {
+            if (my == routeToken && b != null && tries < 4) ui.postDelayed(() -> { if (my == routeToken && b != null) fetchRoute(my, from, h, tries + 1, true); }, 1500L * (tries + 1));
+        });
+    }
+
+    private void drawRoute(Router.Route r, double[] from, BoardingHouse h) {
+        b.mapCard.setRoute(r.pts(), r.approximate());
+        double km = r.meters() / 1000.0;
+        int min = (int) Math.max(1, Math.round(r.meters() / (walkable(from, h) ? 80.0 : 500.0)));     // 80 m/min walking, 30 km/h by road
+        b.mapCard.setRouteLabel(Geo.fmt(km) + " \u00B7 " + Geo.fmtTime(min));
+    }
+
     /** Hands the current list, ring and campus dot to the map. Zooms to fit only when the centre changed (first load, campus picked, Near me). */
     private void pushMap() {
         if (b == null) return;
         College campus = BrowseState.campus();
         b.mapCard.setPlaces(current);
+        if (b.mapCard.selectedId() == null) { routeToken++; b.mapCard.clearRoute(); }          // the selected house is gone: so is its route
         b.mapCard.setColleges(BrowseState.colleges);
         b.mapCard.setRing(BrowseState.refLat(), BrowseState.refLng(), BrowseState.radiusKm);
         b.mapCard.setCampusDot(campus == null ? null : campus.lat(), campus == null ? null : campus.lng());
@@ -387,6 +442,7 @@ public class HomeFragment extends Fragment {
         ui.removeCallbacks(settleRadius);
         loc.stop();
         if (area != null) area.destroy();
+        routeToken++;
         search = null;
         finding = false; haveFix = false;
         b = null;
