@@ -1,3 +1,9 @@
+# v2.0.38 - Android port, lag fix 4: rounded-corner mask (JavaFX app stays v1.20.0)
+- `CornerMaskView` drew one huge inverse-fill shape over the whole map card, and the GPU replayed it every frame once the ripple overlay animated. It now draws four tiny corner pieces. `RadarOverlayView` also repaints only the square around the dot.
+- Changed: `CornerMaskView`, `RadarOverlayView`, `build.gradle` (2.0.38 / 238). Not built or run by Claude.
+
+---
+
 # v2.0.37 - Android port, lag fix 3: the map is idle between gestures (JavaFX app stays v1.20.0)
 - Cause: the radar ripples were two map layers whose paint properties changed every frame (plus the pop / found ring, 60 per second). Each change makes MapLibre re-render the WHOLE map, so the map never rested, even when nobody touched it.
 - Fix (hybrid): the ripples and the "found you" ring are now drawn by the new `RadarOverlayView` (plain Canvas above the map, only a few circles). The dot itself stays a map layer, so it is always on its exact spot; the ripples hide while the camera moves and snap back when the map is idle.

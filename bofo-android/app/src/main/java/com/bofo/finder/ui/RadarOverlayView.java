@@ -78,7 +78,10 @@ public class RadarOverlayView extends android.view.View {
         anim.setRepeatCount(ValueAnimator.INFINITE);
         anim.addUpdateListener(a -> {
             t = (float) a.getAnimatedValue();
-            if (has && !moving && isShown()) invalidate();     // hidden / scrolled away / camera moving: no work at all
+            if (has && !moving && isShown()) {                 // hidden / scrolled away / camera moving: no work at all
+                float rr = 66f * unit;                          // only the square around the dot repaints (biggest ring = 45 style px)
+                invalidate((int) (cx - rr), (int) (cy - rr), (int) (cx + rr) + 1, (int) (cy + rr) + 1);
+            }
         });
         anim.start();
     }

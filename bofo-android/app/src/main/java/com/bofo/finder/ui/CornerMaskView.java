@@ -34,9 +34,14 @@ public class CornerMaskView extends android.view.View {
 
     @Override
     protected void onSizeChanged(int w, int h, int ow, int oh) {
+        // Four small corner pieces instead of one huge "everything outside the card" shape: that inverse fill was replayed on the GPU every frame.
         path.reset();
-        path.addRoundRect(new RectF(0, 0, w, h), radius, radius, Path.Direction.CW);
-        path.setFillType(Path.FillType.INVERSE_WINDING);
+        float r = Math.min(radius, Math.min(w, h) / 2f);
+        path.moveTo(0, 0); path.lineTo(r, 0); path.arcTo(new RectF(0, 0, 2 * r, 2 * r), 270, -90); path.close();
+        path.moveTo(w, 0); path.lineTo(w, r); path.arcTo(new RectF(w - 2 * r, 0, w, 2 * r), 0, -90); path.close();
+        path.moveTo(w, h); path.lineTo(w - r, h); path.arcTo(new RectF(w - 2 * r, h - 2 * r, w, h), 90, -90); path.close();
+        path.moveTo(0, h); path.lineTo(0, h - r); path.arcTo(new RectF(0, h - 2 * r, 2 * r, h), 180, -90); path.close();
+        path.setFillType(Path.FillType.WINDING);
     }
 
     @Override

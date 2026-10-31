@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.38 lag fix 4 (2026-10-31)
+- **PR title:** `v2.0.38 - Android: cheaper rounded-corner mask, smaller ripple repaint area`
+- User: real mid-range+ phone, lag everywhere all the time (v2.0.37 did not fix it). Still open: A/B renderer (`android-sdk-opengl`, commented in `build.gradle`), debug vs release build, SurfaceView inside the scrolling AppBar page (texture mode was slower before), pixelRatio 1.5.
+
+---
+
 # Handoff (Android) - v2.0.37 lag fix 3 (2026-10-31)
 - **PR title:** `v2.0.37 - Android: map idle between gestures (ripples on a Canvas overlay, no rebuild on pan)`
 - `RadarOverlayView` (new) draws ripples + found ring; `MapCardView.refreshRadar()` places it (on camera idle, on a fix, on resize); `rebuildPlaces(force)` / `rebuildColleges(force)` skip when only the position changed; `paintRoute()` split out of `render()`.
