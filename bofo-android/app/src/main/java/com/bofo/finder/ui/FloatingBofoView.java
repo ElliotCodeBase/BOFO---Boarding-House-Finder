@@ -34,32 +34,31 @@ import java.util.Random;
 
 /**
  * Floating "Ask BOFO" button (original: BofoPanel.java). Drag it anywhere, it snaps to the nearest side edge on release.
- * It always floats (soft bob + tilt) and, after a quiet spell, plays a random idle move (wiggle, hop, look around, flip, loop-the-loop, think, sleep),
- * never the same one twice in a row. Idle stops on touch, while the chat is open, when hidden / in the background, or when system animations are off.
- * Tap = performClick (the shell opens the chat overlay). Transform and alpha animators only.
+ * Same behaviour as the JavaFX button: a white round button with the {@link BofoMascot} (a port of the JavaFX Mascot, same drawing and
+ * same animations) that bobs up and down; after a quiet spell (4-10 s) it plays one of the four idle poses (thinking, sitting, running,
+ * sleeping), never the same twice in a row, then rests again. A tap, a drag, the chat opening, hiding or system animations off end it at once.
+ * Tap = performClick (the shell opens the chat overlay).
  */
 public class FloatingBofoView extends FrameLayout {
-    private enum Idle { WIGGLE, HOP, SWAY, FLIP, DASH, THINK, SLEEP }
-
     /** Remembered between screens of the same sign-in (the shell is rebuilt when you come back from a detail screen). */
     private static float savedTx, savedTy;
     private static boolean savedMoved;
     public static void forgetPosition() { savedMoved = false; savedTx = 0f; savedTy = 0f; }
 
-    private final FrameLayout bobber;           // white circle + mascot: this is what floats and plays the idle moves
-    private final TextView zzz;
+    private final FrameLayout bobber;           // white circle + mascot: this is what floats
+    private final BofoMascot face;              // fixed 46 dp box inside the 56 dp button; poses overflow it without resizing anything
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Random rnd = new Random();
     private final float dp;
     private final int slop, edge;
     private int boundTop, boundBottom;          // px kept free above the view / between the view and the bottom of the parent
-    private ObjectAnimator bob, tilt;
-    private Animator idleAnim;
+    private ObjectAnimator bob;
     private ValueAnimator snap;
-    private Idle last;
-    private boolean ready, pressing, dragging, chatOpen, restored;
+    private BofoMascot.Idle last;
+    private boolean ready, pressing, dragging, chatOpen, restored, idling;
     private float downX, downY, startTx, startTy;
     private final Runnable idleTick = this::playIdle;
+    private final Runnable idleEnd = () -> { endIdle(); startFloat(); scheduleIdle(); };
 
     public FloatingBofoView(Context c) { this(c, null); }
 
@@ -76,24 +75,15 @@ public class FloatingBofoView extends FrameLayout {
         setContentDescription(c.getString(R.string.cd_mascot_ask));
 
         bobber = new FrameLayout(c);
-        bobber.setBackgroundResource(R.drawable.bg_circle_white);
+        bobber.setBackgroundResource(R.drawable.bg_bofo_fab);
         bobber.setElevation(6 * dp);
         bobber.setCameraDistance(8000f * dp);
+        bobber.setClipChildren(false);
         addView(bobber, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        MascotView face = new MascotView(c);
-        int pad = Math.round(4 * dp);
-        face.setPadding(pad, pad, pad, pad);
+        face = new BofoMascot(c);
         face.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-        bobber.addView(face, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        zzz = new TextView(c);
-        zzz.setText("Zz");
-        zzz.setTextSize(11);
-        zzz.setTypeface(null, Typeface.BOLD);
-        zzz.setTextColor(ContextCompat.getColor(c, R.color.bofo_primary));
-        zzz.setAlpha(0f);
-        zzz.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-        addView(zzz, new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END));
+        int box = Math.round(46 * dp);
+        bobber.addView(face, new LayoutParams(box, box, Gravity.CENTER));
         ready = true;
     }
 
@@ -148,18 +138,14 @@ public class FloatingBofoView extends FrameLayout {
 
     private void startFloat() {
         if (bob != null || !animsOn() || !isShown() || chatOpen) return;
-        bob = ObjectAnimator.ofFloat(bobber, View.TRANSLATION_Y, 0f, -6 * dp);
+        bob = ObjectAnimator.ofFloat(bobber, View.TRANSLATION_Y, 0f, -6 * dp);       // JavaFX: TranslateTransition 1.2 s, by -6, auto-reverse
         bob.setDuration(1200); bob.setRepeatMode(ValueAnimator.REVERSE); bob.setRepeatCount(ValueAnimator.INFINITE);
         bob.setInterpolator(new AccelerateDecelerateInterpolator());
-        tilt = ObjectAnimator.ofFloat(bobber, View.ROTATION, -2.5f, 2.5f);
-        tilt.setDuration(1900); tilt.setRepeatMode(ValueAnimator.REVERSE); tilt.setRepeatCount(ValueAnimator.INFINITE);
-        tilt.setInterpolator(new AccelerateDecelerateInterpolator());
-        bob.start(); tilt.start();
+        bob.start();
     }
 
     private void stopFloat() {
         if (bob != null) { bob.cancel(); bob = null; }
-        if (tilt != null) { tilt.cancel(); tilt = null; }
         bobber.setTranslationY(0f);
         bobber.setRotation(0f);
     }
@@ -171,130 +157,40 @@ public class FloatingBofoView extends FrameLayout {
         if (canIdle()) handler.postDelayed(idleTick, 4000 + rnd.nextInt(6000));
     }
 
+    /** Same pick and same lengths as BofoPanel.startIdle(): never the same pose twice in a row. */
     private void playIdle() {
-        if (!canIdle() || idleAnim != null) return;
-        Idle[] all = Idle.values();
-        Idle pick;
+        if (!canIdle() || idling) return;
+        BofoMascot.Idle[] all = BofoMascot.Idle.values();
+        BofoMascot.Idle pick;
         do { pick = all[rnd.nextInt(all.length)]; } while (pick == last);
         last = pick;
         stopFloat();
-        resetPose();
-        final Animator a = build(pick);
-        idleAnim = a;
-        a.addListener(new AnimatorListenerAdapter() {
-            private boolean cancelled;
-            @Override public void onAnimationCancel(Animator an) { cancelled = true; }
-            @Override public void onAnimationEnd(Animator an) {
-                if (cancelled) return;
-                idleAnim = null;
-                resetPose();
-                startFloat();
-                scheduleIdle();
-            }
-        });
-        a.start();
+        face.idle(pick);
+        idling = true;
+        long ms;
+        switch (pick) {
+            case SLEEPING: ms = 12000 + rnd.nextInt(4000); break;
+            case RUNNING:  ms = 5400; break;
+            case THINKING: ms = 7000; break;
+            default:       ms = 8000; break;
+        }
+        handler.postDelayed(idleEnd, ms);
     }
 
-    /** Ends the current move at once (touch, chat open, hidden). The caller restarts the float if it still wants it. */
+    /** Ends the current pose at once (touch, chat open, hidden). The caller restarts the float if it still wants it. */
     private void endIdle() {
         handler.removeCallbacks(idleTick);
-        if (idleAnim != null) { Animator a = idleAnim; idleAnim = null; a.cancel(); }
+        handler.removeCallbacks(idleEnd);
+        if (idling) { idling = false; face.endIdle(); }
         resetPose();
     }
 
     private void resetPose() {
-        float w = bobber.getWidth() > 0 ? bobber.getWidth() : 52 * dp;
+        float w = bobber.getWidth() > 0 ? bobber.getWidth() : 56 * dp;
         bobber.setPivotX(w / 2f); bobber.setPivotY(w / 2f);
         bobber.setTranslationX(0f); bobber.setTranslationY(0f);
         bobber.setRotation(0f); bobber.setRotationY(0f);
         bobber.setScaleX(1f); bobber.setScaleY(1f); bobber.setAlpha(1f);
-        zzz.setAlpha(0f); zzz.setTranslationY(0f);
-    }
-
-    private Animator build(Idle p) {
-        final float w = bobber.getWidth() > 0 ? bobber.getWidth() : 52 * dp;
-        final TimeInterpolator lin = new LinearInterpolator(), soft = new AccelerateDecelerateInterpolator();
-        switch (p) {
-            case WIGGLE: {                                                   // quick shake, twice
-                ObjectAnimator r = ObjectAnimator.ofFloat(bobber, View.ROTATION, 0f, -14f, 12f, -9f, 6f, 0f);
-                r.setDuration(850); r.setRepeatCount(1);
-                return r;
-            }
-            case HOP: {                                                      // two hops, squash and stretch from the feet
-                bobber.setPivotY(w);
-                float[] f = {0f, .12f, .38f, .62f, .9f, 1f};
-                AnimatorSet s = new AnimatorSet();
-                s.playTogether(
-                        kf(bobber, View.TRANSLATION_Y, f, new float[]{0, 0, -16 * dp, 0, 0, 0}, 650, 1, lin),
-                        kf(bobber, View.SCALE_Y, f, new float[]{1f, .88f, 1.1f, 1f, .9f, 1f}, 650, 1, lin),
-                        kf(bobber, View.SCALE_X, f, new float[]{1f, 1.08f, .95f, 1f, 1.07f, 1f}, 650, 1, lin));
-                return s;
-            }
-            case SWAY: {                                                     // looks left, then right
-                float[] f = {0f, .25f, .75f, 1f};
-                AnimatorSet s = new AnimatorSet();
-                s.playTogether(
-                        kf(bobber, View.TRANSLATION_X, f, new float[]{0, -6 * dp, 6 * dp, 0}, 1500, 0, soft),
-                        kf(bobber, View.ROTATION, f, new float[]{0, -7, 7, 0}, 1500, 0, soft));
-                return s;
-            }
-            case FLIP: {                                                     // one coin flip around the vertical axis
-                ObjectAnimator r = ObjectAnimator.ofFloat(bobber, View.ROTATION_Y, 0f, 360f);
-                r.setDuration(900); r.setInterpolator(new DecelerateInterpolator());
-                return r;
-            }
-            case DASH: {                                                     // two small loops above its spot (original: "runs a circle")
-                final float rad = 9 * dp;
-                ValueAnimator v = ValueAnimator.ofFloat(0f, (float) (2 * Math.PI));
-                v.setDuration(1000); v.setInterpolator(lin); v.setRepeatCount(1);
-                v.addUpdateListener(a -> {
-                    double t = (Float) a.getAnimatedValue();
-                    bobber.setTranslationX((float) (Math.sin(t) * rad));
-                    bobber.setTranslationY((float) (-(1 - Math.cos(t)) * rad));
-                    bobber.setRotation((float) (Math.sin(t) * 10));
-                });
-                return v;
-            }
-            case THINK: {                                                    // head tilt, slow pulse
-                ObjectAnimator in = ObjectAnimator.ofFloat(bobber, View.ROTATION, 0f, -10f);
-                in.setDuration(300); in.setInterpolator(new DecelerateInterpolator());
-                ObjectAnimator sx = ObjectAnimator.ofFloat(bobber, View.SCALE_X, 1f, 1.07f);
-                ObjectAnimator sy = ObjectAnimator.ofFloat(bobber, View.SCALE_Y, 1f, 1.07f);
-                for (ObjectAnimator o : new ObjectAnimator[]{sx, sy}) { o.setDuration(450); o.setRepeatMode(ValueAnimator.REVERSE); o.setRepeatCount(5); }
-                AnimatorSet pulse = new AnimatorSet();
-                pulse.playTogether(sx, sy);
-                ObjectAnimator out = ObjectAnimator.ofFloat(bobber, View.ROTATION, -10f, 0f);
-                out.setDuration(300);
-                AnimatorSet s = new AnimatorSet();
-                s.playSequentially(in, pulse, out);
-                return s;
-            }
-            default: {                                                       // SLEEP: dims, breathes slowly, "Zz" rises
-                ObjectAnimator down = ObjectAnimator.ofFloat(bobber, View.ALPHA, 1f, .7f);
-                down.setDuration(250);
-                ObjectAnimator sx = ObjectAnimator.ofFloat(bobber, View.SCALE_X, 1f, 1.06f);
-                ObjectAnimator sy = ObjectAnimator.ofFloat(bobber, View.SCALE_Y, 1f, 1.06f);
-                for (ObjectAnimator o : new ObjectAnimator[]{sx, sy}) { o.setDuration(1000); o.setRepeatMode(ValueAnimator.REVERSE); o.setRepeatCount(3); }
-                ObjectAnimator rise = ObjectAnimator.ofFloat(zzz, View.TRANSLATION_Y, 0f, -16 * dp);
-                rise.setDuration(2000); rise.setRepeatCount(1); rise.setInterpolator(lin);
-                ObjectAnimator fade = kf(zzz, View.ALPHA, new float[]{0f, .2f, .8f, 1f}, new float[]{0f, 1f, 1f, 0f}, 2000, 1, lin);
-                AnimatorSet mid = new AnimatorSet();
-                mid.playTogether(sx, sy, rise, fade);
-                ObjectAnimator up = ObjectAnimator.ofFloat(bobber, View.ALPHA, .7f, 1f);
-                up.setDuration(250);
-                AnimatorSet s = new AnimatorSet();
-                s.playSequentially(down, mid, up);
-                return s;
-            }
-        }
-    }
-
-    private static ObjectAnimator kf(View target, Property<View, Float> prop, float[] at, float[] val, long ms, int repeat, TimeInterpolator ti) {
-        Keyframe[] k = new Keyframe[at.length];
-        for (int i = 0; i < at.length; i++) k[i] = Keyframe.ofFloat(at[i], val[i]);
-        ObjectAnimator o = ObjectAnimator.ofPropertyValuesHolder(target, PropertyValuesHolder.ofKeyframe(prop, k));
-        o.setDuration(ms); o.setRepeatCount(repeat); o.setInterpolator(ti);
-        return o;
     }
 
     // ------------------------------------------------------------------ touch: press, drag, snap to the nearest edge, tap

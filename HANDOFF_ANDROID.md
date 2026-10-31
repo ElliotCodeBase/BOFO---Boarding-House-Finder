@@ -1,3 +1,12 @@
+# Handoff (Android) - v2.0.50 JavaFX mascot animation (2026-10-31)
+- **PR title:** `v2.0.50 - Android: Ask BOFO button uses a port of the JavaFX mascot animation`
+- User: "re-use the javafx animation for the AI chat button instead of making another shitty version". Source of truth = `src/main/java/com/bofo/finder/ui/Mascot.java` + `BofoPanel.java` (idle timing). `BofoMascot.java` recomputes every frame from `SystemClock.uptimeMillis()` (no animator objects); JavaFX `Interpolator.EASE_*` curves are in `ease()`.
+- Colors are the Android mascot colors (yellow hat, `design/mascot`), NOT the JavaFX lavender re-theme (`Mascot.java` palette). To match JavaFX exactly, change the 7 color constants at the top of `BofoMascot`.
+- If the mascot is clipped when it hops / z's float: some parent has `clipChildren=true`; `FloatingBofoView` and its `bobber` already set it to false.
+- Not done: the chat header `MascotView` (THINKING / SITTING) still uses the old vector; can switch to `BofoMascot` (`setExpression`) if asked.
+
+---
+
 # Handoff (Android) - v2.0.49 offline strip (2026-10-31)
 - **PR title:** `v2.0.49 - Android: offline strip with icon and Try again`
 - `offline_banner` is now a LinearLayout (icon, text, `offline_retry` calling `reload()`); same observer in `HomeFragment`.

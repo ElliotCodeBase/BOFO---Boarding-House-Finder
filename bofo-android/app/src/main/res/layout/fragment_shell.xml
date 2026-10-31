@@ -30,8 +30,8 @@
     <!-- Ask BOFO button (Step 1b, v2.0.21): floats, can be dragged anywhere, snaps to a side edge, plays idle moves. Tap opens the chat card below. -->
     <com.bofo.finder.ui.FloatingBofoView
         android:id="@+id/bofo_fab"
-        android:layout_width="52dp"
-        android:layout_height="52dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="96dp" />

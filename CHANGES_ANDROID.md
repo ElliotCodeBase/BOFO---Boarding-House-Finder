@@ -1,3 +1,8 @@
+# v2.0.50 - Android port: the Ask BOFO button uses the JavaFX mascot animation (JavaFX app stays v1.20.0)
+- New `BofoMascot` = a line-by-line port of the JavaFX `Mascot.java`: same shapes on the 200 grid, same four poses (**thinking**: hand on chin, foot tap, eyes look around, bubble; **sitting**: plops down, feet swing, blinks; **running**: leans, arms pump, feet stride, speed lines; **sleeping**: slumped, nodding, hat droops, z z z) and the same **squash-and-hop** between poses. Same numbers and easing curves as the JavaFX Timelines.
+- `FloatingBofoView` now works like `BofoPanel`: white round 56 dp button with a thin border, mascot in a fixed 46 dp box, plain 1.2 s bob (no tilt), first pose after 4-10 s, never the same pose twice, lengths 7 s / 8 s / 5.4 s / 12-16 s, tap or drag ends it. The old wiggle / hop / flip / dash moves and the "Zz" text are gone.
+- Changed: `FloatingBofoView.java`, `fragment_shell.xml` (button 52 -> 56 dp), `build.gradle` (2.0.50 / 250). New: `BofoMascot.java`, `bg_bofo_fab.xml`. The chat header still uses `MascotView` (unchanged). Not built by Claude (frames were rendered on a desktop JVM to check the drawing).
+
 # v2.0.49 - Android port: better offline strip on Home (JavaFX app stays v1.20.0)
 - The dark offline strip now has a small wifi-off icon, the text "You're offline. Showing saved places." and a **Try again** button on the right (reloads the list). Slightly taller (40 dp) so it no longer sits tight on the greeting.
 - Changed: `fragment_home.xml`, `strings_home.xml`, `HomeFragment.java`, `build.gradle` (2.0.49 / 249). Not built by Claude.
