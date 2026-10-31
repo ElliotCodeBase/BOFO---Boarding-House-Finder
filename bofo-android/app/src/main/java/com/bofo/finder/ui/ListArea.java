@@ -17,10 +17,12 @@ import com.bofo.finder.R;
 import com.bofo.finder.databinding.ViewListAreaBinding;
 import com.bofo.finder.model.BoardingHouse;
 import com.bofo.finder.util.Cache;
+import com.bofo.finder.util.Connectivity;
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
 /** The shared body of Home / Explore / Saved: card grid, skeleton while loading, pull to refresh, message + retry. */
@@ -29,6 +31,18 @@ final class ListArea {
     private final BhAdapter adapter;
     private ObjectAnimator pulse;
     private final Footer footer = new Footer();
+    private static final long SLOW_MS = 5000;                 // v2.0.48: after this long the skeleton gets a "Slow network" note
+    private boolean offlineShown;
+    private Consumer<Boolean> slowListener;
+    private final Runnable slowRun = new Runnable() {
+        @Override public void run() {
+            if (b.skeleton.getVisibility() != View.VISIBLE) return;
+            float dn = b.skeleton.getResources().getDisplayMetrics().density;
+            b.skeleton.setPadding(b.skeleton.getPaddingLeft(), Math.round(36 * dn), b.skeleton.getPaddingRight(), b.skeleton.getPaddingBottom());
+            b.slowNote.setVisibility(View.VISIBLE);
+            if (slowListener != null) slowListener.accept(true);
+        }
+    };
 
     /** Step 7: one full-width "Show more (n)" button after the cards. */
     private static final class Footer extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -60,7 +74,14 @@ final class ListArea {
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
         b.swipe.setOnRefreshListener(() -> { Cache.remove("list:"); reload.run(); });
         b.retry.setOnClickListener(v -> reload.run());
+        // Back online while the "No internet connection" screen is showing: reload by itself.
+        Connectivity.OFFLINE.observe(f.getViewLifecycleOwner(), off -> { if (Boolean.FALSE.equals(off) && offlineShown) reload.run(); });
     }
+
+    /** Home uses this to put a "Slow network" note on the map too. true = loading is slow, false = it stopped. */
+    void setSlowListener(Consumer<Boolean> l) { slowListener = l; }
+
+    boolean isOfflineShown() { return offlineShown; }
 
     /** First load: skeleton cards. Later loads: keep the list and show the pull-to-refresh spinner. */
     void showLoading() {
@@ -68,6 +89,9 @@ final class ListArea {
         if (adapter.getItemCount() > 0) { b.swipe.setRefreshing(true); return; }
         b.list.setVisibility(View.GONE);
         b.skeleton.setVisibility(View.VISIBLE);
+        b.slowNote.setVisibility(View.GONE);
+        b.skeleton.removeCallbacks(slowRun);
+        b.skeleton.postDelayed(slowRun, SLOW_MS);
         if (pulse == null) {
             pulse = ObjectAnimator.ofFloat(b.skeleton, View.ALPHA, 1f, 0.45f);
             pulse.setDuration(900);
@@ -85,6 +109,7 @@ final class ListArea {
 
     void showList(List<BoardingHouse> l, boolean toTop) {
         stopLoading();
+        offlineShown = false;
         b.emptyBox.setVisibility(View.GONE);
         b.list.setVisibility(View.VISIBLE);
         adapter.submitList(l, toTop ? () -> b.list.scrollToPosition(0) : null);
@@ -92,6 +117,28 @@ final class ListArea {
 
     /** Empty result or error (retry = true shows the Try again button). */
     void showMessage(String text, boolean retry) {
+        offlineShown = false;
+        b.emptyIcon.setImageResource(R.drawable.mascot_happy);
+        b.emptyIcon.setImageTintList(null);
+        b.emptyIcon.setPadding(0, 0, 0, 0);
+        b.emptyTitle.setVisibility(View.GONE);
+        fillMessage(text, retry);
+    }
+
+    /** v2.0.48: no network at all (and no saved copy): wifi-off icon, a clear title, one line of help, Try again. */
+    void showOffline() {
+        offlineShown = true;
+        float dn = b.emptyIcon.getResources().getDisplayMetrics().density;
+        int pad = Math.round(14 * dn);
+        b.emptyIcon.setImageResource(R.drawable.ic_wifi_off);
+        b.emptyIcon.setImageTintList(android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(b.emptyIcon.getContext(), R.color.bofo_muted)));
+        b.emptyIcon.setPadding(pad, pad, pad, pad);
+        b.emptyTitle.setText(R.string.net_offline_title);
+        b.emptyTitle.setVisibility(View.VISIBLE);
+        fillMessage(b.emptyText.getContext().getString(R.string.net_offline_body), true);
+    }
+
+    private void fillMessage(String text, boolean retry) {
         stopLoading();
         footer.set(null, null);
         adapter.submitList(Collections.<BoardingHouse>emptyList());
@@ -103,12 +150,18 @@ final class ListArea {
 
     private void stopLoading() {
         b.swipe.setRefreshing(false);
+        b.skeleton.removeCallbacks(slowRun);
+        if (b.slowNote.getVisibility() == View.VISIBLE) {
+            b.slowNote.setVisibility(View.GONE);
+            b.skeleton.setPadding(b.skeleton.getPaddingLeft(), 0, b.skeleton.getPaddingRight(), b.skeleton.getPaddingBottom());
+            if (slowListener != null) slowListener.accept(false);
+        }
         b.skeleton.setVisibility(View.GONE);
         if (pulse != null) { pulse.cancel(); b.skeleton.setAlpha(1f); }
     }
 
     /** Call from onDestroyView so no animator keeps the old view alive. */
-    void destroy() { if (pulse != null) { pulse.cancel(); pulse = null; } }
+    void destroy() { b.skeleton.removeCallbacks(slowRun); slowListener = null; if (pulse != null) { pulse.cancel(); pulse = null; } }
 
     static void toast(Fragment f, String msg) {
         if (f.isAdded() && f.getContext() != null) Toast.makeText(f.requireContext(), msg, Toast.LENGTH_SHORT).show();

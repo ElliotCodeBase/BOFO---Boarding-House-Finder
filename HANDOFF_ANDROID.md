@@ -1,3 +1,11 @@
+# Handoff (Android) - v2.0.48 slow / no-internet states (2026-10-31)
+- **PR title:** `v2.0.48 - Android: skeleton + "Slow network" note, clear "No internet connection" screen, map note`
+- User screenshot: Home showed an empty area under "Nearby boarding houses" and a blank map. Now `ListArea.showLoading()` posts a 5 s `slowRun` (note over the skeleton, `setSlowListener` lets Home show a map note); `ListArea.showOffline()` is used by Home / Explore / Saved when `Connectivity.isNetworkError(e)`; `ListArea` observes `Connectivity.OFFLINE` and reloads when it flips back to online while the offline screen is showing.
+- Test: airplane mode + open Home (offline screen, then turn it off = reloads by itself); Developer options > network throttling or a very weak connection (skeleton, then the slow note after 5 s, map note).
+- Not done / ideas: other screens (Chats, Dashboard, Detail) still use their own plain text messages with the new `list_offline` wording.
+
+---
+
 # Handoff (Android) - v2.0.47 Directions auto-retry (2026-10-31)
 - **PR title:** `v2.0.47 - Android: Directions card retries by itself`
 - `DirectionsCardView.runPlan(t, my, from, to, tries)`; guarded by `token` and `planning`. If the user means "update as the phone moves", that already happens through `onFix` / `startWatching`.

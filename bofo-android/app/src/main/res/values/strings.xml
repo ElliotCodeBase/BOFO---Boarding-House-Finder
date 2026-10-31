@@ -122,7 +122,7 @@
     <string name="common_try_again">Try again</string>
     <string name="offline_banner">You are offline. Showing the last saved copy.</string>
     <string name="list_error">Could not load the boarding houses.</string>
-    <string name="list_offline">No connection to the server. Check the internet and pull down to try again.</string>
+    <string name="list_offline">No internet connection. Check your Wi-Fi or mobile data and try again.</string>
     <string name="cd_bh_photo">Boarding house photo</string>
     <string name="cd_save">Save this place</string>
     <string name="cd_back">Back</string>
