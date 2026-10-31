@@ -1,3 +1,8 @@
+# v2.0.72 - Android: boarding house dot / pin no longer sits on the phone's dot
+- **Fixed:** when a boarding house was near the user's own location, its circle (or pin / number bubble) was drawn on top of the phone's blue dot and its ripples.
+- **Now:** a house whose marker would land within about 30 dp (dots), 22 dp (pins) or 34 dp (number bubbles) of the phone's dot is shown just outside that distance, straight away from the dot (straight down when exactly on it). Only the drawing moves; the house's real position, tap and route are unchanged. It follows the phone and the zoom.
+- Files: `MapCardView.java` (`clearOfUser`, `rebuildPlaces`, `setUser`), `build.gradle` (2.0.72 / 272). Not built or run by Claude.
+
 # v2.0.71 - Android: Home map stays exactly where it was after the place page
 - **Fixed:** the first time you left a place page the map came back as it was, but later (no campus chosen, "Near me" / overview mode) it jumped to the zoomed-out "Finding your location" view. Cause: coming back, Home forgot it already had a location fix, so the first location update re-ran the overview; the list reload also re-ran overview / fit.
 - **Now:** coming back from a place page Home keeps the saved camera, keeps the known location (blue dot shows at once) and skips the automatic overview / fit once. Picking a campus, radius, Near me or the locate button still moves the map as before.

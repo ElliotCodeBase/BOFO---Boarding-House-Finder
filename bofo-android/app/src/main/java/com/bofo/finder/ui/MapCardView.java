@@ -489,7 +489,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             if (r[0] > 8) heading = (double) ((r[1] % 360 + 360) % 360);
         } else if (lat == null) heading = null;
         userLat = lat; userLng = lng;
-        if (style != null) { set("user-src", MapGeo.pointJson(userLat, userLng)); set("cone-src", coneJson()); }
+        if (style != null) { set("user-src", MapGeo.pointJson(userLat, userLng)); set("cone-src", coneJson()); rebuildPlaces(false); }   // houses near the dot slide clear of it (only redone when the phone moved ~10 m)
         refreshRadar();
         if (lat == null) { stopRipples(); return; }
         if (first) popIn();
@@ -746,7 +746,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** force = false (after a camera move): skipped when the data, selection, zoom and card size are all unchanged, because a pure pan moves every pin the same way (clusters and label clashes do not change). */
     private void rebuildPlaces(boolean force) {
         if (style == null || map == null) return;
-        String sig = placesVer + "|" + selectedId + "|" + Math.round(map.getCameraPosition().zoom * 20) + "|" + getWidth() + "x" + getHeight();
+        String sig = placesVer + "|" + selectedId + "|" + Math.round(map.getCameraPosition().zoom * 20) + "|" + getWidth() + "x" + getHeight()
+                + "|" + (userLat == null ? "-" : Math.round(userLat * 10000) + "," + Math.round(userLng * 10000));       // v2.0.72: a pin that was moved off the phone's dot follows the phone
         if (!force && sig.equals(placesSig)) return;
         placesSig = sig;
         float d = getResources().getDisplayMetrics().density;
@@ -756,8 +757,18 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             BoardingHouse p = places.get(i);
             if (!Double.isNaN(p.lat()) && !Double.isNaN(p.lng())) sp[i] = map.getProjection().toScreenLocation(new LatLng(p.lat(), p.lng()));
         }
+        // v2.0.72: a house under the phone's dot (or its ripples) is moved just clear of it on screen, so the two circles never sit on top of each other
+        final boolean pinMode = map.getCameraPosition().zoom >= PIN_ZOOM;
+        final float clr = (pinMode ? 22 : 30) * d;
+        final double[][] pos = new double[n][];
+        for (int i = 0; i < n; i++) {
+            if (sp[i] == null) continue;
+            BoardingHouse p = places.get(i);
+            pos[i] = clearOfUser(p.lat(), p.lng(), clr);
+            if (pos[i][0] != p.lat() || pos[i][1] != p.lng()) sp[i] = map.getProjection().toScreenLocation(new LatLng(pos[i][0], pos[i][1]));
+        }
         StringBuilder feats = new StringBuilder(), labels = new StringBuilder();
-        if (map.getCameraPosition().zoom >= PIN_ZOOM) {
+        if (pinMode) {
             List<Integer> order = new ArrayList<>();
             for (int i = 0; i < n; i++) if (sp[i] != null) { if (places.get(i).id().equals(selectedId)) order.add(0, i); else order.add(i); }
             List<RectF> bodies = new ArrayList<>(), taken = new ArrayList<>();
@@ -767,7 +778,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 BoardingHouse p = places.get(i);
                 boolean isSel = p.id().equals(selectedId);
                 if (feats.length() > 0) feats.append(',');
-                feats.append(feat(p.lat(), p.lng(), "\"kind\":\"pin\",\"id\":\"" + esc(p.id()) + "\",\"icon\":\"" + (isSel ? "pin-sel" : p.featured() ? "pin-star" : "pin") + "\",\"sel\":" + (isSel ? 1 : 0)));
+                feats.append(feat(pos[i][0], pos[i][1], "\"kind\":\"pin\",\"id\":\"" + esc(p.id()) + "\",\"icon\":\"" + (isSel ? "pin-sel" : p.featured() ? "pin-star" : "pin") + "\",\"sel\":" + (isSel ? 1 : 0)));
                 String text = clip(p.name(), 22);
                 if (text.isEmpty()) continue;
                 String key = "lb|" + text;
@@ -785,7 +796,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 if (clash && !isSel) continue;                                    // colliding labels are hidden
                 taken.add(r);
                 if (labels.length() > 0) labels.append(',');
-                labels.append(feat(p.lat(), p.lng(), "\"icon\":\"" + esc(key) + "\""));
+                labels.append(feat(pos[i][0], pos[i][1], "\"icon\":\"" + esc(key) + "\""));
             }
         } else {
             boolean[] used = new boolean[n];
@@ -798,7 +809,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 if (feats.length() > 0) feats.append(',');
                 if (m.size() == 1) {
                     BoardingHouse p = places.get(i);
-                    feats.append(feat(p.lat(), p.lng(), "\"kind\":\"dot\",\"id\":\"" + esc(p.id()) + "\",\"sel\":" + (p.id().equals(selectedId) ? 1 : 0)));
+                    feats.append(feat(pos[i][0], pos[i][1], "\"kind\":\"dot\",\"id\":\"" + esc(p.id()) + "\",\"sel\":" + (p.id().equals(selectedId) ? 1 : 0)));
                 } else {
                     double la = 0, ln = 0, bn = -90, bs = 90, be = -180, bw = 180;
                     for (int j : m) {
@@ -808,13 +819,26 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                     }
                     String key = "cl|" + m.size();
                     if (imgs.add(key)) style.addImage(key, bubble(m.size()));
-                    feats.append(feat(la / m.size(), ln / m.size(), String.format(Locale.US,
+                    double[] cpos = clearOfUser(la / m.size(), ln / m.size(), 34 * d);
+                    feats.append(feat(cpos[0], cpos[1], String.format(Locale.US,
                             "\"kind\":\"cluster\",\"icon\":\"%s\",\"bn\":%.6f,\"bs\":%.6f,\"be\":%.6f,\"bw\":%.6f", key, bn, bs, be, bw)));
                 }
             }
         }
         set("places-src", collection(feats));
         set("labels-src", collection(labels));
+    }
+
+    /** {lat, lng} of a point that is at least {@code clearPx} screen pixels away from the phone's dot: nearer points slide straight out to that distance (straight down when exactly on it). */
+    private double[] clearOfUser(double lat, double lng, float clearPx) {
+        if (userLat == null || map == null || Double.isNaN(lat) || Double.isNaN(lng)) return new double[]{lat, lng};
+        PointF u = map.getProjection().toScreenLocation(new LatLng(userLat, userLng));
+        PointF q = map.getProjection().toScreenLocation(new LatLng(lat, lng));
+        double dx = q.x - u.x, dy = q.y - u.y, dist = Math.hypot(dx, dy);
+        if (dist >= clearPx) return new double[]{lat, lng};
+        if (dist < 1) { dx = 0; dy = 1; dist = 1; }
+        LatLng ll = map.getProjection().fromScreenLocation(new PointF((float) (u.x + dx / dist * clearPx), (float) (u.y + dy / dist * clearPx)));
+        return new double[]{ll.getLatitude(), ll.getLongitude()};
     }
 
     private void rebuildColleges() { rebuildColleges(true); }
