@@ -54,6 +54,7 @@ public class HomeFragment extends Fragment {
     private String paintedPhoto = "";
     private int token;
     private int lastChange = -1;
+    private boolean viewShownBefore, keepCamera;     // v2.0.71: coming back from a place page the map stays where it was (no overview / fit jump)
     private int tab;
     private static final int BATCH = 15;
     private int shown = BATCH;
@@ -83,6 +84,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle state) {
         super.onViewCreated(view, state);
+        keepCamera = viewShownBefore;
         adapter = new BhAdapter(new BhAdapter.Listener() {
             @Override public void open(BoardingHouse x) { BhDetailFragment.open(HomeFragment.this, x.id()); }
             @Override public void heart(BoardingHouse x) { Favorites.toggle(x.id(), msg -> ListArea.toast(HomeFragment.this, msg)); }
@@ -134,6 +136,7 @@ public class HomeFragment extends Fragment {
         paintLocate();
         // MapLibre start-up (native libs, style parse) is heavy: do it after the first frame, not inside the same frame as the list
         final View root = b.getRoot();
+        if (me != null) b.mapCard.setUser(me[0], me[1]);      // the blue dot is back at once
         b.mapCard.rememberCamera("home");                  // v2.0.69: coming back from a place page the map opens where it was
         root.postDelayed(() -> { if (b != null && isAdded()) b.mapCard.activate(getViewLifecycleOwner()); }, 300);
 
@@ -453,7 +456,11 @@ public class HomeFragment extends Fragment {
         String key = BrowseState.refLat() + "," + BrowseState.refLng();
         boolean changed = !key.equals(lastRef);
         lastRef = key;
-        if (overviewActive()) {
+        boolean skip = keepCamera && !changed;          // back from a place page: the saved camera was already put back
+        keepCamera = false;
+        if (skip) {
+            ovFit = false;
+        } else if (overviewActive()) {
             if (changed || ovFit) { if (!current.isEmpty()) ovFit = false; b.mapCard.overview(); }
         } else if (changed) b.mapCard.fit();
     }
@@ -475,7 +482,8 @@ public class HomeFragment extends Fragment {
         if (area != null) area.destroy();
         routeToken++;
         search = null;
-        finding = false; haveFix = false;
+        finding = false;               // v2.0.71: haveFix stays, so the first location update after coming back does not re-zoom the map
+        viewShownBefore = true;
         b = null;
         super.onDestroyView();
     }

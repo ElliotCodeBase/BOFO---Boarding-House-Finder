@@ -65,11 +65,21 @@ public final class MapGeo {
     public static double[] bounds(List<BoardingHouse> places) {
         if (places == null || places.isEmpty()) return null;
         double minLat = 90, minLng = 180, maxLat = -90, maxLng = -180;
+        boolean any = false;
         for (BoardingHouse p : places) {
+            if (!validPoint(p.lat(), p.lng())) continue;       // v2.0.70: a house saved without a real position (0, 0 = open sea) must not pull the camera away from the others
+            any = true;
             minLat = Math.min(minLat, p.lat()); maxLat = Math.max(maxLat, p.lat());
             minLng = Math.min(minLng, p.lng()); maxLng = Math.max(maxLng, p.lng());
         }
-        return new double[]{minLat, minLng, maxLat, maxLng};
+        return any ? new double[]{minLat, minLng, maxLat, maxLng} : null;
+    }
+
+    /** False for NaN, out-of-range values and the empty 0 / 0 point. */
+    public static boolean validPoint(double lat, double lng) {
+        if (Double.isNaN(lat) || Double.isNaN(lng)) return false;
+        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return false;
+        return Math.abs(lat) > 0.0001 || Math.abs(lng) > 0.0001;
     }
 
     /** Bounds of the ring around a centre: {minLat, minLng, maxLat, maxLng}. */

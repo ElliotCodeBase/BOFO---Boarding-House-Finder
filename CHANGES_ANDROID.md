@@ -1,3 +1,14 @@
+# v2.0.71 - Android: Home map stays exactly where it was after the place page
+- **Fixed:** the first time you left a place page the map came back as it was, but later (no campus chosen, "Near me" / overview mode) it jumped to the zoomed-out "Finding your location" view. Cause: coming back, Home forgot it already had a location fix, so the first location update re-ran the overview; the list reload also re-ran overview / fit.
+- **Now:** coming back from a place page Home keeps the saved camera, keeps the known location (blue dot shows at once) and skips the automatic overview / fit once. Picking a campus, radius, Near me or the locate button still moves the map as before.
+- Files: `HomeFragment.java` (`viewShownBefore`, `keepCamera`, `haveFix` kept, `setUser` on return), `build.gradle` (2.0.71 / 271). Not built or run by Claude.
+
+# v2.0.70 - Android: one bad house position no longer blanks the Home map
+- **Fixed:** with some boarding houses the Home map still showed nothing. A house saved without a real position (0 / 0, open sea, or missing) was counted when the map fitted "all pins", so the camera zoomed out to include the sea.
+- **Now:** `MapGeo.bounds` ignores houses whose position is empty or invalid (`MapGeo.validPoint`). The camera fits only the real ones.
+- Files: `MapGeo.java`, `build.gradle` (2.0.70 / 270). Not built or run by Claude.
+- To fix the data itself: in Supabase, `boarding_houses` rows with `lat = 0` or `lng = 0` need a real pin (owner can edit the place and move the pin).
+
 # v2.0.69 - Android: Home map remembers where it was
 - **Fixed:** after leaving a place page the Home map opened at the empty start view (lat 0 / lng 0, open sea) and showed nothing. The camera (centre + zoom) is now saved when the map stops moving and when the screen closes, and put back when Home opens the map again.
 - Only Home uses it for now (`rememberCamera("home")`); other maps are unchanged. A new campus / radius / Near me still moves the camera as before.
