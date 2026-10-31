@@ -1,3 +1,9 @@
+# v2.0.75 - Android: nicer house dots + map credit as an (i) button
+- **Fixed:** the house dots on the map were black. Cause: the colour was given to the map as a plain number (`Expression.literal(int)`), which MapLibre does not read as a colour; it now uses `Expression.color(...)`.
+- **Now:** a house dot is indigo (dark indigo when selected) with a thick white ring and a soft indigo halo (new layer `places-dots-halo`). Taps are unchanged.
+- **Map credit:** the "(c) OpenStreetMap contributors - OpenFreeMap" text shows for 4 s when the map appears, then folds into a small round (i); tap it to read the credit again (folds after 5 s). Softer white pill with a thin border (`bg_attribution`, new `bg_attribution_dot`). The licence text stays reachable.
+- Files: `MapCardView.java` (`places-dots` / `places-dots-halo`, `setupAttribution`, `setAttribution`), `bg_attribution.xml`, `bg_attribution_dot.xml` (new), `view_map_card.xml`, `build.gradle` (2.0.75 / 275). Not built or run by Claude.
+
 # v2.0.74 - Android: the path is always in view (pathfind fix)
 - **Fixed:** after tapping a house the path (line, start / end dots) was not visible: only the "757 m - 9 min" chip showed and the map stayed on the zoomed-out overview. Cause: the "fit the path" move could be undone by a later overview / fit (first location fix, list reload), and the fit itself was silently skipped when its padding was bigger than the small map card.
 - **Now:** while a path is shown, overview / fit / ring moves are ignored and only re-fit the path; the path padding is capped to 70 % of the card height and 20 % of the width, with fallbacks (plain padding, then centre + zoom 15) and a retry if the card is not laid out yet.

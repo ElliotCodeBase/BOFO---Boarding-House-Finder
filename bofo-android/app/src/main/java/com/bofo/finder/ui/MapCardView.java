@@ -141,6 +141,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     public MapCardView(@NonNull Context c, @Nullable AttributeSet a) {
         super(c, a);
         b = ViewMapCardBinding.inflate(LayoutInflater.from(c), this, true);      // 3 arguments: view_map_card.xml has a FrameLayout root, not <merge>
+        setupAttribution();
         b.locate.setOnClickListener(v -> { if (listener != null) listener.locate(); });
         b.expand.setOnClickListener(v -> { if (listener != null) listener.expand(); });
         b.radiusSlider.addOnChangeListener((sl, v, fromUser) -> {
@@ -396,11 +397,17 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 PropertyFactory.circleRadius(7f * BIG), PropertyFactory.circleColor(BLUE)));
         // Step 6: zoomed out = small dots that merge into numbered bubbles; zoomed in = full pins with names (rebuildPlaces decides, per zoom)
         Expression sel = Expression.eq(Expression.get("sel"), Expression.literal(1));
+        Expression isDot = Expression.eq(Expression.get("kind"), Expression.literal("dot"));
+        Expression dotColor = Expression.switchCase(sel, Expression.color(DARK_PURPLE), Expression.color(primary));      // v2.0.75: Expression.color, not literal(int) (a plain number drew black dots)
+        st.addLayer(new CircleLayer("places-dots-halo", "places-src").withProperties(
+                PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(15f * BIG), Expression.literal(10f * BIG))),
+                PropertyFactory.circleColor(dotColor), PropertyFactory.circleOpacity(0.18f))
+                .withFilter(isDot));
         st.addLayer(new CircleLayer("places-dots", "places-src").withProperties(
-                PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(8f * BIG), Expression.literal(5f * BIG))),
-                PropertyFactory.circleColor(Expression.switchCase(sel, Expression.literal(DARK_PURPLE), Expression.literal(primary))),
-                PropertyFactory.circleStrokeWidth(2f), PropertyFactory.circleStrokeColor(0xFFFFFFFF))
-                .withFilter(Expression.eq(Expression.get("kind"), Expression.literal("dot"))));
+                PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(8f * BIG), Expression.literal(5.5f * BIG))),
+                PropertyFactory.circleColor(dotColor),
+                PropertyFactory.circleStrokeWidth(2.5f), PropertyFactory.circleStrokeColor(0xFFFFFFFF))
+                .withFilter(isDot));
         st.addLayer(new SymbolLayer("places-clusters", "places-src").withProperties(
                 PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true))
                 .withFilter(Expression.eq(Expression.get("kind"), Expression.literal("cluster"))));
@@ -1083,7 +1090,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     @Override protected void onSizeChanged(int w, int h, int ow, int oh) { super.onSizeChanged(w, h, ow, oh); if (radar != null) post(this::refreshRadar); }
 
     @Override protected void onAttachedToWindow() { super.onAttachedToWindow(); startRipples(); }
-    @Override protected void onDetachedFromWindow() { stopRipples(); super.onDetachedFromWindow(); }
+    @Override protected void onDetachedFromWindow() { stopRipples(); removeCallbacks(attrCollapse); super.onDetachedFromWindow(); }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
@@ -1114,5 +1121,43 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         if (mapView != null) { mapView.onDestroy(); b.mapHost.removeView(mapView); }
         mapView = null; map = null; style = null; owner = null;
         placesSig = null; collegesSig = null;
+    }
+
+    // ---- v2.0.75: map credit as a small (i) button -----------------------------------------------------------------
+
+    private boolean attrOpen;
+    private final Runnable attrCollapse = () -> setAttribution(false);
+
+    /** The licence text stays reachable: it shows for 4 s when the map appears, then folds into a round (i); tapping it opens the text for 5 s. */
+    private void setupAttribution() {
+        b.attribution.setOnClickListener(v -> {
+            removeCallbacks(attrCollapse);
+            setAttribution(!attrOpen);
+            if (attrOpen) postDelayed(attrCollapse, 5000);
+        });
+        setAttribution(true);
+        postDelayed(attrCollapse, 4000);
+    }
+
+    private void setAttribution(boolean open) {
+        attrOpen = open;
+        android.widget.TextView a = b.attribution;
+        float d = getResources().getDisplayMetrics().density;
+        android.transition.TransitionManager.beginDelayedTransition(this, new android.transition.AutoTransition().setDuration(160));
+        if (open) {
+            a.setText(R.string.map_attribution);
+            a.setBackgroundResource(R.drawable.bg_attribution);
+            a.setTypeface(Typeface.DEFAULT);
+            a.setMinWidth(0); a.setMinHeight(0);
+            a.setPadding(Math.round(8 * d), Math.round(4 * d), Math.round(8 * d), Math.round(4 * d));
+        } else {
+            a.setText("i");
+            a.setBackgroundResource(R.drawable.bg_attribution_dot);
+            a.setTypeface(Typeface.DEFAULT_BOLD);
+            a.setGravity(android.view.Gravity.CENTER);
+            a.setMinWidth(Math.round(22 * d)); a.setMinHeight(Math.round(22 * d));
+            a.setPadding(0, 0, 0, 0);
+        }
+        a.setContentDescription(getContext().getString(R.string.map_attribution));
     }
 }

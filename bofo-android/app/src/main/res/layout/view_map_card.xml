@@ -22,6 +22,7 @@
         android:paddingVertical="2dp"
         android:text="@string/map_attribution"
         android:textColor="@color/bofo_text_2"
+        android:gravity="center"
         android:textSize="10sp" />
 
     <!-- Locate button: round, white, bottom-right (expand sits above it and is only shown where a screen asks for it) -->

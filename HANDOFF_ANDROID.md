@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.75 Dots + map credit
+- **PR title:** `v2.0.75 - Android: indigo house dots with halo, map credit folds into an (i) button`
+- `MapCardView`: dots use `Expression.color` (the old `Expression.literal(int)` made them black); `places-dots-halo` layer under `places-dots`. `setupAttribution` / `setAttribution` toggle the `attribution` TextView between pill and round (i) (auto-fold 4 s / 5 s). No Supabase change. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.74 Path always in view
 - **PR title:** `v2.0.74 - Android: pathfind fix, the path stays in view`
 - `MapCardView`: `fit()` / `overview()` call `fitRoute()` when `routeShown()`; `glideToRing` returns while a path is shown; `fitRouteBounds` caps padding (<= 70 % height, <= 20 % width), falls back to plain padding then centre + zoom 15, and retries when the card has no size yet. No Supabase change. Not built or run by Claude.
