@@ -159,7 +159,8 @@ public class MapFragment extends Fragment {
         Double la = BrowseState.nearMe && BrowseState.userLat != null ? BrowseState.userLat : BrowseState.deviceLat;
         Double ln = BrowseState.nearMe && BrowseState.userLng != null ? BrowseState.userLng : BrowseState.deviceLng;
         boolean phone = la != null && ln != null;
-        if ((routeFromMe || c == null) && phone) { b.map.setUser(la, ln); return new double[]{la, ln}; }
+        routeLive = false;
+        if ((routeFromMe || c == null) && phone) { b.map.setUser(la, ln); routeLive = true; return new double[]{la, ln}; }
         if (c != null) return new double[]{c.lat(), c.lng()};
         return null;
     }
@@ -169,6 +170,11 @@ public class MapFragment extends Fragment {
     private static final long SLOW_RETRY_MS = 15_000L;
     private BoardingHouse routeHouse;
     private double[] routeFrom;
+    /** true = the path starts at the phone, so it is drawn again from the new spot when you move (the old road stays until the new one is ready). */
+    private boolean routeLive, rerouting;
+    private long lastRerouteMs;
+    private static final double REROUTE_METERS = 40;
+    private static final long REROUTE_MIN_MS = 8_000L;
 
     private static boolean walkable(double[] from, BoardingHouse h) { return Geo.km(from[0], from[1], h.lat(), h.lng()) <= 3; }
 
@@ -176,7 +182,7 @@ public class MapFragment extends Fragment {
     private void drawRoute(BoardingHouse bh) {
         final double[] from = routeStart();
         if (from == null) { b.map.clearRoute(); say(R.string.bofo_route_no_start); return; }
-        routeHouse = bh; routeFrom = from;
+        routeHouse = bh; routeFrom = from; rerouting = false;
         final int my = ++routeToken;
         Router.Route known = Router.peek(from[0], from[1], bh.lat(), bh.lng());
         if (known == null) known = Router.estimate(from[0], from[1], bh.lat(), bh.lng());
@@ -189,7 +195,8 @@ public class MapFragment extends Fragment {
         final boolean walk = walkable(from, h);
         Async.run(() -> walk ? Router.walk(from[0], from[1], h.lat(), h.lng()) : Router.drive(from[0], from[1], h.lat(), h.lng()), (Router.Route r) -> {
             if (my != routeToken || b == null) return;
-            showRoute(r, walk);
+            if (rerouting && r.approximate()) { retryLater(my, from, h, tries); return; }      // keep the good road on screen, never swap it for a dashed guess
+            showRoute(r, walk, !rerouting);
             if (r.approximate()) retryLater(my, from, h, tries);
         }, e -> { if (my == routeToken && b != null) retryLater(my, from, h, tries); });
     }
@@ -200,12 +207,25 @@ public class MapFragment extends Fragment {
         b.getRoot().postDelayed(() -> { if (my == routeToken && b != null && isResumed()) fetchRoute(my, from, h, tries + 1); }, delay);
     }
 
-    private void showRoute(Router.Route r, boolean walk) {
+    private void showRoute(Router.Route r, boolean walk) { showRoute(r, walk, true); }
+
+    private void showRoute(Router.Route r, boolean walk, boolean fit) {
         double km = r.meters() / 1000.0;
         int min = (int) Math.max(1, Math.round(r.meters() / (walk ? 80.0 : 500.0)));      // 80 m/min walking, about 30 km/h by road
         b.map.setRoute(r.pts(), r.approximate());
         b.map.setRouteLabel(getString(r.approximate() ? R.string.bofo_route_label_est : R.string.bofo_route_label, Geo.fmt(km), Geo.fmtTime(min)));
-        b.map.fitRoute();
+        if (fit) b.map.fitRoute();
+    }
+
+    /** You moved: draw the path again from where you are now (at most every 8 s, and only after 40 m). */
+    private void maybeReroute(double lat, double lng) {
+        if (b == null || !routeMode || !routeLive || routeHouse == null || routeFrom == null) return;
+        long now = android.os.SystemClock.elapsedRealtime();
+        if (now - lastRerouteMs < REROUTE_MIN_MS || Geo.km(routeFrom[0], routeFrom[1], lat, lng) * 1000 < REROUTE_METERS) return;
+        lastRerouteMs = now;
+        routeFrom = new double[]{lat, lng};
+        rerouting = true;
+        fetchRoute(++routeToken, routeFrom, routeHouse, 0);
     }
 
     private void fail(int my, Throwable e) {
@@ -251,7 +271,7 @@ public class MapFragment extends Fragment {
     private void startLive() {
         if (b == null || getContext() == null || !LocationHelper.granted(requireContext()) || !AppPrefs.useLocation(requireContext())) return;
         loc.startWatching(new LocationHelper.Callback() {
-            @Override public void got(double lat, double lng) { if (b != null) b.map.setUser(lat, lng); }
+            @Override public void got(double lat, double lng) { if (b == null) return; b.map.setUser(lat, lng); maybeReroute(lat, lng); }
             @Override public void off() { }
             @Override public void denied() { }
             @Override public void failed() { }

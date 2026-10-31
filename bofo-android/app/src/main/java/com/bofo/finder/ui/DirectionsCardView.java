@@ -212,6 +212,9 @@ public class DirectionsCardView extends MaterialCardView {
             if (my != token) return;
             planning = false; plan = p; chosen = p.best();
             render(t);
+            boolean guess = false;                                      // any option still drawn as a straight guess: ask the road servers again by itself
+            for (Trip.Option o : p.options()) if (o.approximate()) guess = true;
+            if (guess && isAttachedToWindow()) postDelayed(() -> { if (my == token && !planning && isAttachedToWindow()) { planning = true; runPlan(t, my, from, to, 0); } }, 15_000L);
         }, e -> {
             if (my != token) return;
             if (tries < 5) {

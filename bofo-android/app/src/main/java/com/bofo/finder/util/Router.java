@@ -106,20 +106,26 @@ public final class Router {
     private static Route fetch(String key, boolean foot, double lat1, double lng1, double lat2, double lng2) {
         if (AppConfig.routeOnline()) {
             lastError = "";
-            // 1) OSRM server (configurable), 2) Valhalla: two independent free services, so one being busy or blocked does not lose the road path
-            for (int provider = 0; provider < 2; provider++) {
+            // 1) OSRM server (configurable), 2) Valhalla, 3) public OSRM demo (cars only): independent free services, so one being busy or blocked does not lose the road path.
+            // A road answer much longer than the straight line may be a bad snap: ask the next service too and keep the shorter real road.
+            double straightM = Geo.km(lat1, lng1, lat2, lng2) * 1000;
+            Route best = null;
+            for (int provider = 0; provider < 3; provider++) {
+                if (provider == 2 && foot) break;                                                    // the demo server has no walking profile
                 for (int attempt = 1; attempt <= 2; attempt++) {
                     try {
-                        Route r = provider == 0 ? osrm(foot, lat1, lng1, lat2, lng2) : valhalla(foot, lat1, lng1, lat2, lng2);
-                        if (r != null) { CACHE.put(key, r); lastError = ""; return r; }
-                        break;                                                                       // answered "no path": retrying will not help
+                        Route r = provider == 0 ? osrm(foot, lat1, lng1, lat2, lng2) : provider == 1 ? valhalla(foot, lat1, lng1, lat2, lng2) : osrmDemo(lat1, lng1, lat2, lng2);
+                        if (r != null) { if (best == null || r.meters() < best.meters()) best = r; }
+                        break;                                                                       // answered (path or "no path"): retrying will not help
                     } catch (Throwable e) {
-                        lastError = (provider == 0 ? "OSRM: " : "Valhalla: ") + e;
+                        lastError = (provider == 0 ? "OSRM: " : provider == 1 ? "Valhalla: " : "OSRM demo: ") + e;
                         System.err.println("[Router] " + lastError + " (try " + attempt + ")");
                     }
-                    try { Thread.sleep(500); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); return estimate(lat1, lng1, lat2, lng2); }
+                    try { Thread.sleep(400); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); return estimate(lat1, lng1, lat2, lng2); }
                 }
+                if (best != null && (straightM < 200 || best.meters() <= straightM * 2.5)) break;    // a believable road: done
             }
+            if (best != null) { CACHE.put(key, best); lastError = ""; return best; }
         }
         Route fallback = estimate(lat1, lng1, lat2, lng2);
         return new Route(fallback.pts(), Geo.km(lat1, lng1, lat2, lng2) * 1000, true);               // straight line only when both servers failed
@@ -131,7 +137,11 @@ public final class Router {
 
     /** OSRM-style answer (GeoJSON line). Returns null when the server says there is no path. */
     private static Route osrm(boolean foot, double lat1, double lng1, double lat2, double lng2) throws Exception {
-        String url = (foot ? AppConfig.routeUrl() : AppConfig.driveUrl())
+        return osrmAt(foot ? AppConfig.routeUrl() : AppConfig.driveUrl(), lat1, lng1, lat2, lng2);
+    }
+
+    private static Route osrmAt(String template, double lat1, double lng1, double lat2, double lng2) throws Exception {
+        String url = template
                 .replace("{lat1}", String.format(Locale.ROOT, "%.6f", lat1)).replace("{lng1}", String.format(Locale.ROOT, "%.6f", lng1))
                 .replace("{lat2}", String.format(Locale.ROOT, "%.6f", lat2)).replace("{lng2}", String.format(Locale.ROOT, "%.6f", lng2));
         JSONObject o = new JSONObject(get(url));
@@ -143,7 +153,14 @@ public final class Router {
         pts.add(new double[]{lat1, lng1});                                                           // start exactly on the college / you
         for (int i = 0; i < c.length(); i++) { JSONArray pt = c.getJSONArray(i); pts.add(new double[]{pt.getDouble(1), pt.getDouble(0)}); }
         pts.add(new double[]{lat2, lng2});                                                           // end exactly on the BH
-        return new Route(thin(pts, 400), Math.max(r.optDouble("distance", 0), Geo.km(lat1, lng1, lat2, lng2) * 1000), false);
+        return new Route(thin(simplify(pts, 2.0), 1500), Math.max(r.optDouble("distance", 0), Geo.km(lat1, lng1, lat2, lng2) * 1000), false);
+    }
+
+    private static final String OSRM_DEMO = "https://router.project-osrm.org/route/v1/driving/{lng1},{lat1};{lng2},{lat2}?overview=full&geometries=geojson";
+
+    /** Public OSRM demo (car roads only). Same answer format as {@link #osrm}. */
+    private static Route osrmDemo(double lat1, double lng1, double lat2, double lng2) throws Exception {
+        return osrmAt(OSRM_DEMO, lat1, lng1, lat2, lng2);
     }
 
     /** Valhalla route (shape is an encoded polyline with 6 decimals). */
@@ -157,7 +174,7 @@ public final class Router {
         for (int l = 0; l < legs.length(); l++) pts.addAll(decodePolyline6(legs.getJSONObject(l).getString("shape")));
         pts.add(new double[]{lat2, lng2});
         double meters = trip.getJSONObject("summary").optDouble("length", 0) * 1000;                 // Valhalla reports km
-        return new Route(thin(pts, 400), Math.max(meters, Geo.km(lat1, lng1, lat2, lng2) * 1000), false);
+        return new Route(thin(simplify(pts, 2.0), 1500), Math.max(meters, Geo.km(lat1, lng1, lat2, lng2) * 1000), false);
     }
 
     /** Standard encoded-polyline decoder, precision 6 (Valhalla). Returns {lat,lng} pairs. */
@@ -173,6 +190,40 @@ public final class Router {
             }
             out.add(new double[]{lat / 1e6, lng / 1e6});
         }
+        return out;
+    }
+
+    /**
+     * Douglas-Peucker: drops only points that lie within {@code tolM} metres of the straight piece between their neighbours, so every
+     * bend of the road stays exactly where it is (even thinning cut corners off the road). Iterative: long roads cannot overflow the stack.
+     */
+    static List<double[]> simplify(List<double[]> p, double tolM) {
+        int n = p.size();
+        if (n < 3) return p;
+        double cos = Math.cos(Math.toRadians(p.get(0)[0]));
+        double[] x = new double[n], y = new double[n];
+        for (int i = 0; i < n; i++) { x[i] = p.get(i)[1] * 111_320.0 * cos; y[i] = p.get(i)[0] * 110_540.0; }
+        boolean[] keep = new boolean[n];
+        keep[0] = keep[n - 1] = true;
+        java.util.ArrayDeque<int[]> todo = new java.util.ArrayDeque<>();
+        todo.push(new int[]{0, n - 1});
+        while (!todo.isEmpty()) {
+            int[] seg = todo.pop();
+            int a = seg[0], z = seg[1], far = -1;
+            double dx = x[z] - x[a], dy = y[z] - y[a], len2 = dx * dx + dy * dy, worst = tolM;
+            for (int i = a + 1; i < z; i++) {
+                double d;
+                if (len2 == 0) d = Math.hypot(x[i] - x[a], y[i] - y[a]);
+                else {
+                    double t = Math.max(0, Math.min(1, ((x[i] - x[a]) * dx + (y[i] - y[a]) * dy) / len2));
+                    d = Math.hypot(x[i] - (x[a] + t * dx), y[i] - (y[a] + t * dy));
+                }
+                if (d > worst) { worst = d; far = i; }
+            }
+            if (far > 0) { keep[far] = true; todo.push(new int[]{a, far}); todo.push(new int[]{far, z}); }
+        }
+        List<double[]> out = new ArrayList<>();
+        for (int i = 0; i < n; i++) if (keep[i]) out.add(p.get(i));
         return out;
     }
 
