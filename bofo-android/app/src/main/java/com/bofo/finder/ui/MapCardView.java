@@ -343,7 +343,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         for (String[] l : new String[][]{{"place-labels", "labels-src"}, {"college-labels", "college-labels-src"}})
             st.addLayer(new SymbolLayer(l[0], l[1]).withProperties(
                     PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAnchor(Property.ICON_ANCHOR_TOP),
-                    PropertyFactory.iconOffset(new Float[]{0f, 2f}), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true)));
+                    PropertyFactory.iconOffset(new Float[]{0f, 2f}), PropertyFactory.iconAllowOverlap(!l[0].equals("college-labels")), PropertyFactory.iconIgnorePlacement(!l[0].equals("college-labels")), PropertyFactory.iconPadding(l[0].equals("college-labels") ? 3f : 0f)));
         st.addLayer(new SymbolLayer("route-label", "routelabel-src").withProperties(
                 PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
                 PropertyFactory.iconOffset(new Float[]{0f, -12f}), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true)));
@@ -961,29 +961,3 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         placesSig = null; collegesSig = null;
     }
 }
-cd C:\Users\user\bofo-finder
-git checkout -b v2.0.43-locate-fix
-
-        $m = "bofo-android\app\src\main\java\com\bofo\finder\ui\MapCardView.java"
-$t = Get-Content $m -Raw
-        $t = $t.Replace('fitPending = false; post(this::applyCamera); }
-
-private void applyCamera()', 'fitPending = false; overviewPending = false; post(this::applyCamera); }
-
-private void applyCamera()')
-Set-Content $m $t -NoNewline
-
-        $h = "bofo-android\app\src\main\java\com\bofo\finder\ui\HomeFragment.java"
-$t = Get-Content $h -Raw
-        $t = $t.Replace('if (b == null || finding) return;', 'if (b == null || (finding && android.os.SystemClock.uptimeMillis() - findStart < 8000)) return;')
-$t = $t.Replace('    private void locateMe() {
-                finding = true;', '    private long findStart;
-
-private void locateMe() {
-    finding = true; findStart = android.os.SystemClock.uptimeMillis();
-    if (me != null) b.mapCard.moveTo(me[0], me[1], 15);')
-    Set-Content $h $t -NoNewline
-
-# check: should print 1 line in MapCardView and 3 in HomeFragment
-    Select-String -Path $m -Pattern "overviewPending = false; post"
-    Select-String -Path $h -Pattern "findStart"

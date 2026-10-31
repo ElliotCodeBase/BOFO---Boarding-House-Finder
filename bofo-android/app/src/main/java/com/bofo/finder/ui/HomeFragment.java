@@ -100,7 +100,7 @@ public class HomeFragment extends Fragment {
             @Override public void glow(String houseId) { if (b != null) b.mapCard.setGlow(houseId); }
             @Override public void choose() {
                 if (b == null || search == null) return;
-                b.appBar.setExpanded(true, true);
+                if (b.appBar.getTop() < 0) { expanding = true; b.appBar.setExpanded(true, true); b.appBar.postDelayed(openAfterExpand, 450); return; }
                 search.openDropdown();
             }
         });
@@ -140,7 +140,7 @@ public class HomeFragment extends Fragment {
         b.appBar.addOnOffsetChangedListener((bar, offset) -> {
             if (b == null) return;
             b.area.swipe.setEnabled(offset == 0);
-            if (search != null) search.closeOnScroll();
+            if (expanding && offset == 0) { bar.removeCallbacks(openAfterExpand); bar.post(openAfterExpand); } else if (search != null && !expanding) search.closeOnScroll();
         });
         b.area.emptyBox.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);   // the list area is taller than the screen under the header
         b.area.emptyBox.setPadding(b.area.emptyBox.getPaddingLeft(), Math.round(40 * dn), b.area.emptyBox.getPaddingRight(), b.area.emptyBox.getPaddingBottom());
@@ -289,6 +289,7 @@ public class HomeFragment extends Fragment {
 
     /** The search text changed or was cleared: clearing it (with no campus) brings the overview back. */
     private void onSearchChanged() {
+        atMe = false;
         if (b == null) return;
         if (!BrowseState.hasRef() && search != null && search.isEmpty()) { ovOn = true; b.mapCard.overview(); }
         paintLocate();
@@ -297,6 +298,7 @@ public class HomeFragment extends Fragment {
     /** Locate button: overview on = fly to me (overview off); overview off with nothing chosen = back to the overview; otherwise fly to me. */
     private void onLocateTap() {
         if (b == null || (finding && android.os.SystemClock.uptimeMillis() - findStart < 8000)) return;                       // extra taps while finding are ignored
+        if (atMe) { atMe = false; if (!BrowseState.hasRef() && (search == null || search.isEmpty())) ovOn = true; b.mapCard.overview(); paintLocate(); return; }
         if (overviewActive()) { ovOn = false; paintLocate(); locateMe(); return; }
         if (!BrowseState.hasRef() && search != null && search.isEmpty()) { ovOn = true; b.mapCard.overview(); paintLocate(); return; }
         locateMe();
@@ -307,7 +309,11 @@ public class HomeFragment extends Fragment {
     }
 
     /** Locate button on the map: show the dot, move there, "found you" ring, keep the dot live. */
+    private long findStart; private boolean expanding; private final Runnable openAfterExpand = () -> { expanding = false; if (b != null && search != null) search.openDropdown(); }; private boolean atMe;
+
     private void locateMe() {
+        findStart = android.os.SystemClock.uptimeMillis(); atMe = true;
+        if (me != null) b.mapCard.moveTo(me[0], me[1], 15);
         finding = true;
         b.mapCard.setLocState(MapCardView.Loc.FINDING);
         loc.requestOnce(new LocationHelper.Callback() {
@@ -328,6 +334,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void locFailed(int msg) {
+        atMe = false;
         finding = false;
         if (b != null) b.mapCard.setLocState(MapCardView.Loc.OFF);
         say(msg);
@@ -368,7 +375,7 @@ public class HomeFragment extends Fragment {
     /** Start = the chosen campus, else the campus nearest to the house, else the phone. */
     private double[] routeStart(BoardingHouse p) {
         College c = BrowseState.campus();
-        if (c == null && BrowseState.colleges != null && !BrowseState.colleges.isEmpty()) c = DirectionsRules.nearestCampus(BrowseState.colleges, p.lat(), p.lng());
+        if (c == null && me != null) return me; if (c == null && BrowseState.colleges != null && !BrowseState.colleges.isEmpty()) c = DirectionsRules.nearestCampus(BrowseState.colleges, p.lat(), p.lng());
         if (c != null) return new double[]{c.lat(), c.lng()};
         return me;
     }
