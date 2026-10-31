@@ -280,9 +280,9 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         st.addSource(new GeoJsonSource("route-start-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("route-end-src", MapGeo.EMPTY));
         st.addLayer(new FillLayer("radius-fill", "radius-src").withProperties(
-                PropertyFactory.fillColor(primary), PropertyFactory.fillOpacity(0.08f)));
-        st.addLayer(new LineLayer("radius-line", "radius-src").withProperties(
-                PropertyFactory.lineColor(primary), PropertyFactory.lineWidth(2f), PropertyFactory.lineDasharray(new Float[]{2f, 2f})));
+                PropertyFactory.fillColor(primary), PropertyFactory.fillOpacity(0.06f)));
+        st.addLayer(new LineLayer("radius-glow", "radius-src").withProperties(PropertyFactory.lineColor(primary), PropertyFactory.lineWidth(8f), PropertyFactory.lineOpacity(0.10f), PropertyFactory.lineBlur(4f))); st.addLayer(new LineLayer("radius-line", "radius-src").withProperties(
+                PropertyFactory.lineColor(primary), PropertyFactory.lineWidth(1.6f), PropertyFactory.lineOpacity(0.85f)));
         // Stage 6: route line (white casing + purple line; a straight-line estimate is dashed) and its two end dots, under the pins
         Expression exact = Expression.eq(Expression.get("approx"), Expression.literal(0));
         Expression guess = Expression.eq(Expression.get("approx"), Expression.literal(1));
@@ -812,14 +812,14 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** White pill with purple text (radius edge label). */
     private Bitmap chip(String text) {
         float d = getResources().getDisplayMetrics().density;
-        Paint t = textPaint(ContextCompat.getColor(getContext(), R.color.bofo_primary), 11, true);
+        Paint t = textPaint(0xFFFFFFFF, 11, true);
         int w = Math.round(t.measureText(text) + 16 * d), h = Math.round(t.getTextSize() + 10 * d);
         Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bmp);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         p.setColor(0xFFFFFFFF);
-        c.drawRoundRect(new RectF(0, 0, w, h), h / 2f, h / 2f, p);
-        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(d); p.setColor(0xFFE4DEFB);
+        p.setColor(0xFF17142A); c.drawRoundRect(new RectF(0, 0, w, h), h / 2f, h / 2f, p);
+        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(d); p.setColor(0xFF17142A);
         c.drawRoundRect(new RectF(d / 2, d / 2, w - d / 2, h - d / 2), h / 2f, h / 2f, p);
         c.drawText(text, w / 2f, h / 2f - (t.ascent() + t.descent()) / 2f, t);
         return bmp;

@@ -76,50 +76,40 @@
         android:background="@drawable/bg_radius_pill"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="14dp"
-        android:paddingEnd="8dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="10dp"
         android:visibility="gone">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/map_radius_label"
-            android:textColor="@color/bofo_ink"
-            android:textSize="12sp"
-            android:textStyle="bold" />
-
-        <com.google.android.material.slider.Slider
-            android:id="@+id/radius_slider"
-            android:layout_width="130dp"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="4dp"
-            android:contentDescription="@string/cd_map_radius"
-            android:stepSize="0.5"
-            android:valueFrom="0.5"
-            android:valueTo="5"
-            android:value="3"
-            app:haloRadius="16dp"
-            app:labelBehavior="gone"
-            app:minTouchTargetSize="40dp"
-            app:thumbColor="@color/bofo_primary"
-            app:thumbElevation="0dp"
-            app:thumbRadius="9dp"
-            app:trackColorActive="@color/bofo_primary"
-            app:trackColorInactive="#E4DEFB"
-            app:trackHeight="4dp" />
 
         <TextView
             android:id="@+id/radius_value"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_radius_chip"
-            android:minWidth="52dp"
-            android:gravity="center"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="4dp"
-            android:textColor="@color/bofo_primary"
-            android:textSize="12sp"
+            android:minWidth="46dp"
+            android:textColor="@color/bofo_ink"
+            android:textSize="13sp"
             android:textStyle="bold" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/radius_slider"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:contentDescription="@string/cd_map_radius"
+            android:stepSize="0.5"
+            android:valueFrom="0.5"
+            android:valueTo="5"
+            android:value="3"
+            app:haloRadius="14dp"
+            app:labelBehavior="gone"
+            app:minTouchTargetSize="40dp"
+            app:thumbColor="@color/bofo_white"
+            app:thumbElevation="2dp"
+            app:thumbRadius="8dp"
+            app:thumbStrokeColor="@color/bofo_ink"
+            app:thumbStrokeWidth="2dp"
+            app:trackColorActive="@color/bofo_ink"
+            app:trackColorInactive="#E3E3EA"
+            app:trackHeight="3dp" />
     </LinearLayout>
 
     <!-- Step 6: preview card: house-icon square, name, price, stars, X closes, > opens the place -->
