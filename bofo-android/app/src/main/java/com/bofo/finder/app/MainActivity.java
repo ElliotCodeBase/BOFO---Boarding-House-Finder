@@ -18,7 +18,7 @@ import com.bofo.finder.util.AuthLinks;
 /** The single Activity. Screens are Fragments hosted by the NavHost in activity_main.xml. */
 public class MainActivity extends AppCompatActivity {
 
-    private ActivityMainBinding binding;
+    private ActivityMainBinding binding; public static boolean keepAppStill; public static int imeBottom; public static Runnable imeListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
             Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
                     | WindowInsetsCompat.Type.displayCutout());
             Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
-            v.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+            imeBottom = ime.bottom; v.setPadding(bars.left, bars.top, bars.right, keepAppStill ? bars.bottom : Math.max(bars.bottom, ime.bottom)); if (imeListener != null) imeListener.run();
             return WindowInsetsCompat.CONSUMED;
         });
 

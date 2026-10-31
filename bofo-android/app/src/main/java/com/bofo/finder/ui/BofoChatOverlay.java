@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.bofo.finder.R;
+import com.bofo.finder.app.MainActivity;
 import com.bofo.finder.databinding.ItemMsgMineBinding;
 import com.bofo.finder.databinding.ItemMsgTheirsBinding;
 import com.bofo.finder.databinding.ViewBofoChatBinding;
@@ -54,6 +55,10 @@ public class BofoChatOverlay extends FrameLayout {
     }
 
     public boolean isOpen() { return shown; }
+
+    private void release() { MainActivity.keepAppStill = false; MainActivity.imeListener = null; androidx.core.view.ViewCompat.requestApplyInsets(this); }
+
+    
     public void setOnClosed(@Nullable Runnable r) { onClosed = r; }
 
     /** Space (px) the card keeps clear at the bottom: the tab bar. */
@@ -63,7 +68,7 @@ public class BofoChatOverlay extends FrameLayout {
     public void open(float cx, float cy) {
         if (shown) return;
         shown = true;
-        setVisibility(VISIBLE);
+        setVisibility(VISIBLE); MainActivity.keepAppStill = true; MainActivity.imeListener = () -> applyCardSize(getWidth(), getHeight()); androidx.core.view.ViewCompat.requestApplyInsets(this);
         if (!greeted) { greeted = true; say(getContext().getString(R.string.bofo_hello), false); }
         b.card.setPivotX(cx - b.card.getLeft());
         b.card.setPivotY(cy - b.card.getTop());
@@ -82,7 +87,7 @@ public class BofoChatOverlay extends FrameLayout {
         b.card.animate().scaleX(.15f).scaleY(.15f).alpha(0f).setDuration(180).setInterpolator(new AccelerateInterpolator())
                 .withEndAction(() -> {
                     if (shown) return;
-                    setVisibility(INVISIBLE);
+                    setVisibility(INVISIBLE); release();
                     if (onClosed != null) onClosed.run();
                 }).start();
         b.scrim.animate().alpha(0f).setDuration(180).start();
@@ -100,10 +105,10 @@ public class BofoChatOverlay extends FrameLayout {
     private void applyCardSize(int w, int h) {
         if (w <= 0 || h <= 0) return;
         int cw = Math.round(Math.min(380 * dp, w - 24 * dp));
-        int ch = Math.round(Math.max(220 * dp, Math.min(500 * dp, h - bottomOffset - 24 * dp)));
+        int bm = bottomOffset; if (shown && MainActivity.imeBottom > 0) { int[] loc = new int[2]; getLocationInWindow(loc); int over = loc[1] + h - (getRootView().getHeight() - MainActivity.imeBottom); if (over > 0) bm = Math.max(bm, over + Math.round(8 * dp)); } int ch = Math.round(Math.max(220 * dp, Math.min(500 * dp, h - bm - 24 * dp)));
         FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) b.card.getLayoutParams();
-        if (lp.width != cw || lp.height != ch || lp.bottomMargin != bottomOffset) {
-            lp.width = cw; lp.height = ch; lp.bottomMargin = bottomOffset;
+        if (lp.width != cw || lp.height != ch || lp.bottomMargin != bm) {
+            lp.width = cw; lp.height = ch; lp.bottomMargin = bm;
             b.card.setLayoutParams(lp);
         }
     }
@@ -149,6 +154,6 @@ public class BofoChatOverlay extends FrameLayout {
     protected void onDetachedFromWindow() {
         token++;                                                  // a late answer must not touch a dead screen
         waiting = false;
-        super.onDetachedFromWindow();
+        MainActivity.keepAppStill = false; MainActivity.imeListener = null; super.onDetachedFromWindow();
     }
 }
