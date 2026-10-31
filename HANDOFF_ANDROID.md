@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.74 Path always in view
+- **PR title:** `v2.0.74 - Android: pathfind fix, the path stays in view`
+- `MapCardView`: `fit()` / `overview()` call `fitRoute()` when `routeShown()`; `glideToRing` returns while a path is shown; `fitRouteBounds` caps padding (<= 70 % height, <= 20 % width), falls back to plain padding then centre + zoom 15, and retries when the card has no size yet. No Supabase change. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.65 Own amenity icons + place page UI
 - **PR title:** `v2.0.65 - Android: own line icons for amenities (no emoji), cleaner place page`
 - New `AmenityIcons.res(name)` maps the amenity NAME to one of 25 vector drawables `ic_am_*` (water, bolt, wifi, snow, shower, kitchen, laundry, parking, cctv, book, flame, fan, bed, closet, lock, users, moon, paw, female, male, tv, fridge, shield, spark = fallback for unknown / owner-made names, rule = check circle). The emoji in `amenities.icon` is no longer shown anywhere (the column is untouched). `Chips.create(parent, Amenity, suffix, checkable, checked)` adds the icon as chip icon: used by the filter sheet and the listing form. Place page: amenities are two-column tiles (`showAmenities` / `amenityTile`, `bg_amenity_tile`), House rules is a card with check icons, the duplicate star line and the "Free Wi-Fi" line under the tiles are hidden, section spacing 20 dp. To add an icon: new `ic_am_*.xml` + one line in `AmenityIcons`. No Supabase change. Not built or run by Claude (icons were only previewed on a rendered sheet).
