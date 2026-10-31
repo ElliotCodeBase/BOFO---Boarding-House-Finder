@@ -1,12 +1,6 @@
-BOFO Android v2.0.32 - Step 10: Detail, Chat, Chats. Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
-changed  bofo-android/app/build.gradle  (version 2.0.32 / 232)
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ChatsFragment.java, ChatFragment.java, BhDetailFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/util/ChatRules.java
-changed  bofo-android/app/src/test/java/com/bofo/finder/util/ChatRulesTest.java
-changed  bofo-android/app/src/main/res/layout/fragment_chats.xml, item_conversation.xml, fragment_chat.xml, item_msg_mine.xml, item_msg_theirs.xml, fragment_bh_detail.xml
-new      bofo-android/app/src/main/res/layout/item_chat_skeleton.xml
-new      bofo-android/app/src/main/res/values/strings_chats.xml, strings_chat.xml, strings_detail.xml
-new      bofo-android/app/src/main/res/drawable/bg_chat_row.xml, bg_avatar_tint.xml, bg_skeleton_circle.xml, bg_day_chip.xml, bg_send_off.xml, bg_quick_reply.xml
-new      BOFO_v2.0.32_CHANGELOG.md  (what changed, how to open each screen, fix guide)
-changed  CHANGES_ANDROID.md, HANDOFF_ANDROID.md, REVERT_PROGRESS.md, REVERT_PROMPT.md
-DELETE   nothing
+BOFO Android v2.0.33 - Step 11 final pass. Unzip INTO C:\Users\user\bofo-finder, overwrite, then run the DELETE commands.
+changed  bofo-android/app/build.gradle  (2.0.33 / 233)
+changed  bofo-android/app/src/main/res/values/strings.xml, strings_explore.xml (only if they held unused strings)
+DELETE   bofo-android/app/src/main/java/com/bofo/finder/ui/BofoPanelSheet.java
+DELETE   bofo-android/app/src/main/res/layout/sheet_bofo.xml
+changed  CHANGES_ANDROID.md, HANDOFF_ANDROID.md, REVERT_PROGRESS.md, REVERT_PROMPT.md, BOFO_v2.0.33_CHANGELOG.md

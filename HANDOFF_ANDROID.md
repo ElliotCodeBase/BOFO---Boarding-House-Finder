@@ -1,3 +1,10 @@
+# Handoff (Android) - v2.0.33 Step 11 final pass (2026-10-31)
+- **PR title:** `v2.0.33 - Android: remove unused Ask-BOFO sheet and old strings (final pass)`
+- Scan method: grep for `R.<type>.<name>` / `@<type>/<name>` / ViewBinding class in java + res. The `offline_banner` string is unused but kept (the id of the same name is used).
+- Revert plan Steps 1-11 complete. Remaining work: build and run on a phone, compare with the original recordings, fix differences.
+
+---
+
 # Handoff (Android) - v2.0.32 Step 10 Detail, chat, chats (2026-10-31)
 - **PR title:** `v2.0.32 - Android: Detail, Chat and Chats screens restyled (skeleton rows, quick replies, day chip, pinned chat button)`
 - `ChatsFragment.showSkeleton` (900 ms pulse) replaces the ProgressBar (`loading` id is gone). `ChatFragment`: `quick1/quick2` call `send()`; quick bar shows only when the chat is empty; `Adapter.Holder` has a `day` chip computed from the previous item (`ChatRules.dayLabel`; queued messages have no date and never get a chip). `BhDetailFragment`: `info_chips`, `tile_*_value`, `no_photos`, `title_bar` + `chat_bar` are siblings of the ScrollView (back and heart moved there, same ids). Distance chip needs `bh.distanceKm() > 0` (the detail query may not set it).

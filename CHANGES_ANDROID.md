@@ -1,3 +1,8 @@
+# v2.0.33 - Android port, Step 11: final pass (JavaFX app stays v1.20.0)
+- Deleted the old Ask-BOFO bottom sheet (`BofoPanelSheet.java`, `sheet_bofo.xml`; replaced by the floating button + chat overlay in v2.0.21).
+- Removed 23 unused strings (old filter sheet, List/Map toggle, price range, old chat/detail text). Checked every layout and drawable: all still used.
+- No visual change. Not built or run by Claude. Profile > About shows 2.0.33.
+
 # v2.0.32 - Android port, Step 10: Detail, Chat, Chats (JavaFX app stays v1.20.0)
 - **Chats list:** "Chats" + subtitle "Press and hold a chat (or right-click) to delete it"; six pulsing skeleton rows while loading (the blank screen is gone); white rows with a lavender initials avatar, name, time, purple house name, last message; empty state mascot + "No chats yet" + "Open a place and tap Chat with owner."; list has bottom space for the floating tab bar.
 - **Chat:** header = back, initials avatar, name, purple "Boarding house owner"; empty state = mascot, "Say hello", "Ask the owner about price, rooms or a visit." and two quick-reply chips ("Is it still available?", "Can I visit this week?": tap sends); composer "Write a message..." with a grey send button that turns purple when there is text; "Today" / "Yesterday" / "Oct 28" chip above each day of messages. Bubbles were already purple with time and tick. Chat logic, polling and outbox untouched.
