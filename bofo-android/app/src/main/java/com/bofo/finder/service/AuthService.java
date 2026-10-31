@@ -117,6 +117,15 @@ public final class AuthService {
         apply(r, true);
     }
 
+    /** DEBUG builds only (the "force login" buttons): real password sign-in with the test account of a role. It is a genuine session
+     *  (real JWT), so RLS, favorites, chat, listings and storage all work, exactly like the JavaFX dev buttons. */
+    public void devSignIn(com.bofo.finder.model.Role role) throws Exception {
+        String r = role.db(), mail = AppConfig.devEmail(r), pw = AppConfig.devPassword(r);
+        if (mail.isEmpty() || pw.isEmpty())
+            throw new IllegalStateException("No dev." + r + ".email / dev." + r + ".password in src/main/resources/com/bofo/finder/config.local.properties (then Sync Gradle and run a DEBUG build).");
+        signInPassword(mail, pw);
+    }
+
     /** Creates the account. Throws {@link ConfirmEmailException} when the project requires e-mail confirmation first. */
     public void signUpPassword(String mail, String password) throws Exception {
         JSONObject r = SupabaseClient.get().authPost("signup", new JSONObject().put("email", mail.trim()).put("password", password));
