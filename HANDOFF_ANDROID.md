@@ -1,3 +1,11 @@
+# Handoff (Android) - v2.0.56 bigger map circles
+- **PR title:** `v2.0.56 - Android: bigger circles on the map`
+- Only `MapCardView.java` (+ build.gradle 2.0.56 / 256). `BIG = 1.5f` scales every `circleRadius`, the user-dot animation sizes (`layerCircle`) and `bubble()`; pins `iconSize` x1.25; tap box wider. Not built or run by Claude.
+---
+# Handoff (Android) - v2.0.55 fix: Suggest BH here returned nothing
+- **PR title:** `v2.0.55 - Android: Ask BOFO no longer filters by words like "BH here"`
+- Only `bofo-chat/index.ts` (+ build.gradle 2.0.55 / 255). `GENERIC_TEXT` in `sanitizeParams`, fallback without `text` in the list branch, no `apply_filters` action without results. **`supabase functions deploy bofo-chat` is required**; check Supabase > Edge Functions > Logs if the old text "I couldn\x27t find a place that matches" still shows (= old function still running).
+---
 # Handoff (Android) - v2.0.54 Ask BOFO uses the chosen college + path drawn on the map
 - **PR title:** `v2.0.54 - Android: Ask BOFO stays inside the chosen college area; "show me the path" draws on the map`
 - `bofo-chat/index.ts`: origin = chosen college > phone (unless "near me" is said); list intents are limited to `radius_km` around the college (`campusScoped`, note `empty_area:`); `PATH_RE` / `SUGGEST_RE` force intent `directions` / `search`; `directions` action comes first and carries `ids:["me"]` when it should start at the phone. **Run `supabase functions deploy bofo-chat`.**

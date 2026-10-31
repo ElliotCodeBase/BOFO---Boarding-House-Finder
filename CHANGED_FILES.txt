@@ -1,11 +1,6 @@
-BOFO-android-v2.0.54-changes.zip  (unzip into the repo root C:\Users\user\bofo-finder, overwrite)
+BOFO-android-v2.0.56-changes.zip  (unzip into the repo root C:\Users\user\bofo-finder, overwrite)
 changed  bofo-android/app/build.gradle
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/MapFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/BofoChatOverlay.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/util/BofoIntentLocal.java
-changed  bofo-android/app/src/main/res/values/strings_bofo.xml
-changed  supabase/functions/bofo-chat/index.ts   (then: supabase functions deploy bofo-chat)
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
 changed  CHANGES_ANDROID.md
 changed  HANDOFF_ANDROID.md
 changed  CHANGED_FILES.txt

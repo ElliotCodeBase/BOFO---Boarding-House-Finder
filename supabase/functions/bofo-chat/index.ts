@@ -147,6 +147,8 @@ function extractJson(t: string): any | null {
   try { return JSON.parse(s.slice(a, b + 1)); } catch { return null; }
 }
 
+/** Words that are not a place name: a "text" made only of these (e.g. "BH here") would filter every listing out. */
+const GENERIC_TEXT = /^(?:(?:suggest|suggestion|recommend|boarding|house|houses|bh|bhs|place|places|room|rooms|apartment|dorm|here|there|me|a|an|the|some|any|nearby|near|around|area|please|po|for|college|campus|school|university|my|find|show|available|cheap|cheapest|best)\b[\s,.!?-]*)+$/i;
 function sanitizeParams(p: any): Params {
   const o: Params = {};
   if (!p || typeof p !== "object") return o;
@@ -157,7 +159,7 @@ function sanitizeParams(p: any): Params {
   if (bool(p.free_electricity)) o.free_electricity = true;
   if (bool(p.free_wifi)) o.free_wifi = true;
   if (Array.isArray(p.amenities)) o.amenities = p.amenities.map((x: unknown) => clean(x, 40)).filter(Boolean).slice(0, 5);
-  if (typeof p.text === "string" && clean(p.text, 60)) o.text = clean(p.text, 60);
+  if (typeof p.text === "string" && clean(p.text, 60) && !GENERIC_TEXT.test(clean(p.text, 60))) o.text = clean(p.text, 60);
   o.limit = Math.max(1, Math.min(5, Math.round(lim ?? 3)));
   if (Array.isArray(p.names)) o.names = p.names.map((x: unknown) => clean(x, 60)).filter(Boolean).slice(0, 4);
   if (Array.isArray(p.refs)) o.refs = p.refs.map((x: unknown) => clean(x, 12).toLowerCase()).filter(Boolean).slice(0, 5);
@@ -473,6 +475,7 @@ Deno.serve(async (req) => {
 
     if (["nearest", "cheapest", "best_rated", "search", "availability"].includes(intent)) {
       let pool = applyFilters(poolFor(), params);
+      if (!pool.length && params.text) { pool = applyFilters(poolFor(), { ...params, text: undefined }); delete filters.text; }   // the name text matched nothing: ignore it
       if (intent === "nearest" || intent === "search" || intent === "availability") {
         if (intent === "nearest" && !origin) note = "no_origin";
         if (origin) pool = pool.sort((a, b) => dist(a) - dist(b));
@@ -534,7 +537,7 @@ Deno.serve(async (req) => {
     if (results.length) actions.push({ type: "show_on_map", ids });
     if (results.length >= 1 && intent !== "compare") actions.push({ type: "open_detail", id: ids[0] });
     if (results.length >= 1 && origin && intent !== "directions") actions.push(dirAction);
-    if (Object.keys(filters).length && ["search", "cheapest", "nearest", "best_rated", "availability"].includes(intent)) actions.push({ type: "apply_filters" });
+    if (results.length && Object.keys(filters).length && ["search", "cheapest", "nearest", "best_rated", "availability"].includes(intent)) actions.push({ type: "apply_filters" });
     const suggestions: string[] = [];
     if (results.length >= 2 && intent !== "compare") suggestions.push("Compare them");
     if (results.length >= 2) suggestions.push("Which of those is cheapest?");

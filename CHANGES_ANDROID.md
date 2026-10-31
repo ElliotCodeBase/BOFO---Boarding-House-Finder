@@ -1,3 +1,9 @@
+# v2.0.56 - Android: bigger circles on the map
+- `MapCardView`: all circles are 1.5x bigger (one constant `BIG`): the number bubbles (clusters) and their numbers, the place dots, the campus / college dots, your blue location dot, the price glow and the route start / end dots. Pins are 1.25x bigger and the tap area is wider to match. Change `BIG` to make them bigger or smaller. Not built or run by Claude.
+
+# v2.0.55 - Android: fix "Suggest BH here" finding nothing
+- Cause (seen in the screen recording): the AI model put words like "BH here" into the search text, and the server then required that text inside every listing name / address, so nothing matched. Fix in `bofo-chat/index.ts` (**redeploy**): generic words (bh, boarding house, here, suggest ...) are dropped from the text filter; if a text filter still finds nothing it is ignored; no "See in Explore" chip when there are no results.
+
 # v2.0.54 - Android: Ask BOFO knows the chosen college; "show me the path" draws on the map
 - **College scope:** the chosen college now beats the phone position (before, the phone position was sent every time and won, so the answers ignored the college). With a college chosen, nearest / cheapest / best rated / search / availability only list boarding houses inside the app radius around it. Nothing inside = a clear message (bigger radius or another campus), not a far-away place. "near me" / "from me" in the message still measures from the phone; a named place ("near Silliman") still wins.
 - **Suggest here:** "suggest / recommend a boarding house here", "irekomenda dito" are understood as a search around the chosen college.

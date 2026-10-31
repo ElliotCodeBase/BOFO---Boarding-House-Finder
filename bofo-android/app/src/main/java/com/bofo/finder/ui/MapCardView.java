@@ -126,6 +126,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
 
     // ---- Step 6: clusters, labels, campus dots, price glow ----
     private final java.util.Map<String, float[]> imgSize = new java.util.HashMap<>();   // label bitmap sizes: style.getImage() copies the whole bitmap
+    /** Every circle on the map (dots, user dot, route ends, number bubbles) is drawn this many times bigger than the original size. */
+    private static final float BIG = 1.5f;
     private final Set<String> imgs = new HashSet<>();      // bitmaps already added to the style (labels, cluster bubbles)
     private List<College> colleges = new ArrayList<>();
     private String glowId, routeLabel;
@@ -296,20 +298,20 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 PropertyFactory.lineColor(primary), PropertyFactory.lineWidth(4f),
                 PropertyFactory.lineDasharray(new Float[]{1.5f, 1.5f})).withFilter(guess));
         st.addLayer(new CircleLayer("route-start", "route-start-src").withProperties(
-                PropertyFactory.circleRadius(7f), PropertyFactory.circleColor(0xFF2F6FED),
+                PropertyFactory.circleRadius(7f * BIG), PropertyFactory.circleColor(0xFF2F6FED),
                 PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeColor(0xFFFFFFFF)));
         st.addLayer(new CircleLayer("route-end", "route-end-src").withProperties(
-                PropertyFactory.circleRadius(8f), PropertyFactory.circleColor(0xFFE5484D),
+                PropertyFactory.circleRadius(8f * BIG), PropertyFactory.circleColor(0xFFE5484D),
                 PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeColor(0xFFFFFFFF)));        // red destination
         // Step 6: price glow (a house lit from the rent card), then every campus as a small orange dot (tap = choose it)
         st.addLayer(new CircleLayer("places-glow", "glow-src").withProperties(
-                PropertyFactory.circleRadius(18f), PropertyFactory.circleColor(GLOW), PropertyFactory.circleOpacity(0.32f),
+                PropertyFactory.circleRadius(18f * BIG), PropertyFactory.circleColor(GLOW), PropertyFactory.circleOpacity(0.32f),
                 PropertyFactory.circleStrokeColor(GLOW), PropertyFactory.circleStrokeWidth(2f), PropertyFactory.circleStrokeOpacity(0.8f)));
         st.addLayer(new CircleLayer("colleges-dot", "colleges-src").withProperties(
-                PropertyFactory.circleRadius(6f), PropertyFactory.circleColor(amber),
+                PropertyFactory.circleRadius(6f * BIG), PropertyFactory.circleColor(amber),
                 PropertyFactory.circleStrokeWidth(2.5f), PropertyFactory.circleStrokeColor(0xFFFFFFFF)));
         st.addLayer(new CircleLayer("campus-dot", "campus-src").withProperties(
-                PropertyFactory.circleRadius(8f), PropertyFactory.circleColor(amber),
+                PropertyFactory.circleRadius(8f * BIG), PropertyFactory.circleColor(amber),
                 PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeColor(0xFFFFFFFF)));
         // Step 5: the radar dot (LiveDot): the view cone, then shadow + white ring + blue core
         // (the two ripple rings and the "found you" ring are drawn by RadarOverlayView: changing a map layer every frame re-renders the whole map)
@@ -318,15 +320,15 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
                 PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true)));
         st.addLayer(new CircleLayer("user-shadow", "user-src").withProperties(
-                PropertyFactory.circleRadius(13f), PropertyFactory.circleColor(0xFF17142A), PropertyFactory.circleOpacity(0.22f)));
+                PropertyFactory.circleRadius(13f * BIG), PropertyFactory.circleColor(0xFF17142A), PropertyFactory.circleOpacity(0.22f)));
         st.addLayer(new CircleLayer("user-ring", "user-src").withProperties(
-                PropertyFactory.circleRadius(10f), PropertyFactory.circleColor(0xFFFFFFFF)));
+                PropertyFactory.circleRadius(10f * BIG), PropertyFactory.circleColor(0xFFFFFFFF)));
         st.addLayer(new CircleLayer("user-dot", "user-src").withProperties(
-                PropertyFactory.circleRadius(7f), PropertyFactory.circleColor(BLUE)));
+                PropertyFactory.circleRadius(7f * BIG), PropertyFactory.circleColor(BLUE)));
         // Step 6: zoomed out = small dots that merge into numbered bubbles; zoomed in = full pins with names (rebuildPlaces decides, per zoom)
         Expression sel = Expression.eq(Expression.get("sel"), Expression.literal(1));
         st.addLayer(new CircleLayer("places-dots", "places-src").withProperties(
-                PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(8f), Expression.literal(5f))),
+                PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(8f * BIG), Expression.literal(5f * BIG))),
                 PropertyFactory.circleColor(Expression.switchCase(sel, Expression.literal(DARK_PURPLE), Expression.literal(primary))),
                 PropertyFactory.circleStrokeWidth(2f), PropertyFactory.circleStrokeColor(0xFFFFFFFF))
                 .withFilter(Expression.eq(Expression.get("kind"), Expression.literal("dot"))));
@@ -338,7 +340,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
                 PropertyFactory.iconAllowOverlap(true),
                 PropertyFactory.iconIgnorePlacement(true),
-                PropertyFactory.iconSize(Expression.switchCase(sel, Expression.literal(1.3f), Expression.literal(1f))))
+                PropertyFactory.iconSize(Expression.switchCase(sel, Expression.literal(1.3f * 1.25f), Expression.literal(1.25f))))
                 .withFilter(Expression.eq(Expression.get("kind"), Expression.literal("pin"))));
         for (String[] l : new String[][]{{"place-labels", "labels-src"}, {"college-labels", "college-labels-src"}})
             st.addLayer(new SymbolLayer(l[0], l[1]).withProperties(
@@ -540,9 +542,9 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         }
         float scale = 0.82f + 0.18f * popT;
         float a = popT;
-        layerCircle("user-shadow", 13f * scale, 0.22f * a);
-        layerCircle("user-ring", 10f * scale, a);
-        layerCircle("user-dot", 7f * scale, a);
+        layerCircle("user-shadow", 13f * BIG * scale, 0.22f * a);
+        layerCircle("user-ring", 10f * BIG * scale, a);
+        layerCircle("user-dot", 7f * BIG * scale, a);
     }
 
     /** Stage 6: draws a route ({lat, lng} pairs; approximate = dashed straight-line estimate). Fewer than 2 points removes it. */
@@ -796,7 +798,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** Numbered purple bubble for merged dots. */
     private Bitmap bubble(int count) {
         float d = getResources().getDisplayMetrics().density;
-        int sz = Math.round((count >= 100 ? 42 : count >= 10 ? 38 : 34) * d);
+        int sz = Math.round((count >= 100 ? 42 : count >= 10 ? 38 : 34) * BIG * d);
         Bitmap bmp = Bitmap.createBitmap(sz, sz, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bmp);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -804,7 +806,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         c.drawCircle(sz / 2f, sz / 2f, sz / 2f, p);
         p.setColor(ContextCompat.getColor(getContext(), R.color.bofo_primary));
         c.drawCircle(sz / 2f, sz / 2f, sz / 2f - 2.5f * d, p);
-        Paint t = textPaint(0xFFFFFFFF, 13, true);
+        Paint t = textPaint(0xFFFFFFFF, 13 * BIG, true);
         c.drawText(String.valueOf(count), sz / 2f, sz / 2f - (t.ascent() + t.descent()) / 2f, t);
         return bmp;
     }
@@ -905,7 +907,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         if (map == null || !tapsEnabled) return false;
         PointF pt = map.getProjection().toScreenLocation(point);
         float d = getResources().getDisplayMetrics().density;
-        RectF box = new RectF(pt.x - 22 * d, pt.y - 44 * d, pt.x + 22 * d, pt.y + 10 * d);     // pins are anchored at their tip: look above the tap too
+        RectF box = new RectF(pt.x - 30 * d, pt.y - 56 * d, pt.x + 30 * d, pt.y + 14 * d);     // pins are anchored at their tip: look above the tap too
         List<Feature> hit = map.queryRenderedFeatures(box, "places", "places-dots", "places-clusters", "colleges-dot");
         for (Feature f : hit) {
             String kind = f.getStringProperty("kind"), id = f.getStringProperty("id");
