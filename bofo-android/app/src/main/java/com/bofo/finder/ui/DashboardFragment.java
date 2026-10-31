@@ -24,6 +24,16 @@ import com.bofo.finder.util.Async;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.DashboardRules;
 import com.bofo.finder.util.ErrorText;
+import com.bofo.finder.util.Geo;
+import com.bofo.finder.util.Router;
+import com.bofo.finder.util.DirectionsRules;
+import com.bofo.finder.util.LocationHelper;
+import com.bofo.finder.util.VerificationRules;
+import com.bofo.finder.model.College;
+import com.bofo.finder.model.Profile;
+import com.bofo.finder.service.ProfileService;
+import com.bofo.finder.service.VerificationService;
+import com.google.android.material.card.MaterialCardView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -45,9 +55,28 @@ public class DashboardFragment extends Fragment {
 
     private FragmentDashboardBinding b;
     private int token;
+    private LocationHelper location;
+    private MapCardView map;                       // owner map (rebuilt on every render)
+    private List<College> colleges = new ArrayList<>();
+    private List<BoardingHouse> mapPlaces = new ArrayList<>();
+    private double[] me;                           // last phone fix
+    private int routeToken;
+    private final android.os.Handler ui = new android.os.Handler(android.os.Looper.getMainLooper());
 
     private static final class Place {
         BoardingHouse bh; DashboardRules.Row row; boolean boosted;
+    }
+
+    private static final class Data {
+        List<Place> places = new ArrayList<>();
+        VerificationRules.State verif;             // null = could not be read (banner stays hidden)
+        List<College> colleges = new ArrayList<>();
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle state) {
+        super.onCreate(state);
+        location = new LocationHelper(this);         // registers the permission launcher: must be made in onCreate
     }
 
     @Nullable @Override
@@ -67,9 +96,15 @@ public class DashboardFragment extends Fragment {
         b.swipe.setRefreshing(true);
         String me = AuthService.get().userId();
         Async.run(() -> {
+            Data data = new Data();
+            try {                                      // the banner and the campuses are bonuses: a failure never hides the numbers
+                Profile pr = new ProfileService().fetchMe();
+                data.verif = VerificationRules.effective(pr != null && pr.verified(), new VerificationService().myLatest(me).optString("status", "unverified"));
+            } catch (Exception ignored) { /* unknown */ }
+            try { data.colleges = new BhService().colleges(); } catch (Exception ignored) { /* no route start then */ }
             List<BoardingHouse> mine = new BhService().myListings(me);
-            List<Place> out = new ArrayList<>();
-            if (mine.isEmpty()) return out;
+            List<Place> out = data.places;
+            if (mine.isEmpty()) return data;
             StringBuilder ids = new StringBuilder();
             for (BoardingHouse x : mine) ids.append(ids.length() == 0 ? "" : ",").append(x.id());
             JSONArray act = SupabaseClient.get().select("bh_activity", "boarding_house_id=in.(" + ids + ")&select=*");
@@ -90,11 +125,12 @@ public class DashboardFragment extends Fragment {
                 out.add(p);
             }
             out.sort((p, q) -> Integer.compare(q.row.views(), p.row.views()));
-            return out;
-        }, (List<Place> l) -> {
+            return data;
+        }, (Data d) -> {
             if (my != token || b == null) return;
             b.swipe.setRefreshing(false);
-            render(l);
+            colleges = d.colleges;
+            render(d);
         }, e -> {
             if (my != token || b == null) return;
             b.swipe.setRefreshing(false);
@@ -109,10 +145,17 @@ public class DashboardFragment extends Fragment {
         b.content.addView(b.message);
     }
 
-    private void render(List<Place> l) {
-        if (l.isEmpty()) { show(getString(R.string.dash_empty)); return; }
-        b.message.setVisibility(View.GONE);
+    private void render(Data d) {
+        List<Place> l = d.places;
         b.content.removeAllViews();
+        addBanner(d.verif);
+        if (l.isEmpty()) {
+            b.message.setText(R.string.dash_empty);
+            b.message.setVisibility(View.VISIBLE);
+            b.content.addView(b.message);
+            return;
+        }
+        b.message.setVisibility(View.GONE);
         List<DashboardRules.Row> rows = new ArrayList<>();
         int boosted = 0;
         for (Place p : l) { rows.add(p.row); if (p.boosted) boosted++; }
@@ -125,6 +168,8 @@ public class DashboardFragment extends Fragment {
         b.content.addView(statRow(stat(t.views(), R.string.dash_views), stat(t.saves(), R.string.dash_saved), stat(t.chats(), R.string.dash_chats)));
         b.content.addView(statRow(stat(DashboardRules.rating(t.rating()), R.string.dash_rating), stat(t.reviews(), R.string.dash_reviews), stat(t.beds(), R.string.dash_beds)));
 
+        addMap(l);
+
         TextView per = text(getString(R.string.dash_per_place), 16, true);
         per.setPadding(0, dp(20), 0, dp(8));
         b.content.addView(per);
@@ -136,6 +181,10 @@ public class DashboardFragment extends Fragment {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.bottomMargin = dp(8);
             card.setLayoutParams(lp);
+            card.setClickable(true);
+            card.setForeground(androidx.core.content.ContextCompat.getDrawable(requireContext(), android.R.drawable.list_selector_background));
+            final String hid = p.bh.id();
+            card.setOnClickListener(v -> BhDetailFragment.open(this, hid));
             card.addView(text(p.bh.name() + (p.boosted ? "  \u2605" : ""), 15, true));
             DashboardRules.Row r = p.row;
             TextView nums = text(getString(R.string.dash_row, r.views(), r.saves(), r.chats(), DashboardRules.rating(r.rating()), r.reviews(), r.beds()), 13, false);
@@ -143,6 +192,104 @@ public class DashboardFragment extends Fragment {
             card.addView(nums);
             b.content.addView(card);
         }
+    }
+
+    /** Verification status banner (same words as My places). Hidden when verified or unknown. */
+    private void addBanner(VerificationRules.State v) {
+        if (v == null || v == VerificationRules.State.VERIFIED) return;
+        TextView t = text(getString(v == VerificationRules.State.PENDING ? R.string.verify_banner_pending
+                : v == VerificationRules.State.REJECTED ? R.string.verify_banner_rejected : R.string.verify_banner_unverified), 14, true);
+        t.setBackgroundResource(R.drawable.bg_dir_option);
+        t.setPadding(dp(14), dp(12), dp(14), dp(12));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = dp(12);
+        t.setLayoutParams(lp);
+        t.setClickable(true);
+        t.setOnClickListener(x -> NavHostFragment.findNavController(this).navigate(R.id.verificationFragment));
+        b.content.addView(t);
+    }
+
+    /** "Your places on the map": tap a pin to see the route from the nearest campus (as on the JavaFX owner Dashboard). */
+    private void addMap(List<Place> l) {
+        mapPlaces = new ArrayList<>();
+        for (Place p : l) mapPlaces.add(p.bh);
+        TextView title = text(getString(R.string.dash_map_title), 16, true);
+        title.setPadding(0, dp(20), 0, dp(8));
+        b.content.addView(title);
+        MaterialCardView frame = new MaterialCardView(requireContext());
+        frame.setRadius(dp(28));
+        frame.setCardElevation(0);
+        frame.setStrokeWidth(dp(1));
+        frame.setStrokeColor(0x1F000000);
+        frame.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(320)));
+        map = new MapCardView(requireContext());
+        map.setParentScrollBlocked(true);
+        map.showExpand(false);
+        map.setListener(new MapCardView.Listener() {
+            @Override public void openPlace(String id) { BhDetailFragment.open(DashboardFragment.this, id); }
+            @Override public void locate() { locateMe(); }
+            @Override public void placeSelected(String id) { showRoute(id); }
+        });
+        frame.addView(map, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        frame.addView(new CornerMaskView(requireContext()), new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        b.content.addView(frame);
+        map.setPlaces(mapPlaces);
+        map.setColleges(colleges);
+        final MapCardView m = map;
+        b.getRoot().postDelayed(() -> { if (b != null && map == m && isAdded()) { m.activate(getViewLifecycleOwner()); m.fit(); } }, 300);
+    }
+
+    private void locateMe() {
+        if (me != null && map != null) { map.moveTo(me[0], me[1], 15); return; }
+        location.requestOnce(new LocationHelper.Callback() {
+            @Override public void got(double lat, double lng) {
+                if (b == null || map == null) return;
+                me = new double[]{lat, lng};
+                map.setUser(lat, lng);
+                map.setLocState(LocationHelper.precise(requireContext()) ? MapCardView.Loc.EXACT : MapCardView.Loc.APPROX);
+                map.moveTo(lat, lng, 15);
+            }
+            @Override public void off() { ListArea.toast(DashboardFragment.this, getString(R.string.loc_off)); }
+            @Override public void denied() { ListArea.toast(DashboardFragment.this, getString(R.string.loc_denied)); }
+            @Override public void failed() { ListArea.toast(DashboardFragment.this, getString(R.string.loc_failed)); }
+        });
+    }
+
+    /** Pin tapped (id) or closed (null): route from the campus nearest to that place; the real road route replaces the estimate. */
+    private void showRoute(String id) {
+        if (b == null || map == null) return;
+        final int my = ++routeToken;
+        BoardingHouse h = null;
+        if (id != null) for (BoardingHouse x : mapPlaces) if (id.equals(x.id())) { h = x; break; }
+        College c = h == null || colleges.isEmpty() ? null : DirectionsRules.nearestCampus(colleges, h.lat(), h.lng());
+        if (h == null || c == null) { map.clearRoute(); return; }
+        final BoardingHouse house = h;
+        final double[] from = {c.lat(), c.lng()};
+        Router.Route known = Router.peek(from[0], from[1], house.lat(), house.lng());
+        if (known == null) known = Router.estimate(from[0], from[1], house.lat(), house.lng());
+        drawRoute(known, from, house);
+        map.fitRoute();
+        fetchRoute(my, from, house, 0);
+    }
+
+    private static boolean walkable(double[] from, BoardingHouse h) { return Geo.km(from[0], from[1], h.lat(), h.lng()) <= 3; }
+
+    private void fetchRoute(int my, double[] from, BoardingHouse h, int tries) {
+        Async.run(() -> walkable(from, h) ? Router.walk(from[0], from[1], h.lat(), h.lng()) : Router.drive(from[0], from[1], h.lat(), h.lng()), r -> {
+            if (my != routeToken || b == null || map == null) return;
+            drawRoute(r, from, h);
+            if (!r.approximate()) map.fitRoute();
+            else if (tries < 4) ui.postDelayed(() -> { if (my == routeToken && b != null) fetchRoute(my, from, h, tries + 1); }, 1500L * (tries + 1));
+        }, e -> {
+            if (my == routeToken && b != null && tries < 4) ui.postDelayed(() -> { if (my == routeToken && b != null) fetchRoute(my, from, h, tries + 1); }, 1500L * (tries + 1));
+        });
+    }
+
+    private void drawRoute(Router.Route r, double[] from, BoardingHouse h) {
+        map.setRoute(r.pts(), r.approximate());
+        double km = r.meters() / 1000.0;
+        int min = (int) Math.max(1, Math.round(r.meters() / (walkable(from, h) ? 80.0 : 500.0)));
+        map.setRouteLabel(Geo.fmt(km) + " \u00B7 " + Geo.fmtTime(min));
     }
 
     private LinearLayout statRow(View... cells) {
@@ -190,5 +337,5 @@ public class DashboardFragment extends Fragment {
     private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
 
     @Override
-    public void onDestroyView() { token++; b = null; super.onDestroyView(); }
+    public void onDestroyView() { token++; routeToken++; map = null; ui.removeCallbacksAndMessages(null); b = null; super.onDestroyView(); }
 }

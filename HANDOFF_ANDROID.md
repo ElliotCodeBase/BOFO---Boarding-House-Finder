@@ -1,3 +1,21 @@
+# Handoff (Android) - v2.0.44 owner Create wizard (2026-10-31)
+- **PR title:** `v2.0.44 - Android: Create / Edit place as a 4-step wizard (map pin + route, amenity picker, photo thumbnails, review)`
+- **Owner port is now COMPLETE (update 1 = v2.0.43 Dashboard, update 2 = v2.0.44 Create).** Everything from the JavaFX `DashboardView` and `ListingFormView` exists on Android, plus everything that was already there (stats, My places menu, Boost, edit mode).
+- Sync Gradle, run a debug build, log in with the Owner test button. TEST LIST: (1) Dashboard: banner for an unverified owner, map pins, tap a pin = purple route + distance, cards open the place; (2) Create: step 1 map moves under a fixed pin, Set pin shows "x km from <campus>", Next is blocked until name/address/pin; (3) rooms steppers; (4) Camera + Gallery, x removes a thumbnail; (5) amenity search, "Add ..." creates one (verified owner only), tap a selected chip to remove; (6) Publish; Edit from My places shows the amenities and the pin.
+- Files: `ui/ListingFormFragment.java` (wizard, all in one file; sections marked with comment bars), `layout/fragment_listing_form.xml` (4 `pageN` blocks), `MapCardView.center()`, `BhService.Draft.syncAmenities`.
+- Likely first problems if the build fails: binding names in `ListingFormFragment` (camelCase of the layout ids), `Chips.create` use, `LinearProgressIndicator` (Material 1.13 is in `build.gradle`). Nothing was compiled by Claude.
+- Supabase: 005_amenities + 006_admin_can_publish applied on 2026-10-31 to project `zfxldzcoirqolflkkhrh` (see v2.0.43). No new migration in this update.
+- Next ideas (not asked): removing EXISTING photos in edit mode, re-ordering photos, showing amenity chips on the Dashboard cards.
+
+---
+
+# Handoff (Android) - v2.0.43 owner Dashboard + Create plan (2026-10-31)
+- **PR title:** `v2.0.43 - Android: owner Dashboard gets verification banner, map with route, place cards`
+- Task from the user: "re-add ALL owner features from the JavaFX app (Dashboard and Create) to Android, keep what was added". Delivered as 2 updates: **update 1 = v2.0.43 Dashboard (done)**, **update 2 = v2.0.44 Create wizard (see the next entry / `OWNER_PORT_PLAN.md` if v2.0.44 is not there yet)**.
+- Supabase 005 + 006 applied to project `zfxldzcoirqolflkkhrh` on 2026-10-31 (amenities now exist, so the amenity picker can work and edit mode can show amenities).
+
+---
+
 # Handoff (Android) - v2.0.42 force-login buttons (2026-10-31)
 - **PR title:** `v2.0.42 - Android: Student / Owner / Admin test-login buttons on the login screen (debug builds)`
 - Sync Gradle, then run a DEBUG build from Android Studio. Buttons need `dev.student|owner|admin.email` / `.password` in `C:\Users\user\bofo-finder\src\main\resources\com\bofo\finder\config.local.properties` (git-ignored, the JavaFX file); `bofo-android/local.properties` can override them. No keys = no buttons.
