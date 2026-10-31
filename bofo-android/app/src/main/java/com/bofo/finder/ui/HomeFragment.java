@@ -100,7 +100,7 @@ public class HomeFragment extends Fragment {
             @Override public void glow(String houseId) { if (b != null) b.mapCard.setGlow(houseId); }
             @Override public void choose() {
                 if (b == null || search == null) return;
-                b.appBar.setExpanded(true, true);
+                if (b.appBar.getTop() < 0) { expanding = true; b.appBar.setExpanded(true, true); b.appBar.postDelayed(openAfterExpand, 450); return; }
                 search.openDropdown();
             }
         });
@@ -140,7 +140,7 @@ public class HomeFragment extends Fragment {
         b.appBar.addOnOffsetChangedListener((bar, offset) -> {
             if (b == null) return;
             b.area.swipe.setEnabled(offset == 0);
-            if (search != null) search.closeOnScroll();
+            if (expanding && offset == 0) { bar.removeCallbacks(openAfterExpand); bar.post(openAfterExpand); } else if (search != null && !expanding) search.closeOnScroll();
         });
         b.area.emptyBox.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);   // the list area is taller than the screen under the header
         b.area.emptyBox.setPadding(b.area.emptyBox.getPaddingLeft(), Math.round(40 * dn), b.area.emptyBox.getPaddingRight(), b.area.emptyBox.getPaddingBottom());
@@ -309,7 +309,7 @@ public class HomeFragment extends Fragment {
     }
 
     /** Locate button on the map: show the dot, move there, "found you" ring, keep the dot live. */
-    private long findStart; private boolean atMe;
+    private long findStart; private boolean expanding; private final Runnable openAfterExpand = () -> { expanding = false; if (b != null && search != null) search.openDropdown(); }; private boolean atMe;
 
     private void locateMe() {
         findStart = android.os.SystemClock.uptimeMillis(); atMe = true;
