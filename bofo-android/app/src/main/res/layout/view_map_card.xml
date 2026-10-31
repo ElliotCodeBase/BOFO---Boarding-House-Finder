@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bofo_bg">
+    android:background="@color/bofo_bg"
+    android:clipChildren="false">
 
     <!-- The MapView is added here from code (after MapLibre is initialised). -->
     <FrameLayout
@@ -31,6 +32,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="10dp"
+        android:clipChildren="false"
         android:orientation="vertical">
 
         <ImageButton
@@ -43,13 +45,28 @@
             android:src="@drawable/ic_expand"
             android:visibility="gone" />
 
-        <ImageButton
-            android:id="@+id/locate"
+        <!-- v2.0.78: the ring grows out of the button while the phone is being found (outside the 44 dp box, so nothing clips) -->
+        <FrameLayout
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:background="@drawable/bg_map_button"
-            android:contentDescription="@string/cd_locate"
-            android:src="@drawable/ic_my_location" />
+            android:clipChildren="false">
+
+            <View
+                android:id="@+id/locate_ring"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_locate_ring"
+                android:importantForAccessibility="no"
+                android:visibility="invisible" />
+
+            <ImageButton
+                android:id="@+id/locate"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_map_button"
+                android:contentDescription="@string/cd_locate"
+                android:src="@drawable/ic_my_location" />
+        </FrameLayout>
     </LinearLayout>
 
     <!-- Step 5: glass pill with the location state, top-left (hidden while the radius pill is shown) -->

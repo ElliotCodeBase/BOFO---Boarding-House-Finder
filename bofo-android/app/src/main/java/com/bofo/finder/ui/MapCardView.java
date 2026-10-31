@@ -142,6 +142,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         super(c, a);
         b = ViewMapCardBinding.inflate(LayoutInflater.from(c), this, true);      // 3 arguments: view_map_card.xml has a FrameLayout root, not <merge>
         setupAttribution();
+        setupLocatePress();
         b.locate.setOnClickListener(v -> { if (listener != null) listener.locate(); });
         b.expand.setOnClickListener(v -> { if (listener != null) listener.expand(); });
         b.radiusSlider.addOnChangeListener((sl, v, fromUser) -> {
@@ -555,26 +556,74 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         b.locPill.setVisibility(res != 0 && !pillShown ? View.VISIBLE : View.GONE);
     }
 
+    /** v2.0.78: while the phone is being found a soft ring grows out of the round button and fades, and the button breathes a little. Nothing is scaled past a parent's edge any more (that clipped the round button into a rounded square). */
     private void startLocatePulse() {
-        if (locatePulse != null) return;
-        locatePulse = ObjectAnimator.ofPropertyValuesHolder(b.locate,
-                PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.14f), PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.14f), PropertyValuesHolder.ofFloat(View.ALPHA, 1f, 0.65f));
-        locatePulse.setDuration(650);
-        locatePulse.setRepeatMode(ValueAnimator.REVERSE);
+        if (locatePulse != null || !animationsOn()) return;
+        b.locateRing.setVisibility(View.VISIBLE);
+        locatePulse = ValueAnimator.ofFloat(0f, 1f);
+        locatePulse.setDuration(1500);
         locatePulse.setRepeatCount(ValueAnimator.INFINITE);
+        locatePulse.setInterpolator(new android.view.animation.DecelerateInterpolator(1.3f));
+        locatePulse.addUpdateListener(a -> {
+            float t = (float) a.getAnimatedValue();
+            float ring = 1f + 0.4f * t;                                   // 44 dp -> ~62 dp: stays inside the 10 dp margin of the card
+            b.locateRing.setScaleX(ring); b.locateRing.setScaleY(ring);
+            b.locateRing.setAlpha((1f - t) * (1f - t));
+            float breath = 1f + 0.05f * (float) Math.sin(Math.PI * t);
+            b.locate.setScaleX(breath); b.locate.setScaleY(breath);
+        });
         locatePulse.start();
     }
 
     private void stopLocatePulse() {
         if (locatePulse == null) return;
         locatePulse.cancel(); locatePulse = null;
-        b.locate.setScaleX(1f); b.locate.setScaleY(1f); b.locate.setAlpha(1f);
+        b.locateRing.setVisibility(View.INVISIBLE); b.locateRing.setAlpha(0f);
+        // found: a small pop that settles with a little overshoot instead of snapping back
+        b.locate.animate().cancel();
+        b.locate.animate().scaleX(1.16f).scaleY(1.16f).setDuration(110).setInterpolator(new android.view.animation.DecelerateInterpolator())
+                .withEndAction(() -> b.locate.animate().scaleX(1f).scaleY(1f).setDuration(320).setInterpolator(new android.view.animation.OvershootInterpolator(3.2f)).start()).start();
     }
 
-    /** Step 5: purple locate button while the overview is on. */
+    /** v2.0.78: press feedback (shrinks under the finger, springs back with overshoot). Returns false so the click still fires. */
+    private void setupLocatePress() {
+        b.locate.setOnTouchListener((v, e) -> {
+            if (locatePulse != null) return false;
+            int act = e.getActionMasked();
+            if (act == MotionEvent.ACTION_DOWN) v.animate().scaleX(0.88f).scaleY(0.88f).setDuration(90).setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+            else if (act == MotionEvent.ACTION_UP || act == MotionEvent.ACTION_CANCEL) v.animate().scaleX(1f).scaleY(1f).setDuration(300).setInterpolator(new android.view.animation.OvershootInterpolator(3.2f)).start();
+            return false;
+        });
+    }
+
+    private Boolean locateOn;
+    private ValueAnimator locateTint;
+
+    /** Step 5: purple locate button while the overview is on. v2.0.78: the white and purple backgrounds cross-fade and the icon colour fades with them (it used to swap in one frame). */
     public void setLocateActive(boolean on) {
-        b.locate.setBackgroundResource(on ? R.drawable.bg_map_button_on : R.drawable.bg_map_button);
-        if (on) b.locate.setColorFilter(0xFFFFFFFF); else b.locate.clearColorFilter();
+        if (locateOn != null && locateOn == on) return;
+        boolean first = locateOn == null;
+        locateOn = on;
+        int white = 0xFFFFFFFF, own = 0xFF5B3BF0;
+        android.graphics.drawable.Drawable from = ContextCompat.getDrawable(getContext(), on ? R.drawable.bg_map_button : R.drawable.bg_map_button_on);
+        android.graphics.drawable.Drawable to = ContextCompat.getDrawable(getContext(), on ? R.drawable.bg_map_button_on : R.drawable.bg_map_button);
+        if (locateTint != null) locateTint.cancel();
+        if (first || from == null || to == null || !animationsOn()) {
+            b.locate.setBackgroundResource(on ? R.drawable.bg_map_button_on : R.drawable.bg_map_button);
+            if (on) b.locate.setColorFilter(white); else b.locate.clearColorFilter();
+            return;
+        }
+        android.graphics.drawable.TransitionDrawable td = new android.graphics.drawable.TransitionDrawable(new android.graphics.drawable.Drawable[]{from, to});
+        b.locate.setBackground(td);
+        td.startTransition(200);
+        final int c0 = on ? own : white, c1 = on ? white : own;
+        locateTint = ValueAnimator.ofObject(new android.animation.ArgbEvaluator(), c0, c1);
+        locateTint.setDuration(200);
+        locateTint.addUpdateListener(a -> b.locate.setColorFilter((int) a.getAnimatedValue()));
+        locateTint.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(android.animation.Animator an) { if (!on) b.locate.clearColorFilter(); }
+        });
+        locateTint.start();
     }
 
     /** Step 5: the locate button found the phone: one bigger "found you" ring and a small pop. */
