@@ -194,9 +194,9 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         capCache(app);
         owner = lifecycleOwner;
         mapView = new MapView(getContext(), MapLibreMapOptions.createFromAttributes(getContext(), null)
-                .pixelRatio(Math.min(1.75f, getResources().getDisplayMetrics().density)));   // 3x screens draw 2.25x the pixels for no visible gain; the rounded corners are drawn by CornerMaskView
+                .pixelRatio(getResources().getDisplayMetrics().density));   // 3x screens draw 2.25x the pixels for no visible gain; the rounded corners are drawn by CornerMaskView
         b.mapHost.addView(mapView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-        radar = new RadarOverlayView(getContext(), Math.min(1.75f, getResources().getDisplayMetrics().density));   // same unit as the map's pixelRatio
+        radar = new RadarOverlayView(getContext(), getResources().getDisplayMetrics().density);   // same unit as the map's pixelRatio
         b.mapHost.addView(radar, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         mapView.setMaximumFps(60);          // 120 Hz phones (realme 14 Pro+) would otherwise render the map up to 120 times a second while panning: double the GPU work, no visible gain
         mapView.onCreate(null);
