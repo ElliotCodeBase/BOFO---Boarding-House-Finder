@@ -170,7 +170,7 @@ function sanitizeParams(p: any): Params {
   const o: Params = {};
   if (!p || typeof p !== "object") return o;
   const mx = num(p.max_price), mn = num(p.min_price), lim = num(p.limit);
-  if (mx !== undefined && mx > 0) o.max_price = Math.min(mx, 1_000_000);
+  if (mx !== undefined && mx > 0) o.max_price = Math.min(mx, 1_000_000);   // "5k" is fixed by parseLocal, which runs first
   if (mn !== undefined && mn > 0) o.min_price = Math.min(mn, 1_000_000);
   if (bool(p.free_water)) o.free_water = true;
   if (bool(p.free_electricity)) o.free_electricity = true;
@@ -202,8 +202,8 @@ const GREETING_RE = /^(hi|hello|hey|kumusta|musta|good (morning|evening|afternoo
 function parseLocal(msg: string, hasLast: boolean): { intent: Intent; params: Params } {
   const m = msg.toLowerCase();
   const p: Params = { limit: 3 };
-  const price = m.match(/(?:under|below|less than|max(?:imum)?|hanggang|up to|not more than|di lalampas sa|<=?)\s*(?:₱|php|p)?\s*(\d[\d,]*)/i) ?? m.match(/(?:₱|php)\s*(\d[\d,]*)/i) ?? m.match(/(\d[\d,]{2,})\s*(?:pesos|php|piso)/i);
-  if (price) { const v = Number(price[1].replace(/,/g, "")); if (v > 0) p.max_price = v; }
+  const price = m.match(/(?:under|below|less than|max(?:imum)?|hanggang|up to|not more than|di lalampas sa|<=?)\s*(?:₱|php|p)?\s*(\d[\d,]*(?:\.\d+)?)\s*(k|thousand|libo)?\b/i) ?? m.match(/(?:₱|php)\s*(\d[\d,]*(?:\.\d+)?)\s*(k|thousand|libo)?\b/i) ?? m.match(/(\d[\d,]{2,}(?:\.\d+)?)\s*()(?:pesos|php|piso)/i);
+  if (price) { let v = Number(price[1].replace(/,/g, "")); if (price[2]) v *= 1000; if (v > 0) p.max_price = v; }
   if (/\b(all|lahat|tanan)\b/.test(m)) p.limit = 5;                                  // "list all BH" -> up to 5, not 3
   if (/wi-?fi|internet/.test(m)) p.free_wifi = true;
   if (/\b(water|tubig)\b/.test(m)) p.free_water = true;

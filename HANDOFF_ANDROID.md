@@ -1,6 +1,6 @@
 # Handoff (Android) - v2.0.61 auto path + readable Ask BOFO
 - **PR title:** `v2.0.61 - Android: map path refreshes by itself, cleaner map UI, readable Ask BOFO replies`
-- `MapFragment.drawRoute/fetchRoute/retryLater/onResume`: walk <= 3 km else `Router.drive`; estimate first, retries until `!approximate`. New style `Widget.Bofo.Button.MapPill`. `bofo-chat/index.ts`: `distText`, `lines`, `listReply`, `nearWhere` (numbered list replies). **`supabase functions deploy bofo-chat` required.** If the build fails: `Widget.Bofo.Button.MapPill` attrs (`icon`, `iconTint` null) on the MaterialButton. Not built or run by Claude.
+- `MapFragment.drawRoute/fetchRoute/retryLater/onResume`: walk <= 3 km else `Router.drive`; estimate first, retries until `!approximate`. New style `Widget.Bofo.Button.MapPill`. `bofo-chat/index.ts`: `distText`, `lines`, `listReply`, `nearWhere` (numbered list replies). **bofo-chat was deployed to the live project (version 17) from Claude on 2026-11-01; redeploy with `supabase functions deploy bofo-chat` only if you change the file.** Also fixed: "under 5k" / "2.5k" / "4 libo" are read as thousands (was PHP 5). If the build fails: `Widget.Bofo.Button.MapPill` attrs (`icon`, `iconTint` null) on the MaterialButton. Not built or run by Claude.
 ---
 # Handoff (Android) - v2.0.60 Ask BOFO chat redesign
 - **PR title:** `v2.0.60 - Android: Ask BOFO chat redesign (listing cards, compare table, starter chips, typing dots)`
