@@ -1,12 +1,9 @@
-BOFO Android v2.0.27 - Step 5: radar dot, location states, overview. Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
-changed  bofo-android/app/build.gradle  (version 2.0.27 / 227, shown in Profile > About)
+BOFO Android v2.0.28 - Step 6: pins, clusters, campus dots, circle label, preview card. Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
+changed  bofo-android/app/build.gradle  (version 2.0.28 / 228, shown in Profile > About)
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/HomeFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/HomeSearchBar.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/util/LocationHelper.java
 changed  bofo-android/app/src/main/res/layout/view_map_card.xml
-new      bofo-android/app/src/main/res/drawable/bg_glass_pill.xml
-new      bofo-android/app/src/main/res/drawable/bg_map_button_on.xml
-new      bofo-android/app/src/main/res/values/strings_radar.xml
+new      bofo-android/app/src/main/res/drawable/bg_peek_icon.xml
+new      bofo-android/app/src/main/res/values/strings_pins.xml
 changed  CHANGES_ANDROID.md, HANDOFF_ANDROID.md, REVERT_PROGRESS.md, REVERT_PROMPT.md
 DELETE   nothing

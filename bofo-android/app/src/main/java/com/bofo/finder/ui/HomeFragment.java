@@ -104,6 +104,9 @@ public class HomeFragment extends Fragment {
             @Override public void openPlace(String id) { BhDetailFragment.open(HomeFragment.this, id); }
             @Override public void locate() { onLocateTap(); }
             @Override public void radiusChanged(float km, boolean settled) { onRadiusPill(km, settled); }
+            @Override public void campusTapped(String id) {
+                for (College c : BrowseState.colleges) if (c.id().equals(id)) { BrowseState.setCampus(c); return; }
+            }
         });
         b.mapCard.setLocState(!AppPrefs.useLocation(requireContext()) ? MapCardView.Loc.OFF
                 : LocationHelper.granted(requireContext()) ? MapCardView.Loc.FINDING : MapCardView.Loc.NONE);   // the live dot resolves it
@@ -302,6 +305,7 @@ public class HomeFragment extends Fragment {
         if (b == null) return;
         College campus = BrowseState.campus();
         b.mapCard.setPlaces(current);
+        b.mapCard.setColleges(BrowseState.colleges);
         b.mapCard.setRing(BrowseState.refLat(), BrowseState.refLng(), BrowseState.radiusKm);
         b.mapCard.setCampusDot(campus == null ? null : campus.lat(), campus == null ? null : campus.lng());
         String key = BrowseState.refLat() + "," + BrowseState.refLng();

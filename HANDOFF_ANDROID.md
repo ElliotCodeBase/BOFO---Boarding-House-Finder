@@ -1,3 +1,10 @@
+# Handoff (Android) - v2.0.28 Step 6 pins, clusters, campus dots, preview card (2026-10-31)
+- **PR title:** `v2.0.28 - Android: pin clusters, labels, campus dots, radius label and preview card on the Home map`
+- `MapCardView.rebuildPlaces()` (own clustering in screen px, per zoom, on camera idle) writes `places-src` with `kind` = dot | cluster | pin; labels in `labels-src`; campuses in `colleges-src` / `college-labels-src`; edge label `ringlabel-src`; glow `glow-src`. Text = bitmaps added with `imgs` cache (style has no glyphs). `Listener.campusTapped`. Layout: new `peek` card (`peek_price`, `peek_close`, `peek_open` is now an ImageButton).
+- If it looks off: check cluster merge threshold (30 dp) and PIN_ZOOM (12.5); if labels lag on slow phones, limit rebuild to idle only (already) or cap names. Next: Step 7 (chips, section header, rent card, list states; call `setGlow`).
+
+---
+
 # Handoff (Android) - v2.0.27 Step 5 radar + location states + overview (2026-10-31)
 - **PR title:** `v2.0.27 - Android: radar dot, location pill and overview mode on the Home map`
 - `MapCardView`: user layers are now ripple1/ripple2/found/cone/shadow/ring/dot (all paint-only updates from `paintUser()`, ripples ~30 fps, skipped when `getGlobalVisibleRect` is empty); `setUser` computes heading; `setLocState(Loc)`, `setLocateActive`, `foundYou()`, `overview()`. `HomeFragment`: `ovOn/ovFit/overviewActive()`, `onLocateTap()`, `locateMe()` with FINDING/EXACT/APPROX/OFF. `HomeSearchBar.Host.searchChanged()`.
