@@ -1,3 +1,8 @@
+# v2.0.66 - Android: Home list refreshes after leaving the place page
+- **Fixed:** after opening a boarding house (BH info page) and going back, the Home list under "Nearby boarding houses" stayed empty. Home now reloads the list by itself every time you come back to it (skeleton shows, then the cards). Also picks up new favourites, new listings and changed rent made while you were away.
+- **Cause:** the tab Fragment is kept while its view is rebuilt; it remembered the last change tick (`lastChange`) and skipped the reload. `onDestroyView` now resets it to -1.
+- Files: `HomeFragment.java` (one line in `onDestroyView`), `build.gradle` (2.0.66 / 266). Not built or run by Claude.
+
 # v2.0.65 - Android: own amenity icons, cleaner place page
 - **Amenity icons:** emoji replaced by the app's own line icons (water drop, bolt, Wi-Fi, snowflake, shower, pot, washing machine, P sign, camera, book, flame, fan, bed, closet, lock, people, moon, paw, venus / mars, TV, fridge, shield). Used on the place page, the owner's amenity picker and the Explore filter. Amenities with an unknown name (owner-made) get a sparkle icon.
 - **Place page:** amenities are tiles with an icon bubble, House rules is a card with check marks, no repeated rating / "Free Wi-Fi" lines, more space between sections.

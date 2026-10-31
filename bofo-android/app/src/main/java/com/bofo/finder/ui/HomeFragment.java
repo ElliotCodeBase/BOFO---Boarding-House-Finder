@@ -468,6 +468,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         token++;                       // late results are ignored
+        lastChange = -1;               // v2.0.66: this Fragment survives a trip to the place page, its view does not: forget the last seen tick so the list reloads when Home comes back
         ui.removeCallbacks(settleRadius);
         loc.stop();
         if (area != null) area.destroy();
