@@ -216,7 +216,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         m.getUiSettings().setTiltGesturesEnabled(false);
         m.getUiSettings().setLogoEnabled(false);          // the attribution text stays visible (licence)
         m.addOnMapClickListener(this::onTap);
-        m.addOnCameraIdleListener(() -> { rebuildPlaces(); rebuildColleges(); });      // pins / clusters / labels depend on the zoom
+        m.addOnCameraMoveStartedListener(reason -> camMoving = true);
+        m.addOnCameraIdleListener(() -> { camMoving = false; rebuildPlaces(); rebuildColleges(); });      // pins / clusters / labels depend on the zoom
         String json = loadStyle(getContext());
         if (json == null) return;
         m.setStyle(new Style.Builder().fromJson(json), st -> { style = st; addLayers(st); render(); post(this::applyCamera); });
@@ -484,14 +485,29 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         ripples.setRepeatCount(ValueAnimator.INFINITE);
         ripples.addUpdateListener(a -> {
             long now = android.os.SystemClock.uptimeMillis();
-            if (now - lastFrame < 33) return;                                  // ~30 frames a second is plenty for a soft ring
-            android.graphics.Rect vis = new android.graphics.Rect();
-            if (!getGlobalVisibleRect(vis)) return;                            // map scrolled off screen: no work
+            if (now - lastFrame < RIPPLE_FRAME_MS) return;                     // ~12 frames a second: every map redraw costs a lot on slow phones / emulators
+            if (camMoving || owner == null) return;                            // never compete with a pan / zoom / radius glide
+            if (!getGlobalVisibleRect(visRect)) return;                        // map scrolled off screen: no work
+            if (visRect.top != lastTop || visRect.height() != lastH) { lastTop = visRect.top; lastH = visRect.height(); return; }   // page is scrolling: wait until it stops
             lastFrame = now;
             rippleT = (float) a.getAnimatedValue();
-            paintUser();
+            paintRipples();
         });
         ripples.start();
+    }
+
+    private static final long RIPPLE_FRAME_MS = 80;
+    private final android.graphics.Rect visRect = new android.graphics.Rect();
+    private int lastTop = Integer.MIN_VALUE, lastH = -1;
+    private volatile boolean camMoving;
+
+    /** Only the two ripple rings (the dot, ring and shadow do not change while the ripples loop). */
+    private void paintRipples() {
+        if (style == null || userLat == null) return;
+        float scale = (0.82f + 0.18f * popT) * (foundT >= 0 ? 1f + 0.25f * (float) Math.sin(Math.PI * foundT) : 1f);
+        float p1 = rippleT, p2 = (rippleT + 0.5f) % 1f;
+        layerCircle("user-ripple1", 10f * (0.5f + 2.2f * p1) * scale, 0.34f * (1f - p1) * popT);
+        layerCircle("user-ripple2", 10f * (0.5f + 2.2f * p2) * scale, 0.34f * (1f - p2) * popT);
     }
 
     private void stopRipples() {

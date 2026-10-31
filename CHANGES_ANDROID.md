@@ -1,3 +1,7 @@
+# v2.0.34 - Android port, lag fix (JavaFX app stays v1.20.0)
+- Cause found in the screen recording (about 17 unique frames/s): the radar ripples redrew the whole map ~30 times a second forever, and 5-6 layer properties each frame.
+- Now: ripples run at ~12 fps, update only the 2 ripple layers, and pause while the map is panning/zooming/gliding or the page is scrolling. Changed: `MapCardView`, `build.gradle` (2.0.34 / 234). Not built or run by Claude.
+
 # v2.0.33 - Android port, Step 11: final pass (JavaFX app stays v1.20.0)
 - Deleted the old Ask-BOFO bottom sheet (`BofoPanelSheet.java`, `sheet_bofo.xml`; replaced by the floating button + chat overlay in v2.0.21).
 - Removed 23 unused strings (old filter sheet, List/Map toggle, price range, old chat/detail text). Checked every layout and drawable: all still used.

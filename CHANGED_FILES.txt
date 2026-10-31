@@ -1,6 +1,5 @@
-BOFO Android v2.0.33 - Step 11 final pass. Unzip INTO C:\Users\user\bofo-finder, overwrite, then run the DELETE commands.
-changed  bofo-android/app/build.gradle  (2.0.33 / 233)
-changed  bofo-android/app/src/main/res/values/strings.xml, strings_explore.xml (only if they held unused strings)
-DELETE   bofo-android/app/src/main/java/com/bofo/finder/ui/BofoPanelSheet.java
-DELETE   bofo-android/app/src/main/res/layout/sheet_bofo.xml
-changed  CHANGES_ANDROID.md, HANDOFF_ANDROID.md, REVERT_PROGRESS.md, REVERT_PROMPT.md, BOFO_v2.0.33_CHANGELOG.md
+BOFO Android v2.0.34 - lag fix. Unzip INTO C:\Users\user\bofo-finder, overwrite.
+changed  bofo-android/app/build.gradle  (2.0.34 / 234)
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
+changed  CHANGES_ANDROID.md, HANDOFF_ANDROID.md, REVERT_PROGRESS.md
+DELETE   nothing

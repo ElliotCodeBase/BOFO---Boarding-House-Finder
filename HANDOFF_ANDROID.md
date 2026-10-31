@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.34 lag fix (2026-10-31)
+- **PR title:** `v2.0.34 - Android: smoother Home (ripples at 12 fps, paused while moving or scrolling)`
+- `MapCardView`: `paintRipples()`, `camMoving` (set by camera move-started / idle), `RIPPLE_FRAME_MS = 80`, scroll detection via `getGlobalVisibleRect` top change. If still laggy: ask if it is an emulator (software GL: try Graphics = Hardware in AVD settings) and which action lags; next suspects are `rebuildPlaces` bitmap text and the CornerMaskView overlay.
+
+---
+
 # Handoff (Android) - v2.0.33 Step 11 final pass (2026-10-31)
 - **PR title:** `v2.0.33 - Android: remove unused Ask-BOFO sheet and old strings (final pass)`
 - Scan method: grep for `R.<type>.<name>` / `@<type>/<name>` / ViewBinding class in java + res. The `offline_banner` string is unused but kept (the id of the same name is used).
