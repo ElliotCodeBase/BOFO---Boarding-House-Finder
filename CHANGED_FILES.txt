@@ -1,10 +1,9 @@
-src/main/java/com/bofo/finder/ui/LoginView.java  changed
-src/main/java/com/bofo/finder/service/AuthService.java  changed
-src/main/java/com/bofo/finder/ui/Nav.java  changed
-pom.xml  changed
-src/android/AndroidManifest.xml  changed
-src/main/resources/com/bofo/finder/config.properties  changed
-docs/EMAIL_LOGIN_SETUP.md  new
-docs/HANDOFF_ARCHIVE.md  changed
-CHANGES.md  changed
-HANDOFF.md  changed
+BOFO Android v2.0.17 - changes zip. Unzip over the repo root C:\Users\user\bofo-finder; paths are relative to it.
+changed  CHANGES_ANDROID.md  (the Android changelog; named CHANGES.md in older zips)
+changed  HANDOFF_ANDROID.md
+changed  bofo-android/README.md
+changed  bofo-android/app/build.gradle
+changed  bofo-android/app/src/main/res/values/strings.xml
+changed  bofo-android/app/src/main/res/values/styles.xml
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/MascotView.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/LoginFragment.java

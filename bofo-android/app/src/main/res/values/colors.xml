@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ported from bofo.css (.root block). Change colours ONLY here. -->
+<resources>
+    <color name="bofo_primary">#5B3BF0</color>
+    <color name="bofo_primary_dark">#3A22B8</color>
+    <color name="bofo_primary_tint">#ECE9FF</color>
+    <color name="bofo_ink">#17142A</color>
+    <color name="bofo_amber">#FFB400</color>
+    <color name="bofo_text">#17142A</color>
+    <color name="bofo_text_2">#5F5C75</color>
+    <color name="bofo_muted">#8D8AA3</color>
+    <color name="bofo_bg">#F5F6FC</color>
+    <color name="bofo_border">#E7E8F2</color>
+    <color name="bofo_skeleton">#E4E5F2</color>
+    <color name="bofo_success">#1E8E5E</color>
+    <color name="bofo_success_tint">#E1F4EA</color>
+    <color name="bofo_error">#D14343</color>
+    <color name="bofo_error_tint">#FCEBEB</color>
+    <color name="bofo_warn_tint">#FFF4DC</color>
+    <color name="bofo_google">#4285F4</color>
+    <color name="bofo_scrim">#8017142A</color>
+    <color name="bofo_white">#FFFFFF</color>
+    <color name="bofo_icon_bg">#EDE4FA</color>
+</resources>

@@ -1,0 +1,22 @@
+# Android / Gradle
+build/
+.gradle/
+.idea/
+*.iml
+*.apk
+*.aab
+captures/
+.externalNativeBuild/
+.cxx/
+
+# secrets - never commit
+local.properties
+config.local.properties
+KEYS.local.md
+*.local.md
+*.jks
+*.keystore
+google-services.json
+
+# release signing (Stage 9)
+keystore.properties
