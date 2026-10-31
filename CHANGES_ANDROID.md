@@ -1,3 +1,7 @@
+# v2.0.73 - Android: only the path stays on the map while a path is shown
+- **Changed:** when you pathfind to a boarding house, every other circle disappears: the other houses (dots, pins, number bubbles and names), all campus dots and names, the chosen campus dot and the radius circle with its km chip. What stays: your dot, the path, its start / end dots and the "km - time" chip, and the house you are going to. Close the path (the X on the preview card) and everything comes back.
+- Files: `MapCardView.java` (`routeShown`, `declutter`, `paintRing`, `paintCampusDot`, `isRouteTarget`, edits in `rebuildPlaces` / `rebuildColleges` / `setRoute` / `clearRoute`), `build.gradle` (2.0.73 / 273). Not built or run by Claude.
+
 # v2.0.72 - Android: boarding house dot / pin no longer sits on the phone's dot
 - **Fixed:** when a boarding house was near the user's own location, its circle (or pin / number bubble) was drawn on top of the phone's blue dot and its ripples.
 - **Now:** a house whose marker would land within about 30 dp (dots), 22 dp (pins) or 34 dp (number bubbles) of the phone's dot is shown just outside that distance, straight away from the dot (straight down when exactly on it). Only the drawing moves; the house's real position, tap and route are unchanged. It follows the phone and the zoom.

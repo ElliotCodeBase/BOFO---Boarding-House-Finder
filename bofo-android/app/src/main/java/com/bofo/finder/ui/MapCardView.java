@@ -475,10 +475,41 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     }
 
     /** The radius ring (null centre or km <= 0 removes it). */
-    public void setRing(Double lat, Double lng, double km) { ringLat = lat; ringLng = lng; ringKm = km; if (style != null) { set("radius-src", MapGeo.circleJson(ringLat, ringLng, ringKm, 64)); paintRingLabel(); } }
+    public void setRing(Double lat, Double lng, double km) { ringLat = lat; ringLng = lng; ringKm = km; paintRing(); }
+
+    /** v2.0.73: while a path is shown the map is decluttered: no radius circle, no campus dot, no campus dots / names, no other houses. */
+    private boolean routeShown() { return routePts != null; }
+
+    private void paintRing() {
+        if (style == null) return;
+        set("radius-src", routeShown() ? MapGeo.EMPTY : MapGeo.circleJson(ringLat, ringLng, ringKm, 64));
+        paintRingLabel();
+    }
+
+    private void paintCampusDot() {
+        if (style == null) return;
+        set("campus-src", routeShown() ? MapGeo.EMPTY : MapGeo.pointJson(campusLat, campusLng));
+    }
+
+    /** A new / cleared path: redraw everything that hides while a path is shown. */
+    private void declutter() {
+        if (style == null) return;
+        paintRing(); paintCampusDot();
+        rebuildPlaces(false); rebuildColleges(false);      // their signatures include the path, so only a real change redraws
+    }
+
+    /** True for the house the path leads to: the selected one, or the one at the path's end point. */
+    private boolean isRouteTarget(BoardingHouse p) {
+        if (p.id().equals(selectedId)) return true;
+        if (routePts == null) return true;
+        double[] e = routePts[routePts.length - 1];
+        float[] r = new float[1];
+        Location.distanceBetween(e[0], e[1], p.lat(), p.lng(), r);
+        return r[0] < 60;
+    }
 
     /** The campus dot (null removes it). */
-    public void setCampusDot(Double lat, Double lng) { campusLat = lat; campusLng = lng; if (style != null) set("campus-src", MapGeo.pointJson(campusLat, campusLng)); }
+    public void setCampusDot(Double lat, Double lng) { campusLat = lat; campusLng = lng; paintCampusDot(); }
 
     /** The live "you are here" dot (null removes it). The first fix grows in from 82 %; the direction of travel comes from the last two fixes. */
     public void setUser(Double lat, Double lng) {
@@ -621,9 +652,10 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         routePts = pts != null && pts.length >= 2 ? pts : null;
         routeApprox = approximate;
         paintRoute(); paintRouteLabel();
+        declutter();
     }
 
-    public void clearRoute() { routePts = null; routeLabel = null; fitRoutePending = false; paintRoute(); paintRouteLabel(); }
+    public void clearRoute() { boolean was = routeShown(); routePts = null; routeLabel = null; fitRoutePending = false; paintRoute(); paintRouteLabel(); if (was) declutter(); }
 
     /** Step 8: "1.7 km · 21 min" chip just above the end of the route (null removes it). */
     public void setRouteLabel(@Nullable String text) { routeLabel = text; paintRouteLabel(); }
@@ -677,9 +709,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private void render() {
         if (style == null) return;
         rebuildPlaces();
-        set("radius-src", MapGeo.circleJson(ringLat, ringLng, ringKm, 64));
-        set("campus-src", MapGeo.pointJson(campusLat, campusLng));
-        paintRingLabel(); rebuildColleges(); paintGlow(); paintRouteLabel();
+        paintRing(); paintCampusDot();
+        rebuildColleges(); paintGlow(); paintRouteLabel();
         set("user-src", MapGeo.pointJson(userLat, userLng));
         set("cone-src", coneJson());
         paintUser();
@@ -747,7 +778,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private void rebuildPlaces(boolean force) {
         if (style == null || map == null) return;
         String sig = placesVer + "|" + selectedId + "|" + Math.round(map.getCameraPosition().zoom * 20) + "|" + getWidth() + "x" + getHeight()
-                + "|" + (userLat == null ? "-" : Math.round(userLat * 10000) + "," + Math.round(userLng * 10000));       // v2.0.72: a pin that was moved off the phone's dot follows the phone
+                + "|" + (routeShown() ? "r" + routePts.length + "," + Math.round(routePts[routePts.length - 1][0] * 10000) : "-") + "|" + (userLat == null ? "-" : Math.round(userLat * 10000) + "," + Math.round(userLng * 10000));       // v2.0.72: a pin that was moved off the phone's dot follows the phone
         if (!force && sig.equals(placesSig)) return;
         placesSig = sig;
         float d = getResources().getDisplayMetrics().density;
@@ -755,7 +786,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         PointF[] sp = new PointF[n];
         for (int i = 0; i < n; i++) {
             BoardingHouse p = places.get(i);
-            if (!Double.isNaN(p.lat()) && !Double.isNaN(p.lng())) sp[i] = map.getProjection().toScreenLocation(new LatLng(p.lat(), p.lng()));
+            if (!Double.isNaN(p.lat()) && !Double.isNaN(p.lng()) && (!routeShown() || isRouteTarget(p))) sp[i] = map.getProjection().toScreenLocation(new LatLng(p.lat(), p.lng()));   // v2.0.73: only the house the path leads to stays while a path is shown
         }
         // v2.0.72: a house under the phone's dot (or its ripples) is moved just clear of it on screen, so the two circles never sit on top of each other
         final boolean pinMode = map.getCameraPosition().zoom >= PIN_ZOOM;
@@ -846,11 +877,11 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private void rebuildColleges(boolean force) {
         if (style == null || map == null) return;
         boolean showNames = map.getCameraPosition().zoom >= 11f;
-        String sig = collegesVer + "|" + showNames;
+        String sig = collegesVer + "|" + showNames + "|" + routeShown();
         if (!force && sig.equals(collegesSig)) return;      // the campus list is the same and the names are still on / off: nothing to send
         collegesSig = sig;
         StringBuilder dots = new StringBuilder(), names = new StringBuilder();
-        for (College c : colleges) {
+        for (College c : routeShown() ? new ArrayList<College>() : colleges) {      // no campus dots / names while a path is shown
             if (dots.length() > 0) dots.append(',');
             dots.append(feat(c.lat(), c.lng(), "\"kind\":\"college\",\"id\":\"" + esc(c.id()) + "\""));
             if (!showNames) continue;
@@ -866,7 +897,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** "500 m" / "4.5 km" chip on the east edge of the radius circle. */
     private void paintRingLabel() {
         if (style == null) return;
-        if (ringLat == null || ringKm <= 0) { set("ringlabel-src", MapGeo.EMPTY); return; }
+        if (ringLat == null || ringKm <= 0 || routeShown()) { set("ringlabel-src", MapGeo.EMPTY); return; }
         String text = ringKm < 1 ? Math.round(ringKm * 1000) + " m" : String.format(Locale.US, "%.1f km", ringKm), key = "rl|" + text;
         if (imgs.add(key)) style.addImage(key, chip(text));
         double[] e = MapGeo.destination(ringLat, ringLng, ringKm, 90);
