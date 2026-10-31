@@ -235,7 +235,7 @@
 
     <!-- Stage 8a: BOFO assistant -->
     <string name="bofo_title">Ask BOFO</string>
-    <string name="bofo_hello">Hi! I am BOFO. Ask me about finding a boarding house, chatting with owners or verifying.</string>
+    <string name="bofo_hello">Hi! I am BOFO. Ask me for the nearest or cheapest boarding house, to compare places or show them on the map.</string>
     <string name="bofo_hint">Ask BOFO...</string>
     <string name="cd_mascot_ask">BOFO mascot, tap to ask</string>
 

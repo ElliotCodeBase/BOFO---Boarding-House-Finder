@@ -18,10 +18,15 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.bofo.finder.R;
 import com.bofo.finder.databinding.FragmentShellBinding;
+import com.bofo.finder.model.BofoAnswer;
 import com.bofo.finder.service.ChatService;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BrowseState;
+import com.bofo.finder.util.ExploreHandoff;
 import com.bofo.finder.util.Favorites;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,6 +107,7 @@ public class ShellFragment extends Fragment {
             if (binding != null) binding.bofoFab.setChatOpen(false);   // the button pops back
         });
         binding.bofoFab.setOnClickListener(v -> openBofo());
+        binding.bofoChat.setOnAction(this::runBofoAction);
 
         binding.dock.setListener(new DockBarView.Listener() {
             @Override public void onTab(int id) { showTab(id); refreshBadge(); }
@@ -178,6 +184,47 @@ public class ShellFragment extends Fragment {
         f.setChatOpen(true);
         binding.bofoChat.open(cx, cy);
         closeBofo.setEnabled(true);
+    }
+
+    /** Ask BOFO action chips / result cards. The chat card closes first, then the app navigates (map with only those pins, detail, Explore with filters). */
+    private void runBofoAction(BofoAnswer.Action a, BofoAnswer ans) {
+        if (binding == null) return;
+        binding.bofoChat.close();
+        switch (a.type()) {
+            case "show_on_map": {
+                List<String> ids = a.ids() != null && !a.ids().isEmpty() ? a.ids() : a.id() != null ? List.of(a.id()) : new ArrayList<String>();
+                if (ids.isEmpty()) return;
+                BofoAnswer.Result one = ids.size() == 1 ? ans.result(ids.get(0)) : null;
+                if (one != null) MapFragment.open(this, one.id(), one.lat(), one.lng());
+                else MapFragment.open(this, ids.toArray(new String[0]));
+                break;
+            }
+            case "open_detail":
+            case "directions":                      // the place screen holds the directions card (walk / transit from the campus or the phone)
+                if (a.id() != null) BhDetailFragment.open(this, a.id());
+                break;
+            case "apply_filters":
+                applyBofoFilters(ans.filters());
+                break;
+            default:
+                break;
+        }
+    }
+
+    /** filters from the answer -> the Explore filters (same names the filter sheet uses), then Explore opens and reloads. */
+    private void applyBofoFilters(JSONObject f) {
+        if (f == null) return;
+        BrowseState.clearFilters();
+        if (f.has("max_price")) BrowseState.maxPrice = f.optDouble("max_price");
+        if (f.optBoolean("free_wifi")) BrowseState.amenityNames.add("Free Wi-Fi");
+        if (f.optBoolean("free_water")) BrowseState.amenityNames.add("Free water");
+        if (f.optBoolean("free_electricity")) BrowseState.amenityNames.add("Free electricity");
+        JSONArray am = f.optJSONArray("amenities");
+        if (am != null) for (int i = 0; i < am.length(); i++) { String n = am.optString(i, ""); if (!n.isEmpty()) BrowseState.amenityNames.add(n); }
+        String text = f.optString("text", "");
+        ExploreHandoff.set(text.isEmpty() ? null : text);
+        BrowseState.bump();
+        openExplore();
     }
 
     private void showTab(int id) {
