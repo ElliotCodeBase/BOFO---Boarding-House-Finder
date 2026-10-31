@@ -151,6 +151,7 @@ public class HomeFragment extends Fragment {
             b.offlineBanner.setVisibility(Boolean.TRUE.equals(off) ? View.VISIBLE : View.GONE);
             paintMapNote();
         });
+        b.offlineRetry.setOnClickListener(v -> reload());
         area.setSlowListener(slow -> { mapSlow = Boolean.TRUE.equals(slow); paintMapNote(); });
         // The first emission is the initial load; later ones come from the campus picker / radius slider.
         BrowseState.CHANGED.observe(getViewLifecycleOwner(), n -> { if (n == null || n == lastChange) return; lastChange = n; reload(); });

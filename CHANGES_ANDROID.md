@@ -1,3 +1,7 @@
+# v2.0.49 - Android port: better offline strip on Home (JavaFX app stays v1.20.0)
+- The dark offline strip now has a small wifi-off icon, the text "You're offline. Showing saved places." and a **Try again** button on the right (reloads the list). Slightly taller (40 dp) so it no longer sits tight on the greeting.
+- Changed: `fragment_home.xml`, `strings_home.xml`, `HomeFragment.java`, `build.gradle` (2.0.49 / 249). Not built by Claude.
+
 # v2.0.48 - Android port: no more blank Home when the network is slow or gone (JavaFX app stays v1.20.0)
 - Home / Explore / Saved: the skeleton cards stay up while loading, and after 5 s a "Slow network. Still loading..." note appears over them. No network and no saved copy now shows a wifi-off icon, "No internet connection", one line of help and Try again (before: a long "No connection to the server..." line, or nothing). It reloads by itself when the connection comes back.
 - Home map: a small note in the middle of the map says "Map can't load without internet" or "Slow network. The map may take a while...".

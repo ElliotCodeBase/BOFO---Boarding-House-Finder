@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.49 offline strip (2026-10-31)
+- **PR title:** `v2.0.49 - Android: offline strip with icon and Try again`
+- `offline_banner` is now a LinearLayout (icon, text, `offline_retry` calling `reload()`); same observer in `HomeFragment`.
+
+---
+
 # Handoff (Android) - v2.0.48 slow / no-internet states (2026-10-31)
 - **PR title:** `v2.0.48 - Android: skeleton + "Slow network" note, clear "No internet connection" screen, map note`
 - User screenshot: Home showed an empty area under "Nearby boarding houses" and a blank map. Now `ListArea.showLoading()` posts a 5 s `slowRun` (note over the skeleton, `setSlowListener` lets Home show a map note); `ListArea.showOffline()` is used by Home / Explore / Saved when `Connectivity.isNetworkError(e)`; `ListArea` observes `Connectivity.OFFLINE` and reloads when it flips back to online while the offline screen is showing.
