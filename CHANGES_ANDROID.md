@@ -1,3 +1,13 @@
+# v2.0.28 - Android port, Step 6: pins, clusters, campus dots, circle label, preview card (JavaFX app stays v1.20.0)
+- **Pins:** zoomed out (below 12.5) small purple dots; dots closer than 30 dp merge into numbered bubbles (tap = glide to a view of the whole group); zoomed in, full pins with the house name under them, labels that would collide are hidden (the selected one always shows). The selected pin grows and turns dark purple. Merging/unmerging is recomputed when the camera stops moving.
+- **Campus dots:** every campus is a small orange dot (names from zoom 11); tap = choose that campus. The chosen campus keeps its bigger dot.
+- **Radius circle:** "500 m" / "4.5 km" chip on its east edge.
+- **Preview card:** house-icon square, name, bold purple "P1,550/mo", star + rating (+ distance), X closes, > opens the place. Tapping a pin glides the camera to it.
+- **Price glow:** `MapCardView.setGlow(id)` lights one house's circle (pink #F43F5E); Step 7's rent card will call it.
+- The map style has no fonts, so all map text (names, bubble numbers, edge label) is drawn as bitmaps and cached per text.
+- Selecting a pin does NOT draw the route yet (Step 8). Red destination pin: Step 8.
+- New: `bg_peek_icon`, `strings_pins.xml`. Changed: `MapCardView`, `HomeFragment` (campusTapped, setColleges), `view_map_card.xml`, `build.gradle` (2.0.28 / 228). Not built or run by Claude (parse-checked only). Profile > About shows 2.0.28.
+
 # v2.0.27 - Android port, Step 5: radar dot, location states, overview (JavaFX app stays v1.20.0)
 - **Radar dot (LiveDot):** blue (#2F6FED) core in a white ring with a soft shadow; TWO staggered ripple rings grow 0.5 -> 2.7x and fade linearly, looping (2.4 s, ~30 fps, paused when the map is off screen, in the background or with animations off); a soft view cone points the way you are moving (shown after the phone has moved ~8 m); the first fix grows in from 82 %; Locate landing = one bigger "found you" ring + a small pop.
 - **Glass pill (top-left):** "Finding your location...", "Your location", "Approximate location" (only coarse permission), "Location is off". Hidden while the radius pill is shown (campus or Near me chosen). The Locate icon pulses while finding; extra taps are ignored.

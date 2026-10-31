@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RadialGradient;
+import android.graphics.Typeface;
 import android.graphics.Shader;
 import android.graphics.Path;
 import android.graphics.PointF;
@@ -30,6 +31,7 @@ import androidx.lifecycle.LifecycleOwner;
 import com.bofo.finder.R;
 import com.bofo.finder.databinding.ViewMapCardBinding;
 import com.bofo.finder.model.BoardingHouse;
+import com.bofo.finder.model.College;
 import com.bofo.finder.util.Geo;
 import com.bofo.finder.util.ListRules;
 import com.bofo.finder.util.MapGeo;
@@ -60,6 +62,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Locale;
 
@@ -76,6 +80,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         default void expand() { }
         /** Step 4: the radius pill moved (km, 0.5 steps). settled = the finger lifted. */
         default void radiusChanged(float km, boolean settled) { }
+        /** Step 6: an orange campus dot was tapped. */
+        default void campusTapped(String id) { }
     }
 
     private static final float PIN_ZOOM = 12.5f;
@@ -113,6 +119,12 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private Double heading;                // degrees, from the last two fixes (null until the phone has moved)
     private boolean overviewPending;
 
+    // ---- Step 6: clusters, labels, campus dots, price glow ----
+    private final Set<String> imgs = new HashSet<>();      // bitmaps already added to the style (labels, cluster bubbles)
+    private List<College> colleges = new ArrayList<>();
+    private String glowId;
+    private static final int DARK_PURPLE = 0xFF2A1C8F, GLOW = 0xFFF43F5E, CAMPUS_TEXT = 0xFFB45309;
+
     public MapCardView(@NonNull Context c) { this(c, null); }
 
     public MapCardView(@NonNull Context c, @Nullable AttributeSet a) {
@@ -129,6 +141,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             @Override public void onStopTrackingTouch(@NonNull Slider sl) { if (listener != null) listener.radiusChanged(sl.getValue(), true); }
         });
         b.radiusValue.setText(getContext().getString(R.string.map_radius_value, b.radiusSlider.getValue()));
+        b.peekClose.setOnClickListener(v -> select(null));
         b.peekOpen.setOnClickListener(v -> { if (listener != null && selectedId != null) listener.openPlace(selectedId); });
     }
 
@@ -201,6 +214,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         m.getUiSettings().setTiltGesturesEnabled(false);
         m.getUiSettings().setLogoEnabled(false);          // the attribution text stays visible (licence)
         m.addOnMapClickListener(this::onTap);
+        m.addOnCameraIdleListener(() -> { rebuildPlaces(); rebuildColleges(); });      // pins / clusters / labels depend on the zoom
         String json = loadStyle(getContext());
         if (json == null) return;
         m.setStyle(new Style.Builder().fromJson(json), st -> { style = st; addLayers(st); render(); post(this::applyCamera); });
@@ -221,6 +235,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     }
 
     private void addLayers(Style st) {
+        imgs.clear();                                     // a new style starts without our label bitmaps
         int primary = ContextCompat.getColor(getContext(), R.color.bofo_primary);
         int amber = ContextCompat.getColor(getContext(), R.color.bofo_amber);
         st.addImage("pin", pin(primary));
@@ -231,6 +246,12 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         st.addSource(new GeoJsonSource("cone-src", MapGeo.EMPTY));
         st.addImage("user-cone", cone());
         st.addSource(new GeoJsonSource("places-src", MapGeo.EMPTY));
+        st.addSource(new GeoJsonSource("labels-src", MapGeo.EMPTY));
+        st.addSource(new GeoJsonSource("colleges-src", MapGeo.EMPTY));
+        st.addSource(new GeoJsonSource("college-labels-src", MapGeo.EMPTY));
+        st.addSource(new GeoJsonSource("ringlabel-src", MapGeo.EMPTY));
+        st.addSource(new GeoJsonSource("glow-src", MapGeo.EMPTY));
+        st.addImage("pin-sel", pin(DARK_PURPLE));
         st.addSource(new GeoJsonSource("route-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("route-start-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("route-end-src", MapGeo.EMPTY));
@@ -256,6 +277,13 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         st.addLayer(new CircleLayer("route-end", "route-end-src").withProperties(
                 PropertyFactory.circleRadius(7f), PropertyFactory.circleColor(0xFFFFFFFF),
                 PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeColor(primary)));
+        // Step 6: price glow (a house lit from the rent card), then every campus as a small orange dot (tap = choose it)
+        st.addLayer(new CircleLayer("places-glow", "glow-src").withProperties(
+                PropertyFactory.circleRadius(18f), PropertyFactory.circleColor(GLOW), PropertyFactory.circleOpacity(0.32f),
+                PropertyFactory.circleStrokeColor(GLOW), PropertyFactory.circleStrokeWidth(2f), PropertyFactory.circleStrokeOpacity(0.8f)));
+        st.addLayer(new CircleLayer("colleges-dot", "colleges-src").withProperties(
+                PropertyFactory.circleRadius(6f), PropertyFactory.circleColor(amber),
+                PropertyFactory.circleStrokeWidth(2.5f), PropertyFactory.circleStrokeColor(0xFFFFFFFF)));
         st.addLayer(new CircleLayer("campus-dot", "campus-src").withProperties(
                 PropertyFactory.circleRadius(8f), PropertyFactory.circleColor(amber),
                 PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeColor(0xFFFFFFFF)));
@@ -276,22 +304,29 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 PropertyFactory.circleRadius(10f), PropertyFactory.circleColor(0xFFFFFFFF)));
         st.addLayer(new CircleLayer("user-dot", "user-src").withProperties(
                 PropertyFactory.circleRadius(7f), PropertyFactory.circleColor(BLUE)));
-        // zoomed out: small round dots (cheap, and full pins would pile up); zoomed in: the full pins (same idea as the JavaFX PinLayer)
-        CircleLayer dots = new CircleLayer("places-dots", "places-src").withProperties(
-                PropertyFactory.circleRadius(Expression.switchCase(
-                        Expression.eq(Expression.get("sel"), Expression.literal(1)), Expression.literal(8f), Expression.literal(5f))),
-                PropertyFactory.circleColor(primary), PropertyFactory.circleStrokeWidth(2f), PropertyFactory.circleStrokeColor(0xFFFFFFFF));
-        dots.setMaxZoom(PIN_ZOOM);
-        st.addLayer(dots);
-        SymbolLayer pins = new SymbolLayer("places", "places-src").withProperties(
+        // Step 6: zoomed out = small dots that merge into numbered bubbles; zoomed in = full pins with names (rebuildPlaces decides, per zoom)
+        Expression sel = Expression.eq(Expression.get("sel"), Expression.literal(1));
+        st.addLayer(new CircleLayer("places-dots", "places-src").withProperties(
+                PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(8f), Expression.literal(5f))),
+                PropertyFactory.circleColor(Expression.switchCase(sel, Expression.literal(DARK_PURPLE), Expression.literal(primary))),
+                PropertyFactory.circleStrokeWidth(2f), PropertyFactory.circleStrokeColor(0xFFFFFFFF))
+                .withFilter(Expression.eq(Expression.get("kind"), Expression.literal("dot"))));
+        st.addLayer(new SymbolLayer("places-clusters", "places-src").withProperties(
+                PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true))
+                .withFilter(Expression.eq(Expression.get("kind"), Expression.literal("cluster"))));
+        st.addLayer(new SymbolLayer("places", "places-src").withProperties(
                 PropertyFactory.iconImage(Expression.get("icon")),
                 PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
                 PropertyFactory.iconAllowOverlap(true),
                 PropertyFactory.iconIgnorePlacement(true),
-                PropertyFactory.iconSize(Expression.switchCase(
-                        Expression.eq(Expression.get("sel"), Expression.literal(1)), Expression.literal(1.3f), Expression.literal(1f))));
-        pins.setMinZoom(PIN_ZOOM);
-        st.addLayer(pins);
+                PropertyFactory.iconSize(Expression.switchCase(sel, Expression.literal(1.3f), Expression.literal(1f))))
+                .withFilter(Expression.eq(Expression.get("kind"), Expression.literal("pin"))));
+        for (String[] l : new String[][]{{"place-labels", "labels-src"}, {"college-labels", "college-labels-src"}})
+            st.addLayer(new SymbolLayer(l[0], l[1]).withProperties(
+                    PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAnchor(Property.ICON_ANCHOR_TOP),
+                    PropertyFactory.iconOffset(new Float[]{0f, 2f}), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true)));
+        st.addLayer(new SymbolLayer("ring-label", "ringlabel-src").withProperties(
+                PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true)));
     }
 
     /** View cone: a soft blue wedge pointing up from the centre of a 64 dp square (rotated to the direction of travel by the layer). */
@@ -340,11 +375,11 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     public void setPlaces(List<BoardingHouse> list) {
         places = list == null ? new ArrayList<>() : new ArrayList<>(list);
         if (selectedId != null && findPlace(selectedId) == null) { selectedId = null; b.peek.setVisibility(View.GONE); }
-        if (style != null) set("places-src", MapGeo.placesJson(places, selectedId));
+        if (style != null) rebuildPlaces();
     }
 
     /** The radius ring (null centre or km <= 0 removes it). */
-    public void setRing(Double lat, Double lng, double km) { ringLat = lat; ringLng = lng; ringKm = km; if (style != null) set("radius-src", MapGeo.circleJson(ringLat, ringLng, ringKm, 64)); }
+    public void setRing(Double lat, Double lng, double km) { ringLat = lat; ringLng = lng; ringKm = km; if (style != null) { set("radius-src", MapGeo.circleJson(ringLat, ringLng, ringKm, 64)); paintRingLabel(); } }
 
     /** The campus dot (null removes it). */
     public void setCampusDot(Double lat, Double lng) { campusLat = lat; campusLng = lng; if (style != null) set("campus-src", MapGeo.pointJson(campusLat, campusLng)); }
@@ -510,13 +545,14 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     public void select(String id) {
         BoardingHouse p = id == null ? null : findPlace(id);
         selectedId = p == null ? null : id;
-        if (p == null) { b.peek.setVisibility(View.GONE); if (style != null) set("places-src", MapGeo.placesJson(places, selectedId)); return; }
+        if (p == null) { b.peek.setVisibility(View.GONE); if (style != null) rebuildPlaces(); return; }
         b.peekName.setText(p.name());
-        StringBuilder info = new StringBuilder(Money.perMonth(p.price())).append("  -  ").append(ListRules.ratingText(p.avgRating(), p.reviewCount()));
-        if (p.distanceKm() > 0) info.append("  -  ").append(Geo.fmt(p.distanceKm()));
+        b.peekPrice.setText(Money.perMonth(p.price()));
+        StringBuilder info = new StringBuilder("\u2605 ").append(ListRules.ratingText(p.avgRating(), p.reviewCount()));
+        if (p.distanceKm() > 0) info.append("  \u00B7  ").append(Geo.fmt(p.distanceKm()));
         b.peekInfo.setText(info);
         b.peek.setVisibility(View.VISIBLE);
-        if (style != null) set("places-src", MapGeo.placesJson(places, selectedId));
+        if (style != null) rebuildPlaces();
     }
 
     private BoardingHouse findPlace(String id) {
@@ -526,9 +562,10 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
 
     private void render() {
         if (style == null) return;
-        set("places-src", MapGeo.placesJson(places, selectedId));
+        rebuildPlaces();
         set("radius-src", MapGeo.circleJson(ringLat, ringLng, ringKm, 64));
         set("campus-src", MapGeo.pointJson(campusLat, campusLng));
+        paintRingLabel(); rebuildColleges(); paintGlow();
         set("user-src", MapGeo.pointJson(userLat, userLng));
         set("cone-src", coneJson());
         paintUser();
@@ -541,6 +578,180 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private void set(String id, String json) {
         GeoJsonSource s = style.getSourceAs(id);
         if (s != null) s.setGeoJson(json);
+    }
+
+    /** Step 6: every campus (orange dots + names when zoomed in). Tap one = Listener.campusTapped. */
+    public void setColleges(List<College> list) { colleges = list == null ? new ArrayList<>() : new ArrayList<>(list); rebuildColleges(); }
+
+    /** Step 6: lights one house's circle (the rent card's Lowest / Middle / Highest); null turns it off. */
+    public void setGlow(String id) { glowId = id; paintGlow(); }
+
+    private void paintGlow() {
+        if (style == null) return;
+        BoardingHouse p = glowId == null ? null : findPlace(glowId);
+        set("glow-src", p == null ? MapGeo.EMPTY : MapGeo.pointJson(p.lat(), p.lng()));
+    }
+
+    private static String esc(String t) { return t.replace("\\", "\\\\").replace("\"", "\\\""); }
+
+    private static String feat(double lat, double lng, String props) {
+        return String.format(Locale.US, "{\"type\":\"Feature\",\"geometry\":{\"type\":\"Point\",\"coordinates\":[%.6f,%.6f]},\"properties\":{%s}}", lng, lat, props);
+    }
+
+    private static String collection(StringBuilder feats) { return "{\"type\":\"FeatureCollection\",\"features\":[" + feats + "]}"; }
+
+    private static String clip(String t, int n) { t = t == null ? "" : t.trim(); return t.length() > n ? t.substring(0, n - 1) + "\u2026" : t; }
+
+    /** Pins zoomed in (names that do not collide), small dots zoomed out; dots closer than 30 dp merge into a numbered bubble (tap = zoom to the group). */
+    private void rebuildPlaces() {
+        if (style == null || map == null) return;
+        float d = getResources().getDisplayMetrics().density;
+        int n = places.size();
+        PointF[] sp = new PointF[n];
+        for (int i = 0; i < n; i++) {
+            BoardingHouse p = places.get(i);
+            if (!Double.isNaN(p.lat()) && !Double.isNaN(p.lng())) sp[i] = map.getProjection().toScreenLocation(new LatLng(p.lat(), p.lng()));
+        }
+        StringBuilder feats = new StringBuilder(), labels = new StringBuilder();
+        if (map.getCameraPosition().zoom >= PIN_ZOOM) {
+            List<Integer> order = new ArrayList<>();
+            for (int i = 0; i < n; i++) if (sp[i] != null) { if (places.get(i).id().equals(selectedId)) order.add(0, i); else order.add(i); }
+            List<RectF> bodies = new ArrayList<>(), taken = new ArrayList<>();
+            for (int i : order) bodies.add(new RectF(sp[i].x - 15 * d, sp[i].y - 40 * d, sp[i].x + 15 * d, sp[i].y));
+            for (int k = 0; k < order.size(); k++) {
+                int i = order.get(k);
+                BoardingHouse p = places.get(i);
+                boolean isSel = p.id().equals(selectedId);
+                if (feats.length() > 0) feats.append(',');
+                feats.append(feat(p.lat(), p.lng(), "\"kind\":\"pin\",\"id\":\"" + esc(p.id()) + "\",\"icon\":\"" + (isSel ? "pin-sel" : p.featured() ? "pin-star" : "pin") + "\",\"sel\":" + (isSel ? 1 : 0)));
+                String text = clip(p.name(), 22);
+                if (text.isEmpty()) continue;
+                String key = "lb|" + text;
+                if (imgs.add(key)) style.addImage(key, label(text, 0xFF17142A, 11));
+                Bitmap bm = style.getImage(key);
+                float w = bm == null ? 80 * d : bm.getWidth(), h = bm == null ? 16 * d : bm.getHeight();
+                RectF r = new RectF(sp[i].x - w / 2, sp[i].y + 2 * d, sp[i].x + w / 2, sp[i].y + 2 * d + h);
+                boolean clash = false;
+                for (RectF t : taken) if (RectF.intersects(t, r)) { clash = true; break; }
+                if (!clash) for (int j = 0; j < bodies.size() && !clash; j++) if (j != k && RectF.intersects(bodies.get(j), r)) clash = true;
+                if (clash && !isSel) continue;                                    // colliding labels are hidden
+                taken.add(r);
+                if (labels.length() > 0) labels.append(',');
+                labels.append(feat(p.lat(), p.lng(), "\"icon\":\"" + esc(key) + "\""));
+            }
+        } else {
+            boolean[] used = new boolean[n];
+            for (int i = 0; i < n; i++) {
+                if (sp[i] == null || used[i]) continue;
+                List<Integer> m = new ArrayList<>();
+                m.add(i); used[i] = true;
+                for (int j = i + 1; j < n; j++)
+                    if (sp[j] != null && !used[j] && Math.hypot(sp[i].x - sp[j].x, sp[i].y - sp[j].y) < 30 * d) { m.add(j); used[j] = true; }
+                if (feats.length() > 0) feats.append(',');
+                if (m.size() == 1) {
+                    BoardingHouse p = places.get(i);
+                    feats.append(feat(p.lat(), p.lng(), "\"kind\":\"dot\",\"id\":\"" + esc(p.id()) + "\",\"sel\":" + (p.id().equals(selectedId) ? 1 : 0)));
+                } else {
+                    double la = 0, ln = 0, bn = -90, bs = 90, be = -180, bw = 180;
+                    for (int j : m) {
+                        BoardingHouse p = places.get(j);
+                        la += p.lat(); ln += p.lng();
+                        bn = Math.max(bn, p.lat()); bs = Math.min(bs, p.lat()); be = Math.max(be, p.lng()); bw = Math.min(bw, p.lng());
+                    }
+                    String key = "cl|" + m.size();
+                    if (imgs.add(key)) style.addImage(key, bubble(m.size()));
+                    feats.append(feat(la / m.size(), ln / m.size(), String.format(Locale.US,
+                            "\"kind\":\"cluster\",\"icon\":\"%s\",\"bn\":%.6f,\"bs\":%.6f,\"be\":%.6f,\"bw\":%.6f", key, bn, bs, be, bw)));
+                }
+            }
+        }
+        set("places-src", collection(feats));
+        set("labels-src", collection(labels));
+    }
+
+    private void rebuildColleges() {
+        if (style == null || map == null) return;
+        StringBuilder dots = new StringBuilder(), names = new StringBuilder();
+        boolean showNames = map.getCameraPosition().zoom >= 11f;
+        for (College c : colleges) {
+            if (dots.length() > 0) dots.append(',');
+            dots.append(feat(c.lat(), c.lng(), "\"kind\":\"college\",\"id\":\"" + esc(c.id()) + "\""));
+            if (!showNames) continue;
+            String text = clip(c.name(), 26), key = "cn|" + text;
+            if (imgs.add(key)) style.addImage(key, label(text, CAMPUS_TEXT, 11));
+            if (names.length() > 0) names.append(',');
+            names.append(feat(c.lat(), c.lng(), "\"icon\":\"" + esc(key) + "\""));
+        }
+        set("colleges-src", collection(dots));
+        set("college-labels-src", collection(names));
+    }
+
+    /** "500 m" / "4.5 km" chip on the east edge of the radius circle. */
+    private void paintRingLabel() {
+        if (style == null) return;
+        if (ringLat == null || ringKm <= 0) { set("ringlabel-src", MapGeo.EMPTY); return; }
+        String text = ringKm < 1 ? Math.round(ringKm * 1000) + " m" : String.format(Locale.US, "%.1f km", ringKm), key = "rl|" + text;
+        if (imgs.add(key)) style.addImage(key, chip(text));
+        double[] e = MapGeo.destination(ringLat, ringLng, ringKm, 90);
+        set("ringlabel-src", collection(new StringBuilder(feat(e[0], e[1], "\"icon\":\"" + key + "\""))));
+    }
+
+    // ---- bitmaps (the map style has no fonts, so text is drawn here) ----
+
+    private Paint textPaint(int color, float sp, boolean bold) {
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setTextSize(sp * getResources().getDisplayMetrics().scaledDensity);
+        p.setTypeface(bold ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
+        p.setColor(color);
+        p.setTextAlign(Paint.Align.CENTER);
+        return p;
+    }
+
+    /** Name under a pin / campus dot: dark bold text with a white halo. */
+    private Bitmap label(String text, int color, float sp) {
+        float d = getResources().getDisplayMetrics().density;
+        Paint p = textPaint(color, sp, true);
+        int w = Math.round(p.measureText(text) + 8 * d), h = Math.round(p.getTextSize() + 6 * d);
+        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmp);
+        float y = h / 2f - (p.ascent() + p.descent()) / 2f;
+        Paint halo = textPaint(0xFFFFFFFF, sp, true);
+        halo.setStyle(Paint.Style.STROKE); halo.setStrokeWidth(3.5f * d); halo.setStrokeJoin(Paint.Join.ROUND);
+        c.drawText(text, w / 2f, y, halo);
+        c.drawText(text, w / 2f, y, p);
+        return bmp;
+    }
+
+    /** Numbered purple bubble for merged dots. */
+    private Bitmap bubble(int count) {
+        float d = getResources().getDisplayMetrics().density;
+        int sz = Math.round((count >= 100 ? 42 : count >= 10 ? 38 : 34) * d);
+        Bitmap bmp = Bitmap.createBitmap(sz, sz, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmp);
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setColor(0xFFFFFFFF);
+        c.drawCircle(sz / 2f, sz / 2f, sz / 2f, p);
+        p.setColor(ContextCompat.getColor(getContext(), R.color.bofo_primary));
+        c.drawCircle(sz / 2f, sz / 2f, sz / 2f - 2.5f * d, p);
+        Paint t = textPaint(0xFFFFFFFF, 13, true);
+        c.drawText(String.valueOf(count), sz / 2f, sz / 2f - (t.ascent() + t.descent()) / 2f, t);
+        return bmp;
+    }
+
+    /** White pill with purple text (radius edge label). */
+    private Bitmap chip(String text) {
+        float d = getResources().getDisplayMetrics().density;
+        Paint t = textPaint(ContextCompat.getColor(getContext(), R.color.bofo_primary), 11, true);
+        int w = Math.round(t.measureText(text) + 16 * d), h = Math.round(t.getTextSize() + 10 * d);
+        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmp);
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setColor(0xFFFFFFFF);
+        c.drawRoundRect(new RectF(0, 0, w, h), h / 2f, h / 2f, p);
+        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(d); p.setColor(0xFFE4DEFB);
+        c.drawRoundRect(new RectF(d / 2, d / 2, w - d / 2, h - d / 2), h / 2f, h / 2f, p);
+        c.drawText(text, w / 2f, h / 2f - (t.ascent() + t.descent()) / 2f, t);
+        return bmp;
     }
 
     // ---- camera ------------------------------------------------------------------------------------------------
@@ -610,13 +821,30 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         PointF pt = map.getProjection().toScreenLocation(point);
         float d = getResources().getDisplayMetrics().density;
         RectF box = new RectF(pt.x - 22 * d, pt.y - 44 * d, pt.x + 22 * d, pt.y + 10 * d);     // pins are anchored at their tip: look above the tap too
-        List<Feature> hit = map.queryRenderedFeatures(box, "places", "places-dots");
-        if (!hit.isEmpty()) {
-            String id = hit.get(0).getStringProperty("id");
-            if (id != null) { select(id); return true; }
+        List<Feature> hit = map.queryRenderedFeatures(box, "places", "places-dots", "places-clusters", "colleges-dot");
+        for (Feature f : hit) {
+            String kind = f.getStringProperty("kind"), id = f.getStringProperty("id");
+            if ("cluster".equals(kind)) { zoomToCluster(f); return true; }
+            if ("college".equals(kind) && id != null) { if (listener != null) listener.campusTapped(id); return true; }
+            if (id != null) {
+                select(id);
+                BoardingHouse p = findPlace(id);
+                if (p != null) map.easeCamera(CameraUpdateFactory.newLatLng(new LatLng(p.lat(), p.lng())), 300);
+                return true;
+            }
         }
         if (selectedId != null) select(null);
         return false;
+    }
+
+    /** Tap on a numbered bubble: glide to a view of the whole group. */
+    private void zoomToCluster(Feature f) {
+        try {
+            double n = f.getNumberProperty("bn").doubleValue(), sth = f.getNumberProperty("bs").doubleValue();
+            double e = f.getNumberProperty("be").doubleValue(), w = f.getNumberProperty("bw").doubleValue();
+            if (n == sth && e == w) map.easeCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(n, e), PIN_ZOOM + 1), 400);
+            else map.easeCamera(CameraUpdateFactory.newLatLngBounds(LatLngBounds.from(n, e, sth, w), Math.round(60 * getResources().getDisplayMetrics().density)), 400);
+        } catch (Exception ex) { Log.w("BOFO", "Cluster zoom", ex); }
     }
 
     @Override protected void onAttachedToWindow() { super.onAttachedToWindow(); startRipples(); }
