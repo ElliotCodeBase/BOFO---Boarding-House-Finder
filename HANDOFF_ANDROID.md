@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.59 Ask BOFO compare without names
+- **PR title:** `v2.0.59 - Android: Ask BOFO searches first when you say compare without place names`
+- Only `bofo-chat/index.ts` (+ build.gradle 2.0.59 / 259). `compareSearch` flag: intent `compare` with no `names`, no `refs`, no previous results is switched to `search`, then set back to `compare` after `picked` (note `no_compare` when < 2). New `inPhrase()` ("in / sa <area>" -> `params.text`), `landmarkPhrase` cuts a trailing "and compare / show ...". **`supabase functions deploy bofo-chat` required.** `BofoIntentLocal` (offline answers) was NOT changed and still says it needs two names. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.58 Ask BOFO reasoning leak
 - **PR title:** `v2.0.58 - Android: Ask BOFO no longer shows the AI's thinking in the chat`
 - Only `bofo-chat/index.ts` (+ build.gradle 2.0.58 / 258). `callLLM(..., accept)` strips `<think>` blocks and rejects answers where `looksLikeReasoning()` is true (next model, then template); request body has `reasoning: { exclude: true }`; `parseLocal` sets `limit = 5` for "all / lahat / tanan". **`supabase functions deploy bofo-chat` required.** If it still leaks, check Edge Function logs for "unusable answer" and consider removing the reasoning model from `LLM_MODELS`. Not built or run by Claude.

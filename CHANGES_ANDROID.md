@@ -1,3 +1,9 @@
+# v2.0.59 - Android: Ask BOFO understands "show available BH in Dumaguete and compare"
+- Cause (screenshot): the word "compare" made the rules pick the compare intent, which needs two place names, so the answer was "I need two place names to compare" even though the message also asked for a search.
+- `bofo-chat/index.ts` (**redeploy**): a compare with no names and no earlier results now searches first (up to 3 available places, nearest / best first) and then compares them in the table. If fewer than 2 places match, the old "I need two place names" help shows.
+- "in Dumaguete" / "sa Dumaguete" is understood as an area: only places with that word in the name or address are listed (ignored when nothing matches, so it never empties the answer). "near Silliman and compare" no longer reads "Silliman and compare" as the place name.
+- Includes the v2.0.58 fix (reasoning leak). Files: `supabase/functions/bofo-chat/index.ts` (**redeploy**), `build.gradle` (2.0.59 / 259). Not built or run by Claude (the new word rules were tested with Node on 8 sample messages; the Supabase query part was not run).
+
 # v2.0.58 - Android: Ask BOFO no longer shows the AI's thinking in the chat
 - Cause (seen in a screenshot after "List all BH"): the free model is a reasoning model and returned its own thinking ("The user wants to list all boarding houses. I have 5 results. I need to present them...") as the answer. The reply was cut at the token limit, so it ended mid-sentence.
 - `bofo-chat/index.ts` (**redeploy**): the request now asks OpenRouter to leave the reasoning out; `<think>` blocks are stripped; an answer that looks like thinking (starts with "The user wants / I need to / I must ..." or repeats the prompt rules) is thrown away, the next model is tried, and then the code template answers (real listings, correct names and prices). The wording prompt also says "output only the final reply". The bad answer is logged in Supabase > Edge Functions > Logs.

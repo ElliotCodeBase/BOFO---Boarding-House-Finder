@@ -95,7 +95,15 @@ function matchNames(names: string[], pool: Card[]): { found: Card[]; missing: { 
 
 // ------------------------------------------------------------------ landmark in the question ("near Silliman", "malapit sa USLS")
 const GENERIC_PHRASE = /^(boarding|bh\b|house|houses|place|places|room|rooms|apartment|dorm|cheap|cheapest|best|free|wifi|water|electric|under|below)/i;
-function landmarkPhrase(msg: string): string {
+/** "in Dumaguete", "sa Dumaguete": an area word for the text filter (not a place to measure from). */
+function inPhrase(msg: string): string {
+  const m = msg.match(/\b(?:in|sa|didto sa|diri sa)\s+(?:the\s+)?([\p{L}][\p{L}\p{N}.' -]{2,40}?)(?=\s+(?:and|then|at|tapos|kag|please|po|with|under|below)\b|\s*[?.!,]*$)/iu);
+  if (!m) return "";
+  const p = clean(m[1].replace(/\b(city|area|campus|university|school|college)\b/gi, " "), 40);
+  return !p || GENERIC_PHRASE.test(p) || /^(me|my|here|there|akin|akon|ko)\b/i.test(p) ? "" : p;
+}
+function landmarkPhrase(msg0: string): string {
+  const msg = msg0.replace(/\s+(?:and|then|tapos|at|kag)\s+(?:compare|ikumpara|show|list|sort)\b.*$/i, "");   // "near Silliman and compare" -> "near Silliman"
   const re = /(?:\bto|\bnear(?:\s+to)?|\bclosest to|\bclose to|\baround|\bmalapit (?:sa|kay)|\blapit (?:sa|kay)|\bduol sa|\bbeside)\s+(?:the\s+)?(.+?)\s*[?.!]*$/gi;
   let out = "";
   for (const m of msg.matchAll(re)) {
@@ -423,6 +431,10 @@ Deno.serve(async (req) => {
       if (!params.refs?.length && l.refs?.length) params.refs = l.refs;
     }
 
+    // "show available BH in Dumaguete and compare": a compare with no names and no earlier results = search first, then compare the top ones
+    let compareSearch = false;
+    if (intent === "compare" && !params.names?.length && !params.refs?.length && !last.length) { intent = "search"; compareSearch = true; params.limit = Math.max(params.limit ?? 3, 3); }
+
     // ---- origin: explicit -> phone (Near me) -> campus -> none
     // A college the student chose beats the phone's position (the app always sends the phone's position when it knows it);
     // only an explicit "near me / from me" in the message (params.origin === "me") measures from the phone.
@@ -449,6 +461,8 @@ Deno.serve(async (req) => {
     const nearIntent = ["nearest", "cheapest", "best_rated", "search", "availability"].includes(intent);
     const phrase = nearIntent ? landmarkPhrase(message) : "";
     let missingPlace = "";
+    const area = nearIntent && !phrase && !params.text ? inPhrase(message) : "";
+    if (area) params.text = area;          // name / address text filter; ignored automatically when nothing matches it
     if (phrase) {
       const { data: colRows } = await userClient.from("colleges").select("name,lat,lng").limit(300);
       const cols = (colRows ?? []).filter((c: any) => typeof c.lat === "number" && typeof c.lng === "number").map((c: any) => ({ name: clean(c.name, 80), lat: c.lat as number, lng: c.lng as number }));
@@ -540,6 +554,7 @@ Deno.serve(async (req) => {
       else picked = found.slice(0, 1);
     }
 
+    if (compareSearch) { intent = "compare"; if (picked.length < 2 && !note) note = "no_compare"; }
     const results = picked.map((c) => toResult(c, origin));
     if (intent === "compare" && results.length >= 2 && note === "") compare = buildCompare(results, picked);
     if (!origin && ["nearest", "search", "cheapest", "best_rated", "availability"].includes(intent) && results.length && !note && /malapit|near|closest|nearest|lapit|layo|far/i.test(message)) note = "no_origin";
