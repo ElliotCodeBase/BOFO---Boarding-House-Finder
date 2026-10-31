@@ -34,6 +34,7 @@ import org.maplibre.android.camera.CameraUpdateFactory;
 import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.geometry.LatLngBounds;
 import org.maplibre.android.maps.MapLibreMap;
+import org.maplibre.android.maps.MapLibreMapOptions;
 import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.Style;
 import org.maplibre.android.offline.OfflineManager;
@@ -68,6 +69,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         default void radiusChanged(float km, boolean settled) { }
     }
 
+    private static final float PIN_ZOOM = 12.5f;
     private static final String STYLE_ASSET = "bofo-map-style.json";
     private static final long AMBIENT_CACHE_BYTES = 50L * 1024 * 1024;       // MapLibre's own tile cache, capped
     private static String styleJson;
@@ -149,7 +151,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         MapLibre.getInstance(app);
         capCache(app);
         owner = lifecycleOwner;
-        mapView = new MapView(getContext());      // default fast surface; the rounded corners are drawn by CornerMaskView
+        mapView = new MapView(getContext(), MapLibreMapOptions.createFromAttributes(getContext(), null)
+                .pixelRatio(Math.min(2f, getResources().getDisplayMetrics().density)));   // 3x screens draw 2.25x the pixels for no visible gain; the rounded corners are drawn by CornerMaskView
         b.mapHost.addView(mapView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         mapView.onCreate(null);
         owner.getLifecycle().addObserver(this);        // replays onStart / onResume if the screen is already showing
@@ -169,6 +172,9 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
 
     private void onMapReady(@NonNull MapLibreMap m) {
         map = m;
+        m.setMinZoomPreference(6);                         // same range as the JavaFX map (it fits down to zoom 6; the tiles stop at 14)
+        m.setMaxZoomPreference(17);
+        m.setPrefetchZoomDelta(1);                         // default 4 loads lower zoom levels in advance on every zoom: the stutter the JavaFX flyTo also avoids
         m.getUiSettings().setRotateGesturesEnabled(false);
         m.getUiSettings().setTiltGesturesEnabled(false);
         m.getUiSettings().setLogoEnabled(false);          // the attribution text stays visible (licence)
@@ -234,13 +240,22 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         st.addLayer(new CircleLayer("user-dot", "user-src").withProperties(
                 PropertyFactory.circleRadius(7f), PropertyFactory.circleColor(primary),
                 PropertyFactory.circleStrokeWidth(3f), PropertyFactory.circleStrokeColor(0xFFFFFFFF)));
-        st.addLayer(new SymbolLayer("places", "places-src").withProperties(
+        // zoomed out: small round dots (cheap, and full pins would pile up); zoomed in: the full pins (same idea as the JavaFX PinLayer)
+        CircleLayer dots = new CircleLayer("places-dots", "places-src").withProperties(
+                PropertyFactory.circleRadius(Expression.switchCase(
+                        Expression.eq(Expression.get("sel"), Expression.literal(1)), Expression.literal(8f), Expression.literal(5f))),
+                PropertyFactory.circleColor(primary), PropertyFactory.circleStrokeWidth(2f), PropertyFactory.circleStrokeColor(0xFFFFFFFF));
+        dots.setMaxZoom(PIN_ZOOM);
+        st.addLayer(dots);
+        SymbolLayer pins = new SymbolLayer("places", "places-src").withProperties(
                 PropertyFactory.iconImage(Expression.get("icon")),
                 PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
                 PropertyFactory.iconAllowOverlap(true),
                 PropertyFactory.iconIgnorePlacement(true),
                 PropertyFactory.iconSize(Expression.switchCase(
-                        Expression.eq(Expression.get("sel"), Expression.literal(1)), Expression.literal(1.3f), Expression.literal(1f)))));
+                        Expression.eq(Expression.get("sel"), Expression.literal(1)), Expression.literal(1.3f), Expression.literal(1f))));
+        pins.setMinZoom(PIN_ZOOM);
+        st.addLayer(pins);
     }
 
     /** Teardrop pin with a white edge and a white dot, 30 x 40 dp. */
@@ -276,7 +291,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     public void setPlaces(List<BoardingHouse> list) {
         places = list == null ? new ArrayList<>() : new ArrayList<>(list);
         if (selectedId != null && findPlace(selectedId) == null) { selectedId = null; b.peek.setVisibility(View.GONE); }
-        render();
+        if (style != null) set("places-src", MapGeo.placesJson(places, selectedId));
     }
 
     /** The radius ring (null centre or km <= 0 removes it). */
@@ -312,13 +327,13 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     public void select(String id) {
         BoardingHouse p = id == null ? null : findPlace(id);
         selectedId = p == null ? null : id;
-        if (p == null) { b.peek.setVisibility(View.GONE); render(); return; }
+        if (p == null) { b.peek.setVisibility(View.GONE); if (style != null) set("places-src", MapGeo.placesJson(places, selectedId)); return; }
         b.peekName.setText(p.name());
         StringBuilder info = new StringBuilder(Money.perMonth(p.price())).append("  -  ").append(ListRules.ratingText(p.avgRating(), p.reviewCount()));
         if (p.distanceKm() > 0) info.append("  -  ").append(Geo.fmt(p.distanceKm()));
         b.peekInfo.setText(info);
         b.peek.setVisibility(View.VISIBLE);
-        render();
+        if (style != null) set("places-src", MapGeo.placesJson(places, selectedId));
     }
 
     private BoardingHouse findPlace(String id) {
@@ -393,7 +408,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         PointF pt = map.getProjection().toScreenLocation(point);
         float d = getResources().getDisplayMetrics().density;
         RectF box = new RectF(pt.x - 22 * d, pt.y - 44 * d, pt.x + 22 * d, pt.y + 10 * d);     // pins are anchored at their tip: look above the tap too
-        List<Feature> hit = map.queryRenderedFeatures(box, "places");
+        List<Feature> hit = map.queryRenderedFeatures(box, "places", "places-dots");
         if (!hit.isEmpty()) {
             String id = hit.get(0).getStringProperty("id");
             if (id != null) { select(id); return true; }

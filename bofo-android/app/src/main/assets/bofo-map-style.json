@@ -1,44 +1,204 @@
 {
-  "version": 8,
-  "name": "BOFO",
-  "sources": {
-    "openmaptiles": {
-      "type": "vector",
-      "url": "https://tiles.openfreemap.org/planet",
-      "attribution": "<a href=\"https://openfreemap.org\">OpenFreeMap</a> © <a href=\"https://www.openmaptiles.org/\">OpenMapTiles</a> Data from <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
-    }
+ "version": 8,
+ "name": "BOFO",
+ "sources": {
+  "openmaptiles": {
+   "type": "vector",
+   "url": "https://tiles.openfreemap.org/planet",
+   "attribution": "<a href=\"https://openfreemap.org\">OpenFreeMap</a> © <a href=\"https://www.openmaptiles.org/\">OpenMapTiles</a> Data from <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
+  }
+ },
+ "layers": [
+  {
+   "id": "background",
+   "type": "background",
+   "paint": {
+    "background-color": "#F5F6FC"
+   }
   },
-  "layers": [
-    { "id": "background", "type": "background", "paint": { "background-color": "#F5F6FC" } },
-    { "id": "landcover", "type": "fill", "source": "openmaptiles", "source-layer": "landcover",
-      "filter": ["in", "class", "wood", "grass", "farmland"],
-      "paint": { "fill-color": "#E4F1E6", "fill-opacity": 0.8 } },
-    { "id": "park", "type": "fill", "source": "openmaptiles", "source-layer": "park",
-      "paint": { "fill-color": "#D9EEDD", "fill-opacity": 0.9 } },
-    { "id": "landuse", "type": "fill", "source": "openmaptiles", "source-layer": "landuse",
-      "filter": ["in", "class", "residential", "school", "university", "hospital"],
-      "paint": { "fill-color": "#ECE9FF", "fill-opacity": 0.55 } },
-    { "id": "water", "type": "fill", "source": "openmaptiles", "source-layer": "water",
-      "paint": { "fill-color": "#CFE3F7" } },
-    { "id": "waterway", "type": "line", "source": "openmaptiles", "source-layer": "waterway",
-      "paint": { "line-color": "#CFE3F7", "line-width": 1.2 } },
-    { "id": "building", "type": "fill", "source": "openmaptiles", "source-layer": "building", "minzoom": 14,
-      "paint": { "fill-color": "#E3E1EE", "fill-opacity": 0.9 } },
-    { "id": "road-minor-casing", "type": "line", "source": "openmaptiles", "source-layer": "transportation", "minzoom": 13,
-      "filter": ["in", "class", "minor", "service", "track", "path"],
-      "layout": { "line-cap": "round", "line-join": "round" },
-      "paint": { "line-color": "#E7E8F2", "line-width": ["interpolate", ["linear"], ["zoom"], 13, 1.5, 18, 9] } },
-    { "id": "road-minor", "type": "line", "source": "openmaptiles", "source-layer": "transportation", "minzoom": 13,
-      "filter": ["in", "class", "minor", "service", "track", "path"],
-      "layout": { "line-cap": "round", "line-join": "round" },
-      "paint": { "line-color": "#FFFFFF", "line-width": ["interpolate", ["linear"], ["zoom"], 13, 0.8, 18, 7] } },
-    { "id": "road-major-casing", "type": "line", "source": "openmaptiles", "source-layer": "transportation",
-      "filter": ["in", "class", "motorway", "trunk", "primary", "secondary", "tertiary"],
-      "layout": { "line-cap": "round", "line-join": "round" },
-      "paint": { "line-color": "#D9D6EC", "line-width": ["interpolate", ["linear"], ["zoom"], 8, 1.2, 14, 5, 18, 16] } },
-    { "id": "road-major", "type": "line", "source": "openmaptiles", "source-layer": "transportation",
-      "filter": ["in", "class", "motorway", "trunk", "primary", "secondary", "tertiary"],
-      "layout": { "line-cap": "round", "line-join": "round" },
-      "paint": { "line-color": "#FFFFFF", "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.6, 14, 3.5, 18, 13] } }
-  ]
+  {
+   "id": "landcover",
+   "type": "fill",
+   "source": "openmaptiles",
+   "source-layer": "landcover",
+   "filter": [
+    "in",
+    "class",
+    "wood",
+    "grass",
+    "farmland"
+   ],
+   "paint": {
+    "fill-color": "#E7F2EA"
+   }
+  },
+  {
+   "id": "park",
+   "type": "fill",
+   "source": "openmaptiles",
+   "source-layer": "park",
+   "paint": {
+    "fill-color": "#DCEFE0"
+   }
+  },
+  {
+   "id": "landuse",
+   "type": "fill",
+   "source": "openmaptiles",
+   "source-layer": "landuse",
+   "filter": [
+    "in",
+    "class",
+    "residential",
+    "school",
+    "university",
+    "hospital"
+   ],
+   "paint": {
+    "fill-color": "#F0EFFE"
+   }
+  },
+  {
+   "id": "water",
+   "type": "fill",
+   "source": "openmaptiles",
+   "source-layer": "water",
+   "paint": {
+    "fill-color": "#CFE3F7"
+   }
+  },
+  {
+   "id": "waterway",
+   "type": "line",
+   "source": "openmaptiles",
+   "source-layer": "waterway",
+   "paint": {
+    "line-color": "#CFE3F7",
+    "line-width": 1.2
+   }
+  },
+  {
+   "id": "building",
+   "type": "fill",
+   "source": "openmaptiles",
+   "source-layer": "building",
+   "minzoom": 14,
+   "paint": {
+    "fill-color": "#E5E3EF"
+   }
+  },
+  {
+   "id": "road-minor",
+   "type": "line",
+   "source": "openmaptiles",
+   "source-layer": "transportation",
+   "minzoom": 13,
+   "filter": [
+    "in",
+    "class",
+    "minor",
+    "service",
+    "track",
+    "path"
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#FFFFFF",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     13,
+     0.8,
+     18,
+     7
+    ]
+   }
+  },
+  {
+   "id": "road-major-casing",
+   "type": "line",
+   "source": "openmaptiles",
+   "source-layer": "transportation",
+   "filter": [
+    "in",
+    "class",
+    "motorway",
+    "trunk",
+    "primary",
+    "secondary",
+    "tertiary"
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#D9D6EC",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     8,
+     1.2,
+     14,
+     5,
+     18,
+     16
+    ]
+   }
+  },
+  {
+   "id": "road-major",
+   "type": "line",
+   "source": "openmaptiles",
+   "source-layer": "transportation",
+   "filter": [
+    "in",
+    "class",
+    "motorway",
+    "trunk",
+    "primary",
+    "secondary",
+    "tertiary"
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#FFFFFF",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     8,
+     0.6,
+     14,
+     3.5,
+     18,
+     13
+    ]
+   }
+  }
+ ],
+ "transition": {
+  "duration": 0,
+  "delay": 0
+ }
 }
