@@ -1,3 +1,12 @@
+# Handoff (Android) - v2.0.31 Step 9 Explore + Filters sheet (2026-10-31)
+- **PR title:** `v2.0.31 - Android: Explore restyle (search pill, filter button, List | Map) and new Filters sheet`
+- `BrowseState.sort` (0 Nearest, 1 Lowest price, 2 Most beds) and `amenityNames` (fallback picks) join `minPrice/maxPrice/amenityIds`; `activeFilters()` counts price, sort and every amenity. `ExploreRules` = sort + `withAll(names)` + `parseMax`. `ExploreFragment` always loads `Tab.NEW` then sorts client-side (featured pinning is kept only for Nearest). `FilterSheet`: sheet is 90% of the screen, expanded, adjustResize.
+- Amenity error: no migration needed. If the chips are the built-in list on a phone that is online, run `supabase/migrations/005_amenities.sql` and check `amenities_v` + `get_or_create_amenity`; the fallback filters by name on the card data (needs `bh_cards.amenity_names`, same migration) plus the free water / electricity / Wi-Fi flags.
+- Unused now (delete in Step 11): strings `filter_title`, `filter_price*`, `filter_amenities`, `filter_amenity_hint`, `filter_amenities_failed`, `filter_reset`, `filter_apply`, `filters_btn*`, `cd_price_range`; `home_tab_*` still used by Home/Saved.
+- Next: Step 10 (Detail, chat, chats layouts; fix the blank Chats screen).
+
+---
+
 # Handoff (Android) - v2.0.30 Step 8 route on pin select (2026-10-31)
 - **PR title:** `v2.0.30 - Android: route, red end pin and distance/time chip when a Home pin is selected`
 - `MapCardView.Listener.placeSelected(id)` fires only for user taps (`userSelect`); `setRouteLabel`, `fitRouteBounds` (bottom padding = preview card height). `HomeFragment.showRoute/fetchRoute/drawRoute`, `routeToken` cancels stale answers, `me` = last phone fix.

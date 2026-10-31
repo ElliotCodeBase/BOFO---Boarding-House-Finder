@@ -35,6 +35,9 @@ public final class BrowseState {
     public static Double userLat, userLng;
     public static Double minPrice, maxPrice;
     public static final Set<String> amenityIds = new LinkedHashSet<>();
+    /** Step 9: Explore sort (ExploreRules.SORT_*) and amenities picked from the built-in fallback list (matched by name on the cards). */
+    public static int sort;
+    public static final Set<String> amenityNames = new LinkedHashSet<>();
     private static boolean loaded;
 
     public static void bump() { Integer v = CHANGED.getValue(); CHANGED.setValue(v == null ? 1 : v + 1); }
@@ -68,9 +71,9 @@ public final class BrowseState {
     }
 
     /** Price range counts as one filter, each amenity as one. */
-    public static int activeFilters() { return (minPrice != null || maxPrice != null ? 1 : 0) + amenityIds.size(); }
+    public static int activeFilters() { return (minPrice != null || maxPrice != null ? 1 : 0) + (sort != 0 ? 1 : 0) + amenityIds.size() + amenityNames.size(); }
 
-    public static void clearFilters() { minPrice = null; maxPrice = null; amenityIds.clear(); }
+    public static void clearFilters() { minPrice = null; maxPrice = null; sort = 0; amenityIds.clear(); amenityNames.clear(); }
 
     /** Loads colleges + my profile once (offline copies are used when there is no network). */
     public static void ensureLoaded(Runnable done, Consumer<Throwable> fail) {

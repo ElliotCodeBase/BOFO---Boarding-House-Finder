@@ -1,6 +1,14 @@
-BOFO Android v2.0.30 - Step 8: route on pin select. Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
-changed  bofo-android/app/build.gradle  (version 2.0.30 / 230, shown in Profile > About)
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/HomeFragment.java
+BOFO Android v2.0.31 - Step 9: Explore + Filters sheet. Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
+changed  bofo-android/app/build.gradle  (version 2.0.31 / 231, shown in Profile > About)
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ExploreFragment.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/FilterSheet.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/util/BrowseState.java
+changed  bofo-android/app/src/main/res/layout/fragment_explore.xml
+changed  bofo-android/app/src/main/res/layout/sheet_filter.xml
+new      bofo-android/app/src/main/java/com/bofo/finder/util/ExploreRules.java
+new      bofo-android/app/src/test/java/com/bofo/finder/util/ExploreRulesTest.java
+new      bofo-android/app/src/main/res/values/strings_explore.xml
+new      bofo-android/app/src/main/res/values/styles_explore.xml
+new      bofo-android/app/src/main/res/drawable/bg_ex_badge.xml, bg_ex_filter_btn.xml, bg_ex_filter_btn_on.xml, bg_ex_group.xml, bg_ex_icon_btn.xml, bg_ex_input.xml, bg_ex_seg_on.xml, bg_ex_seg_wrap.xml, ic_filter.xml, ic_x_dark.xml
 changed  CHANGES_ANDROID.md, HANDOFF_ANDROID.md, REVERT_PROGRESS.md, REVERT_PROMPT.md
 DELETE   nothing

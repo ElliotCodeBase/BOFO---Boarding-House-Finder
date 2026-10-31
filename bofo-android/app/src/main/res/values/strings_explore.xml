@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ex_subtitle">Find a boarding house near your campus</string>
+    <string name="ex_seg_list">List</string>
+    <string name="ex_seg_map">Map</string>
+    <string name="ex_filter_cd">Filters</string>
+    <string name="ex_close_cd">Close</string>
+    <string name="ex_empty_hint">Try removing a filter or raising the maximum price.</string>
+    <string name="ex_sheet_title">Filters</string>
+    <string name="ex_price_title">Maximum price per month</string>
+    <string name="ex_price_sub">Per person, per month.</string>
+    <string name="ex_price_any">Any</string>
+    <string name="ex_price_custom">Or type your own maximum (₱)</string>
+    <string name="ex_price_bad">Enter a valid price</string>
+    <string name="ex_sort_title">Sort by</string>
+    <string name="ex_sort_nearest">Nearest</string>
+    <string name="ex_sort_price">Lowest price</string>
+    <string name="ex_sort_beds">Most beds</string>
+    <string name="ex_amen_title">Amenities</string>
+    <string name="ex_amen_sub">Show only places that have all of these.</string>
+    <string name="ex_amen_search">Search any amenity</string>
+    <string name="ex_amen_show_all">Popular ones are shown. Type to find any other.</string>
+    <string name="ex_apply">Show results</string>
+    <string name="ex_reset">Reset</string>
+</resources>
