@@ -5,7 +5,13 @@ import android.view.View;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
+import android.view.ViewGroup;
+import android.widget.Button;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bofo.finder.R;
 import com.bofo.finder.databinding.ViewListAreaBinding;
@@ -22,13 +28,33 @@ final class ListArea {
     private final ViewListAreaBinding b;
     private final BhAdapter adapter;
     private ObjectAnimator pulse;
+    private final Footer footer = new Footer();
+
+    /** Step 7: one full-width "Show more (n)" button after the cards. */
+    private static final class Footer extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+        private String text; private Runnable action;
+        void set(String t, Runnable a) { boolean had = text != null; text = t; action = a; if (had && t != null) notifyItemChanged(0); else if (had) notifyItemRemoved(0); else if (t != null) notifyItemInserted(0); }
+        @NonNull @Override public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
+            return new RecyclerView.ViewHolder(android.view.LayoutInflater.from(parent.getContext()).inflate(R.layout.item_show_more, parent, false)) { };
+        }
+        @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder h, int pos) {
+            Button btn = h.itemView.findViewById(R.id.show_more);
+            btn.setText(text);
+            btn.setOnClickListener(v -> { if (action != null) action.run(); });
+        }
+        @Override public int getItemCount() { return text == null ? 0 : 1; }
+    }
 
     ListArea(Fragment f, ViewListAreaBinding b, BhAdapter adapter, Runnable reload) {
         this.b = b;
         this.adapter = adapter;
         int span = f.getResources().getConfiguration().screenWidthDp >= 600 ? 3 : 2;
-        b.list.setLayoutManager(new GridLayoutManager(f.requireContext(), span));
-        b.list.setAdapter(adapter);
+        GridLayoutManager glm = new GridLayoutManager(f.requireContext(), span);
+        glm.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override public int getSpanSize(int pos) { return pos >= adapter.getItemCount() ? span : 1; }      // the footer button spans the row
+        });
+        b.list.setLayoutManager(glm);
+        b.list.setAdapter(new ConcatAdapter(new ConcatAdapter.Config.Builder().setIsolateViewTypes(true).build(), adapter, footer));
         b.skeleton.setLayoutManager(new GridLayoutManager(f.requireContext(), span));
         b.skeleton.setAdapter(new BhAdapter.Skeleton());
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
@@ -52,6 +78,9 @@ final class ListArea {
         if (!pulse.isStarted()) pulse.start();
     }
 
+    /** "Show more (n)" under the cards; null removes it. */
+    void setMore(String text, Runnable action) { footer.set(text, action); }
+
     void showList(List<BoardingHouse> l) {
         stopLoading();
         b.emptyBox.setVisibility(View.GONE);
@@ -62,6 +91,7 @@ final class ListArea {
     /** Empty result or error (retry = true shows the Try again button). */
     void showMessage(String text, boolean retry) {
         stopLoading();
+        footer.set(null, null);
         adapter.submitList(Collections.<BoardingHouse>emptyList());
         b.list.setVisibility(View.GONE);
         b.emptyBox.setVisibility(View.VISIBLE);

@@ -135,7 +135,7 @@
     <string name="home_campus_none">Pick a campus</string>
     <string name="home_campus_set">Campus: %1$s</string>
     <string name="home_radius">Within %1$s km of %2$s</string>
-    <string name="home_empty">No boarding houses here yet. Try a bigger radius or another campus.</string>
+    <string name="home_empty">Nothing nearby yet\nTry a bigger radius or another campus.</string>
     <string name="home_empty_best">No place has been rated yet.</string>
 
     <string name="explore_search_hint">Search by name or area</string>

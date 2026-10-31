@@ -1,3 +1,11 @@
+# Handoff (Android) - v2.0.29 Step 7 chips, section header, rent card, list states (2026-10-31)
+- **PR title:** `v2.0.29 - Android: Home chips, section subtitle, rent card with map glow, Show more`
+- `RentCardView` (canvas): `setData(basis, best)` / `setNoCampus()`, `Listener.glow(id)` -> `MapCardView.setGlow`, `choose()` -> `HomeSearchBar.openDropdown()`. `HomeFragment`: `Result.basis`, `paintRent`, `paintSub`, `paintChips`, `renderList` (BATCH 15). `ListArea.setMore(text, action)` = ConcatAdapter footer (shared; Explore/Saved just never set it).
+- Glow only works for houses in the displayed list (on Best rated the basis is the unfiltered list). `home_tab_*` strings are still used by Explore; `TabLayout` code in `ListArea.onTab` is still used there.
+- Next: Step 8 (route + directions card; draw the route on pin select, red destination pin).
+
+---
+
 # Handoff (Android) - v2.0.28 Step 6 pins, clusters, campus dots, preview card (2026-10-31)
 - **PR title:** `v2.0.28 - Android: pin clusters, labels, campus dots, radius label and preview card on the Home map`
 - `MapCardView.rebuildPlaces()` (own clustering in screen px, per zoom, on camera idle) writes `places-src` with `kind` = dot | cluster | pin; labels in `labels-src`; campuses in `colleges-src` / `college-labels-src`; edge label `ringlabel-src`; glow `glow-src`. Text = bitmaps added with `imgs` cache (style has no glyphs). `Listener.campusTapped`. Layout: new `peek` card (`peek_price`, `peek_close`, `peek_open` is now an ImageButton).
