@@ -86,7 +86,6 @@
     <string name="sex_female">Female</string>
     <string name="sex_other">Prefer not to say</string>
 
-    <string name="account_signed_in">Signed in as %1$s</string>
     <string name="account_role_student">Student</string>
     <string name="account_role_owner">Owner</string>
     <string name="account_role_admin">Admin</string>
@@ -113,7 +112,6 @@
     <string name="settings_delete_confirm">Delete forever</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_close">Close</string>
-    <string name="common_ok">OK</string>
 
     <!-- Stage 4: Home, Explore, Saved, detail -->
     <string name="common_try_again">Try again</string>
@@ -124,7 +122,6 @@
     <string name="cd_save">Save this place</string>
     <string name="cd_back">Back</string>
     <string name="cd_radius">Search radius around the campus</string>
-    <string name="cd_price_range">Monthly price range</string>
     <string name="card_featured">Featured</string>
 
     <string name="home_tab_new">New</string>
@@ -142,22 +139,9 @@
     <string name="explore_results">%1$d places</string>
     <string name="explore_result_one">1 place</string>
     <string name="explore_empty">Nothing matches. Try other words or fewer filters.</string>
-    <string name="filters_btn">Filters</string>
-    <string name="filters_btn_count">Filters (%1$d)</string>
 
-    <string name="filter_title">Filters</string>
-    <string name="filter_price">Monthly price: %1$s</string>
-    <string name="filter_price_any">any</string>
-    <string name="filter_price_range">%1$s to %2$s</string>
-    <string name="filter_price_up_to">up to %1$s</string>
-    <string name="filter_price_from">%1$s and up</string>
-    <string name="filter_amenities">Amenities (must have all)</string>
-    <string name="filter_amenity_hint">Search amenities, for example aircon</string>
     <string name="filter_amenity_didyoumean">Did you mean these?</string>
     <string name="filter_amenity_none">No amenity matches that.</string>
-    <string name="filter_amenities_failed">Amenities could not be loaded.</string>
-    <string name="filter_reset">Reset</string>
-    <string name="filter_apply">Show results</string>
 
     <string name="campus_title">Choose your campus</string>
     <string name="campus_subtitle">Places are sorted by distance from it.</string>
@@ -167,7 +151,6 @@
 
     <string name="saved_empty">Nothing saved yet. Tap the heart on a place to keep it here.</string>
     <string name="saved_error">Could not load your saved places.</string>
-    <string name="save_failed">Could not update your saved places.</string>
 
     <string name="detail_verified">Verified owner</string>
     <string name="detail_amenities">Amenities</string>
@@ -182,19 +165,14 @@
     <string name="detail_chat_error">Could not open the chat.</string>
     <string name="detail_reviews">Reviews (%1$d)</string>
     <string name="detail_no_reviews">No reviews yet.</string>
-    <string name="detail_stats">%1$s - %2$d rooms, %3$d beds in total</string>
     <string name="detail_error">Could not open this place.</string>
     <string name="detail_open_failed">No app can open that.</string>
     <string name="detail_reviewer_anon">Student</string>
 
     <!-- Stage 5: map + location -->
     <string name="map_attribution">© OpenStreetMap contributors · OpenFreeMap</string>
-    <string name="map_view_place">View</string>
     <string name="map_loading">Loading the map…</string>
     <string name="map_you">you</string>
-    <string name="home_view_list">List</string>
-    <string name="home_view_map">Map</string>
-    <string name="home_chip_near_me">Near me</string>
     <string name="home_near_you">Near you</string>
     <string name="detail_show_map">Show on map</string>
     <string name="cd_locate">Show my location</string>
@@ -239,7 +217,6 @@
     <string name="chat_hint">Type a message</string>
     <string name="chat_send">Send</string>
     <string name="chat_offline">You are offline. Messages are saved and sent when the connection returns.</string>
-    <string name="chat_empty">Say hello! Your first message starts the chat.</string>
     <string name="chat_error">Could not load this chat.</string>
     <string name="chat_send_failed">The message was not sent: %1$s</string>
     <string name="chat_delete_me">Delete for me</string>
