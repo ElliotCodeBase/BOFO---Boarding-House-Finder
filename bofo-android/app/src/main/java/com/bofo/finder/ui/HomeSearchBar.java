@@ -112,6 +112,9 @@ final class HomeSearchBar {
 
     boolean isOpen() { return open; }
 
+    /** The header scrolls with the list (Step 4): an open dropdown would be left behind, so it closes. */
+    void closeOnScroll() { if (open) dismiss(true); }
+
     // ------------------------------------------------------------------ actions
 
     private void enter() {

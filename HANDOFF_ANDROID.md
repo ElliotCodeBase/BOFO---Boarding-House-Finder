@@ -1,3 +1,16 @@
+# Handoff (Android) - v2.0.22 revert Step 4, inline map card (2026-10-31)
+- **PR title:** `v2.0.22 - Android: Home is one scrolling page with an inline map card and radius pill`
+
+## Done
+- `fragment_home.xml`: CoordinatorLayout; `AppBarLayout` (id app_bar, scroll flag) holds the whole header, the list include sits behind it with the scrolling-view behaviour. Map is in `map_frame` (MaterialCardView 28 dp, height set in HomeFragment).
+- `MapCardView`: `setRadiusPill`, `glideToRing`, `Listener.radiusChanged`, texture-mode MapView, padded ring fit. `view_map_card.xml`: radius pill, locate bottom-right, attribution pill, peek card leaves room for the locate button.
+- `HomeFragment`: no more map mode / toggle; radius debounce 350 ms; fits only when the centre changes. `HomeSearchBar.closeOnScroll()`.
+
+## Next
+Step 5 (radar dot, glass pill, overview/locate logic). See `REVERT_PROMPT.md`. Unused now: `home_view_list` / `home_view_map` strings (delete in Step 11).
+
+---
+
 # Handoff (Android) - v2.0.18 login errors visible (2026-10-31)
 - **PR title:** `v2.0.18 - Android port: show login errors (scroll into view, hide keyboard, Logcat)`
 

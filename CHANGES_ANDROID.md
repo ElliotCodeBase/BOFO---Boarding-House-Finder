@@ -1,3 +1,11 @@
+# v2.0.22 - Android port, revert Step 4: inline map card (JavaFX app stays v1.20.0)
+- Home is now ONE scrolling page: offline strip, greeting, search, rounded map card, New / Hot / Best rated, rent line, title and the card grid all scroll together (CoordinatorLayout + AppBarLayout; the list recycles as before; pull-to-refresh only at the very top).
+- Removed from Home: the List / Map toggle, the full-screen map button and the old radius slider row.
+- Map card: 28 dp corners, thin outline, height 42% of the screen (200-440 dp), round white locate button bottom-right, attribution as a small pill bottom-left, radius pill top-centre (Radius, purple slider, chip like "1.0 km"; 0.5 to 5 km, step 0.5). Dragging the pill moves the circle and eases the zoom live; the list reloads 350 ms after it settles.
+- The map no longer re-zooms when only the radius changes; it fits when the centre changes (first load, campus picked, Near me).
+- MapView now uses texture mode so it clips to the rounded card and the search dropdown floats above it.
+- Not built or run by Claude. Profile > About shows 2.0.22.
+
 # v2.0.18 - Android port, login errors are now visible (JavaFX app stays v1.20.0)
 - Google sign-in on a real phone returned to the login screen with no message: the error text sits below the buttons, hidden behind the keyboard. Now any login message closes the keyboard and scrolls to it, and failures are also written to Logcat (tag `BOFO`).
 - No Supabase, library or other code change. Profile > About and Settings show 2.0.18.
