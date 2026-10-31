@@ -173,7 +173,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
 
     /** force = the finger lifted: always frame the final circle. */
     public void glideToRing(boolean force) {
-        if (map == null || ringLat == null || ringKm <= 0) return;
+        if (map == null || ringLat == null || ringKm <= 0 || routeShown()) return;       // v2.0.74: the ring is hidden while a path is shown
         long now = android.os.SystemClock.uptimeMillis();
         if (!force && now - lastGlide < 160) return;                 // at most ~6 camera moves a second while dragging
         lastGlide = now;
@@ -965,10 +965,10 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     // ---- camera ------------------------------------------------------------------------------------------------
 
     /** Zoom to the ring if there is one, else to all pins, else to the default area. */
-    public void fit() { fitPending = true; target = null; post(this::applyCamera); }
+    public void fit() { if (routeShown()) { fitRoute(); return; } fitPending = true; target = null; post(this::applyCamera); }   // v2.0.74: a shown path keeps the camera
 
     /** Step 5 overview: zoom out so every pin (and the phone, if known) fills ~90 % of the card. */
-    public void overview() { overviewPending = true; fitPending = false; target = null; post(this::applyCamera); }
+    public void overview() { if (routeShown()) { fitRoute(); return; } overviewPending = true; fitPending = false; target = null; post(this::applyCamera); }   // v2.0.74: a shown path keeps the camera
 
     /** Owner form pin picker: the map centre now (lat, lng), or null before the map is ready. */
     @Nullable public double[] center() {
@@ -1017,10 +1017,21 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** Fits the whole route, leaving room at the bottom for the preview card (and at the top for the radius pill). Glides there. */
     private void fitRouteBounds(double[] bb) {
         if (bb[0] == bb[2] && bb[1] == bb[3]) { fitBounds(bb, 40); return; }
+        int w = getWidth(), h = getHeight();
+        if (w <= 0 || h <= 0) { fitRoutePending = true; postDelayed(this::applyCamera, 150); return; }     // not laid out yet: try again
         float d = getResources().getDisplayMetrics().density;
         int bottom = Math.round(((b.peek.getVisibility() == View.VISIBLE ? Math.max(b.peek.getHeight() / d, 70) + 26 + 18 : 40)) * d);
-        int top = Math.round((pillShown ? 84 : 44) * d), side = Math.round(40 * d);
-        map.easeCamera(CameraUpdateFactory.newLatLngBounds(LatLngBounds.from(bb[2], bb[3], bb[0], bb[1]), side, top, side, bottom), 450);
+        int top = Math.round((pillShown ? 84 : 44) * d), side = Math.min(Math.round(40 * d), Math.round(w * 0.2f));
+        int maxV = Math.round(h * 0.7f);                                  // v2.0.74: padding must never eat the card (MapLibre then silently skips the move)
+        if (top + bottom > maxV) { float k = maxV / (float) (top + bottom); top = Math.round(top * k); bottom = Math.round(bottom * k); }
+        LatLngBounds lb = LatLngBounds.from(bb[2], bb[3], bb[0], bb[1]);
+        try {
+            map.easeCamera(CameraUpdateFactory.newLatLngBounds(lb, side, top, side, bottom), 450);
+        } catch (Exception e) {
+            Log.w("BOFO", "Route fit", e);
+            try { map.moveCamera(CameraUpdateFactory.newLatLngBounds(lb, Math.round(24 * d))); }
+            catch (Exception e2) { map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng((bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2), 15)); }
+        }
     }
 
     /** {minLat, minLng, maxLat, maxLng}: a single point gets zoom 15, anything else is fitted with {@code padDp} around it. */

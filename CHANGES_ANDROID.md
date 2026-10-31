@@ -1,3 +1,8 @@
+# v2.0.74 - Android: the path is always in view (pathfind fix)
+- **Fixed:** after tapping a house the path (line, start / end dots) was not visible: only the "757 m - 9 min" chip showed and the map stayed on the zoomed-out overview. Cause: the "fit the path" move could be undone by a later overview / fit (first location fix, list reload), and the fit itself was silently skipped when its padding was bigger than the small map card.
+- **Now:** while a path is shown, overview / fit / ring moves are ignored and only re-fit the path; the path padding is capped to 70 % of the card height and 20 % of the width, with fallbacks (plain padding, then centre + zoom 15) and a retry if the card is not laid out yet.
+- Files: `MapCardView.java` (`fit`, `overview`, `glideToRing`, `fitRouteBounds`), `build.gradle` (2.0.74 / 274). Not built or run by Claude.
+
 # v2.0.73 - Android: only the path stays on the map while a path is shown
 - **Changed:** when you pathfind to a boarding house, every other circle disappears: the other houses (dots, pins, number bubbles and names), all campus dots and names, the chosen campus dot and the radius circle with its km chip. What stays: your dot, the path, its start / end dots and the "km - time" chip, and the house you are going to. Close the path (the X on the preview card) and everything comes back.
 - Files: `MapCardView.java` (`routeShown`, `declutter`, `paintRing`, `paintCampusDot`, `isRouteTarget`, edits in `rebuildPlaces` / `rebuildColleges` / `setRoute` / `clearRoute`), `build.gradle` (2.0.73 / 273). Not built or run by Claude.
