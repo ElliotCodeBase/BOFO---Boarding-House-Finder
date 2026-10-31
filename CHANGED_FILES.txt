@@ -1,7 +1,5 @@
-new     bofo-android/app/src/main/java/com/bofo/finder/ui/BofoMascot.java
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/FloatingBofoView.java
-changed bofo-android/app/src/main/res/layout/fragment_shell.xml
-new     bofo-android/app/src/main/res/drawable/bg_bofo_fab.xml
+changed bofo-android/app/src/main/res/layout/view_bofo_chat.xml
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/BofoChatOverlay.java
 changed bofo-android/app/build.gradle
 changed CHANGES_ANDROID.md
 changed HANDOFF_ANDROID.md

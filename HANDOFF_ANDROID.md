@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.51 chat header mascot
+- **PR title:** `v2.0.51 - Android: Ask BOFO chat header uses the JavaFX mascot animation`
+- Rebuilt on top of the real `main` (v2.0.50). An earlier attempt was made from a different folder snapshot (DockBarView with extra elevation, 56 dp button, other DashboardFragment) and the tab bar went invisible: do NOT bring those files along. Only `view_bofo_chat.xml`, `BofoChatOverlay.java`, `build.gradle`.
+
+---
+
 # Handoff (Android) - v2.0.50 JavaFX mascot animation (2026-10-31)
 - **PR title:** `v2.0.50 - Android: Ask BOFO button uses a port of the JavaFX mascot animation`
 - User: "re-use the javafx animation for the AI chat button instead of making another shitty version". Source of truth = `src/main/java/com/bofo/finder/ui/Mascot.java` + `BofoPanel.java` (idle timing). `BofoMascot.java` recomputes every frame from `SystemClock.uptimeMillis()` (no animator objects); JavaFX `Interpolator.EASE_*` curves are in `ease()`.
