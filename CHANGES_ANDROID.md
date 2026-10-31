@@ -1,3 +1,16 @@
+# v2.0.47 - Android port: Directions card refreshes by itself (JavaFX app stays v1.20.0)
+- Place > Directions: if the route cannot be worked out (weak signal, slow server) the card now keeps loading and **tries again by itself** (up to 5 times, 2 s, 4 s, 6 s...) instead of stopping at an empty box with a Retry button. The Retry button only shows after the 5th failure.
+- Changed: `DirectionsCardView.java`, `build.gradle` (2.0.47 / 247). Not built by Claude.
+
+# v2.0.46 - Android port: locate button zooms out fast (JavaFX app stays v1.20.0)
+- Dashboard map: the round locate button is now a toggle. First tap = fly to you (uses the saved position at once), second tap = zoom back out to all your places. Before, there was no quick way back out.
+- Map camera jumps (`moveTo`) now take a fixed 0.5 s instead of the slow default fly time (also used by Home and the Create map).
+- Changed: `MapCardView.java`, `DashboardFragment.java`, `build.gradle` (2.0.46 / 246). Not built by Claude.
+
+# v2.0.45 - Android port: nicer owner Dashboard (JavaFX app stays v1.20.0)
+- Purple **hero card** (places, boosted, big total of views); stat tiles are now white rounded cards (before they were flat text, so they looked empty); **place cards** have the photo, name, price, an amber "Boosted" tag and chips (views, saved, chats, free beds, rating); amber verification banner; more space at the bottom so the floating tab bar never covers the last card.
+- Changed: `DashboardFragment.java`, `fragment_dashboard.xml`, `strings.xml`, `build.gradle` (2.0.45 / 245); new drawables `bg_dash_card`, `bg_dash_hero`, `bg_dash_chip`, `bg_dash_chip_amber`, `bg_dash_chip_green`. Not built by Claude.
+
 # v2.0.44 - Android port: owner Create wizard like the JavaFX one (update 2 of 2; JavaFX app stays v1.20.0)
 - **Create / Edit place is now 4 steps** with a segment bar, "STEP n OF 4", and a bottom bar that always shows the errors (with **Copy error details**), "n of 6 required details done" with a progress bar, and Back / Next / **Publish listing**:
   1. **Place & pin:** name, address, a **map with a fixed pin** (move the map, tap **Set pin at map center**), the **walking route and distance from the nearest campus** (e.g. "1.2 km from NORSU (about 15 min walk)"), the map flies to your phone on open.

@@ -203,12 +203,21 @@ public class DirectionsCardView extends MaterialCardView {
         if (known == null) known = Router.estimate(from[0], from[1], to[0], to[1]);
         b.map.setRoute(known.pts(), known.approximate());
         b.map.fitRoute();
+        runPlan(t, my, from, to, 0);
+    }
+
+    /** Works out the plan. A failure (weak signal, slow server) is retried by itself up to 5 times, a little later each time, while the card keeps its loading state; only then the Retry button shows. */
+    private void runPlan(int t, int my, double[] from, double[] to, int tries) {
         Async.run(() -> TripPlanner.planWithin(from, to, DirectionsRules.PLAN_SECONDS), p -> {
             if (my != token) return;
             planning = false; plan = p; chosen = p.best();
             render(t);
         }, e -> {
             if (my != token) return;
+            if (tries < 5) {
+                postDelayed(() -> { if (my == token && planning) runPlan(t, my, from, to, tries + 1); }, 2000L * (tries + 1));
+                return;
+            }
             planning = false; failed = true;
             showError();
         });

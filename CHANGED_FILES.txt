@@ -1,10 +1,4 @@
 changed bofo-android/app/build.gradle
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/ListingFormFragment.java
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
-changed bofo-android/app/src/main/java/com/bofo/finder/service/BhService.java
-changed bofo-android/app/src/main/res/layout/fragment_listing_form.xml
-changed bofo-android/app/src/main/res/values/strings.xml
-new     bofo-android/app/src/main/res/drawable/ic_pin_center.xml
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/DirectionsCardView.java
 changed CHANGES_ANDROID.md
 changed HANDOFF_ANDROID.md
-(Unzip update 1 = BOFO-android-v2.0.43-changes.zip FIRST, then this one.)
