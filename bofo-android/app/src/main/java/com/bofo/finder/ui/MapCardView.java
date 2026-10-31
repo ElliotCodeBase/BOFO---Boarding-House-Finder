@@ -833,6 +833,11 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** Step 5 overview: zoom out so every pin (and the phone, if known) fills ~90 % of the card. */
     public void overview() { overviewPending = true; fitPending = false; target = null; post(this::applyCamera); }
 
+    /** Owner form pin picker: the map centre now (lat, lng), or null before the map is ready. */
+    @Nullable public double[] center() {
+        if (map == null || map.getCameraPosition().target == null) return null;
+        return new double[]{map.getCameraPosition().target.getLatitude(), map.getCameraPosition().target.getLongitude()};
+    }
     public void moveTo(double lat, double lng, double zoom) { target = new double[]{lat, lng, zoom}; fitPending = false; overviewPending = false; post(this::applyCamera); }
 
     private void applyCamera() {

@@ -1,3 +1,19 @@
+# v2.0.44 - Android port: owner Create wizard like the JavaFX one (update 2 of 2; JavaFX app stays v1.20.0)
+- **Create / Edit place is now 4 steps** with a segment bar, "STEP n OF 4", and a bottom bar that always shows the errors (with **Copy error details**), "n of 6 required details done" with a progress bar, and Back / Next / **Publish listing**:
+  1. **Place & pin:** name, address, a **map with a fixed pin** (move the map, tap **Set pin at map center**), the **walking route and distance from the nearest campus** (e.g. "1.2 km from NORSU (about 15 min walk)"), the map flies to your phone on open.
+  2. **Price & rooms:** price, per bed / per room, rooms with **- / +** steppers (Beds, Occupied now; occupied can never pass beds), remove room.
+  3. **Amenities & photos:** **Camera** and Gallery buttons, **thumbnails with a small x to remove** a photo, **amenity picker** (search box, popular chips, selected chips you can remove, "Show all", and **Add "text"** to create your own, a leading emoji becomes its icon). The old Free water / electricity / Wi-Fi tick boxes are now amenities (columns stay in sync).
+  4. **Contact & review:** phone, Facebook, e-mail, and a review card of what students will see.
+- Edit mode uses the same wizard: pin, rooms, contact and **amenities** are filled from the place; saving now also replaces the amenities (only when the catalog was read, so they are never wiped by accident).
+- Replaced: typed latitude / longitude + "Use my location" button. The old validation (`BhService.validate`) is unchanged, so the same rules apply.
+- Needs the amenities tables: applied to your Supabase in update 1 (005 + 006). Adding your own amenity needs a verified owner (database function).
+- Changed: `ListingFormFragment.java` (rewritten), `fragment_listing_form.xml` (rewritten), `MapCardView.java` (+`center()`), `BhService.java` (`Draft.syncAmenities`, amenities saved on edit), `strings.xml`, new `drawable/ic_pin_center.xml`, `build.gradle` (2.0.44 / 244). Not built in Android Studio by Claude (syntax-checked only).
+
+# v2.0.43 - Android port: owner Dashboard like the JavaFX one (update 1 of 2; JavaFX app stays v1.20.0)
+- **Dashboard** now has: the verification banner (unverified / pending / rejected, tap = Verification screen), the existing numbers (kept), **"Your places on the map"** (tap a pin = route from the nearest campus with distance and time; locate button), and one tappable card per place (opens the place). Pull down to refresh.
+- **Supabase (done with your permission):** migrations `005_amenities` and `006_admin_can_publish` were NOT applied on the live project; they are now (tables `amenities`, `bh_amenities`, view `amenities_v`, function `get_or_create_amenity`, `bh_cards` with amenity columns, 20 starter amenities). Needed by update 2 (amenity picker).
+- Changed: `DashboardFragment.java`, `strings.xml` (+ `dash_map_title`), `build.gradle` (2.0.43 / 243). Not built in Android Studio by Claude.
+
 # v2.0.42 - Android port: Student / Owner / Admin force-login buttons are back (JavaFX app stays v1.20.0)
 - The login screen has a "Developer: test accounts" row with **Student / Owner / Admin** buttons, like the JavaFX app. Each one does a real Supabase password sign-in (genuine session, so the posted boarding houses, favorites, chat, listings and admin queues all work) and then goes through the normal routing.
 - The accounts are the same `dev.student|owner|admin.email` / `.password` keys of the git-ignored `src/main/resources/com/bofo/finder/config.local.properties` that the JavaFX buttons use: nothing to retype. `app/build.gradle` reads that file and puts the values into the **debug** build only; a release APK has them empty, so the buttons are hidden and no test password is inside the APK.

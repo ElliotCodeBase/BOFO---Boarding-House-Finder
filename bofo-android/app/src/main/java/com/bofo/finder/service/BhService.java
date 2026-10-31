@@ -215,6 +215,7 @@ public final class BhService {
         public List<String> amenityIds = new ArrayList<>();
         public List<RoomDraft> rooms = new ArrayList<>();
         public List<byte[]> photos = new ArrayList<>();          // NEW photos (when editing: added after the existing ones)
+        public boolean syncAmenities;                            // editing: replace the place's amenities with amenityIds (only when the catalog was loaded)
         public int existingPhotos;                               // editing only: photos the place already has
     }
     public record RoomDraft(int beds, int occupants) {}
@@ -319,6 +320,15 @@ public final class BhService {
             JSONArray roomRows = new JSONArray();
             for (RoomDraft r : d.rooms) roomRows.put(new JSONObject().put("boarding_house_id", id).put("beds", r.beds()).put("occupants", r.occupants()));
             api.insert("rooms", roomRows);
+            if (d.syncAmenities) {
+                step = "saving the amenities";
+                api.delete("bh_amenities", "boarding_house_id=eq." + id);
+                if (!d.amenityIds.isEmpty()) {
+                    JSONArray amenityRows = new JSONArray();
+                    for (String aid : d.amenityIds) amenityRows.put(new JSONObject().put("boarding_house_id", id).put("amenity_id", aid));
+                    api.insert("bh_amenities", amenityRows);
+                }
+            }
             step = "saving the contact details";
             JSONObject c = new JSONObject().put("phone", d.phone).put("facebook", d.facebook).put("email", d.email);
             if (api.update("bh_contacts", "boarding_house_id=eq." + id, c).length() == 0) api.insert("bh_contacts", c.put("boarding_house_id", id));

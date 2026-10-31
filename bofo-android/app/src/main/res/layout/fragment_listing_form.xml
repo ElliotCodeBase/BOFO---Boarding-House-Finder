@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bofo_bg"
@@ -32,172 +33,386 @@
             android:textStyle="bold" />
     </LinearLayout>
 
+    <!-- step header: 4 segments, "STEP n OF 4", title, hint (filled from code) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bofo_white"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingBottom="12dp"
+        android:paddingTop="4dp">
+
+        <LinearLayout
+            android:id="@+id/segs"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:orientation="horizontal" />
+
+        <TextView
+            android:id="@+id/step_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/bofo_primary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/step_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/bofo_text"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/step_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/bofo_text_2"
+            android:textSize="13sp" />
+    </LinearLayout>
+
     <ScrollView
+        android:id="@+id/scroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
         android:padding="16dp">
 
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- page 1: place and pin -->
+            <LinearLayout
+                android:id="@+id/page0"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView style="@style/Text.Form.Label" android:text="@string/form_name" />
+                <EditText
+                    android:id="@+id/name"
+                    style="@style/Widget.Form.Input"
+                    android:autofillHints="no"
+                    android:inputType="textCapWords"
+                    android:maxLength="120" />
+
+                <TextView style="@style/Text.Form.Label" android:text="@string/form_address" />
+                <EditText
+                    android:id="@+id/address"
+                    style="@style/Widget.Form.Input"
+                    android:autofillHints="no"
+                    android:inputType="textPostalAddress|textCapWords"
+                    android:maxLength="250" />
+
+                <TextView style="@style/Text.Form.Label" android:text="@string/form_pin_label" />
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/bofo_border"
+                    app:strokeWidth="1dp">
+
+                    <FrameLayout
+                        android:id="@+id/map_frame"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                    <!-- the pin stays in the middle; its tip sits on the map centre -->
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_pin_center"
+                        android:translationY="-20dp" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <Button
+                    android:id="@+id/set_pin"
+                    style="@style/Widget.Bofo.Button.Tint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/form_set_pin" />
+                <TextView
+                    android:id="@+id/pin_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/form_pin_none"
+                    android:textColor="@color/bofo_text_2"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- page 2: price and rooms -->
+            <LinearLayout
+                android:id="@+id/page1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView style="@style/Text.Form.Label" android:text="@string/form_price" />
+                <EditText
+                    android:id="@+id/price"
+                    style="@style/Widget.Form.Input"
+                    android:autofillHints="no"
+                    android:inputType="numberDecimal" />
+                <RadioGroup
+                    android:id="@+id/mode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <RadioButton
+                        android:id="@+id/mode_bed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="@string/form_per_bed" />
+                    <RadioButton
+                        android:id="@+id/mode_room"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="@string/form_per_room" />
+                </RadioGroup>
+
+                <TextView style="@style/Text.Form.Label" android:text="@string/form_rooms" />
+                <LinearLayout
+                    android:id="@+id/rooms"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+                <Button
+                    android:id="@+id/add_room"
+                    style="@style/Widget.Bofo.Button.Tint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/form_add_room" />
+            </LinearLayout>
+
+            <!-- page 3: photos and amenities -->
+            <LinearLayout
+                android:id="@+id/page2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView style="@style/Text.Form.Label" android:text="@string/form_photos" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <Button
+                        android:id="@+id/take_photo"
+                        style="@style/Widget.Bofo.Button.Tint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:text="@string/form_take_photo" />
+                    <Button
+                        android:id="@+id/add_photos"
+                        style="@style/Widget.Bofo.Button.Tint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/form_add_photos" />
+                </LinearLayout>
+                <TextView
+                    android:id="@+id/photo_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/bofo_text_2"
+                    android:textSize="13sp" />
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:scrollbars="none">
+                    <LinearLayout
+                        android:id="@+id/thumbs"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" />
+                </HorizontalScrollView>
+
+                <TextView android:id="@+id/amenities_label" style="@style/Text.Form.Label" android:text="@string/form_amenities" />
+                <TextView
+                    android:id="@+id/amen_hint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/form_amen_hint"
+                    android:textColor="@color/bofo_text_2"
+                    android:textSize="13sp" />
+                <EditText
+                    android:id="@+id/amen_search"
+                    style="@style/Widget.Form.Input"
+                    android:layout_marginTop="8dp"
+                    android:autofillHints="no"
+                    android:hint="@string/form_amen_search"
+                    android:imeOptions="actionDone"
+                    android:inputType="text"
+                    android:maxLength="44" />
+                <TextView
+                    android:id="@+id/amen_selected_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/form_amen_selected"
+                    android:textColor="@color/bofo_text_2"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/amen_selected"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:id="@+id/amen_heading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/form_amen_popular"
+                    android:textColor="@color/bofo_text_2"
+                    android:textSize="13sp" />
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/amenities"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+                <Button
+                    android:id="@+id/amen_more"
+                    style="@style/Widget.Bofo.Button.Tint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/form_amen_more" />
+                <TextView
+                    android:id="@+id/amen_note"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/bofo_text_2"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- page 4: contact and review -->
+            <LinearLayout
+                android:id="@+id/page3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView style="@style/Text.Form.Label" android:text="@string/form_contact" />
+                <EditText
+                    android:id="@+id/phone"
+                    style="@style/Widget.Form.Input"
+                    android:autofillHints="no"
+                    android:hint="@string/form_phone"
+                    android:inputType="phone" />
+                <EditText
+                    android:id="@+id/facebook"
+                    style="@style/Widget.Form.Input"
+                    android:layout_marginTop="8dp"
+                    android:autofillHints="no"
+                    android:hint="@string/form_facebook"
+                    android:inputType="textUri" />
+                <EditText
+                    android:id="@+id/email"
+                    style="@style/Widget.Form.Input"
+                    android:layout_marginTop="8dp"
+                    android:autofillHints="no"
+                    android:hint="@string/form_email"
+                    android:inputType="textEmailAddress" />
+
+                <TextView style="@style/Text.Form.Label" android:text="@string/form_review" />
+                <TextView
+                    android:id="@+id/review"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_dir_option"
+                    android:padding="14dp"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </FrameLayout>
+    </ScrollView>
+
+    <!-- bottom bar, always visible: errors, progress, Back + Next / Publish -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bofo_white"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="10dp">
+
         <LinearLayout
+            android:id="@+id/error_box"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView style="@style/Text.Form.Label" android:text="@string/form_name" />
-            <EditText
-                android:id="@+id/name"
-                style="@style/Widget.Form.Input"
-                android:autofillHints="no"
-                android:inputType="textCapWords"
-                android:maxLength="120" />
-
-            <TextView style="@style/Text.Form.Label" android:text="@string/form_address" />
-            <EditText
-                android:id="@+id/address"
-                style="@style/Widget.Form.Input"
-                android:autofillHints="no"
-                android:inputType="textPostalAddress|textCapWords"
-                android:maxLength="250" />
-
-            <TextView style="@style/Text.Form.Label" android:text="@string/form_price" />
-            <EditText
-                android:id="@+id/price"
-                style="@style/Widget.Form.Input"
-                android:autofillHints="no"
-                android:inputType="numberDecimal" />
-            <RadioGroup
-                android:id="@+id/mode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <RadioButton
-                    android:id="@+id/mode_bed"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="@string/form_per_bed" />
-                <RadioButton
-                    android:id="@+id/mode_room"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="@string/form_per_room" />
-            </RadioGroup>
-
-            <TextView style="@style/Text.Form.Label" android:text="@string/form_rooms" />
-            <LinearLayout
-                android:id="@+id/rooms"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-            <Button
-                android:id="@+id/add_room"
-                style="@style/Widget.Bofo.Button.Tint"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/form_add_room" />
-
-            <TextView style="@style/Text.Form.Label" android:text="@string/form_free" />
-            <CheckBox android:id="@+id/free_water" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/form_water" />
-            <CheckBox android:id="@+id/free_electricity" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/form_electricity" />
-            <CheckBox android:id="@+id/free_wifi" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/form_wifi" />
-
-            <TextView android:id="@+id/amenities_label" style="@style/Text.Form.Label" android:text="@string/form_amenities" />
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/amenities"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <TextView style="@style/Text.Form.Label" android:text="@string/form_contact" />
-            <EditText
-                android:id="@+id/phone"
-                style="@style/Widget.Form.Input"
-                android:autofillHints="no"
-                android:hint="@string/form_phone"
-                android:inputType="phone" />
-            <EditText
-                android:id="@+id/facebook"
-                style="@style/Widget.Form.Input"
-                android:layout_marginTop="8dp"
-                android:autofillHints="no"
-                android:hint="@string/form_facebook"
-                android:inputType="textUri" />
-            <EditText
-                android:id="@+id/email"
-                style="@style/Widget.Form.Input"
-                android:layout_marginTop="8dp"
-                android:autofillHints="no"
-                android:hint="@string/form_email"
-                android:inputType="textEmailAddress" />
-
-            <TextView style="@style/Text.Form.Label" android:text="@string/form_location" />
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <EditText
-                    android:id="@+id/lat"
-                    style="@style/Widget.Form.Input"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:autofillHints="no"
-                    android:hint="@string/form_lat"
-                    android:inputType="numberDecimal|numberSigned" />
-                <EditText
-                    android:id="@+id/lng"
-                    style="@style/Widget.Form.Input"
-                    android:layout_width="0dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:autofillHints="no"
-                    android:hint="@string/form_lng"
-                    android:inputType="numberDecimal|numberSigned" />
-            </LinearLayout>
-            <Button
-                android:id="@+id/use_location"
-                style="@style/Widget.Bofo.Button.Tint"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/form_use_location" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/form_location_hint"
-                android:textAppearance="@style/Text.Bofo.Secondary" />
-
-            <TextView style="@style/Text.Form.Label" android:text="@string/form_photos" />
-            <Button
-                android:id="@+id/add_photos"
-                style="@style/Widget.Bofo.Button.Tint"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/form_add_photos" />
-            <TextView
-                android:id="@+id/photo_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="@style/Text.Bofo.Secondary" />
-
+            android:orientation="vertical"
+            android:visibility="gone">
             <TextView
                 android:id="@+id/errors"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
                 android:background="@color/bofo_error_tint"
+                android:maxLines="8"
                 android:padding="12dp"
-                android:textColor="@color/bofo_error"
-                android:visibility="gone" />
+                android:textColor="@color/bofo_error" />
+            <Button
+                android:id="@+id/copy_error"
+                style="@style/Widget.Bofo.Button.Tint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/form_copy_error" />
+        </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/progress_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/bofo_text_2"
+                android:textSize="12sp" />
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/progress_bar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:max="100" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/back_step"
+                style="@style/Widget.Bofo.Button.Tint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="10dp"
+                android:text="@string/form_back" />
             <Button
                 android:id="@+id/publish"
                 style="@style/Widget.Bofo.Button.Cta"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="32dp"
-                android:text="@string/form_publish" />
+                android:layout_weight="1"
+                android:text="@string/form_next" />
         </LinearLayout>
-    </ScrollView>
+    </LinearLayout>
 </LinearLayout>

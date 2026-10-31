@@ -337,7 +337,7 @@
     <string name="form_saved">Changes saved.</string>
     <string name="form_edit_failed">Could not save: %1$s</string>
     <string name="form_edit_load_failed">Could not load this place to edit.</string>
-    <string name="form_edit_photos">%1$d photo(s) already on this place; you can add more (up to 8 in total). Removing photos is not ported yet.</string>
+    <string name="form_edit_photos">%1$d photo(s) already on this place; you can add more (up to 8 in total).</string>
     <string name="listing_edit">Edit</string>
 
     <!-- Stage 8f: owner dashboard -->
@@ -350,6 +350,7 @@
     <string name="dash_reviews">Reviews</string>
     <string name="dash_beds">Free beds</string>
     <string name="dash_boosted">%1$d boosted</string>
+    <string name="dash_map_title">Your places on the map</string>
     <string name="dash_per_place">Your places</string>
     <string name="dash_row">%1$d views  -  %2$d saved  -  %3$d chats\nRating %4$s (%5$d reviews)  -  %6$d free beds</string>
     <string name="dash_empty">You have no places yet. Add a place and its numbers appear here.</string>
@@ -440,4 +441,47 @@
     <string name="adminpay_refund_do">Refund</string>
     <string name="adminpay_done">Marked as refunded and the boost ended. Return the money in the PayMongo dashboard.</string>
     <string name="adminpay_error">Could not refund.</string>
+    <!-- v2.0.44 Create wizard (JavaFX ListingFormView) -->
+    <string name="form_step_count">STEP %1$d OF 4</string>
+    <string name="form_step1">Place &amp; pin</string>
+    <string name="form_step1_hint">Name your place and drop a pin so students see the distance to campus.</string>
+    <string name="form_step2">Price &amp; rooms</string>
+    <string name="form_step2_hint">How much it costs and how many beds each room has.</string>
+    <string name="form_step3">Amenities &amp; photos</string>
+    <string name="form_step3_hint">Show what you offer. Clear, bright photos get more chats.</string>
+    <string name="form_step4">Contact &amp; review</string>
+    <string name="form_step4_hint">Tell students how to reach you, then check everything.</string>
+    <string name="form_pin_label">Pin location (move the map until the pin sits on your place)</string>
+    <string name="form_set_pin">Set pin at map center</string>
+    <string name="form_pin_none">No pin yet. Move the map so the pin sits on your place, then tap Set pin.</string>
+    <string name="form_pin_set">Pin set: %1$s</string>
+    <string name="form_amen_hint">Not in the list? Type it and tap Add. Students can find it in the Explore filter.</string>
+    <string name="form_amen_search">Search or add your own (e.g. \uD83C\uDFCA Swimming pool)</string>
+    <string name="form_amen_selected">Selected</string>
+    <string name="form_amen_popular">Popular amenities</string>
+    <string name="form_amen_results">Matches</string>
+    <string name="form_amen_more">Show all amenities</string>
+    <string name="form_amen_less">Show fewer</string>
+    <string name="form_amen_add">Add \"%1$s\"</string>
+    <string name="form_amen_failed">Could not add that amenity: %1$s</string>
+    <string name="form_amen_missing">Amenities are not available right now. The place can still be saved without them.</string>
+    <string name="form_review">Review</string>
+    <string name="form_take_photo">Camera</string>
+    <string name="form_next">Next</string>
+    <string name="form_back">Back</string>
+    <string name="form_publish_listing">Publish listing</string>
+    <string name="form_copy_error">Copy error details</string>
+    <string name="form_copied">Error copied</string>
+    <string name="form_progress">%1$d of 6 required details done</string>
+    <string name="form_progress_done">All required details are filled in</string>
+    <string name="form_err_name">Enter the BH name.</string>
+    <string name="form_err_address">Enter the address.</string>
+    <string name="form_err_pin">Set the pin: move the map, then tap Set pin.</string>
+    <string name="form_err_price">Enter the monthly payment.</string>
+    <string name="form_err_photo">Add at least one photo.</string>
+    <string name="form_err_contact">Add at least one way to contact you.</string>
+    <string name="form_room_n">Room %1$d</string>
+    <string name="form_room_beds_l">Beds</string>
+    <string name="form_room_occ_l">Occupied now</string>
+    <string name="form_review_text">%1$s\n%2$s\n\nPHP %3$s %4$s a month\n%5$d room(s), %6$d beds\n%7$d amenities, %8$d photo(s)</string>
 </resources>
