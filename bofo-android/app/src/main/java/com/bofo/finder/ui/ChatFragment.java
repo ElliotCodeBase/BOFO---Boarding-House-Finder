@@ -108,8 +108,8 @@ public class ChatFragment extends Fragment {
         me = AuthService.get().userId();
         b.title.setText(args.getString(ARG_TITLE, ""));
         String place = args.getString(ARG_PLACE, "");
-        b.subtitle.setText(place);
-        b.subtitle.setVisibility(place.isEmpty() ? View.GONE : View.VISIBLE);
+        String who = args.getString(ARG_TITLE, "").trim();
+        b.avatar.setText(who.isEmpty() ? "?" : who.substring(0, 1).toUpperCase());
         b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
 
         adapter = new Adapter(new Adapter.Listener() {
@@ -127,6 +127,19 @@ public class ChatFragment extends Fragment {
             }
         });
         b.send.setOnClickListener(v -> send());
+        b.input.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence c, int a, int n, int d) { }
+            @Override public void onTextChanged(CharSequence c, int a, int n, int d) { }
+            @Override public void afterTextChanged(android.text.Editable e) {
+                if (b == null) return;
+                boolean has = e.toString().trim().length() > 0;      // purple only when there is text
+                b.send.setEnabled(has);
+                b.send.setBackgroundResource(has ? R.drawable.bg_send_button : R.drawable.bg_send_off);
+            }
+        });
+        View.OnClickListener quick = v -> { b.input.setText(((TextView) v).getText()); send(); };
+        b.quick1.setOnClickListener(quick);
+        b.quick2.setOnClickListener(quick);
         b.retry.setOnClickListener(v -> load());
         Connectivity.OFFLINE.observe(getViewLifecycleOwner(), off -> {
             if (b == null) return;
@@ -156,6 +169,8 @@ public class ChatFragment extends Fragment {
         }, e -> {
             if (my != token || b == null) return;
             b.loading.setVisibility(View.GONE);
+            b.helloMascot.setVisibility(View.GONE);
+            b.helloTitle.setVisibility(View.GONE);
             b.messageText.setText(Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.chat_error), e));
             b.retry.setVisibility(View.VISIBLE);
             b.messageBox.setVisibility(View.VISIBLE);
@@ -358,8 +373,11 @@ public class ChatFragment extends Fragment {
         adapter.submitList(all, () -> { if (b != null && scrollDown && !all.isEmpty()) b.list.scrollToPosition(all.size() - 1); });
         boolean empty = loaded && all.isEmpty();
         b.retry.setVisibility(View.GONE);
-        b.messageText.setText(R.string.chat_empty);
+        b.helloMascot.setVisibility(View.VISIBLE);
+        b.helloTitle.setVisibility(View.VISIBLE);
+        b.messageText.setText(R.string.chat_hello_sub);
         b.messageBox.setVisibility(empty ? View.VISIBLE : View.GONE);
+        b.quickScroll.setVisibility(empty ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -395,10 +413,10 @@ public class ChatFragment extends Fragment {
             LayoutInflater in = LayoutInflater.from(p.getContext());
             if (type == 1) {
                 ItemMsgMineBinding v = ItemMsgMineBinding.inflate(in, p, false);
-                return new Holder(v.getRoot(), v.body, v.meta);
+                return new Holder(v.getRoot(), v.body, v.meta, v.day);
             }
             ItemMsgTheirsBinding v = ItemMsgTheirsBinding.inflate(in, p, false);
-            return new Holder(v.getRoot(), v.body, v.meta);
+            return new Holder(v.getRoot(), v.body, v.meta, v.day);
         }
 
         @Override
@@ -406,6 +424,11 @@ public class ChatFragment extends Fragment {
             ChatRules.Item i = getItem(position);
             Holder h = (Holder) vh;
             h.body.setText(i.body);
+            long now = System.currentTimeMillis();
+            String dl = ChatRules.dayLabel(i.createdAt, now, ZoneId.systemDefault());
+            String before = position > 0 ? ChatRules.dayLabel(getItem(position - 1).createdAt, now, ZoneId.systemDefault()) : "";
+            h.day.setText(dl);
+            h.day.setVisibility(!dl.isEmpty() && !dl.equals(before) ? View.VISIBLE : View.GONE);
             String time = i.state == ChatRules.State.PENDING ? h.meta.getResources().getString(R.string.chat_sending)
                     : i.state == ChatRules.State.FAILED ? h.meta.getResources().getString(R.string.chat_failed_tap)
                     : ChatRules.timeLabel(i.createdAt, System.currentTimeMillis(), ZoneId.systemDefault());
@@ -418,8 +441,8 @@ public class ChatFragment extends Fragment {
         }
 
         static final class Holder extends RecyclerView.ViewHolder {
-            final View root; final TextView body, meta;
-            Holder(View root, TextView body, TextView meta) { super(root); this.root = root; this.body = body; this.meta = meta; }
+            final View root; final TextView body, meta, day;
+            Holder(View root, TextView body, TextView meta, TextView day) { super(root); this.root = root; this.body = body; this.meta = meta; this.day = day; }
         }
     }
 }

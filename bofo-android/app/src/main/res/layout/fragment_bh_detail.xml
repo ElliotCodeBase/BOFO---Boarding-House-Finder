@@ -8,6 +8,8 @@
         android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="52dp"
+        android:layout_marginBottom="76dp"
         android:visibility="gone">
 
         <LinearLayout
@@ -25,27 +27,18 @@
                     android:layout_height="match_parent"
                     android:background="@color/bofo_skeleton" />
 
-                <ImageButton
-                    android:id="@+id/back"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_gravity="top|start"
-                    android:layout_margin="10dp"
-                    android:background="@drawable/bg_circle_white"
-                    android:contentDescription="@string/cd_back"
-                    android:padding="9dp"
-                    android:src="@drawable/ic_back" />
 
-                <ImageButton
-                    android:id="@+id/heart"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_gravity="top|end"
-                    android:layout_margin="10dp"
-                    android:background="@drawable/bg_circle_white"
-                    android:contentDescription="@string/cd_save"
-                    android:padding="9dp"
-                    android:src="@drawable/ic_heart_outline" />
+
+                <TextView
+                    android:id="@+id/no_photos"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/detail_no_photos"
+                    android:textColor="@color/bofo_muted"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/photo_count"
@@ -71,18 +64,15 @@
                     android:id="@+id/name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textAppearance="@style/Text.Bofo.Title" />
+                    android:textAppearance="@style/Text.Bofo.Title"
+                    android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/verified"
-                    android:layout_width="wrap_content"
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/info_chips"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/detail_verified"
-                    android:textColor="@color/bofo_success"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
+                    android:layout_marginTop="8dp" />
 
                 <TextView
                     android:id="@+id/price"
@@ -123,12 +113,91 @@
                     android:text="@string/detail_show_map"
                     android:textSize="13sp" />
 
-                <TextView
-                    android:id="@+id/stats"
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textColor="@color/bofo_text_2" />
+                    android:layout_marginTop="14dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="0dp"
+                        android:background="@drawable/bg_chat_row"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/tile_beds_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/bofo_ink"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/detail_tile_beds"
+                            android:textColor="@color/bofo_muted"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_chat_row"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/tile_rooms_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/bofo_ink"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/detail_tile_rooms"
+                            android:textColor="@color/bofo_muted"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_chat_row"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/tile_rating_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/bofo_ink"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/detail_tile_rating"
+                            android:textColor="@color/bofo_muted"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/free"
@@ -195,13 +264,6 @@
                     android:textAppearance="@style/Text.Bofo.Secondary"
                     android:visibility="gone" />
 
-                <Button
-                    android:id="@+id/chat"
-                    style="@style/Widget.Bofo.Button.Cta"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:text="@string/detail_chat" />
 
                 <com.bofo.finder.ui.DirectionsCardView
                     android:id="@+id/directions"
@@ -236,6 +298,68 @@
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/title_bar"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_gravity="top"
+        android:background="@color/bofo_white"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="6dp">
+
+                <ImageButton
+                    android:id="@+id/back"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    
+                    
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/cd_back"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_back" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/detail_title"
+            android:textColor="@color/bofo_ink"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/heart"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    
+                    
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/cd_save"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_heart_outline" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/chat_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/bofo_white"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/chat"
+            style="@style/Widget.Bofo.Button.Cta"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:backgroundTint="@color/bofo_primary"
+            android:text="@string/detail_chat"
+            app:cornerRadius="26dp" />
+    </FrameLayout>
 
     <ProgressBar
         android:id="@+id/loading"

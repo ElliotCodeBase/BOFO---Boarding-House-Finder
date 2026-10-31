@@ -112,6 +112,21 @@ public final class ChatRules {
         }
     }
 
+    /** Day chip above a run of messages: "Today", "Yesterday", else "Oct 28". "" for text it cannot read (queued messages). */
+    public static String dayLabel(String iso, long nowMs, ZoneId zone) {
+        if (iso == null || iso.isEmpty()) return "";
+        try {
+            LocalDate day = OffsetDateTime.parse(iso).toInstant().atZone(zone).toLocalDate();
+            LocalDate today = Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate();
+            if (day.equals(today)) return "Today";
+            if (day.equals(today.minusDays(1))) return "Yesterday";
+            String[] mon = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+            return mon[day.getMonthValue() - 1] + " " + day.getDayOfMonth();
+        } catch (RuntimeException bad) {
+            return "";
+        }
+    }
+
     /** One line for the inbox: whitespace collapsed, cut at {@code max} characters with "...". */
     public static String preview(String body, int max) {
         if (body == null) return "";

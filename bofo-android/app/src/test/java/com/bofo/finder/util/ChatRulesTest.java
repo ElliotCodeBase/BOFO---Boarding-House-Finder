@@ -109,4 +109,14 @@ public class ChatRulesTest {
         assertEquals("hi", ChatRules.outgoing("  hi  ", 1000));
         assertEquals(5, ChatRules.outgoing("abcdefghij", 5).length());
     }
+
+    @Test
+    public void dayLabelNamesTodayYesterdayAndDate() {
+        java.time.ZoneId utc = java.time.ZoneOffset.UTC;
+        long now = java.time.OffsetDateTime.parse("2026-10-31T12:00:00Z").toInstant().toEpochMilli();
+        org.junit.Assert.assertEquals("Today", ChatRules.dayLabel("2026-10-31T01:00:00Z", now, utc));
+        org.junit.Assert.assertEquals("Yesterday", ChatRules.dayLabel("2026-10-30T23:00:00Z", now, utc));
+        org.junit.Assert.assertEquals("Oct 28", ChatRules.dayLabel("2026-10-28T10:00:00Z", now, utc));
+        org.junit.Assert.assertEquals("", ChatRules.dayLabel("1761900000000", now, utc));
+    }
 }

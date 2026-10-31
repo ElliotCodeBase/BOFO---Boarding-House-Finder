@@ -102,6 +102,7 @@ public class BhDetailFragment extends Fragment {
         if (my != token || b == null) return;
         b.loading.setVisibility(View.GONE);
         b.content.setVisibility(View.GONE);
+        b.chatBar.setVisibility(View.GONE);
         b.errorText.setText(Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.detail_error), e));
         b.errorBox.setVisibility(View.VISIBLE);
     }
@@ -109,8 +110,12 @@ public class BhDetailFragment extends Fragment {
     private void show(JSONObject d, JSONArray reviews) throws Exception {
         BoardingHouse bh = BoardingHouse.from(d);
         b.name.setText(bh.name());
-        b.verified.setVisibility(bh.ownerVerified() ? View.VISIBLE : View.GONE);
-        b.price.setText(Money.perMonth(bh.price()) + ("per_room".equals(d.optString("price_mode", "per_bed")) ? " per room" : " per bed"));
+        b.price.setText(getString(R.string.detail_per_month, Money.peso(bh.price()), "per_room".equals(d.optString("price_mode", "per_bed")) ? "room" : "bed"));
+        b.infoChips.removeAllViews();
+        if (bh.ownerVerified()) b.infoChips.addView(Chips.create(b.infoChips, getString(R.string.detail_verified), false, false));
+        int free = bh.availableBeds();
+        b.infoChips.addView(Chips.create(b.infoChips, free == 1 ? getString(R.string.detail_bed_available) : getString(R.string.detail_beds_available, free), false, false));
+        if (bh.distanceKm() > 0) b.infoChips.addView(Chips.create(b.infoChips, getString(R.string.detail_km_away, String.format(java.util.Locale.US, "%.1f", bh.distanceKm())), false, false));
         b.rating.setText(ListRules.ratingText(bh.avgRating(), bh.reviewCount()));
         b.address.setText(bh.address());
         b.address.setVisibility(bh.address().isEmpty() ? View.GONE : View.VISIBLE);
@@ -120,10 +125,12 @@ public class BhDetailFragment extends Fragment {
         JSONArray rooms = d.optJSONArray("rooms");
         int roomCount = rooms == null ? 0 : rooms.length(), bedsTotal = 0;
         for (int i = 0; i < roomCount; i++) bedsTotal += rooms.getJSONObject(i).optInt("beds", 0);
-        b.stats.setText(getString(R.string.detail_stats, ListRules.bedsText(bh.availableBeds()), roomCount, bedsTotal));
-        String free = ListRules.freeText(bh.water(), bh.electricity(), bh.wifi());
-        b.free.setText(free);
-        b.free.setVisibility(free.isEmpty() ? View.GONE : View.VISIBLE);
+        b.tileBedsValue.setText(String.valueOf(bh.availableBeds()));
+        b.tileRoomsValue.setText(String.valueOf(roomCount));
+        b.tileRatingValue.setText(ListRules.ratingText(bh.avgRating(), bh.reviewCount()));
+        String freeText = ListRules.freeText(bh.water(), bh.electricity(), bh.wifi());
+        b.free.setText(freeText);
+        b.free.setVisibility(freeText.isEmpty() ? View.GONE : View.VISIBLE);
 
         showPhotos(d, bh);
         showAmenities(d.optJSONArray("amenity_list"));
@@ -133,6 +140,7 @@ public class BhDetailFragment extends Fragment {
 
         b.loading.setVisibility(View.GONE);
         b.content.setVisibility(View.VISIBLE);
+        b.chatBar.setVisibility(View.VISIBLE);
     }
 
     /** Stage 7: get_or_create_conversation (idempotent), then open the chat. An owner cannot chat with themselves. */
@@ -173,6 +181,7 @@ public class BhDetailFragment extends Fragment {
         if (urls.isEmpty() && bh.photoUrl() != null && !bh.photoUrl().isEmpty()) urls.add(bh.photoUrl());
         final int n = urls.size();
         b.photos.setAdapter(new PhotoAdapter(urls));
+        b.noPhotos.setVisibility(n == 0 ? View.VISIBLE : View.GONE);
         b.photoCount.setVisibility(n > 1 ? View.VISIBLE : View.GONE);
         b.photoCount.setText(n > 0 ? "1 / " + n : "");
         b.photos.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {

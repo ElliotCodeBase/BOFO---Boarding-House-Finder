@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="detail_title">Boarding house</string>
+    <string name="detail_no_photos">No photos yet</string>
+    <string name="detail_tile_beds">Beds free</string>
+    <string name="detail_tile_rooms">Rooms</string>
+    <string name="detail_tile_rating">Rating</string>
+    <string name="detail_beds_available">%1$d beds available</string>
+    <string name="detail_bed_available">1 bed available</string>
+    <string name="detail_km_away">%1$s km away</string>
+    <string name="detail_per_month">%1$s / month \u00B7 per %2$s</string>
+</resources>
