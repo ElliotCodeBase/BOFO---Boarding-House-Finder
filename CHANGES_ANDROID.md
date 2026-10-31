@@ -1,3 +1,8 @@
+# v2.0.62 - Android: path follows the real road, refreshes by itself
+- **More accurate path:** `Router` no longer thins the road to 400 evenly spaced points (that cut corners off the road). It now keeps every bend (Douglas-Peucker, 2 m tolerance, up to 1500 points). If the first server's road is more than 2.5x the straight distance (bad snap), the next server is asked too and the shorter real road wins. Third fallback for vehicle routes: the public OSRM demo.
+- **Auto refresh:** on the map path, when it starts at your phone and you move 40 m, the road is redrawn from your new spot (at most every 8 s; the old road stays until the new one is ready, never swapped for a dashed guess; no camera jump). The Directions card re-asks every 15 s while any option is still a straight-line guess.
+- Files: `Router.java`, `MapFragment.java`, `DirectionsCardView.java`, `build.gradle` (2.0.62 / 262). Not built or run by Claude (javac syntax check only).
+
 # v2.0.61 - Android: map path refreshes by itself, cleaner map UI, readable Ask BOFO replies
 - **Path on the map (Ask BOFO "show me the path"):** `MapFragment` now uses the road route for places farther than 3 km (it used the walking route, which gives up past 30 km, so a 165 km trip stayed a dotted "33 h walk" estimate forever). The straight guide line shows at once, then the real road path replaces it by itself: 5 quick retries, then one quiet try every 15 s, and again whenever you come back to the screen. Time is walking for close places, by road (about 30 km/h) for far ones. The label says "finding the road..." until the real path is drawn.
 - **Map UI:** the campus button is a white pill with a campus icon (like the back button) instead of a wide lavender bar; the place preview card allows a 2-line name.

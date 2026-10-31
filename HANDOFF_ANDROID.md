@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.62 accurate road path + auto refresh
+- **PR title:** `v2.0.62 - Android: path follows the real road and refreshes by itself`
+- `Router.simplify` (Douglas-Peucker) replaces even thinning; `fetch` tries OSRM, Valhalla, OSRM demo (drive only) and keeps the shorter believable road. `MapFragment.maybeReroute` (40 m / 8 s, `routeLive`, `rerouting`); `DirectionsCardView.runPlan` re-runs every 15 s while an option is approximate. No Supabase change. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.61 auto path + readable Ask BOFO
 - **PR title:** `v2.0.61 - Android: map path refreshes by itself, cleaner map UI, readable Ask BOFO replies`
 - `MapFragment.drawRoute/fetchRoute/retryLater/onResume`: walk <= 3 km else `Router.drive`; estimate first, retries until `!approximate`. New style `Widget.Bofo.Button.MapPill`. `bofo-chat/index.ts`: `distText`, `lines`, `listReply`, `nearWhere` (numbered list replies). **bofo-chat was deployed to the live project (version 17) from Claude on 2026-11-01; redeploy with `supabase functions deploy bofo-chat` only if you change the file.** Also fixed: "under 5k" / "2.5k" / "4 libo" are read as thousands (was PHP 5). If the build fails: `Widget.Bofo.Button.MapPill` attrs (`icon`, `iconTint` null) on the MaterialButton. Not built or run by Claude.
