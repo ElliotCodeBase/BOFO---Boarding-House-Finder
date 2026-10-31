@@ -118,6 +118,43 @@
                         android:layout_height="wrap_content"
                         android:contentDescription="@string/settings_use_location" />
                 </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/settings_path_fade"
+                            android:textColor="@color/bofo_text"
+                            android:textSize="15sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/settings_path_fade_desc"
+                            android:textAppearance="@style/Text.Bofo.Secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/path_fade"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/settings_path_fade" />
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

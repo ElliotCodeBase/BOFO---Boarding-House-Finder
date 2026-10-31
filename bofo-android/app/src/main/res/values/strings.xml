@@ -103,6 +103,8 @@
     <string name="settings_preferences">Preferences</string>
     <string name="settings_legal">Legal</string>
     <string name="settings_use_location">Use my location</string>
+    <string name="settings_path_fade">See-through path</string>
+    <string name="settings_path_fade_desc">Make the route line on the map 80% transparent so you can check the path follows the road.</string>
     <string name="settings_use_location_desc">Centre the map and sort places by distance from where I am.</string>
     <string name="settings_switch_owner">Switch to an owner account</string>
     <string name="settings_switch_student">Switch to a student account</string>

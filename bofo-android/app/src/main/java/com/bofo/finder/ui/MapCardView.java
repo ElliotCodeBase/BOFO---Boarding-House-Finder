@@ -33,6 +33,7 @@ import com.bofo.finder.config.AppConfig;
 import com.bofo.finder.databinding.ViewMapCardBinding;
 import com.bofo.finder.model.BoardingHouse;
 import com.bofo.finder.model.College;
+import com.bofo.finder.util.AppPrefs;
 import com.bofo.finder.util.Geo;
 import com.bofo.finder.util.ListRules;
 import com.bofo.finder.util.MapGeo;
@@ -625,6 +626,17 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         boolean has = routePts != null;
         set("route-start-src", has ? MapGeo.pointJson(routePts[0][0], routePts[0][1]) : MapGeo.EMPTY);
         set("route-end-src", has ? MapGeo.pointJson(routePts[routePts.length - 1][0], routePts[routePts.length - 1][1]) : MapGeo.EMPTY);
+        applyRouteOpacity();
+    }
+
+    /** Settings > "See-through path": the route line (casing, line, dashed estimate) is 80% transparent (opacity 0.2) instead of solid. */
+    private void applyRouteOpacity() {
+        if (style == null) return;
+        float o = AppPrefs.seeThroughPath(getContext()) ? 0.2f : 1f;
+        for (String id : new String[]{"route-casing", "route-line", "route-dash"}) {
+            LineLayer l = style.getLayerAs(id);
+            if (l != null) l.setProperties(PropertyFactory.lineOpacity(o));
+        }
     }
 
     private void set(String id, String json) {
@@ -952,7 +964,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     // ---- lifecycle ---------------------------------------------------------------------------------------------
 
     @Override public void onStart(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onStart(); }
-    @Override public void onResume(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onResume(); startRipples(); }
+    @Override public void onResume(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onResume(); startRipples(); applyRouteOpacity(); }   // picks up the Settings switch
     @Override public void onPause(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onPause(); stopRipples(); }
     @Override public void onStop(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onStop(); }
 
