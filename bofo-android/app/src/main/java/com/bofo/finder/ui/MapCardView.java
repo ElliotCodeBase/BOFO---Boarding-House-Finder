@@ -833,7 +833,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** Step 5 overview: zoom out so every pin (and the phone, if known) fills ~90 % of the card. */
     public void overview() { overviewPending = true; fitPending = false; target = null; post(this::applyCamera); }
 
-    public void moveTo(double lat, double lng, double zoom) { target = new double[]{lat, lng, zoom}; fitPending = false; post(this::applyCamera); }
+    public void moveTo(double lat, double lng, double zoom) { target = new double[]{lat, lng, zoom}; fitPending = false; overviewPending = false; post(this::applyCamera); }
 
     private void applyCamera() {
         if (map == null) return;                       // runs again from onMapReady once the style is in
@@ -961,3 +961,29 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         placesSig = null; collegesSig = null;
     }
 }
+cd C:\Users\user\bofo-finder
+git checkout -b v2.0.43-locate-fix
+
+        $m = "bofo-android\app\src\main\java\com\bofo\finder\ui\MapCardView.java"
+$t = Get-Content $m -Raw
+        $t = $t.Replace('fitPending = false; post(this::applyCamera); }
+
+private void applyCamera()', 'fitPending = false; overviewPending = false; post(this::applyCamera); }
+
+private void applyCamera()')
+Set-Content $m $t -NoNewline
+
+        $h = "bofo-android\app\src\main\java\com\bofo\finder\ui\HomeFragment.java"
+$t = Get-Content $h -Raw
+        $t = $t.Replace('if (b == null || finding) return;', 'if (b == null || (finding && android.os.SystemClock.uptimeMillis() - findStart < 8000)) return;')
+$t = $t.Replace('    private void locateMe() {
+                finding = true;', '    private long findStart;
+
+private void locateMe() {
+    finding = true; findStart = android.os.SystemClock.uptimeMillis();
+    if (me != null) b.mapCard.moveTo(me[0], me[1], 15);')
+    Set-Content $h $t -NoNewline
+
+# check: should print 1 line in MapCardView and 3 in HomeFragment
+    Select-String -Path $m -Pattern "overviewPending = false; post"
+    Select-String -Path $h -Pattern "findStart"

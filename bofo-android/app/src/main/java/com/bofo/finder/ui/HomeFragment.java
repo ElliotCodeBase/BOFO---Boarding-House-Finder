@@ -296,7 +296,7 @@ public class HomeFragment extends Fragment {
 
     /** Locate button: overview on = fly to me (overview off); overview off with nothing chosen = back to the overview; otherwise fly to me. */
     private void onLocateTap() {
-        if (b == null || finding) return;                       // extra taps while finding are ignored
+        if (b == null || (finding && android.os.SystemClock.uptimeMillis() - findStart < 8000)) return;                       // extra taps while finding are ignored
         if (overviewActive()) { ovOn = false; paintLocate(); locateMe(); return; }
         if (!BrowseState.hasRef() && search != null && search.isEmpty()) { ovOn = true; b.mapCard.overview(); paintLocate(); return; }
         locateMe();
