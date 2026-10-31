@@ -1,4 +1,5 @@
 # Revert-to-original-UI progress (bofo-android)
+## v2.0.31 - Step 9 done: Explore (title + subtitle, search pill + square filter button with count badge, List | Map control with the Home map card, New/Hot/Best tabs removed) and the new Filters sheet (max price chips + own number, Sort by Nearest / Lowest price / Most beds, Amenities popular chips + search, nothing applies until Show results). Amenity catalog failure now falls back to a built-in popular list (no error text). Not built or run by Claude.
 ## v2.0.30 - Step 8 done: route on pin select (campus -> nearest campus -> me), red end dot, distance/time chip, instant estimate then real route with 4 quiet retries, camera fits above the card. Directions card left as is. Not built or run by Claude.
 ## v2.0.29 - Step 7 done: chips, section subtitle, RentCardView (glow on map), Show more batches of 15, empty state text. Not built or run by Claude.
 ## v2.0.28 - Step 6 done: own clustering (bubbles), name labels w/ collision hiding, orange campus dots (tap = choose), radius edge label, new preview card, setGlow(). Route on select = Step 8. Not built or run by Claude.
@@ -25,5 +26,5 @@
 - Home list skeleton now pulses like the original (900 ms, 1 -> 0.45, ease in-out). Chats skeleton rows come in Step 10.
 - Login, list card and everything else untouched. Not built or run by Claude.
 ## v2.0.19 - Step 1 done: floating tab bar + mascot button
-## Next: Step 9 (Explore + filter sheet).
+## Next: Step 10 (Detail, chat, chats).
 **To continue in any AI:** upload your latest project zip, then paste the whole of `REVERT_PROMPT.md` (repo root) and say "Do Step 4".

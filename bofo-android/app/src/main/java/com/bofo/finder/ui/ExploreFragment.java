@@ -1,6 +1,7 @@
 package com.bofo.finder.ui;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,6 +15,7 @@ import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.bofo.finder.R;
@@ -25,15 +27,21 @@ import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BrowseState;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
+import com.bofo.finder.util.ExploreRules;
 import com.bofo.finder.util.Favorites;
 import com.bofo.finder.util.ListRules;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
-/** Explore: search by name / area, price + amenity filters, sort tabs. Distance is measured from the chosen campus when there is one. */
+/**
+ * Step 9: Explore. Title + subtitle, one search pill with a square filter button, List | Map control, results.
+ * Sort (Nearest / Lowest price / Most beds), max price and amenities live in the filter sheet. Distance is measured from the chosen campus when there is one.
+ */
 public class ExploreFragment extends Fragment {
 
-    private static final BhService.Tab[] TABS = {BhService.Tab.NEW, BhService.Tab.HOT, BhService.Tab.BEST};
     private static final long DEBOUNCE_MS = 400;
 
     private FragmentExploreBinding b;
@@ -43,8 +51,9 @@ public class ExploreFragment extends Fragment {
     private Runnable pendingSearch;
     private int token;
     private int lastChange = -1;
-    private int tab;
     private String query = "";
+    private boolean mapMode, mapReady;
+    private List<BoardingHouse> lastItems = new ArrayList<>();
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
@@ -61,29 +70,31 @@ public class ExploreFragment extends Fragment {
         });
         area = new ListArea(this, b.area, adapter, this::reload);
 
-        b.tabs.addTab(b.tabs.newTab().setText(R.string.home_tab_new));
-        b.tabs.addTab(b.tabs.newTab().setText(R.string.home_tab_hot));
-        b.tabs.addTab(b.tabs.newTab().setText(R.string.home_tab_best));
-        ListArea.onTab(b.tabs, pos -> { tab = pos; reload(); });
-
         b.search.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int a, int c, int d) { }
             @Override public void onTextChanged(CharSequence s, int a, int c, int d) { }
             @Override public void afterTextChanged(Editable s) {
+                if (b == null) return;
+                b.searchClear.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
                 if (pendingSearch != null) handler.removeCallbacks(pendingSearch);
                 final String q = s.toString().trim();
                 pendingSearch = () -> { if (!q.equals(query)) { query = q; reload(); } };
                 handler.postDelayed(pendingSearch, DEBOUNCE_MS);
             }
         });
+        b.search.setOnFocusChangeListener((v, focus) -> { if (b != null) b.searchPill.setActivated(focus); });
         b.search.setOnEditorActionListener((v, action, ev) -> {
             if (action != EditorInfo.IME_ACTION_SEARCH) return false;
             InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
             if (imm != null) imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
             return true;
         });
+        b.searchClear.setOnClickListener(v -> b.search.setText(""));
         b.filterBtn.setOnClickListener(v -> new FilterSheet().show(getChildFragmentManager(), "filter"));
+        b.segList.setOnClickListener(v -> setMapMode(false));
+        b.segMap.setOnClickListener(v -> setMapMode(true));
         paintFilterButton();
+        paintSeg();
 
         String handoff = com.bofo.finder.util.ExploreHandoff.take();          // typed in the Home search bar (not a campus)
         if (handoff != null) { query = handoff; b.search.setText(handoff); b.search.setSelection(handoff.length()); }
@@ -94,9 +105,64 @@ public class ExploreFragment extends Fragment {
     }
 
     private void paintFilterButton() {
+        if (b == null) return;
         int n = BrowseState.activeFilters();
-        b.filterBtn.setText(n == 0 ? getString(R.string.filters_btn) : getString(R.string.filters_btn_count, n));
+        b.filterBadge.setVisibility(n > 0 ? View.VISIBLE : View.GONE);
+        b.filterBadge.setText(String.valueOf(n));
+        b.filterBtn.setBackgroundResource(n > 0 ? R.drawable.bg_ex_filter_btn_on : R.drawable.bg_ex_filter_btn);
+        b.filterBtn.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), n > 0 ? R.color.bofo_white : R.color.bofo_ink)));
     }
+
+    private void paintSeg() {
+        if (b == null) return;
+        paintOne(b.segList, !mapMode);
+        paintOne(b.segMap, mapMode);
+    }
+
+    private void paintOne(android.widget.TextView t, boolean on) {
+        t.setBackgroundResource(on ? R.drawable.bg_ex_seg_on : 0);
+        t.setTextColor(ContextCompat.getColor(requireContext(), on ? R.color.bofo_text : R.color.bofo_text_2));
+    }
+
+    // ---- List | Map -----------------------------------------------------------------------------------------------
+
+    private void setMapMode(boolean on) {
+        if (b == null || mapMode == on) return;
+        mapMode = on;
+        paintSeg();
+        b.area.getRoot().setVisibility(on ? View.GONE : View.VISIBLE);
+        b.mapFrame.setVisibility(on ? View.VISIBLE : View.GONE);
+        if (on) { ensureMap(); pushMap(true); }
+    }
+
+    /** The map only starts when it is first opened (MapLibre start-up is heavy). */
+    private void ensureMap() {
+        if (mapReady || b == null) return;
+        mapReady = true;
+        b.mapCard.setListener(new MapCardView.Listener() {
+            @Override public void openPlace(String id) { BhDetailFragment.open(ExploreFragment.this, id); }
+            @Override public void locate() { }
+            @Override public void campusTapped(String id) {
+                for (College c : BrowseState.colleges) if (c.id().equals(id)) { BrowseState.setCampus(c); return; }
+            }
+        });
+        b.mapCard.showLocate(false);
+        b.mapCard.showExpand(false);
+        b.mapCard.setLocState(MapCardView.Loc.NONE);
+        b.mapCard.activate(getViewLifecycleOwner());
+    }
+
+    private void pushMap(boolean fit) {
+        if (b == null || !mapReady) return;
+        College c = BrowseState.campus();
+        b.mapCard.setPlaces(lastItems);
+        b.mapCard.setColleges(BrowseState.colleges);
+        b.mapCard.setCampusDot(c == null ? null : c.lat(), c == null ? null : c.lng());
+        b.mapCard.setRing(null, null, 0);
+        if (fit) b.mapCard.fit();
+    }
+
+    // ---- data -----------------------------------------------------------------------------------------------------
 
     private void reload() {
         if (b == null) return;
@@ -105,21 +171,26 @@ public class ExploreFragment extends Fragment {
         BrowseState.ensureLoaded(() -> {
             if (my != token || b == null) return;
             final College c = BrowseState.campus();
-            final BhService.Tab t = TABS[tab];
             final String q = query;
             final Double min = BrowseState.minPrice, max = BrowseState.maxPrice;
+            final int sort = BrowseState.sort;
+            final Set<String> names = new LinkedHashSet<>(BrowseState.amenityNames);
             final BhService.Filter f = BrowseState.filter(q);
             Async.run(() -> {
                 Double lat = c == null ? null : c.lat();
                 Double lng = c == null ? null : c.lng();
-                List<BoardingHouse> l = new BhService().list(t, lat, lng, null, f);       // no radius: search everywhere, nearest first
-                return ListRules.inPriceRange(l, min, max);
+                List<BoardingHouse> l = new BhService().list(BhService.Tab.NEW, lat, lng, null, f);   // no radius: search everywhere, nearest first
+                l = ListRules.inPriceRange(l, min, max);
+                l = ExploreRules.withAll(l, names);
+                return ExploreRules.sort(l, sort);
             }, (List<BoardingHouse> l) -> {
                 if (my != token || b == null) return;
+                lastItems = l;
                 adapter.setShowDistance(c != null);
                 b.resultCount.setText(l.size() == 1 ? getString(R.string.explore_result_one) : getString(R.string.explore_results, l.size()));
-                if (l.isEmpty()) area.showMessage(getString(R.string.explore_empty), false);
+                if (l.isEmpty()) area.showMessage(getString(BrowseState.activeFilters() > 0 ? R.string.ex_empty_hint : R.string.explore_empty), false);
                 else area.showList(l);
+                if (mapMode) pushMap(true);
             }, e -> fail(my, e));
         }, e -> fail(my, e));
     }
