@@ -1,4 +1,7 @@
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
 changed bofo-android/app/build.gradle
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
+changed bofo-android/app/src/main/res/drawable/bg_attribution.xml
+new bofo-android/app/src/main/res/drawable/bg_attribution_dot.xml
+changed bofo-android/app/src/main/res/layout/view_map_card.xml
 changed CHANGES_ANDROID.md
 changed HANDOFF_ANDROID.md
