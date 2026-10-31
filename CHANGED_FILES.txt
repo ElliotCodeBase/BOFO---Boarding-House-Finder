@@ -1,6 +1,6 @@
-BOFO Android v2.0.36 - build fix (replaces v2.0.35). Unzip INTO C:\Users\user\bofo-finder, overwrite.
-changed  bofo-android/app/build.gradle  (2.0.36 / 236)
+BOFO Android v2.0.37 - lag fix 3. Unzip INTO C:\Users\user\bofo-finder, overwrite.
+changed  bofo-android/app/build.gradle  (2.0.37 / 237)
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
-changed  bofo-android/app/src/main/assets/bofo-map-style.json
+new      bofo-android/app/src/main/java/com/bofo/finder/ui/RadarOverlayView.java
 changed  CHANGES_ANDROID.md, HANDOFF_ANDROID.md, REVERT_PROGRESS.md
 DELETE   nothing

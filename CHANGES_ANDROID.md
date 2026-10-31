@@ -1,3 +1,12 @@
+# v2.0.37 - Android port, lag fix 3: the map is idle between gestures (JavaFX app stays v1.20.0)
+- Cause: the radar ripples were two map layers whose paint properties changed every frame (plus the pop / found ring, 60 per second). Each change makes MapLibre re-render the WHOLE map, so the map never rested, even when nobody touched it.
+- Fix (hybrid): the ripples and the "found you" ring are now drawn by the new `RadarOverlayView` (plain Canvas above the map, only a few circles). The dot itself stays a map layer, so it is always on its exact spot; the ripples hide while the camera moves and snap back when the map is idle.
+- A pan no longer rebuilds pins / clusters / labels / campus dots (only a zoom, a data change or a selection does). Same houses / campuses again = no redraw. A new or cleared route only updates the route layers.
+- First-fix pop repaints the dot at ~30 fps instead of every frame.
+- Changed: `MapCardView`, new `RadarOverlayView`, `build.gradle` (2.0.37 / 237, plus a commented OpenGL ES line for an A/B test). Not built or run by Claude.
+
+---
+
 # v2.0.35 - Android port, lag fix 2 (JavaFX app stays v1.20.0)
 - Pin / cluster / label rebuild now runs once, 160 ms after the map stops (it ran on every idle and copied every label bitmap from the map each time).
 - Lighter drawing: map pixel ratio 1.75 (was 2), max zoom 16 (was 17), buildings only from zoom 15, minor roads from zoom 14, no blur on the location-dot shadow.
