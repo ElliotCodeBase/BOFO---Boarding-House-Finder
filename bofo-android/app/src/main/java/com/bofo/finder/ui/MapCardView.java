@@ -27,6 +27,7 @@ import com.bofo.finder.util.Geo;
 import com.bofo.finder.util.ListRules;
 import com.bofo.finder.util.MapGeo;
 import com.bofo.finder.util.Money;
+import com.google.android.material.slider.Slider;
 
 import org.maplibre.android.MapLibre;
 import org.maplibre.android.camera.CameraUpdateFactory;
@@ -63,6 +64,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         void openPlace(String id);
         void locate();
         default void expand() { }
+        /** Step 4: the radius pill moved (km, 0.5 steps). settled = the finger lifted. */
+        default void radiusChanged(float km, boolean settled) { }
     }
 
     private static final String STYLE_ASSET = "bofo-map-style.json";
@@ -81,7 +84,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private String selectedId;
     private Double ringLat, ringLng, campusLat, campusLng, userLat, userLng;
     private double ringKm;
-    private boolean fitPending;
+    private boolean fitPending, pillShown;
+    private long lastGlide;
     private double[][] routePts;        // Stage 6: the drawn route, {lat, lng} pairs
     private boolean routeApprox, fitRoutePending, tapsEnabled = true, blockParentScroll;
     private double[] target;           // {lat, lng, zoom}
@@ -93,10 +97,48 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         b = ViewMapCardBinding.inflate(LayoutInflater.from(c), this, true);      // 3 arguments: view_map_card.xml has a FrameLayout root, not <merge>
         b.locate.setOnClickListener(v -> { if (listener != null) listener.locate(); });
         b.expand.setOnClickListener(v -> { if (listener != null) listener.expand(); });
+        b.radiusSlider.addOnChangeListener((sl, v, fromUser) -> {
+            b.radiusValue.setText(getContext().getString(R.string.map_radius_value, v));
+            if (fromUser && listener != null) listener.radiusChanged(v, false);
+        });
+        b.radiusSlider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
+            @Override public void onStartTrackingTouch(@NonNull Slider sl) { }
+            @Override public void onStopTrackingTouch(@NonNull Slider sl) { if (listener != null) listener.radiusChanged(sl.getValue(), true); }
+        });
+        b.radiusValue.setText(getContext().getString(R.string.map_radius_value, b.radiusSlider.getValue()));
         b.peekOpen.setOnClickListener(v -> { if (listener != null && selectedId != null) listener.openPlace(selectedId); });
     }
 
     public void setListener(Listener l) { listener = l; }
+
+    /** Step 4: the radius pill (top-centre). km is clamped to 0.5-5 and snapped to 0.5; setting it never fires the listener. */
+    public void setRadiusPill(boolean show, double km) {
+        pillShown = show;
+        b.radiusPill.setVisibility(show ? View.VISIBLE : View.GONE);
+        float v = (float) (Math.round(Math.max(0.5, Math.min(5, km)) * 2) / 2.0);
+        if (b.radiusSlider.getValue() != v) b.radiusSlider.setValue(v);
+        b.radiusValue.setText(getContext().getString(R.string.map_radius_value, v));
+    }
+
+    /** Step 4: while the pill is dragged, ease the camera so the whole (live) circle stays in view. */
+    public void glideToRing() { glideToRing(false); }
+
+    /** force = the finger lifted: always frame the final circle. */
+    public void glideToRing(boolean force) {
+        if (map == null || ringLat == null || ringKm <= 0) return;
+        long now = android.os.SystemClock.uptimeMillis();
+        if (!force && now - lastGlide < 160) return;                 // at most ~6 camera moves a second while dragging
+        lastGlide = now;
+        double[] bb = MapGeo.ringBounds(ringLat, ringLng, ringKm);
+        if (bb == null) return;
+        float d = getResources().getDisplayMetrics().density;
+        int pad = Math.round(36 * d), top = Math.round((pillShown ? 80 : 36) * d);
+        try {
+            map.easeCamera(CameraUpdateFactory.newLatLngBounds(LatLngBounds.from(bb[2], bb[3], bb[0], bb[1]), pad, top, pad, pad), 150);
+        } catch (Exception e) {
+            Log.w("BOFO", "Map glide", e);
+        }
+    }
 
     public void showExpand(boolean show) { b.expand.setVisibility(show ? View.VISIBLE : View.GONE); }
 
@@ -107,7 +149,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         MapLibre.getInstance(app);
         capCache(app);
         owner = lifecycleOwner;
-        mapView = new MapView(getContext());
+        mapView = new MapView(getContext());      // default fast surface; the rounded corners are drawn by CornerMaskView
         b.mapHost.addView(mapView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         mapView.onCreate(null);
         owner.getLifecycle().addObserver(this);        // replays onStart / onResume if the screen is already showing
@@ -238,13 +280,13 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     }
 
     /** The radius ring (null centre or km <= 0 removes it). */
-    public void setRing(Double lat, Double lng, double km) { ringLat = lat; ringLng = lng; ringKm = km; render(); }
+    public void setRing(Double lat, Double lng, double km) { ringLat = lat; ringLng = lng; ringKm = km; if (style != null) set("radius-src", MapGeo.circleJson(ringLat, ringLng, ringKm, 64)); }
 
     /** The campus dot (null removes it). */
-    public void setCampusDot(Double lat, Double lng) { campusLat = lat; campusLng = lng; render(); }
+    public void setCampusDot(Double lat, Double lng) { campusLat = lat; campusLng = lng; if (style != null) set("campus-src", MapGeo.pointJson(campusLat, campusLng)); }
 
     /** The live "you are here" dot (null removes it). */
-    public void setUser(Double lat, Double lng) { userLat = lat; userLng = lng; render(); }
+    public void setUser(Double lat, Double lng) { userLat = lat; userLng = lng; if (style != null) set("user-src", MapGeo.pointJson(userLat, userLng)); }
 
     /** Stage 6: draws a route ({lat, lng} pairs; approximate = dashed straight-line estimate). Fewer than 2 points removes it. */
     public void setRoute(double[][] pts, boolean approximate) {
@@ -325,19 +367,22 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             fitPending = false;
             double[] bb = ringLat != null && ringKm > 0 ? MapGeo.ringBounds(ringLat, ringLng, ringKm) : MapGeo.bounds(places);
             if (bb == null) map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(MapGeo.DEFAULT_LAT, MapGeo.DEFAULT_LNG), 12));
-            else fitBounds(bb, 48);
+            else fitBounds(bb, 48, ringLat != null && ringKm > 0 && pillShown ? 44 : 0);
         } catch (Exception e) {
             Log.w("BOFO", "Map camera", e);
         }
     }
 
     /** {minLat, minLng, maxLat, maxLng}: a single point gets zoom 15, anything else is fitted with {@code padDp} around it. */
-    private void fitBounds(double[] bb, int padDp) {
+    private void fitBounds(double[] bb, int padDp) { fitBounds(bb, padDp, 0); }
+
+    private void fitBounds(double[] bb, int padDp, int topExtraDp) {
         if (bb[0] == bb[2] && bb[1] == bb[3]) {
             map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(bb[0], bb[1]), 15));
         } else {
-            int pad = Math.round(padDp * getResources().getDisplayMetrics().density);
-            map.moveCamera(CameraUpdateFactory.newLatLngBounds(LatLngBounds.from(bb[2], bb[3], bb[0], bb[1]), pad));
+            float d = getResources().getDisplayMetrics().density;
+            int pad = Math.round(padDp * d), top = Math.round((padDp + topExtraDp) * d);
+            map.moveCamera(CameraUpdateFactory.newLatLngBounds(LatLngBounds.from(bb[2], bb[3], bb[0], bb[1]), pad, top, pad, pad));
         }
     }
 

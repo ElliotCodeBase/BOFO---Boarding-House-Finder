@@ -1,20 +1,12 @@
-BOFO Android v2.0.21 - Step 1b (floating Ask BOFO button + chat overlay) and Step 3 (Home header + search bar). Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
-changed  bofo-android/app/build.gradle  (version 2.0.21 / 221)
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
+BOFO Android v2.0.23 (includes v2.0.22 Step 4 + map lag fix) (inline map card, Home one scrolling page, radius pill). Unzip INTO the repo root C:\Users\user\bofo-finder, overwrite.
+changed  bofo-android/app/build.gradle  (version 2.0.23 / 223)
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/HomeFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ExploreFragment.java  (reads the Home search hand-off once)
-changed  bofo-android/app/src/main/res/layout/fragment_shell.xml
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/HomeSearchBar.java
 changed  bofo-android/app/src/main/res/layout/fragment_home.xml
-new      bofo-android/app/src/main/java/com/bofo/finder/ui/FloatingBofoView.java
-new      bofo-android/app/src/main/java/com/bofo/finder/ui/BofoChatOverlay.java
-new      bofo-android/app/src/main/java/com/bofo/finder/ui/HomeSearchBar.java
-new      bofo-android/app/src/main/java/com/bofo/finder/util/CampusMatch.java
-new      bofo-android/app/src/main/java/com/bofo/finder/util/ExploreHandoff.java
-new      bofo-android/app/src/test/java/com/bofo/finder/util/CampusMatchTest.java
-new      bofo-android/app/src/main/res/layout/view_bofo_chat.xml
-new      bofo-android/app/src/main/res/layout/item_campus_option.xml
-new      bofo-android/app/src/main/res/drawable/bg_bofo_card.xml, ic_bofo_close.xml, bg_search_pill.xml, bg_dropdown.xml, bg_icon_circle_tint.xml, bg_bell_button.xml, ic_bell.xml, ic_chevron_down.xml, ic_campus_dot.xml
-new      bofo-android/app/src/main/res/values/strings_bofo.xml, strings_home.xml
-changed  REVERT_PROGRESS.md
-changed  REVERT_PROMPT.md
-unused now (delete in Step 11, nothing to do yet): BofoPanelSheet.java, sheet_bofo.xml
+changed  bofo-android/app/src/main/res/layout/view_map_card.xml
+new      bofo-android/app/src/main/java/com/bofo/finder/ui/CornerMaskView.java
+new      bofo-android/app/src/main/res/drawable/bg_radius_pill.xml, bg_radius_chip.xml, bg_attribution.xml
+new      bofo-android/app/src/main/res/values/strings_map_card.xml
+changed  CHANGES_ANDROID.md, HANDOFF_ANDROID.md, REVERT_PROGRESS.md, REVERT_PROMPT.md
+unused now (delete in Step 11, nothing to do yet): strings home_view_list, home_view_map; BofoPanelSheet.java, sheet_bofo.xml

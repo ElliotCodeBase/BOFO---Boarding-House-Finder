@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="map_radius_label">Radius</string>
+    <string name="map_radius_value">%1$.1f km</string>
+    <string name="cd_map_radius">Search radius, 0.5 to 5 kilometres</string>
+</resources>

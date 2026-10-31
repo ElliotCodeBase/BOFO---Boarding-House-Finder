@@ -1,6 +1,9 @@
 package com.bofo.finder.ui;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,14 +30,12 @@ import com.bofo.finder.util.ListRules;
 import com.bofo.finder.util.LocationHelper;
 import com.bofo.finder.util.PriceRange;
 import com.bumptech.glide.Glide;
-import com.google.android.material.slider.Slider;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Locale;
 
-/** Home: greeting row, one search bar (campus dropdown), New / Hot / Best rated tabs, rent range, radius slider and the card grid. */
+/** Home (one scrolling page): greeting row, one search bar, the inline map card with its radius pill, New / Hot / Best rated tabs, rent range and the card grid. */
 public class HomeFragment extends Fragment {
 
     private static final BhService.Tab[] TABS = {BhService.Tab.NEW, BhService.Tab.HOT, BhService.Tab.BEST};
@@ -50,7 +51,16 @@ public class HomeFragment extends Fragment {
     private int lastChange = -1;
     private int tab;
     private final LocationHelper loc = new LocationHelper(this);   // registers the permission launcher: must be created with the Fragment
-    private boolean mapMode;
+    private static final long RADIUS_SETTLE_MS = 350;      // the list reloads this long after the radius pill stops moving
+    private final Handler ui = new Handler(Looper.getMainLooper());
+    private float pendingKm;
+    private double loadedRadius = -1;
+    private String lastRef;                                 // the map zooms to fit only when the centre changes
+    private final Runnable settleRadius = () -> {
+        if (b == null || pendingKm == loadedRadius) return;
+        BrowseState.radiusKm = pendingKm;
+        BrowseState.bump();
+    };
     private List<BoardingHouse> current = new ArrayList<>();
 
     @Nullable @Override
@@ -80,20 +90,28 @@ public class HomeFragment extends Fragment {
         });
         b.bell.setOnClickListener(v -> say(R.string.home_bell_toast));
         paintGreeting();
-        b.radius.addOnChangeListener((s, value, fromUser) -> paintRadiusLabel(value));
-        b.radius.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
-            @Override public void onStartTrackingTouch(@NonNull Slider s) { }
-            @Override public void onStopTrackingTouch(@NonNull Slider s) { BrowseState.radiusKm = s.getValue(); BrowseState.bump(); }
-        });
-
-        // List / Map toggle: the map is created the first time it is shown
+        // Inline map card (Step 4): always on the page, sized 42% of the screen (200-440 dp), drag on it never scrolls the page
+        float dn = getResources().getDisplayMetrics().density;
+        ViewGroup.LayoutParams flp = b.mapFrame.getLayoutParams();
+        flp.height = Math.round(Math.max(200 * dn, Math.min(440 * dn, getResources().getDisplayMetrics().heightPixels * 0.42f)));
+        b.mapFrame.setLayoutParams(flp);
+        if (BrowseState.radiusKm > 5) BrowseState.radiusKm = 5;          // the pill goes 0.5 to 5 km
+        b.mapCard.setParentScrollBlocked(true);
         b.mapCard.setListener(new MapCardView.Listener() {
             @Override public void openPlace(String id) { BhDetailFragment.open(HomeFragment.this, id); }
             @Override public void locate() { locateMe(); }
-            @Override public void expand() { MapFragment.open(HomeFragment.this); }
+            @Override public void radiusChanged(float km, boolean settled) { onRadiusPill(km, settled); }
         });
-        b.mapCard.showExpand(true);
-        b.viewToggle.addOnButtonCheckedListener((g, id, checked) -> { if (checked) setMapMode(id == R.id.view_map); });
+        b.mapCard.activate(getViewLifecycleOwner());
+
+        // The header scrolls away with the list: pull-to-refresh only at the very top, an open dropdown closes
+        b.appBar.addOnOffsetChangedListener((bar, offset) -> {
+            if (b == null) return;
+            b.area.swipe.setEnabled(offset == 0);
+            if (search != null) search.closeOnScroll();
+        });
+        b.area.emptyBox.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);   // the list area is taller than the screen under the header
+        b.area.emptyBox.setPadding(b.area.emptyBox.getPaddingLeft(), Math.round(40 * dn), b.area.emptyBox.getPaddingRight(), b.area.emptyBox.getPaddingBottom());
 
         Favorites.load(null);
         Favorites.IDS.observe(getViewLifecycleOwner(), ids -> adapter.setFavorites(ids));
@@ -111,13 +129,14 @@ public class HomeFragment extends Fragment {
             paintCampus();
             final Double lat = BrowseState.refLat(), lng = BrowseState.refLng();
             final double radius = BrowseState.radiusKm;
+            loadedRadius = radius;
             final BhService.Tab t = TABS[tab];
             Async.run(() -> load(t, lat, lng, radius), (Result r) -> {
                 if (my != token || b == null) return;
                 adapter.setShowDistance(lat != null);
                 paintRange(r.range());
                 current = r.list();
-                pushMap(mapMode);
+                pushMap();
                 if (r.list().isEmpty()) area.showMessage(getString(t == BhService.Tab.BEST ? R.string.home_empty_best : R.string.home_empty), false);
                 else area.showList(r.list());
             }, e -> fail(my, e));
@@ -142,12 +161,7 @@ public class HomeFragment extends Fragment {
     private void paintCampus() {
         boolean ref = BrowseState.hasRef();
         b.sectionTitle.setText(ref ? R.string.home_nearby : R.string.home_all);
-        b.radiusBox.setVisibility(ref ? View.VISIBLE : View.GONE);
-        if (ref) {
-            float v = (float) Math.max(BrowseState.RADIUS_MIN, Math.min(BrowseState.RADIUS_MAX, BrowseState.radiusKm));
-            if (b.radius.getValue() != v) b.radius.setValue(v);
-            paintRadiusLabel(v);
-        }
+        b.mapCard.setRadiusPill(ref, BrowseState.radiusKm);
         if (search != null) search.syncFromState();       // the search bar shows the chosen campus / Near me
         paintGreeting();                                  // the profile may have arrived with this load
     }
@@ -206,7 +220,7 @@ public class HomeFragment extends Fragment {
 
     /** Live dot, only when the permission is already granted and Settings > Use my location is on (never asks by itself). */
     private void startLive() {
-        if (!mapMode || getContext() == null || !LocationHelper.granted(requireContext()) || !AppPrefs.useLocation(requireContext())) return;
+        if (getContext() == null || !LocationHelper.granted(requireContext()) || !AppPrefs.useLocation(requireContext())) return;
         loc.startWatching(new LocationHelper.Callback() {
             @Override public void got(double lat, double lng) { if (b != null) b.mapCard.setUser(lat, lng); }
             @Override public void off() { }
@@ -215,22 +229,26 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    private void setMapMode(boolean on) {
-        mapMode = on;
-        b.area.getRoot().setVisibility(on ? View.GONE : View.VISIBLE);
-        b.mapCard.setVisibility(on ? View.VISIBLE : View.GONE);
-        if (on) { b.mapCard.activate(getViewLifecycleOwner()); pushMap(true); startLive(); }
-        else loc.stop();
+    /** Radius pill moved: the circle and the zoom follow live, the list reloads once it has settled. */
+    private void onRadiusPill(float km, boolean settled) {
+        if (b == null) return;
+        pendingKm = km;
+        BrowseState.radiusKm = km;
+        b.mapCard.setRing(BrowseState.refLat(), BrowseState.refLng(), km);
+        b.mapCard.glideToRing(settled);
+        ui.removeCallbacks(settleRadius);
+        ui.postDelayed(settleRadius, RADIUS_SETTLE_MS);
     }
 
-    /** Hands the current list, ring and campus dot to the map. */
-    private void pushMap(boolean fit) {
+    /** Hands the current list, ring and campus dot to the map. Zooms to fit only when the centre changed (first load, campus picked, Near me). */
+    private void pushMap() {
         if (b == null) return;
         College campus = BrowseState.campus();
         b.mapCard.setPlaces(current);
         b.mapCard.setRing(BrowseState.refLat(), BrowseState.refLng(), BrowseState.radiusKm);
         b.mapCard.setCampusDot(campus == null ? null : campus.lat(), campus == null ? null : campus.lng());
-        if (fit) b.mapCard.fit();
+        String key = BrowseState.refLat() + "," + BrowseState.refLng();
+        if (!key.equals(lastRef)) { lastRef = key; b.mapCard.fit(); }
     }
 
     private void say(int res) { ListArea.toast(this, getString(res)); }
@@ -240,12 +258,6 @@ public class HomeFragment extends Fragment {
 
     @Override
     public void onStop() { loc.stop(); super.onStop(); }
-
-    private void paintRadiusLabel(float km) {
-        College c = BrowseState.campus();
-        String n = String.format(Locale.US, km % 1 == 0 ? "%.0f" : "%.1f", km);
-        b.radiusLabel.setText(getString(R.string.home_radius, n, c == null ? getString(R.string.map_you) : c.name()));
-    }
 
     private void paintRange(PriceRange r) {
         if (r == null) { b.priceRange.setVisibility(View.GONE); return; }
@@ -258,6 +270,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         token++;                       // late results are ignored
+        ui.removeCallbacks(settleRadius);
         loc.stop();
         if (area != null) area.destroy();
         search = null;
