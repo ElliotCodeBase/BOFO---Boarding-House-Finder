@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.25 current location (2026-10-31)
+- **PR title:** `v2.0.25 - Android: current location fallback (LocationManager) + clear "location is off" message`
+- `LocationHelper.platform()` fallback, `Callback.servicesOff()` (default = failed()), Home overrides it. Emulator: set a position in Extended controls > Location. Real cause not confirmed: check which toast shows and `adb logcat -s BOFO`.
+
+---
+
 # Handoff (Android) - v2.0.24 map speed (2026-10-31)
 - **PR title:** `v2.0.24 - Android: faster Home map (2x pixel cap, lighter style, dots when zoomed out, delayed start)`
 - `MapCardView`: pixelRatio cap, zoom 6-17, prefetch delta 1, `places-dots` layer (maxzoom 12.5) + `places` symbols (minzoom 12.5), per-source updates. `bofo-map-style.json` trimmed. `HomeFragment` activates the map after 300 ms. If it is STILL laggy: ask whether it is an emulator (software GL) or a phone, and whether the lag is panning the map, dragging the radius pill or scrolling the page.

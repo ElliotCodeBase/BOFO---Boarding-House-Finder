@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="loc_services_off">Location is turned off on your phone. Turn it on in the quick settings, then tap again.</string>
+</resources>

@@ -202,6 +202,7 @@ public class HomeFragment extends Fragment {
             @Override public void off() { say(R.string.loc_off); paintCampus(); }
             @Override public void denied() { say(R.string.loc_denied); paintCampus(); }
             @Override public void failed() { say(R.string.loc_failed); paintCampus(); }
+            @Override public void servicesOff() { say(R.string.loc_services_off); paintCampus(); }
         });
     }
 
@@ -217,6 +218,7 @@ public class HomeFragment extends Fragment {
             @Override public void off() { say(R.string.loc_off); }
             @Override public void denied() { say(R.string.loc_denied); }
             @Override public void failed() { say(R.string.loc_failed); }
+            @Override public void servicesOff() { say(R.string.loc_services_off); }
         });
     }
 

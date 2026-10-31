@@ -1,3 +1,8 @@
+# v2.0.25 - Android port, current location fix (JavaFX app stays v1.20.0)
+- If Google's fused location returns nothing (no Play services, emulator with no mock position, first fix slow), the app now falls back to Android's own LocationManager: last known fix from any provider, else one fresh fix (12 s). Failures are logged with tag `BOFO`.
+- New toast when the phone's Location switch is off: "Location is turned off on your phone..." instead of the generic failure message.
+- Not built or run by Claude. Profile > About shows 2.0.25.
+
 # v2.0.24 - Android port, map speed: do what the JavaFX map does (JavaFX app stays v1.20.0)
 - Why JavaFX is smooth: it paints each OpenFreeMap tile ONCE into a 512 px picture (only land, parks, water, buildings, roads; no labels, no blending), caches it, then pans/zooms just move pictures; zoomed out the pins are small dots, zoom 15+ reuses the zoom 14 tile, and camera moves avoid drawing every zoom level on the way. The Android map re-draws vector geometry every frame at full screen density.
 - Now: map capped at 2x pixel density (3x phones drew 2.25x the pixels); style trimmed (no opacity blending, no minor-road outlines, no fade transition); zoom limited to 6-17 like JavaFX; tile prefetch delta 4 -> 1; zoomed out (below 12.5) pins are small dots, full pins only when zoomed in; pins/selection redraw only the pins layer; the map starts 300 ms after the page, not in the same frame as the list.

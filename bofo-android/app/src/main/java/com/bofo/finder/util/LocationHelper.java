@@ -5,11 +5,16 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
+import android.os.CancellationSignal;
+import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
+import androidx.core.location.LocationManagerCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -35,6 +40,8 @@ public final class LocationHelper {
         void denied();
         /** No position could be read (location services off, no signal). */
         void failed();
+        /** The phone's Location switch (quick settings) is off, so no app can read a position. Default: same as {@link #failed()}. */
+        default void servicesOff() { failed(); }
     }
 
     private final Fragment fragment;
@@ -91,15 +98,48 @@ public final class LocationHelper {
                     if (loc != null) { if (fragment.isAdded()) cb.got(loc.getLatitude(), loc.getLongitude()); }
                     else lastKnown(cb);
                 })
-                .addOnFailureListener(e -> lastKnown(cb));
+                .addOnFailureListener(e -> { Log.w("BOFO", "Fused location failed", e); lastKnown(cb); });
     }
 
     @SuppressLint("MissingPermission")
     private void lastKnown(Callback cb) {
         if (client == null || !fragment.isAdded()) return;
         client.getLastLocation()
-                .addOnSuccessListener(loc -> { if (fragment.isAdded()) { if (loc != null) cb.got(loc.getLatitude(), loc.getLongitude()); else cb.failed(); } })
-                .addOnFailureListener(e -> { if (fragment.isAdded()) cb.failed(); });
+                .addOnSuccessListener(loc -> { if (fragment.isAdded()) { if (loc != null) cb.got(loc.getLatitude(), loc.getLongitude()); else platform(cb); } })
+                .addOnFailureListener(e -> { if (fragment.isAdded()) platform(cb); });
+    }
+
+    /** Last resort: Android's own LocationManager (no Google Play services needed). Last known fix from any provider, else one fresh fix (12 s). */
+    @SuppressLint("MissingPermission")
+    private void platform(Callback cb) {
+        Context c = fragment.getContext();
+        if (c == null || !fragment.isAdded()) return;
+        LocationManager lm = (LocationManager) c.getSystemService(Context.LOCATION_SERVICE);
+        if (lm == null || !LocationManagerCompat.isLocationEnabled(lm)) { Log.w("BOFO", "Location switch is off"); cb.servicesOff(); return; }
+        try {
+            Location best = null;
+            for (String p : lm.getProviders(true)) {
+                Location l = lm.getLastKnownLocation(p);
+                if (l != null && (best == null || l.getTime() > best.getTime())) best = l;
+            }
+            if (best != null) { cb.got(best.getLatitude(), best.getLongitude()); return; }
+            String provider = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ? LocationManager.NETWORK_PROVIDER
+                    : lm.isProviderEnabled(LocationManager.GPS_PROVIDER) ? LocationManager.GPS_PROVIDER : null;
+            if (provider == null) { cb.failed(); return; }
+            final boolean[] done = {false};
+            final CancellationSignal cancel = new CancellationSignal();
+            final Handler h = new Handler(Looper.getMainLooper());
+            final Runnable timeout = () -> { if (!done[0]) { done[0] = true; cancel.cancel(); Log.w("BOFO", "Location: no fix in 12 s"); if (fragment.isAdded()) cb.failed(); } };
+            h.postDelayed(timeout, 12_000);
+            LocationManagerCompat.getCurrentLocation(lm, provider, cancel, ContextCompat.getMainExecutor(c), l -> {
+                if (done[0]) return;
+                done[0] = true; h.removeCallbacks(timeout);
+                if (!fragment.isAdded()) return;
+                if (l != null) cb.got(l.getLatitude(), l.getLongitude()); else cb.failed();
+            });
+        } catch (SecurityException e) {
+            cb.denied();
+        }
     }
 
     @SuppressLint("MissingPermission")
