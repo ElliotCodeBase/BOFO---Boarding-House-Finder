@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.57 faster Ask BOFO
+- **PR title:** `v2.0.57 - Android: Ask BOFO answers much faster`
+- `bofo-chat/index.ts`: `fast = parseLocal()` first, LLM classify only when `fast.intent === "unknown"`; wording LLM only for chit-chat unless `LLM_WORDING=1`; `callLLM` timeout 5-6 s, max 2 models. `BofoChatOverlay`: location gate skipped when `BrowseState.collegeId != null`. **`supabase functions deploy bofo-chat` required.** Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.56 bigger map circles
 - **PR title:** `v2.0.56 - Android: bigger circles on the map`
 - Only `MapCardView.java` (+ build.gradle 2.0.56 / 256). `BIG = 1.5f` scales every `circleRadius`, the user-dot animation sizes (`layerCircle`) and `bubble()`; pins `iconSize` x1.25; tap box wider. Not built or run by Claude.

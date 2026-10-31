@@ -1,3 +1,8 @@
+# v2.0.57 - Android: Ask BOFO answers much faster
+- Cause: every question made TWO model calls one after the other (understand, then word the answer), each up to 12 s per model and up to every model in `LLM_MODELS`; the chat also waited up to 20 s for the phone position even with a college chosen.
+- `bofo-chat/index.ts` (**redeploy**): the rules answer most questions with no model call at all (the model is only asked when the rules cannot place the message); the answer is worded by the code template (set secret `LLM_WORDING=1` to let the model word every answer again); at most 2 models, 5-6 s each instead of 12 s.
+- `BofoChatOverlay`: no phone-location wait when a college is chosen.
+
 # v2.0.56 - Android: bigger circles on the map
 - `MapCardView`: all circles are 1.5x bigger (one constant `BIG`): the number bubbles (clusters) and their numbers, the place dots, the campus / college dots, your blue location dot, the price glow and the route start / end dots. Pins are 1.25x bigger and the tap area is wider to match. Change `BIG` to make them bigger or smaller. Not built or run by Claude.
 

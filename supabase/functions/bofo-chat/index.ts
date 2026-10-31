@@ -117,13 +117,13 @@ function findCollege(phrase: string, cols: { name: string; lat: number; lng: num
 }
 
 // ------------------------------------------------------------------ LLM (OpenRouter, free models with automatic fallback)
-async function callLLM(system: string, user: string, maxTokens: number): Promise<string | null> {
+async function callLLM(system: string, user: string, maxTokens: number, timeoutMs = 6000): Promise<string | null> {
   const key = (Deno.env.get("OPENROUTER_API_KEY") ?? "").trim();
   const models = (Deno.env.get("LLM_MODELS") ?? "").split(",").map((m) => m.trim()).filter(Boolean);
   if (!key || !models.length) { console.error("bofo-chat: OPENROUTER_API_KEY or LLM_MODELS is not set (secrets missing) -> rule-based answers only"); return null; }
-  for (const model of models) {
+  for (const model of models.slice(0, 2)) {                  // at most two models: a third try only makes the wait longer
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 12000);
+    const timer = setTimeout(() => ctl.abort(), timeoutMs);
     try {
       const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST", signal: ctl.signal,
@@ -386,14 +386,19 @@ Deno.serve(async (req) => {
     let intent: Intent = "unknown";
     let params: Params = { limit: 3 };
     const ctx = history.slice(-4).map((t) => `${t.role}: ${t.text.slice(0, 100)}`).join("\n");
-    const raw = await callLLM(CLASSIFY, `${ctx ? "RECENT:\n" + ctx + "\n" : ""}HAS_PREVIOUS_RESULTS: ${last.length > 0}\nMESSAGE: ${JSON.stringify(message)}`, 400);
-    const j = raw ? extractJson(raw) : null;
-    if (!j) console.error(`bofo-chat: classify gave no usable JSON: ${raw ? JSON.stringify(raw.slice(0, 200)) : "no response from any model"}`);
+    // FAST PATH: the rules understand most questions (nearest, cheapest, under 3000, compare, map, path ...) in no time.
+    // Only a message the rules cannot place goes to the model, so the usual answer needs no LLM call at all.
+    const fast = parseLocal(message, last.length > 0);
+    let j: any = null;
+    if (fast.intent === "unknown") {
+      const raw = await callLLM(CLASSIFY, `${ctx ? "RECENT:\n" + ctx + "\n" : ""}HAS_PREVIOUS_RESULTS: ${last.length > 0}\nMESSAGE: ${JSON.stringify(message)}`, 400, 5000);
+      j = raw ? extractJson(raw) : null;
+      if (!j) console.error(`bofo-chat: classify gave no usable JSON: ${raw ? JSON.stringify(raw.slice(0, 200)) : "no response from any model"}`);
+    }
     if (j && INTENTS.includes(j.intent)) { intent = j.intent; params = sanitizeParams(j.params); }
     else {
-      degraded = true;
-      const l = parseLocal(message, last.length > 0);
-      intent = l.intent; params = sanitizeParams(l.params);
+      degraded = fast.intent === "unknown";
+      intent = fast.intent; params = sanitizeParams(fast.params);
     }
     // a small model often files these under "unknown": the words themselves decide
     {
@@ -548,7 +553,8 @@ Deno.serve(async (req) => {
 
     // ---- LLM call #2: word the answer from the real results only (template when it fails)
     let reply = ""; let worded = false;
-    if (intent === "chitchat" || intent === "unknown" || intent === "app_help" || results.length || note) {
+    // The code template answers in about a millisecond; the model only words chit-chat (set LLM_WORDING=1 to let it word every answer, slower).
+    if (intent === "chitchat" || intent === "unknown" || (Deno.env.get("LLM_WORDING") === "1" && (intent === "app_help" || results.length || note))) {
       if (!note.startsWith("not_found:") && note !== "no_compare") {
         const facts = {
           intent, note: note.startsWith("far:") ? `no listing within ${note.slice(4)} km of ${where}; only the closest one is shown, say that plainly`
@@ -558,7 +564,7 @@ Deno.serve(async (req) => {
           compare_best: compare ? compare.rows.filter((r) => r.best >= 0).map((r) => `${r.label}: ${results[r.best].name}`) : undefined,
           app_help: intent === "app_help" ? faq(message) : undefined,
         };
-        const w = await callLLM(WORDING, `RESULTS: ${JSON.stringify(facts)}\nUSER MESSAGE: ${JSON.stringify(message)}`, 220);
+        const w = await callLLM(WORDING, `RESULTS: ${JSON.stringify(facts)}\nUSER MESSAGE: ${JSON.stringify(message)}`, 220, 5000);
         const t = w ? clean(w.replace(/```/g, ""), 500) : "";
         if (t.length >= 3) { reply = t; worded = true; }
       }

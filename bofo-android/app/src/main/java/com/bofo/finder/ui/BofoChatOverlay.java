@@ -179,7 +179,7 @@ public class BofoChatOverlay extends FrameLayout {
         b.mascot.idle(BofoMascot.Idle.THINKING);
         showTyping();
         final int my = ++token;
-        if (locationGate != null && !haveLocation() && WANTS_LOCATION.matcher(q).find()) {
+        if (locationGate != null && BrowseState.collegeId == null && !haveLocation() && WANTS_LOCATION.matcher(q).find()) {   // a chosen college is the start point: no waiting for the phone
             // "nearest ..." with no position yet: turn location on now (permission + phone popup), then ask.
             locationGate.ensure((ok, reasonRes) -> {
                 if (my != token) return;
