@@ -1,7 +1,10 @@
+<<<<<<< HEAD
 # Handoff (Android) - v2.0.63 See-through path switch
 - **PR title:** `v2.0.63 - Android: Settings switch makes the map path 80% transparent`
 - `AppPrefs.seeThroughPath` (key `path_see_through`, default off) + new row `path_fade` in `fragment_settings.xml` / `SettingsFragment`. `MapCardView.applyRouteOpacity()` sets `lineOpacity` 0.2 on `route-casing`, `route-line`, `route-dash`; runs from `paintRoute()` and `onResume` (so it updates when you come back from Settings). No Supabase change. Not built or run by Claude.
 ---
+=======
+>>>>>>> origin/main
 # Handoff (Android) - v2.0.62 accurate road path + auto refresh
 - **PR title:** `v2.0.62 - Android: path follows the real road and refreshes by itself`
 - `Router.simplify` (Douglas-Peucker) replaces even thinning; `fetch` tries OSRM, Valhalla, OSRM demo (drive only) and keeps the shorter believable road. `MapFragment.maybeReroute` (40 m / 8 s, `routeLive`, `rerouting`); `DirectionsCardView.runPlan` re-runs every 15 s while an option is approximate. No Supabase change. Not built or run by Claude.
