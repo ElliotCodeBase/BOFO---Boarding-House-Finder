@@ -184,7 +184,7 @@ public class ListingFormFragment extends Fragment {
         for (int k = 0; k < b.segs.getChildCount(); k++) {
             GradientDrawable g = new GradientDrawable();
             g.setCornerRadius(dp(3));
-            g.setColor(k <= step ? 0xFF5B3BF0 : 0xFFE7E8F2);
+            g.setColor(androidx.core.content.ContextCompat.getColor(requireContext(), k <= step ? R.color.bofo_primary : R.color.bofo_skeleton));
             b.segs.getChildAt(k).setBackground(g);
         }
         int[] titles = {R.string.form_step1, R.string.form_step2, R.string.form_step3, R.string.form_step4};
@@ -455,7 +455,7 @@ public class ListingFormFragment extends Fragment {
         x.setGravity(Gravity.CENTER);
         GradientDrawable g = new GradientDrawable();
         g.setShape(GradientDrawable.OVAL);
-        g.setColor(0xB317142A);
+        g.setColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.bofo_ink_70));
         x.setBackground(g);
         FrameLayout.LayoutParams xl = new FrameLayout.LayoutParams(dp(22), dp(22), Gravity.TOP | Gravity.END);
         xl.setMargins(0, dp(4), dp(4), 0);

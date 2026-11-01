@@ -22,6 +22,7 @@ import com.bofo.finder.util.Async;
 import com.bofo.finder.util.AppPrefs;
 import com.bofo.finder.util.Cache;
 import com.bofo.finder.util.ErrorText;
+import com.bofo.finder.util.ThemeMode;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 /** Settings: edit profile, switch student / owner, location switch, agreements, sign out, delete account. */
@@ -45,6 +46,9 @@ public class SettingsFragment extends Fragment {
         b.useLocation.setOnCheckedChangeListener((btn, on) -> AppPrefs.setUseLocation(requireContext(), on));
         b.pathFade.setChecked(AppPrefs.seeThroughPath(requireContext()));
         b.pathFade.setOnCheckedChangeListener((btn, on) -> AppPrefs.setSeeThroughPath(requireContext(), on));
+        // v2.0.117: Orange theme. Checked state first, listener second (so building the screen never flips the theme). The activity recreates itself on this same screen.
+        b.orangeTheme.setChecked(AppPrefs.orangeTheme(requireContext()));
+        b.orangeTheme.setOnCheckedChangeListener((btn, on) -> ThemeMode.set(requireActivity(), on));
         b.terms.setOnClickListener(v -> LegalSheet.show(getParentFragmentManager(), LegalText.Doc.TERMS));
         b.privacy.setOnClickListener(v -> LegalSheet.show(getParentFragmentManager(), LegalText.Doc.PRIVACY));
         b.ownerAgreement.setOnClickListener(v -> LegalSheet.show(getParentFragmentManager(), LegalText.Doc.OWNER));

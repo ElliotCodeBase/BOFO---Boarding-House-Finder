@@ -37,4 +37,52 @@
     <color name="mascot_roof_dark">#C4ABEE</color>
     <color name="mascot_feet">#E4D9F7</color>
     <color name="mascot_light">#D9C8F5</color>
+
+    <!-- v2.0.117 lavender / tint helpers (classic = the literals that used to be hardcoded) -->
+    <color name="bofo_line_tint">#ECE8FA</color>
+    <color name="bofo_stroke_soft">#E7E2FB</color>
+    <color name="bofo_stroke_neutral">#E3E2EA</color>
+    <color name="bofo_stroke_accent">#DCD5F7</color>
+    <color name="bofo_disabled">#D9D6EA</color>
+    <color name="bofo_surface_tint">#F8F7FE</color>
+    <color name="bofo_chip_tint">#F5F2FF</color>
+    <color name="bofo_chip_stroke">#C9BFFA</color>
+    <color name="bofo_day_chip">#E9E6FA</color>
+    <color name="bofo_ripple">#1A5B3BF0</color>
+    <color name="bofo_primary_wash">#265B3BF0</color>
+    <color name="bofo_primary_ring">#995B3BF0</color>
+    <color name="bofo_ink_10">#1A17142A</color>
+    <color name="bofo_ink_12">#1F17142A</color>
+    <color name="bofo_ink_15">#2617142A</color>
+    <color name="bofo_ink_70">#B317142A</color>
+    <color name="bofo_ink_85">#D917142A</color>
+    <!-- map pins, dots, halos (MapCardView) and the basemap (assets/bofo-map-style.json is recoloured with the map_* names) -->
+    <color name="bofo_primary_deep">#2A1C8F</color>
+    <color name="bofo_primary_soft">#7A5CF5</color>
+    <color name="map_halo">#E2DCFC</color>
+    <color name="map_halo_selected">#C9C0EE</color>
+    <color name="map_pin_edge">#C9C4E6</color>
+    <color name="map_pin_edge_seen">#8F89B8</color>
+    <color name="map_pin_seen_text">#4A4568</color>
+    <color name="map_bg">#E8EAF2</color>
+    <color name="map_landuse">#E0DFF3</color>
+    <color name="map_building">#D2CFE5</color>
+    <color name="map_building_edge">#BDB9D8</color>
+    <color name="map_road_casing">#C7C9DA</color>
+    <color name="map_road_major_casing">#A9ABC6</color>
+    <color name="map_road_service">#FAFAFD</color>
+    <color name="map_raster_bg">#F5F6FC</color>
+    <!-- loading screen (SplashFragment, SplashStageView, SplashDotsView) -->
+    <color name="splash_bg">#17142A</color>
+    <color name="splash_title">#FFFFFF</color>
+    <color name="splash_subtitle">#EFEDFB</color>
+    <color name="splash_status">#8D8AA3</color>
+    <color name="splash_dots">#FFFFFF</color>
+    <color name="splash_shadow">#8D7BFF</color>
+    <color name="splash_dust">#C9BBFF</color>
+    <color name="splash_spark">#FFFFFF</color>
+    <color name="splash_mascot_outline">#00FFFFFF</color>
+    <!-- first frame before the app runs: fixed per theme (the system draws it, so it cannot follow the switch; see Theme.Bofo.Launch) -->
+    <color name="launch_bg_classic">#17142A</color>
+    <color name="launch_bg_orange">#FFFFFF</color>
 </resources>

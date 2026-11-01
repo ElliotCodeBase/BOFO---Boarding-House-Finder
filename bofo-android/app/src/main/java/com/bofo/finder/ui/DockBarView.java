@@ -57,7 +57,7 @@ public class DockBarView extends ViewGroup {
         void onAction(int id);
     }
 
-    private static final int IDLE = 0xFF9B98AA, ACTIVE = 0xFF1A1530, CREATE_LABEL = 0xFF1A1530;
+    private final int IDLE, ACTIVE, CREATE_LABEL;      // v2.0.117: from colors.xml so they follow the theme (were static literals)
     private static final ArgbEvaluator ARGB = new ArgbEvaluator();
     private static final PathInterpolator LEAD = new PathInterpolator(0.2f, 0.8f, 0.2f, 1f);
     private static final PathInterpolator TRAIL = new PathInterpolator(0.4f, 0f, 0.2f, 1f);
@@ -84,6 +84,9 @@ public class DockBarView extends ViewGroup {
 
     public DockBarView(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+        IDLE = androidx.core.content.ContextCompat.getColor(context, R.color.bofo_idle);
+        ACTIVE = androidx.core.content.ContextCompat.getColor(context, R.color.bofo_ink);
+        CREATE_LABEL = ACTIVE;
         dp = context.getResources().getDisplayMetrics().density;
         barH = 68 * dp; tabH = 54 * dp; pad = 8 * dp; inset = 3 * dp; minTab = 54 * dp; maxTab = 84 * dp;
         actionTop = 4 * dp; actionH = 72 * dp;

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.0.117: both themes are light on purpose. Never let Android's own "force dark" repaint the app (the orange theme runs with night mode ON only as a switch). -->
+<resources>
+    <style name="Theme.Bofo" parent="Base.Theme.Bofo">
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+</resources>

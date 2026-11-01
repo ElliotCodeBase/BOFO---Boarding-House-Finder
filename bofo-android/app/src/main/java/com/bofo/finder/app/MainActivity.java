@@ -1,9 +1,11 @@
 package com.bofo.finder.app;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.SystemBarStyle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -15,6 +17,7 @@ import com.bofo.finder.R;
 import com.bofo.finder.databinding.ActivityMainBinding;
 import com.bofo.finder.ui.AuthRouter;
 import com.bofo.finder.util.AuthLinks;
+import com.bofo.finder.util.ThemeMode;
 
 /** The single Activity. Screens are Fragments hosted by the NavHost in activity_main.xml. */
 public class MainActivity extends AppCompatActivity {
@@ -24,12 +27,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.Theme_Bofo);               // v2.0.97: leave the dark launch theme (manifest) before any screen is built
-        EdgeToEdge.enable(this);
+        // v2.0.117: explicit LIGHT bars. EdgeToEdge.enable(this) alone reads the night flag and would draw white status / navigation icons on the light app in the orange theme.
+        EdgeToEdge.enable(this, SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT), SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT));
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        if (savedInstanceState == null)             // fresh launch always starts on the dark loading screen (SplashFragment puts the light colour back when it leaves)
-            binding.mainRoot.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.bofo_ink));
+        if (savedInstanceState == null) {           // fresh launch always starts on the loading screen (SplashFragment puts the light colour back when it leaves)
+            binding.mainRoot.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.splash_bg));   // v2.0.117: dark ink (classic) / white (orange)
+            ThemeMode.syncSplashTheme(this);        // Android 13+: next cold start draws the system splash in the chosen colour
+        }
 
         // Edge-to-edge: keep content clear of the status bar, the navigation bar and the keyboard.
         ViewCompat.setOnApplyWindowInsetsListener(binding.mainRoot, (v, windowInsets) -> {

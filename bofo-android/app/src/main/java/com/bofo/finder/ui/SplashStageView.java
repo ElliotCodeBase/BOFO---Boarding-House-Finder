@@ -2,6 +2,7 @@ package com.bofo.finder.ui;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -11,6 +12,10 @@ import android.view.View;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.PathInterpolator;
+
+import androidx.core.content.ContextCompat;
+
+import com.bofo.finder.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +72,8 @@ public class SplashStageView extends View {
     private final RectF r = new RectF();
     private final Path path = new Path();
     private final float density;
+    // v2.0.117: every colour comes from colors.xml (mascot_* and splash_*), so the classic and orange themes both work
+    private final int cBody, cOutline, cScreen, cGlass, cFace, cRoof, cRoofDark, cFeet, cLight, cShadow, cDust, cSpark;
     private long startMs;
     private boolean running;
 
@@ -75,6 +82,18 @@ public class SplashStageView extends View {
     public SplashStageView(Context c, AttributeSet a) {
         super(c, a);
         density = c.getResources().getDisplayMetrics().density;
+        cBody = ContextCompat.getColor(c, R.color.mascot_body);
+        cOutline = ContextCompat.getColor(c, R.color.splash_mascot_outline);   // transparent in classic (no outline), a soft orange ring on the white screen
+        cScreen = ContextCompat.getColor(c, R.color.mascot_screen);
+        cGlass = ContextCompat.getColor(c, R.color.mascot_glass);
+        cFace = ContextCompat.getColor(c, R.color.mascot_face);
+        cRoof = ContextCompat.getColor(c, R.color.mascot_roof);
+        cRoofDark = ContextCompat.getColor(c, R.color.mascot_roof_dark);
+        cFeet = ContextCompat.getColor(c, R.color.mascot_feet);
+        cLight = ContextCompat.getColor(c, R.color.mascot_light);
+        cShadow = ContextCompat.getColor(c, R.color.splash_shadow);
+        cDust = ContextCompat.getColor(c, R.color.splash_dust);
+        cSpark = ContextCompat.getColor(c, R.color.splash_spark);
         line.setStyle(Paint.Style.STROKE);
         line.setStrokeCap(Paint.Cap.ROUND);
         line.setStrokeJoin(Paint.Join.ROUND);
@@ -140,7 +159,7 @@ public class SplashStageView extends View {
         float sc = shScale.at(t), sa = shAlpha.at(t);
         c.save();
         c.scale(sc, sc, w / 2f, h - 14f * d);
-        fill.setColor(argb(0.32f * sa, 0x8D, 0x7B, 0xFF));
+        fill.setColor(tint(0.32f * sa, cShadow));
         r.set(w / 2f - 54f * d, h - 22f * d, w / 2f + 54f * d, h - 6f * d);
         c.drawOval(r, fill);
         c.restore();
@@ -153,7 +172,7 @@ public class SplashStageView extends View {
         for (float[] dp : dust) {
             if (t < dp[0] || t > dp[0] + dp[1]) continue;
             float e = OUT.getInterpolation((t - dp[0]) / dp[1]), k = dp[2];
-            fill.setColor(argb(0.5f * k * (1f - e), 0xC9, 0xBB, 0xFF));
+            fill.setColor(tint(0.5f * k * (1f - e), cDust));
             for (int sd = -1; sd <= 1; sd += 2) {
                 c.drawCircle(100f + sd * (34f + 30f * e * k), 168f - 6f * e, (6f + 5f * e) * k, fill);
                 c.drawCircle(100f + sd * (22f + 18f * e * k), 170f - 2f * e, (4f + 3f * e) * k, fill);
@@ -169,46 +188,47 @@ public class SplashStageView extends View {
         c.rotate(lean.at(t), 100f, 172f);
 
         float fu = feetUp.at(t), sp = -fu * 0.7f;
-        rr(c, 60 - sp, 156 + fu, 30, 16, 8, 0xFFE4D9F7);  // feet (tuck up and spread a little in the air)
-        rr(c, 110 + sp, 156 + fu, 30, 16, 8, 0xFFE4D9F7);
-        rr(c, 40, 50, 120, 112, 32, 0xFFFFFFFF);         // body (white variant)
-        rr(c, 56, 70, 88, 68, 22, 0xFF3A22B8);           // face screen
-        rr(c, 66, 77, 36, 5, 2.5f, 0xFF5B3BF0);          // glass highlight
-        rr(c, 86, 146, 28, 6, 3, 0xFFD9C8F5);            // status light
+        rr(c, 60 - sp, 156 + fu, 30, 16, 8, cFeet);  // feet (tuck up and spread a little in the air)
+        rr(c, 110 + sp, 156 + fu, 30, 16, 8, cFeet);
+        if (Color.alpha(cOutline) > 0) rr(c, 37.5f, 47.5f, 125, 117, 34.5f, cOutline);   // outline ring so the white body shows on the white (orange) screen
+        rr(c, 40, 50, 120, 112, 32, cBody);              // body (white variant)
+        rr(c, 56, 70, 88, 68, 22, cScreen);           // face screen
+        rr(c, 66, 77, 36, 5, 2.5f, cGlass);          // glass highlight
+        rr(c, 86, 146, 28, 6, 3, cLight);            // status light
 
         // hat: its own transform (lift, tilt about the brim centre, squash about the brim underside)
         c.save();
         c.translate(0, hatY.at(t));
         c.rotate(hatAng.at(t), 100f, 52f);
         c.scale(hatSx.at(t), hatSy.at(t), 100f, 59f);
-        rr(c, 119, 18, 13, 24, 4, 0xFFC4ABEE);           // chimney
+        rr(c, 119, 18, 13, 24, 4, cRoofDark);           // chimney
         path.reset(); path.moveTo(57, 48); path.lineTo(100, 16); path.lineTo(143, 48); path.close();
-        fill.setColor(0xFFD9C8F5); fill.setStyle(Paint.Style.FILL); c.drawPath(path, fill);
-        line.setColor(0xFFD9C8F5); line.setStrokeWidth(8f); c.drawPath(path, line);   // roof (rounded corners)
-        rr(c, 38, 45, 124, 14, 7, 0xFFC4ABEE);           // brim
+        fill.setColor(cRoof); fill.setStyle(Paint.Style.FILL); c.drawPath(path, fill);
+        line.setColor(cRoof); line.setStrokeWidth(8f); c.drawPath(path, line);   // roof (rounded corners)
+        rr(c, 38, 45, 124, 14, 7, cRoofDark);           // brim
         c.restore();
 
         // eyes and smile
         float es = eyeSy.at(t);
         c.save(); c.translate(eyeX.at(t), eyeY.at(t));
-        c.save(); c.scale(1f, es, 83f, 103f); rr(c, 76, 92, 14, 22, 7, 0xFFFFFFFF); c.restore();
-        c.save(); c.scale(1f, es, 117f, 103f); rr(c, 110, 92, 14, 22, 7, 0xFFFFFFFF); c.restore();
+        c.save(); c.scale(1f, es, 83f, 103f); rr(c, 76, 92, 14, 22, 7, cFace); c.restore();
+        c.save(); c.scale(1f, es, 117f, 103f); rr(c, 110, 92, 14, 22, 7, cFace); c.restore();
         c.restore();
         path.reset(); path.moveTo(86, 122); path.quadTo(100, smile.at(t), 114, 122);
-        line.setColor(0xFFFFFFFF); line.setStrokeWidth(5f); c.drawPath(path, line);
+        line.setColor(cFace); line.setStrokeWidth(5f); c.drawPath(path, line);
 
         // pop bursts (ring + sparks), above everything, follow the jump
         for (float[] b : bursts) {
             if (t < b[0] || t > b[0] + b[1]) continue;
             float e = OUT.getInterpolation((t - b[0]) / b[1]);
             float rs = 0.4f + 2.4f * e;
-            line.setColor(argb(0.9f * (1f - e), 255, 255, 255)); line.setStrokeWidth(4f * rs);
+            line.setColor(tint(0.9f * (1f - e), cSpark)); line.setStrokeWidth(4f * rs);
             c.drawCircle(100f, 48f, 16f * rs, line);
             fill.setStyle(Paint.Style.FILL);
             for (int i = 0; i < ANG.length; i++) {
                 double a = Math.toRadians(ANG[i]);
                 float dist = (i % 2 == 0 ? 56f : 42f) * e, scale = 1f - 0.7f * e;
-                fill.setColor(i % 2 == 0 ? argb(1f - e, 255, 255, 255) : argb(1f - e, 0xC9, 0xBB, 0xFF));
+                fill.setColor(tint(1f - e, i % 2 == 0 ? cSpark : cDust));
                 c.drawCircle(100f + (float) Math.cos(a) * dist, 48f + (float) Math.sin(a) * dist, (i % 2 == 0 ? 5f : 3.5f) * scale, fill);
             }
         }
@@ -220,6 +240,11 @@ public class SplashStageView extends View {
         fill.setStyle(Paint.Style.FILL); fill.setColor(color);
         r.set(x, y, x + w, y + h);
         c.drawRoundRect(r, rad, rad, fill);
+    }
+
+    /** The colour with its own alpha scaled by a (0..1): the animation keeps its alpha curves, the colour comes from the theme. */
+    private static int tint(float a, int base) {
+        return argb(a * Color.alpha(base) / 255f, Color.red(base), Color.green(base), Color.blue(base));
     }
 
     private static int argb(float a, int r, int g, int b) {

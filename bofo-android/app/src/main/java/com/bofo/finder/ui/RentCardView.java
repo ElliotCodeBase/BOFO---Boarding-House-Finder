@@ -113,7 +113,7 @@ public class RentCardView extends View {
         float w = getWidth(), h = getHeight();
         p.setStyle(Paint.Style.FILL); p.setColor(0xFFFFFFFF);
         c.drawRoundRect(new RectF(0, 0, w, h), 18 * d, 18 * d, p);
-        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(d); p.setColor(0xFFECE8FA);
+        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(d); p.setColor(ContextCompat.getColor(getContext(), R.color.bofo_line_tint));
         c.drawRoundRect(new RectF(d / 2, d / 2, w - d / 2, h - d / 2), 18 * d, 18 * d, p);
         int text2 = ContextCompat.getColor(getContext(), R.color.bofo_text_2), ink = ContextCompat.getColor(getContext(), R.color.bofo_ink);
         int primary = ContextCompat.getColor(getContext(), R.color.bofo_primary);
@@ -155,7 +155,7 @@ public class RentCardView extends View {
         }
         // the line with one marker per price at its real place
         float lineY = h - 22 * d, l = pad + 8 * d, r = w - pad - 8 * d;
-        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(3 * d); p.setStrokeCap(Paint.Cap.ROUND); p.setColor(0xFFE4DEFB);
+        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(3 * d); p.setStrokeCap(Paint.Cap.ROUND); p.setColor(ContextCompat.getColor(getContext(), R.color.bofo_stroke_soft));
         c.drawLine(l, lineY, r, lineY, p);
         p.setStyle(Paint.Style.FILL);
         for (Mark m : marks) {

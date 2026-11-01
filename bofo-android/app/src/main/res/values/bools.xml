@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.0.117: classic loading screen is dark (white status / navigation bar icons); the orange one is white (dark icons). res/values-night/bools.xml flips it. -->
+<resources>
+    <bool name="splash_light_bars">false</bool>
+</resources>
