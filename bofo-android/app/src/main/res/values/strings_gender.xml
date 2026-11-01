@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.0.87: who may stay in a boarding house (owner form, student card + place page, Explore filter). -->
+<resources>
+    <string name="gender_female">Female only</string>
+    <string name="gender_male">Male only</string>
+    <string name="gender_any">Male &amp; Female</string>
+    <string name="gender_both">Both</string>
+    <string name="gender_all">All</string>
+    <string name="gender_seg_female">Female</string>
+    <string name="gender_seg_male">Male</string>
+    <string name="gender_filter_title">Who can stay</string>
+    <string name="gender_filter_sub">Female only, male only, or places open to both.</string>
+    <string name="form_gender">Who can stay here?</string>
+    <string name="form_gender_hint">Students see this on your listing and can filter by it.</string>
+    <string name="form_gender_female">Female only</string>
+    <string name="form_gender_male">Male only</string>
+    <string name="form_gender_any">Both (male &amp; female)</string>
+</resources>

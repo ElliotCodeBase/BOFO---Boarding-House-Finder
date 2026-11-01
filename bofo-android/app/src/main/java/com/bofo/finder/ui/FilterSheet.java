@@ -24,6 +24,7 @@ import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BrowseState;
 import com.bofo.finder.util.ExploreRules;
 import com.bofo.finder.util.Fuzzy;
+import com.bofo.finder.util.GenderRules;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
@@ -55,6 +56,8 @@ public class FilterSheet extends BottomSheetDialogFragment {
     private int sort;
     private boolean verified, beds;                                  // v2.0.82: quick filters (same values as the map chips)
     private Chip verifiedChip, bedsChip;
+    private String gender = "";                                     // v2.0.87: "" = all, else female / male / any (= both)
+    private static final String[] GENDERS = {"", GenderRules.FEMALE, GenderRules.MALE, GenderRules.ANY};
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
@@ -63,6 +66,7 @@ public class FilterSheet extends BottomSheetDialogFragment {
         selNames.addAll(BrowseState.amenityNames);
         sort = BrowseState.sort;
         verified = BrowseState.verifiedOnly; beds = BrowseState.bedsOnly;
+        gender = BrowseState.gender;
 
         // quick filters (the chips on the Explore map read and write the same values)
         verifiedChip = Chips.create(b.quickChips, getString(R.string.ex_quick_verified), true, verified);
@@ -85,6 +89,11 @@ public class FilterSheet extends BottomSheetDialogFragment {
         for (int i = 0; i < segs.length; i++) { final int idx = i; segs[i].setOnClickListener(v -> { sort = idx; paintSort(); }); }
         paintSort();
 
+        // who can stay
+        TextView[] gsegs = {b.gender0, b.gender1, b.gender2, b.gender3};
+        for (int i = 0; i < gsegs.length; i++) { final int idx = i; gsegs[i].setOnClickListener(v -> { gender = GENDERS[idx]; paintGender(); }); }
+        paintGender();
+
         // amenities
         b.amenitySearch.addTextChangedListener(new SimpleWatcher() { @Override public void afterTextChanged(Editable s) { renderChips(); } });
         Async.run(() -> new BhService().amenities(), (List<Amenity> l) -> {
@@ -102,6 +111,7 @@ public class FilterSheet extends BottomSheetDialogFragment {
         b.reset.setOnClickListener(v -> {                          // clears the sheet only: the list changes at "Show results"
             b.priceCustom.setText(""); sort = 0; selected.clear(); selNames.clear();
             verified = false; beds = false; verifiedChip.setChecked(false); bedsChip.setChecked(false);
+            gender = ""; paintGender();
             b.amenitySearch.setText("");
             paintSort(); renderChips();
         });
@@ -117,7 +127,8 @@ public class FilterSheet extends BottomSheetDialogFragment {
         BrowseState.sort = sort;
         BrowseState.verifiedOnly = verified;
         BrowseState.bedsOnly = beds;
-        java.util.Map<String, String> labels = new HashMap<>();                       // lets the map's quick chips (Wi-Fi, Female-only) see what is ticked here
+        BrowseState.gender = gender;
+        java.util.Map<String, String> labels = new HashMap<>();                       // lets the map's quick chips (Wi-Fi) see what is ticked here
         for (String id : selected) {
             String name = BrowseState.amenityLabels.get(id);
             for (Amenity a : amenities) if (a.id().equals(id)) name = a.name();
@@ -152,6 +163,15 @@ public class FilterSheet extends BottomSheetDialogFragment {
         if (b == null) return;
         String t = b.priceCustom.getText().toString().trim();
         for (int i = 0; i < priceChips.size(); i++) priceChips.get(i).setChecked(i == 0 ? t.isEmpty() : t.equals(String.valueOf(PRICES[i - 1])));
+    }
+
+    private void paintGender() {
+        TextView[] segs = {b.gender0, b.gender1, b.gender2, b.gender3};
+        for (int i = 0; i < segs.length; i++) {
+            boolean on = GENDERS[i].equals(gender);
+            segs[i].setBackgroundResource(on ? R.drawable.bg_ex_seg_on : 0);
+            segs[i].setTextColor(ContextCompat.getColor(requireContext(), on ? R.color.bofo_text : R.color.bofo_text_2));
+        }
     }
 
     private void paintSort() {

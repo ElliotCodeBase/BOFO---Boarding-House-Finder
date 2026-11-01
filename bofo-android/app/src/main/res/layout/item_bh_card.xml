@@ -39,6 +39,20 @@
                 android:textStyle="bold"
                 android:visibility="gone" />
 
+            <TextView
+                android:id="@+id/gender"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|start"
+                android:layout_margin="8dp"
+                android:background="@drawable/bg_badge_gender"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
+                android:textColor="@color/bofo_ink"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
             <ImageButton
                 android:id="@+id/heart"
                 android:layout_width="40dp"

@@ -853,6 +853,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         android.text.SpannableStringBuilder info = new android.text.SpannableStringBuilder("\u2605 ").append(ListRules.ratingText(p.avgRating(), p.reviewCount()));
         info.setSpan(new android.text.style.ForegroundColorSpan(0xFFF5A524), 0, 1, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);     // v2.0.79: amber star
         if (p.distanceKm() > 0) info.append("  \u00B7  ").append(Geo.fmt(p.distanceKm()));
+        String gp = com.bofo.finder.util.GenderRules.normalize(p.genderPolicy());                          // v2.0.87: who can stay
+        if (!gp.isEmpty()) info.append("  \u00B7  ").append(infoView.getContext().getString(com.bofo.finder.util.GenderRules.labelRes(gp)));
         infoView.setText(info);
         String photo = p.photoUrl();
         if (photo == null || photo.isEmpty()) { Glide.with(photoView).clear(photoView); photoView.setVisibility(View.GONE); }

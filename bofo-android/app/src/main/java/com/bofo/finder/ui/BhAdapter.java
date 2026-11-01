@@ -70,6 +70,9 @@ public final class BhAdapter extends ListAdapter<BoardingHouse, BhAdapter.VH> {
         String free = ListRules.freeText(b.water(), b.electricity(), b.wifi());
         v.free.setText(free);
         v.free.setVisibility(free.isEmpty() ? android.view.View.GONE : android.view.View.VISIBLE);
+        String gp = com.bofo.finder.util.GenderRules.normalize(b.genderPolicy());      // v2.0.87: who can stay (hidden when the database has no gender_policy yet)
+        v.gender.setText(gp.isEmpty() ? "" : v.getRoot().getContext().getString(com.bofo.finder.util.GenderRules.labelRes(gp)));
+        v.gender.setVisibility(gp.isEmpty() ? android.view.View.GONE : android.view.View.VISIBLE);
         v.badge.setVisibility(b.featured() ? android.view.View.VISIBLE : android.view.View.GONE);
         String url = b.photoUrl();
         Glide.with(v.photo).load(url == null || url.isEmpty() ? (String) null : url).centerCrop().placeholder(R.color.bofo_skeleton).into(v.photo);

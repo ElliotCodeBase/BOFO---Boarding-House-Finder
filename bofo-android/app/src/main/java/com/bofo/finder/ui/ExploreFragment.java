@@ -38,6 +38,7 @@ import com.bofo.finder.util.Trip;
 import com.bofo.finder.util.TripPlanner;
 import com.bofo.finder.util.ErrorText;
 import com.bofo.finder.util.ExploreRules;
+import com.bofo.finder.util.GenderRules;
 import com.bofo.finder.util.Favorites;
 import com.bofo.finder.util.LocationHelper;
 import com.bofo.finder.util.ListRules;
@@ -217,7 +218,7 @@ public class ExploreFragment extends Fragment {
         Set<String> names = new LinkedHashSet<>(BrowseState.amenityNames);
         for (String id : BrowseState.amenityIds) { String n = BrowseState.amenityLabels.get(id); if (n != null) names.add(n); }
         List<BoardingHouse> l = OfflineExplore.apply(saved, query, BrowseState.minPrice, BrowseState.maxPrice, names, BrowseState.verifiedOnly,
-                BrowseState.bedsOnly, BrowseState.sort, c == null ? null : c.lat(), c == null ? null : c.lng(), areaBox);
+                BrowseState.bedsOnly, BrowseState.gender, BrowseState.sort, c == null ? null : c.lat(), c == null ? null : c.lng(), areaBox);
         lastItems = l;
         adapter.setShowDistance(c != null);
         b.resultCount.setText((l.size() == 1 ? getString(R.string.explore_result_one) : getString(R.string.explore_results, l.size())) + " \u00B7 " + getString(R.string.map_offline_short));
@@ -260,7 +261,7 @@ public class ExploreFragment extends Fragment {
 
     /** Five chips + Reset. They read and write BrowseState (the same values as the filter sheet), so the badge and the sheet stay in sync. */
     private void setupChips() {
-        int[] labels = {R.string.map_chip_under2k, R.string.map_chip_wifi, R.string.map_chip_verified, R.string.map_chip_female, R.string.map_chip_beds};
+        int[] labels = {R.string.map_chip_under2k, R.string.map_chip_wifi, R.string.map_chip_verified, R.string.map_chip_female, R.string.map_chip_male, R.string.map_chip_beds};
         quickChips = new TextView[labels.length];
         b.mapChipsRow.removeAllViews();
         for (int i = 0; i < labels.length; i++) {
@@ -295,7 +296,8 @@ public class ExploreFragment extends Fragment {
             case 0: return BrowseState.maxPrice != null && BrowseState.maxPrice == BrowseState.QUICK_PRICE;
             case 1: return BrowseState.hasAmenityNamed(BrowseState.AMEN_WIFI);
             case 2: return BrowseState.verifiedOnly;
-            case 3: return BrowseState.hasAmenityNamed(BrowseState.AMEN_FEMALE);
+            case 3: return GenderRules.FEMALE.equals(BrowseState.gender);
+            case 4: return GenderRules.MALE.equals(BrowseState.gender);
             default: return BrowseState.bedsOnly;
         }
     }
@@ -306,7 +308,8 @@ public class ExploreFragment extends Fragment {
             case 0: BrowseState.minPrice = null; BrowseState.maxPrice = on ? Double.valueOf(BrowseState.QUICK_PRICE) : null; break;
             case 1: BrowseState.setAmenityNamed(BrowseState.AMEN_WIFI, on); break;
             case 2: BrowseState.verifiedOnly = on; break;
-            case 3: BrowseState.setAmenityNamed(BrowseState.AMEN_FEMALE, on); break;
+            case 3: BrowseState.gender = on ? GenderRules.FEMALE : ""; break;     // v2.0.87: the same value as "Who can stay" in the filter sheet
+            case 4: BrowseState.gender = on ? GenderRules.MALE : ""; break;
             default: BrowseState.bedsOnly = on; break;
         }
         keepArea = true; soft = true;               // the box from "Search this area" and the camera stay; the strip fades
@@ -466,6 +469,7 @@ public class ExploreFragment extends Fragment {
             final int sort = BrowseState.sort;
             final Set<String> names = new LinkedHashSet<>(BrowseState.amenityNames);
             final boolean onlyVerified = BrowseState.verifiedOnly, onlyBeds = BrowseState.bedsOnly;
+            final String gender = BrowseState.gender;
             final BhService.Filter f = BrowseState.filter(q);
             final double[] box = areaBox;
             Async.run(() -> {
@@ -476,6 +480,7 @@ public class ExploreFragment extends Fragment {
                 l = ListRules.inPriceRange(l, min, max);
                 l = ExploreRules.withAll(l, names);
                 l = ExploreRules.quick(l, onlyVerified, onlyBeds);
+                l = GenderRules.keep(l, gender);                                    // v2.0.87: the server already filtered; this also covers an old copy served offline
                 l = ExploreRules.sort(l, sort);
                 if (box != null) {                                                  // "Search this area": keep the houses inside the visible box (BhService has no bounds query)
                     List<BoardingHouse> in = new ArrayList<>();

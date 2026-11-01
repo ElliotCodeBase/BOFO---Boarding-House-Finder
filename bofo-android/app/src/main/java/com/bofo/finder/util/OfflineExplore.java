@@ -53,6 +53,7 @@ public final class OfflineExplore {
                 JSONArray am = new JSONArray();
                 if (h.amenities() != null) for (String x : h.amenities()) am.put(x);
                 o.put("amenity_names", am);
+                o.put("gender_policy", h.genderPolicy() == null ? "" : h.genderPolicy());
                 a.put(o);
             } catch (Exception skip) { /* one bad house never loses the rest */ }
         }
@@ -77,6 +78,12 @@ public final class OfflineExplore {
      */
     public static List<BoardingHouse> apply(List<BoardingHouse> in, String text, Double min, Double max, Collection<String> names,
                                             boolean verified, boolean beds, int sort, Double refLat, Double refLng, double[] box) {
+        return apply(in, text, min, max, names, verified, beds, "", sort, refLat, refLng, box);
+    }
+
+    /** Same, with the v2.0.87 gender filter ("" = all, else female / male / any). */
+    public static List<BoardingHouse> apply(List<BoardingHouse> in, String text, Double min, Double max, Collection<String> names,
+                                            boolean verified, boolean beds, String gender, int sort, Double refLat, Double refLng, double[] box) {
         List<BoardingHouse> l = new ArrayList<>();
         String q = text == null ? "" : text.trim().toLowerCase(java.util.Locale.ROOT);
         for (BoardingHouse h : in) {
@@ -87,6 +94,7 @@ public final class OfflineExplore {
         l = ListRules.inPriceRange(l, min, max);
         l = ExploreRules.withAll(l, names);
         l = ExploreRules.quick(l, verified, beds);
+        l = GenderRules.keep(l, gender);
         if (sort == ExploreRules.SORT_NEAREST && refLat != null && refLng != null) l.sort(java.util.Comparator.comparingDouble(BoardingHouse::distanceKm));
         else l = ExploreRules.sort(l, sort);
         if (box != null) {

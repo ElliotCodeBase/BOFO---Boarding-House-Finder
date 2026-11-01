@@ -42,10 +42,12 @@ public final class BrowseState {
     public static final Set<String> amenityNames = new LinkedHashSet<>();
     /** v2.0.82: quick filters. verifiedOnly = owner verified, bedsOnly = at least one free bed. Applied in Explore (client side). */
     public static boolean verifiedOnly, bedsOnly;
+    /** v2.0.87: who may stay. "" = all places, else {@link GenderRules#FEMALE} / {@link GenderRules#MALE} / {@link GenderRules#ANY} (= boys and girls). */
+    public static String gender = "";
     /** v2.0.82: id -> name of the catalog amenities ticked in the filter sheet, so a quick chip ("Wi-Fi", "Female-only") can tell it is on. */
     public static final java.util.Map<String, String> amenityLabels = new java.util.HashMap<>();
     public static final double QUICK_PRICE = 2000;
-    public static final String AMEN_WIFI = "Free Wi-Fi", AMEN_FEMALE = "Female only";
+    public static final String AMEN_WIFI = "Free Wi-Fi";
     private static boolean loaded;
 
     public static void bump() { Integer v = CHANGED.getValue(); CHANGED.setValue(v == null ? 1 : v + 1); }
@@ -75,11 +77,12 @@ public final class BrowseState {
         f.maxPrice = maxPrice;
         f.amenityIds.addAll(amenityIds);
         f.text = text;
+        f.gender = gender;
         return f;
     }
 
     /** Price range counts as one filter, each amenity as one. */
-    public static int activeFilters() { return (minPrice != null || maxPrice != null ? 1 : 0) + (sort != 0 ? 1 : 0) + amenityIds.size() + amenityNames.size() + (verifiedOnly ? 1 : 0) + (bedsOnly ? 1 : 0); }
+    public static int activeFilters() { return (minPrice != null || maxPrice != null ? 1 : 0) + (sort != 0 ? 1 : 0) + amenityIds.size() + amenityNames.size() + (verifiedOnly ? 1 : 0) + (bedsOnly ? 1 : 0) + (gender.isEmpty() ? 0 : 1); }
 
     private static String norm(String s) { return s == null ? "" : s.toLowerCase(java.util.Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]", ""); }
 
@@ -100,7 +103,7 @@ public final class BrowseState {
         while (it.hasNext()) { String id = it.next(); if (norm(amenityLabels.get(id)).equals(k)) { it.remove(); amenityLabels.remove(id); } }
     }
 
-    public static void clearFilters() { minPrice = null; maxPrice = null; sort = 0; amenityIds.clear(); amenityNames.clear(); amenityLabels.clear(); verifiedOnly = false; bedsOnly = false; }
+    public static void clearFilters() { minPrice = null; maxPrice = null; sort = 0; amenityIds.clear(); amenityNames.clear(); amenityLabels.clear(); verifiedOnly = false; bedsOnly = false; gender = ""; }
 
     /** Loads colleges + my profile once (offline copies are used when there is no network). */
     public static void ensureLoaded(Runnable done, Consumer<Throwable> fail) {
