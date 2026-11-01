@@ -48,6 +48,7 @@ public class BhDetailFragment extends Fragment {
 
     /** Opens the detail screen on top of the shell (Back returns to the same tab). */
     public static void open(Fragment from, String id) {
+        if (from.getContext() != null) com.bofo.finder.util.AppPrefs.addViewed(from.requireContext(), id);      // v2.0.81: the map dims pins of places already seen
         Bundle a = new Bundle();
         a.putString(ARG_ID, id);
         NavHostFragment.findNavController(from).navigate(R.id.bhDetailFragment, a);
