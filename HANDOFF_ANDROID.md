@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.94 Group labels: rounded square
+- **PR title:** `v2.0.94 - Android: map group price labels are rounded squares, not capsules`
+- `MapCardView.bubble(count, from)` price variant: corner radius `8 * d` (outer) / `8 * d - 2.5 * d` (inner) instead of `h / 2`. Bitmap size and anchor unchanged. Price pins (`pricePin`) and route chips (still `h / 2`) were NOT changed. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.93 Settings + Profile redesign
 - **PR title:** `v2.0.93 - Android: redesigned Settings and Profile screens (icon rows, hero card)`
 - Layout-only: every view id used by `SettingsFragment` / `ProfileFragment` / `AiChatLogFragment.attachEntry` is kept (rows are TextViews with start icon + end chevron, so `switchRole.setText` still works). Row dividers = `showDividers="middle"` (hidden rows skip their divider). Not built or run by Claude. Not done: Edit profile screen (`ProfileSetupFragment`) still the old look.
