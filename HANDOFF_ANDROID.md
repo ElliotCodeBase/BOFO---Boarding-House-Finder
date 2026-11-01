@@ -1,3 +1,8 @@
+# Handoff (Android) - v2.0.116 Loading screen: plainer
+- **PR title:** `v2.0.116 - Android: loading screen less flashy`
+- Removed the glow and sparkles from `SplashStageView`; `SplashDotsView` is plain white again (same smooth wave); `SplashFragment.enter()` is a simple fade (mascot first, text 200 ms later). Jump / blink / dust from v2.0.113 kept. Not built or run by Claude.
+
+---
 # Handoff (Android) - v2.0.115 Better loading screen
 - **PR title:** `v2.0.115 - Android: better loading screen animation`
 - `SplashFragment.enter()`: mascot pops in (overshoot), title / subtitle / dots / status float up in turn (ids `stage`, `title`, `subtitle`, `dots` added to fragment_splash.xml). `SplashDotsView`: one smooth sine wave, lavender to white. `SplashStageView`: radial glow behind the mascot (brighter at the jump apex) + 7 rising sparkles (`SPARKS`). Same 2400 ms loop. Not built or run by Claude.

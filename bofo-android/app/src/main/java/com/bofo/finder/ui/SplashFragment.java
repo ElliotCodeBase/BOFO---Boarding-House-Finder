@@ -43,16 +43,12 @@ public class SplashFragment extends Fragment {
         return binding.getRoot();
     }
 
-    /** v2.0.115: the mascot pops in, then title, subtitle, dots and status float up one after another. */
+    /** v2.0.116: a quiet fade-in, text a touch later than the mascot. No bounce, no big slide. */
     private void enter() {
-        float dp = getResources().getDisplayMetrics().density;
-        binding.stage.setAlpha(0f); binding.stage.setScaleX(0.8f); binding.stage.setScaleY(0.8f);
-        binding.stage.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(650).setInterpolator(new android.view.animation.OvershootInterpolator(1.6f)).start();
-        View[] v = {binding.title, binding.subtitle, binding.dots, binding.status};
+        View[] v = {binding.stage, binding.title, binding.subtitle, binding.dots, binding.status};
         for (int i = 0; i < v.length; i++) {
-            v[i].setAlpha(0f); v[i].setTranslationY(18 * dp);
-            v[i].animate().alpha(1f).translationY(0f).setStartDelay(250 + 130L * i).setDuration(520)
-                    .setInterpolator(new android.view.animation.DecelerateInterpolator(1.8f)).start();
+            v[i].setAlpha(0f);
+            v[i].animate().alpha(1f).setStartDelay(i == 0 ? 0 : 200).setDuration(i == 0 ? 400 : 500).start();
         }
     }
 

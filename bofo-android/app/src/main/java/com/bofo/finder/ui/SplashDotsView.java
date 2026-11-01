@@ -8,7 +8,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.animation.PathInterpolator;
 
-/** Three dots (lavender to white) on one smooth sine wave. */
+/** Three white dots rising and fading one after another. */
 public class SplashDotsView extends View {
     private static final PathInterpolator BOTH = new PathInterpolator(0.42f, 0f, 0.58f, 1f);
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -33,15 +33,9 @@ public class SplashDotsView extends View {
         for (int i = 0; i < 3; i++) {                                // v2.0.115: one smooth wave (no pause), each dot a little behind the one before
             float x = (5 + i * 20) * d;
             float e = (float) (Math.sin(now / 900.0 * Math.PI * 2 - i * 0.95) + 1) / 2f;
-            p.setColor(blend(0xFFB9A8FF, 0xFFFFFFFF, e));
             p.setAlpha(Math.round((0.35f + 0.65f * e) * 255f));
-            c.drawCircle(x, (14f - 7f * e) * d, (4f + 1.8f * e) * d, p);
+            c.drawCircle(x, (14f - 7f * e) * d, 5f * d, p);
         }
         if (running) postInvalidateOnAnimation();
-    }
-
-    private static int blend(int a, int b, float t) {
-        int r = Math.round(((a >> 16) & 255) * (1 - t) + ((b >> 16) & 255) * t), g = Math.round(((a >> 8) & 255) * (1 - t) + ((b >> 8) & 255) * t), bl = Math.round((a & 255) * (1 - t) + (b & 255) * t);
-        return 0xFF000000 | (r << 16) | (g << 8) | bl;
     }
 }

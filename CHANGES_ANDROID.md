@@ -1,3 +1,6 @@
+# v2.0.116 - Android: loading screen plainer
+- Removed the purple glow and sparkles; simple fade-in; white dots.
+
 # v2.0.115 - Android: better loading screen
 - Loading screen eases in (mascot pops, text floats up), has a soft glow and rising sparkles behind BOFO, and the three dots move in one smooth wave.
 
