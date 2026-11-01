@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- v2.0.98 listing card: taller photo, name + shield on one line, price as the main figure, one quiet meta line. All ids unchanged. -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/Widget.Bofo.Card"
     android:layout_width="match_parent"
@@ -14,7 +15,7 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="130dp">
+            android:layout_height="144dp">
 
             <ImageView
                 android:id="@+id/photo"
@@ -29,14 +30,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top|start"
-                android:layout_margin="8dp"
+                android:layout_margin="10dp"
                 android:background="@drawable/bg_badge_amber"
+                android:fontFamily="sans-serif-medium"
                 android:paddingHorizontal="8dp"
-                android:paddingVertical="2dp"
+                android:paddingVertical="3dp"
                 android:text="@string/card_featured"
                 android:textColor="@color/bofo_ink"
                 android:textSize="11sp"
-                android:textStyle="bold"
                 android:visibility="gone" />
 
             <TextView
@@ -44,24 +45,24 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|start"
-                android:layout_margin="8dp"
+                android:layout_margin="10dp"
                 android:background="@drawable/bg_badge_gender"
+                android:fontFamily="sans-serif-medium"
                 android:paddingHorizontal="8dp"
-                android:paddingVertical="2dp"
+                android:paddingVertical="3dp"
                 android:textColor="@color/bofo_ink"
                 android:textSize="11sp"
-                android:textStyle="bold"
                 android:visibility="gone" />
 
             <ImageButton
                 android:id="@+id/heart"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
                 android:layout_gravity="top|end"
-                android:layout_margin="6dp"
+                android:layout_margin="8dp"
                 android:background="@drawable/bg_circle_white"
                 android:contentDescription="@string/cd_save"
-                android:padding="9dp"
+                android:padding="8dp"
                 android:src="@drawable/ic_heart_outline" />
         </FrameLayout>
 
@@ -73,28 +74,29 @@
             android:paddingTop="10dp"
             android:paddingBottom="12dp">
 
-            <TextView
-                android:id="@+id/name"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:fontFamily="sans-serif-medium"
-                android:textColor="@color/bofo_text"
-                android:textSize="15sp" />
-
-            <!-- v2.0.90: green shield + "Verified" = verified owner, grey shield + "Not verified" = not yet -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
+                <TextView
+                    android:id="@+id/name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-medium"
+                    android:maxLines="1"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp" />
+
+                <!-- v2.0.98: icon only (green shield = verified owner, grey = not yet); verifiedText is kept for BhAdapter but hidden -->
                 <ImageView
                     android:id="@+id/verified"
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="6dp"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_shield_unverified" />
 
@@ -102,28 +104,27 @@
                     android:id="@+id/verifiedText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
                     android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:visibility="gone" />
             </LinearLayout>
 
             <TextView
                 android:id="@+id/price"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="2dp"
                 android:textAppearance="@style/Text.Bofo.Price" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
+                    android:layout_width="13dp"
+                    android:layout_height="13dp"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_star" />
 
@@ -133,7 +134,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:layout_weight="1"
-                    android:textColor="@color/bofo_text_2"
+                    android:textColor="@color/bofo_text"
                     android:textSize="12sp" />
 
                 <TextView
@@ -148,7 +149,8 @@
                 android:id="@+id/beds"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="6dp"
+                android:fontFamily="sans-serif-medium"
                 android:textColor="@color/bofo_text_2"
                 android:textSize="12sp" />
 
@@ -156,7 +158,7 @@
                 android:id="@+id/free"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="1dp"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="@color/bofo_success"

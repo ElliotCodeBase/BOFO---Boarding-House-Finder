@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="review_write">Write a review</string>
+    <string name="review_edit">Edit your review</string>
+    <string name="review_sheet_title">Rate this place</string>
+    <string name="review_sheet_title_edit">Your review</string>
+    <string name="review_sheet_hint">What was it like to stay here? (optional)</string>
+    <string name="review_pick_rating">Tap a star to rate</string>
+    <string name="review_submit">Post review</string>
+    <string name="review_update">Save changes</string>
+    <string name="review_delete">Delete my review</string>
+    <string name="review_posted">Review posted</string>
+    <string name="review_updated">Review updated</string>
+    <string name="review_deleted">Review deleted</string>
+    <string name="review_failed">Could not save your review.</string>
+    <string name="review_you">You</string>
+    <string name="review_count_left">%1$d / 1000</string>
+    <plurals name="review_star_cd">
+        <item quantity="one">%d star</item>
+        <item quantity="other">%d stars</item>
+    </plurals>
+    <string name="review_rating_1">Poor</string>
+    <string name="review_rating_2">Fair</string>
+    <string name="review_rating_3">Good</string>
+    <string name="review_rating_4">Very good</string>
+    <string name="review_rating_5">Excellent</string>
+</resources>

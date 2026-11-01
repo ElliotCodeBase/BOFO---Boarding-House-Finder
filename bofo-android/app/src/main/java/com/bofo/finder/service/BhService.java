@@ -215,6 +215,11 @@ public final class BhService {
                 .put("rating", rating).put("comment", c.isEmpty() ? JSONObject.NULL : c));
     }
 
+    /** v2.0.98: a student removes their own review (RLS reviews_delete allows it). */
+    public void deleteReview(String bhId, String studentId) throws Exception {
+        api.delete("reviews", "boarding_house_id=eq." + bhId + "&student_id=eq." + studentId);
+    }
+
     /* ---------- owner: listings ---------- */
     public List<BoardingHouse> myListings(String ownerId) throws Exception {
         JSONArray a = cards("owner_id=eq." + ownerId + "&select=" + cols() + "&order=created_at.desc");

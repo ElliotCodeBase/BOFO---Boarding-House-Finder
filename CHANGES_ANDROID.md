@@ -1,3 +1,6 @@
+# v2.0.98 - Android: reviews + card
+- Students can rate and review a place (edit / delete their own). Listing card redesigned.
+
 # v2.0.97 - Android: launch screen + tab fade
 - Dark loading screen first (no light mascot splash, no white strips), cross-fade between tabs, Developer button removed.
 

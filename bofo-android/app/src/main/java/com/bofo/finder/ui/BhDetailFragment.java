@@ -110,6 +110,7 @@ public class BhDetailFragment extends Fragment {
 
     private void show(JSONObject d, JSONArray reviews) throws Exception {
         BoardingHouse bh = BoardingHouse.from(d);
+        current = bh;
         b.name.setText(bh.name());
         b.price.setText(getString(R.string.detail_per_month, Money.peso(bh.price()), "per_room".equals(d.optString("price_mode", "per_bed")) ? "room" : "bed"));
         b.infoChips.removeAllViews();
@@ -318,8 +319,37 @@ public class BhDetailFragment extends Fragment {
         catch (ActivityNotFoundException e) { ListArea.toast(this, getString(R.string.detail_open_failed)); }
     }
 
+    private int myRating;                 // v2.0.98: this student's own review of the place (0 = none yet)
+    private String myComment = "";
+    private BoardingHouse current;
+
+    /** v2.0.98: called by ReviewSheet after a review is posted, edited or deleted: reload the numbers and the list without leaving the page. */
+    void refreshReviews() {
+        if (b == null) return;
+        final int my = token;
+        Async.run(() -> {
+            BhService s = new BhService();
+            return new Object[]{s.detail(id), s.reviews(id)};
+        }, (Object[] r) -> {
+            if (b == null || my != token) return;
+            try {
+                BoardingHouse bh = BoardingHouse.from((JSONObject) r[0]);
+                current = bh;
+                b.rating.setText(ListRules.ratingText(bh.avgRating(), bh.reviewCount()));
+                b.tileRatingValue.setText(ListRules.ratingText(bh.avgRating(), bh.reviewCount()));
+                showReviews((JSONArray) r[1]);
+            } catch (Exception ignored) { }
+        }, e -> { });
+    }
+
     private void showReviews(JSONArray rv) {
         int n = rv == null ? 0 : rv.length();
+        myRating = 0; myComment = "";
+        final String me = AuthService.get().userId();
+        for (int i = 0; me != null && rv != null && i < rv.length(); i++) {            // the student's own review may be older than the 30 shown below
+            JSONObject o = rv.optJSONObject(i);
+            if (o != null && me.equals(o.optString("student_id", ""))) { myRating = o.optInt("rating", 0); myComment = ListRules.firstText(o.optString("comment", "")); break; }
+        }
         b.reviewsTitle.setText(getString(R.string.detail_reviews, n));
         b.reviews.removeAllViews();
         b.reviewsEmpty.setVisibility(n == 0 ? View.VISIBLE : View.GONE);
@@ -329,7 +359,9 @@ public class BhDetailFragment extends Fragment {
             if (o == null) continue;
             ItemReviewBinding r = ItemReviewBinding.inflate(inf, b.reviews, false);
             String name = ListRules.firstText(o.optString("reviewer_name", ""), o.optString("full_name", ""), o.optString("student_name", ""), o.optString("name", ""));
-            r.reviewerName.setText(name.isEmpty() ? getString(R.string.detail_reviewer_anon) : name);
+            boolean mine = me != null && me.equals(o.optString("student_id", ""));
+            String shown = name.isEmpty() ? getString(R.string.detail_reviewer_anon) : name;
+            r.reviewerName.setText(mine ? shown + " (" + getString(R.string.review_you) + ")" : shown);
             r.reviewStars.setText(ListRules.stars(o.optInt("rating", 0)));
             String comment = ListRules.firstText(o.optString("comment", ""));
             r.reviewComment.setText(comment);
@@ -339,6 +371,17 @@ public class BhDetailFragment extends Fragment {
             if (!photo.isEmpty()) Glide.with(r.reviewerPhoto).load(photo).circleCrop().placeholder(R.drawable.mascot_happy).into(r.reviewerPhoto);
             b.reviews.addView(r.getRoot());
         }
+        bindWriteReview();
+    }
+
+    /** Only students can review (the database allows nothing else). The same button edits a review that already exists. */
+    private void bindWriteReview() {
+        boolean student = AuthRouter.role == com.bofo.finder.model.Role.STUDENT;
+        String me = AuthService.get().userId();
+        boolean ownPlace = current != null && me != null && me.equals(current.ownerId());
+        b.writeReview.setVisibility(student && !ownPlace ? View.VISIBLE : View.GONE);
+        b.writeReview.setText(myRating > 0 ? R.string.review_edit : R.string.review_write);
+        b.writeReview.setOnClickListener(v -> ReviewSheet.show(this, id, current == null ? "" : current.name(), myRating, myComment, null));
     }
 
     @Override
