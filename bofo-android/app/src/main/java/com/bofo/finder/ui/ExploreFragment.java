@@ -29,6 +29,7 @@ import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
 import com.bofo.finder.util.ExploreRules;
 import com.bofo.finder.util.Favorites;
+import com.bofo.finder.util.LocationHelper;
 import com.bofo.finder.util.ListRules;
 
 import java.util.ArrayList;
@@ -52,7 +53,10 @@ public class ExploreFragment extends Fragment {
     private int token;
     private int lastChange = -1;
     private String query = "";
-    private boolean mapMode, mapReady;
+    private boolean mapMode, mapReady, finding;
+    private final LocationHelper loc = new LocationHelper(this);       // v2.0.80: registers the permission launcher, so it is created with the Fragment
+    /** v2.0.80: {south, west, north, east} after "Search this area"; the list and the count only keep houses inside it. Cleared by any new search, filter or campus. */
+    private double[] areaBox;
     private List<BoardingHouse> lastItems = new ArrayList<>();
 
     @Nullable @Override
@@ -78,7 +82,7 @@ public class ExploreFragment extends Fragment {
                 b.searchClear.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
                 if (pendingSearch != null) handler.removeCallbacks(pendingSearch);
                 final String q = s.toString().trim();
-                pendingSearch = () -> { if (!q.equals(query)) { query = q; reload(); } };
+                pendingSearch = () -> { if (!q.equals(query)) { query = q; areaBox = null; reload(); } };
                 handler.postDelayed(pendingSearch, DEBOUNCE_MS);
             }
         });
@@ -101,7 +105,7 @@ public class ExploreFragment extends Fragment {
 
         Favorites.load(null);
         Favorites.IDS.observe(getViewLifecycleOwner(), ids -> adapter.setFavorites(ids));
-        BrowseState.CHANGED.observe(getViewLifecycleOwner(), n -> { if (n == null || n == lastChange) return; lastChange = n; paintFilterButton(); reload(); });
+        BrowseState.CHANGED.observe(getViewLifecycleOwner(), n -> { if (n == null || n == lastChange) return; lastChange = n; areaBox = null; paintFilterButton(); reload(); });
     }
 
     private void paintFilterButton() {
@@ -141,12 +145,18 @@ public class ExploreFragment extends Fragment {
         mapReady = true;
         b.mapCard.setListener(new MapCardView.Listener() {
             @Override public void openPlace(String id) { BhDetailFragment.open(ExploreFragment.this, id); }
-            @Override public void locate() { }
+            @Override public void locate() { locateMe(); }
+            @Override public void searchArea(double south, double west, double north, double east) {
+                areaBox = new double[]{south, west, north, east};
+                reload();
+            }
             @Override public void campusTapped(String id) {
                 for (College c : BrowseState.colleges) if (c.id().equals(id)) { BrowseState.setCampus(c); return; }
             }
         });
-        b.mapCard.showLocate(false);
+        b.mapCard.showLocate(true);                 // v2.0.80: lifted above the floating Ask BOFO button, which sits in the same corner
+        b.mapCard.setLocateLift(72);
+        b.mapCard.setSearchAreaEnabled(true);
         b.mapCard.showExpand(false);
         b.mapCard.setLocState(MapCardView.Loc.NONE);
         b.mapCard.activate(getViewLifecycleOwner());
@@ -159,6 +169,7 @@ public class ExploreFragment extends Fragment {
         b.mapCard.setColleges(BrowseState.colleges);
         b.mapCard.setCampusDot(c == null ? null : c.lat(), c == null ? null : c.lng());
         b.mapCard.setRing(null, null, 0);
+        b.mapCard.setCampusChip(c == null ? null : c.name());
         if (fit) b.mapCard.fit();
     }
 
@@ -176,13 +187,20 @@ public class ExploreFragment extends Fragment {
             final int sort = BrowseState.sort;
             final Set<String> names = new LinkedHashSet<>(BrowseState.amenityNames);
             final BhService.Filter f = BrowseState.filter(q);
+            final double[] box = areaBox;
             Async.run(() -> {
                 Double lat = c == null ? null : c.lat();
                 Double lng = c == null ? null : c.lng();
                 List<BoardingHouse> l = new BhService().list(BhService.Tab.NEW, lat, lng, null, f);   // no radius: search everywhere, nearest first
                 l = ListRules.inPriceRange(l, min, max);
                 l = ExploreRules.withAll(l, names);
-                return ExploreRules.sort(l, sort);
+                l = ExploreRules.sort(l, sort);
+                if (box != null) {                                                  // "Search this area": keep the houses inside the visible box (BhService has no bounds query)
+                    List<BoardingHouse> in = new ArrayList<>();
+                    for (BoardingHouse h : l) if (h.lat() >= box[0] && h.lat() <= box[2] && h.lng() >= box[1] && h.lng() <= box[3]) in.add(h);
+                    l = in;
+                }
+                return l;
             }, (List<BoardingHouse> l) -> {
                 if (my != token || b == null) return;
                 lastItems = l;
@@ -190,10 +208,41 @@ public class ExploreFragment extends Fragment {
                 b.resultCount.setText(l.size() == 1 ? getString(R.string.explore_result_one) : getString(R.string.explore_results, l.size()));
                 if (l.isEmpty()) area.showMessage(getString(BrowseState.activeFilters() > 0 ? R.string.ex_empty_hint : R.string.explore_empty), false);
                 else area.showList(l);
-                if (mapMode) pushMap(true);
+                if (mapMode) pushMap(box == null);                       // after "Search this area" the camera stays where the person put it
             }, e -> fail(my, e));
         }, e -> fail(my, e));
     }
+
+    /** v2.0.80: locate button. Shows the blue dot, flies there, plays the "found you" ring; the dot is not kept live on Explore. */
+    private void locateMe() {
+        if (b == null || finding) return;
+        finding = true;
+        b.mapCard.setLocState(MapCardView.Loc.FINDING);
+        loc.requestOnce(new LocationHelper.Callback() {
+            @Override public void got(double lat, double lng) {
+                if (b == null) return;
+                finding = false;
+                b.mapCard.setUser(lat, lng);
+                b.mapCard.setLocState(LocationHelper.precise(requireContext()) ? MapCardView.Loc.EXACT : MapCardView.Loc.APPROX);
+                b.mapCard.moveTo(lat, lng, 15);
+                handler.postDelayed(() -> { if (b != null) b.mapCard.foundYou(); }, 450);
+                handler.postDelayed(() -> { if (b != null && !finding) b.mapCard.setLocState(MapCardView.Loc.NONE); }, 3000);     // the pill steps aside for the campus chip
+            }
+            @Override public void off() { locFailed(R.string.loc_off); }
+            @Override public void denied() { locFailed(R.string.loc_denied); }
+            @Override public void failed() { locFailed(R.string.loc_failed); }
+            @Override public void servicesOff() { locFailed(R.string.loc_services_off); }
+        });
+    }
+
+    private void locFailed(int msg) {
+        finding = false;
+        if (b == null) return;
+        b.mapCard.setLocState(MapCardView.Loc.NONE);
+        ListArea.toast(this, getString(msg));
+    }
+
+    @Override public void onStop() { loc.stop(); super.onStop(); }
 
     private void fail(int my, Throwable e) {
         if (my != token || b == null) return;
