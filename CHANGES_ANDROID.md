@@ -1,3 +1,9 @@
+# v2.0.123 - Android: calmer orange theme
+- Orange is less saturated and a bit darker (`#E85D0C` -> `#CC6030`), so it is easier on the eyes and reads more clearly on white. Pressed / dark orange is `#A94B22`.
+- Background is now a neutral near-white (`#FAF7F4` -> `#F6F5F3`), no longer cream. Cards stay pure white so they stand out from the page.
+- Sharper definition: borders and dividers are darker (`#EEE7E0` -> `#DDD9D3`), text is darker (ink `#1C1815`, secondary `#5C5550`), and map roads / building edges have stronger outlines on a neutral grey-beige map.
+- Only `res/values-night/colors.xml` changed (plus version). Classic purple theme untouched. Version 2.0.123 (versionCode 323). Not built or run by Claude.
+
 # v2.0.122 - Old app versions refused for everyone (server switch, OFF)
 - New migration `019_min_app_version_all.sql`: a server check that can refuse any request from an app older than a minimum version (HTTP 426, "Please update the BOFO app to continue."). Admin-only version of this was 018. It is OFF until you turn it on, and the hook step is separate (see the SQL file).
 - Edge functions `bofo-chat`, `delete-account`, `create-boost-checkout` now forward the app's `x-bofo-app-version` header to the database, so a new app keeps working through them.
