@@ -24,10 +24,24 @@ public final class CampusMatch {
             if (n.startsWith(q)) a.add(k);
             else if (n.contains(" " + q) || n.contains("(" + q)) b.add(k);
             else if (n.contains(q)) c.add(k);
-            else if (initials(n).startsWith(compact)) d.add(k);          // "norsu" -> Negros Oriental State University
+            else if (initials(n).startsWith(compact) || abbreviation(n, compact)) d.add(k);          // "norsu" -> Negros Oriental State University
         }
         a.addAll(b); a.addAll(c); a.addAll(d);
         return a;
+    }
+
+    /** v2.0.101: a typed abbreviation (4+ letters) whose letters appear in order in the name, starting with its first letter: "norsu" = Negros ORiental State University. */
+    static boolean abbreviation(String name, String compact) {
+        if (compact.length() < 4) return false;
+        String letters = name.replaceAll("[^\\p{L}]", "");
+        if (letters.isEmpty() || letters.charAt(0) != compact.charAt(0)) return false;
+        int at = 0;
+        for (int i = 0; i < compact.length(); i++) {
+            at = letters.indexOf(compact.charAt(i), at);
+            if (at < 0) return false;
+            at++;
+        }
+        return true;
     }
 
     /** First letters of the words in a name, skipping small words (of, the, and, de, ...). */

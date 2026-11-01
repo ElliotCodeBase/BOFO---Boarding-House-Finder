@@ -1,3 +1,6 @@
+# v2.0.101 - Android: search by place
+- Typing a city (Dumaguete, Bayawan...) also finds every house within 8 km of it, even when its address does not say the city.
+
 # v2.0.100 - Android: card shows "Not verified" text + location
 - Listing card: words next to the shield, and the place (from the address) under the name.
 

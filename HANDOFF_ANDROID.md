@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.101 Search by place
+- **PR title:** `v2.0.101 - Android: city search finds all houses near the city, not only addresses that contain the name`
+- Cause: Explore searched only name/address text (`BhService` ilike), so a Dumaguete house with address "Demo address 5, Negros" was missed. New `util/PlaceSearch`: city centre from the campus list (city in brackets, averaged) or a built-in list; Explore runs a second `BhService.list` with `RADIUS_KM` (8) around it and merges by id; offline copy uses `PlaceSearch.keep`. A city with no campus and not in the built-in list is still text-only. CI fix: `CampusMatchTest.initialsMatch` ("norsu") failed because only first letters were compared; `CampusMatch.abbreviation` now also matches 4+ letters in order from the name's first letter. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.100 Card: verified text + location
 - **PR title:** `v2.0.100 - Android: listing card shows Not verified text and the location under the name`
 - `item_bh_card.xml`: `verifiedText` visible (11sp) after the shield; new `location` line under the name. `ListRules.locationText(address)` = last two comma parts without "Philippines". Address is free text, so the card shows what the owner typed. Not built or run by Claude.

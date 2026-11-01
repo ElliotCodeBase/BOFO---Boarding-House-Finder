@@ -31,6 +31,7 @@ import com.bofo.finder.model.College;
 import com.bofo.finder.service.BhService;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BrowseState;
+import com.bofo.finder.util.PlaceSearch;
 import com.bofo.finder.util.CommuteRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.OfflineExplore;
@@ -217,8 +218,10 @@ public class ExploreFragment extends Fragment {
         College c = BrowseState.campus();
         Set<String> names = new LinkedHashSet<>(BrowseState.amenityNames);
         for (String id : BrowseState.amenityIds) { String n = BrowseState.amenityLabels.get(id); if (n != null) names.add(n); }
-        List<BoardingHouse> l = OfflineExplore.apply(saved, query, BrowseState.minPrice, BrowseState.maxPrice, names, BrowseState.verifiedOnly,
+        PlaceSearch.Place place = PlaceSearch.find(BrowseState.colleges, query);
+        List<BoardingHouse> l = OfflineExplore.apply(saved, place != null ? "" : query, BrowseState.minPrice, BrowseState.maxPrice, names, BrowseState.verifiedOnly,
                 BrowseState.bedsOnly, BrowseState.gender, BrowseState.sort, c == null ? null : c.lat(), c == null ? null : c.lng(), areaBox);
+        if (place != null) l = PlaceSearch.keep(l, query, place);              // v2.0.100: the typed city also keeps every house near it
         lastItems = l;
         adapter.setShowDistance(c != null);
         b.resultCount.setText((l.size() == 1 ? getString(R.string.explore_result_one) : getString(R.string.explore_results, l.size())) + " \u00B7 " + getString(R.string.map_offline_short));
@@ -471,11 +474,19 @@ public class ExploreFragment extends Fragment {
             final boolean onlyVerified = BrowseState.verifiedOnly, onlyBeds = BrowseState.bedsOnly;
             final String gender = BrowseState.gender;
             final BhService.Filter f = BrowseState.filter(q);
+            final PlaceSearch.Place place = PlaceSearch.find(BrowseState.colleges, q);       // v2.0.100: null when the text is not a known city
             final double[] box = areaBox;
             Async.run(() -> {
                 Double lat = c == null ? null : c.lat();
                 Double lng = c == null ? null : c.lng();
                 List<BoardingHouse> l = new BhService().list(BhService.Tab.NEW, lat, lng, null, f);   // no radius: search everywhere, nearest first
+                if (place != null) {                                                // v2.0.100: a typed city also finds every house near it, even when the address does not say the city
+                    List<BoardingHouse> near = new BhService().list(BhService.Tab.NEW, place.lat(), place.lng(), PlaceSearch.RADIUS_KM, BrowseState.filter(null));
+                    Set<String> have = new LinkedHashSet<>();
+                    for (BoardingHouse h : l) have.add(h.id());
+                    l = new ArrayList<>(l);
+                    for (BoardingHouse h : near) if (have.add(h.id())) l.add(lat != null ? h.withDistance(com.bofo.finder.util.Geo.km(lat, lng, h.lat(), h.lng())) : h);
+                }
                 if (!Connectivity.isOffline()) OfflineExplore.save(l);          // v2.0.83: the last good result set, for the offline map (not when the answer itself came from the old copy)
                 l = ListRules.inPriceRange(l, min, max);
                 l = ExploreRules.withAll(l, names);
