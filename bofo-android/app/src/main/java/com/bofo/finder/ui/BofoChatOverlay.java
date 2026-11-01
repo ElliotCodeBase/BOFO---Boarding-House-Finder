@@ -95,7 +95,7 @@ public class BofoChatOverlay extends FrameLayout {
         if (shown) return;
         shown = true;
         setVisibility(VISIBLE); MainActivity.keepAppStill = true; MainActivity.imeListener = () -> applyCardSize(getWidth(), getHeight()); androidx.core.view.ViewCompat.requestApplyInsets(this);
-        if (!greeted) { greeted = true; say(getContext().getString(R.string.bofo_hello), false); addStarters(); }
+        if (!greeted) { greeted = true; say(getContext().getString(R.string.bofo_hello), false); say(getContext().getString(R.string.ai_chats_notice), false); addStarters(); }   // v2.0.91: 2nd bubble = the AI Chats privacy notice, REMOVE it with the feature
         b.card.setPivotX(cx - b.card.getLeft());
         b.card.setPivotY(cy - b.card.getTop());
         b.card.setScaleX(.15f); b.card.setScaleY(.15f); b.card.setAlpha(0f);

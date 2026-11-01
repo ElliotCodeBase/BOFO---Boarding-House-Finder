@@ -177,6 +177,12 @@
         android:name="com.bofo.finder.ui.SettingsFragment"
         android:label="Settings" />
 
+    <!-- v2.0.91 AI Chats monitor (admin only). REMOVE with the feature (REMOVE_AI_CHATS.md). -->
+    <fragment
+        android:id="@+id/aiChatLogFragment"
+        android:name="com.bofo.finder.ui.AiChatLogFragment"
+        android:label="AI Chats" />
+
     <fragment
         android:id="@+id/debugFragment"
         android:name="com.bofo.finder.ui.DebugFragment"
