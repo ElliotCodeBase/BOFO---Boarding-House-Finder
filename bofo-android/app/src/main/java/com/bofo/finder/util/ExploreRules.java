@@ -53,6 +53,14 @@ public final class ExploreRules {
         return out;
     }
 
+    /** v2.0.82: quick chips. Keeps verified owners and / or houses with at least one free bed (false = no rule). */
+    public static List<BoardingHouse> quick(List<BoardingHouse> in, boolean verified, boolean beds) {
+        if (!verified && !beds) return in;
+        List<BoardingHouse> out = new ArrayList<>();
+        for (BoardingHouse b : in) { if (verified && !b.ownerVerified()) continue; if (beds && b.availableBeds() <= 0) continue; out.add(b); }
+        return out;
+    }
+
     /** "1500" -> 1500.0, blank -> null (no limit), anything else (0, negative, text) -> NaN = invalid. */
     public static Double parseMax(String text) {
         String t = text == null ? "" : text.trim().replace(",", "");

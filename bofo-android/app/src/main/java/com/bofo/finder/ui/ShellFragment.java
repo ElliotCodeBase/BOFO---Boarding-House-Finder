@@ -30,6 +30,8 @@ import com.bofo.finder.util.Favorites;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.bofo.finder.model.BoardingHouse;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -179,6 +181,16 @@ public class ShellFragment extends Fragment {
         if (binding == null) return;
         binding.dock.select(R.id.tab_explore, true);
         showTab(R.id.tab_explore);
+    }
+
+    /** v2.0.82: Explore map \"Compare\" tray: the chat card opens from the Ask BOFO button with a compare table of these houses. */
+    void showCompare(List<BoardingHouse> hs) {
+        if (binding == null || hs == null || hs.size() < 2) return;
+        FloatingBofoView f = binding.bofoFab;
+        float cx = f.getLeft() + f.getTranslationX() + f.getWidth() / 2f;
+        float cy = f.getTop() + f.getTranslationY() + f.getHeight() / 2f;
+        if (!binding.bofoChat.isOpen()) { refreshDeviceLocation(); f.setChatOpen(true); closeBofo.setEnabled(true); }
+        binding.bofoChat.openCompare(cx, cy, hs);
     }
 
     /** Tap on the floating button: it fades out and the chat card pops from where it was. */

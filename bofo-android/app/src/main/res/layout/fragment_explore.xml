@@ -163,6 +163,72 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
+        <!-- v2.0.82: quick filter chips under the "Near campus" chip (built in code, same filters as the sheet) -->
+        <HorizontalScrollView
+            android:id="@+id/map_chips"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:layout_marginTop="52dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/map_chips_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <!-- v2.0.82: compare tray, above the card strip. Long-press a pin or a card to add it. -->
+        <LinearLayout
+            android:id="@+id/compare_tray"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="136dp"
+            android:background="@drawable/bg_chip_on"
+            android:clickable="true"
+            android:elevation="8dp"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="2dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/compare_thumbs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+
+            <TextView
+                android:id="@+id/compare_label"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="8dp"
+                android:gravity="center_vertical"
+                android:textColor="@color/bofo_white"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/compare_clear"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/map_compare_clear_cd"
+                android:padding="13dp"
+                android:src="@drawable/ic_x_dark"
+                app:tint="@color/bofo_white" />
+        </LinearLayout>
+
         <com.bofo.finder.ui.CornerMaskView
             android:layout_width="match_parent"
             android:layout_height="match_parent"

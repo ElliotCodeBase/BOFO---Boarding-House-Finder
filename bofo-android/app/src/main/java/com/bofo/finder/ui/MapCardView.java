@@ -97,6 +97,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         default void placeSelected(@Nullable String id) { }
         /** v2.0.80: "Search this area" was tapped: the visible box (south, west, north, east). */
         default void searchArea(double south, double west, double north, double east) { }
+        /** v2.0.82: long-press on a pin or a strip card (Explore compare tray). */
+        default void placeLongPressed(String id) { }
     }
 
     private static final float PIN_ZOOM = 12.5f;
@@ -315,6 +317,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         m.getUiSettings().setLogoEnabled(false);
         m.getUiSettings().setAttributionEnabled(false);   // v2.0.76: MapLibre's own blue (i) is off; our own credit pill / (i) (setupAttribution) is the licence text
         m.addOnMapClickListener(this::onTap);
+        m.addOnMapLongClickListener(this::onLongTap);
         double[] saved = cameraKey == null ? null : SAVED_CAMERA.get(cameraKey);
         if (saved != null) m.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(saved[0], saved[1]), saved[2]));     // back where it was
         m.addOnCameraMoveStartedListener(reason -> { camMoving = true; if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) gestureMove = true; removeCallbacks(idleRebuild); if (radar != null) radar.setMoving(true); });
@@ -737,8 +740,11 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         pop.start();
     }
 
-    private boolean animationsOn() {
-        try { return android.provider.Settings.Global.getFloat(getContext().getContentResolver(), android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f; }
+    private boolean animationsOn() { return animationsEnabled(getContext()); }
+
+    /** The phone's "animations off" setting (also used by the Explore compare tray). */
+    static boolean animationsEnabled(android.content.Context c) {
+        try { return android.provider.Settings.Global.getFloat(c.getContentResolver(), android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f; }
         catch (Exception e) { return true; }
     }
 
@@ -1253,6 +1259,30 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private PagerSnapHelper stripSnap;
     private long stripLockUntil;
     private String stripSig = "";
+    private final Set<String> compareIds = new HashSet<>();
+    private int stripStroke0 = -1;
+
+    /** v2.0.82: houses in the compare tray get a coloured outline on their strip card. */
+    public void setCompareIds(Set<String> ids) {
+        compareIds.clear();
+        if (ids != null) compareIds.addAll(ids);
+        if (stripAdapter != null && !stripItems.isEmpty()) stripAdapter.notifyItemRangeChanged(0, stripItems.size());
+    }
+
+    /** v2.0.82: the strip dips and comes back (180 ms) when a quick chip changed the houses. The pins just swap: no layer is animated. */
+    public void softFade() {
+        if (!stripOn || !animationsOn() || b.strip.getVisibility() != View.VISIBLE) return;
+        b.strip.animate().cancel();
+        b.strip.setAlpha(.35f);
+        b.strip.animate().alpha(1f).setDuration(220).setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+    }
+
+    private void popCard(View v) {
+        if (!animationsOn()) return;
+        v.animate().cancel();
+        v.animate().scaleX(.95f).scaleY(.95f).setDuration(90).setInterpolator(new android.view.animation.DecelerateInterpolator())
+                .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(220).setInterpolator(new android.view.animation.OvershootInterpolator(2f)).start()).start();
+    }
 
     /** Explore only: a horizontal strip of house cards (the houses in view, nearest the map centre first, at most 20) replaces the single peek card. */
     public void setStripEnabled(boolean on) {
@@ -1371,6 +1401,14 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             });
             v.stripPhoto.setClipToOutline(true);
             final VH h = new VH(v);
+            if (stripStroke0 < 0) stripStroke0 = v.getRoot().getStrokeWidth();
+            v.getRoot().setOnLongClickListener(x -> {
+                int pos = h.getBindingAdapterPosition();
+                if (pos < 0 || pos >= stripItems.size() || listener == null) return false;
+                popCard(v.getRoot());
+                listener.placeLongPressed(stripItems.get(pos).id());
+                return true;
+            });
             v.stripOpen.setOnClickListener(x -> {
                 int pos = h.getBindingAdapterPosition();
                 if (pos >= 0 && pos < stripItems.size() && listener != null) listener.openPlace(stripItems.get(pos).id());
@@ -1380,6 +1418,10 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
 
         @Override public void onBindViewHolder(@NonNull VH h, int pos) {
             fillCard(stripItems.get(pos), h.v.stripName, h.v.stripPrice, h.v.stripInfo, h.v.stripPhoto);
+            boolean inCompare = compareIds.contains(stripItems.get(pos).id());
+            com.google.android.material.card.MaterialCardView card = h.v.getRoot();
+            card.setStrokeWidth(inCompare ? Math.round(2 * getResources().getDisplayMetrics().density) : Math.max(0, stripStroke0));
+            card.setStrokeColor(inCompare ? 0xFF5B3BF0 : 0xFFE7E2FB);
         }
 
         @Override public int getItemCount() { return stripItems.size(); }
@@ -1471,6 +1513,27 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     }
 
     // ---- taps --------------------------------------------------------------------------------------------------
+
+    /** v2.0.82: id of the house pin under this point (not clusters or campus dots), or null. */
+    @Nullable private String placeIdAt(@NonNull LatLng point) {
+        if (map == null) return null;
+        PointF pt = map.getProjection().toScreenLocation(point);
+        float d = getResources().getDisplayMetrics().density;
+        RectF box = new RectF(pt.x - 30 * d, pt.y - 56 * d, pt.x + 30 * d, pt.y + 14 * d);
+        for (Feature f : map.queryRenderedFeatures(box, "places", "places-dots")) {
+            String kind = f.getStringProperty("kind"), id = f.getStringProperty("id");
+            if (id != null && !"cluster".equals(kind) && !"college".equals(kind)) return id;
+        }
+        return null;
+    }
+
+    private boolean onLongTap(@NonNull LatLng point) {
+        if (map == null || !tapsEnabled || listener == null) return false;
+        String id = placeIdAt(point);
+        if (id == null) return false;
+        listener.placeLongPressed(id);
+        return true;
+    }
 
     private boolean onTap(@NonNull LatLng point) {
         if (map == null || !tapsEnabled) return false;

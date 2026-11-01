@@ -236,6 +236,29 @@ public final class BofoIntentLocal {
         return new Compare(ids(rs), rows);
     }
 
+    /** v2.0.82: the compare table for houses picked on the Explore map. Built here, on the phone: it works without the chat server. At most 4 houses. */
+    public static BofoAnswer compareAnswer(List<BoardingHouse> hs, Double lat, Double lng) {
+        List<BoardingHouse> pick = new ArrayList<>(hs.subList(0, Math.min(4, hs.size())));
+        List<Result> rs = results(pick, lat, lng);
+        Compare c = compare(rs);
+        List<Row> rows = new ArrayList<>(c.rows());
+        List<String> counts = new ArrayList<>();
+        int best = -1, top = -1, nz = 0; boolean same = true;
+        for (int i = 0; i < pick.size(); i++) {
+            BoardingHouse b = pick.get(i);
+            int n = Math.max(new java.util.HashSet<>(b.amenities()).size(), (b.water() ? 1 : 0) + (b.electricity() ? 1 : 0) + (b.wifi() ? 1 : 0));
+            counts.add(String.valueOf(n));
+            if (n > 0) nz++;
+            if (i > 0 && n != Integer.parseInt(counts.get(0))) same = false;
+            if (n > top) { top = n; best = i; }
+        }
+        if (nz > 0) rows.add(new Row("Amenities", counts, same ? -1 : best));
+        List<Action> acts = new ArrayList<>();
+        acts.add(new Action("show_on_map", null, ids(rs)));
+        String reply = "Here's the side by side. Cheapest: " + cheapest(rs).name() + ".";
+        return new BofoAnswer(reply, "compare", rs, new Compare(c.ids(), rows), acts, null, new ArrayList<>(), false);
+    }
+
     private interface Txt { String of(Result r); }
     private interface Val { Double of(Result r); }
 
