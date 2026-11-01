@@ -1,3 +1,7 @@
+# v2.0.114 - Android: livelier BOFO chat + new thinking animation
+- BOFO now blinks and breathes in the chat and on the floating button.
+- Thinking: raised eyebrow, drifting eyes, a clear thought bubble with three dots lighting up, and a bouncing-dots typing bubble instead of the text dots.
+
 # v2.0.113 - Android: livelier loading mascot
 - Loading mascot leans into each jump, tucks its feet, looks where it jumps, blinks when it lands, smiles wider in the air and kicks up dust.
 

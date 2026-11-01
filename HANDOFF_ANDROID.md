@@ -1,3 +1,8 @@
+# Handoff (Android) - v2.0.114 Chat mascot alive + new thinking animation
+- **PR title:** `v2.0.114 - Android: livelier chat mascot and new thinking animation`
+- `BofoMascot`: blink every 3.7 s (standing + thinking), breathing squash in standing / thinking, always redraws; THINKING pose gets a raised-eyebrow wiggle, mouth drifting with the gaze and a new `thoughtBubble` (white cloud, `mascot_outline` ring, 3 dots lighting in turn). New `TypingDotsDrawable` (3 bouncing dots, bofo_primary) replaces the text "● ○ ○" in `BofoChatOverlay.showTyping` (`dotsTick` / `DOTS` now unused). Not built or run by Claude.
+
+---
 # Handoff (Android) - v2.0.113 Livelier loading mascot
 - **PR title:** `v2.0.113 - Android: loading mascot animation is more lifelike`
 - `SplashStageView`: new tracks `lean`, `feetUp`, `eyeX/eyeY/eyeSy`, `smile` (per jump in `addJump`) + `dust` puffs at take-off / landing. Same 2400 ms loop, same hat pop. Body leans into the jump, feet tuck and spread, eyes squint on the crouch, look up / sideways in the air, blink on impact; smile grows at the apex. Not built or run by Claude.

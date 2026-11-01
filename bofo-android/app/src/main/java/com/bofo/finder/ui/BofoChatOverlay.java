@@ -502,15 +502,16 @@ public class BofoChatOverlay extends FrameLayout {
 
     private void showTyping() {
         ItemMsgTheirsBinding m = ItemMsgTheirsBinding.inflate(LayoutInflater.from(getContext()), b.chatBox, false);
-        m.body.setText(DOTS[0]);
-        m.body.setTextColor(getContext().getColor(R.color.bofo_primary));
-        m.body.setTextSize(13);
+        m.body.setText("");
+        TypingDotsDrawable dots = new TypingDotsDrawable(getContext().getColor(R.color.bofo_primary), getResources().getDisplayMetrics().density);
+        dots.setBounds(0, 0, dots.getIntrinsicWidth(), dots.getIntrinsicHeight());
+        m.body.setCompoundDrawablesRelative(dots, null, null, null);
         m.body.setContentDescription(getContext().getString(R.string.bofo_typing));
         m.meta.setVisibility(View.GONE);
-        typingBody = m.body; dotStep = 0;
-        removeCallbacks(dotsTick); postDelayed(dotsTick, 380);
+        typingBody = null;                                                       // the dots animate themselves
         typing = m.getRoot();
         b.chatBox.addView(typing);
+        dots.start();
         b.scroll.post(() -> b.scroll.fullScroll(View.FOCUS_DOWN));
     }
 

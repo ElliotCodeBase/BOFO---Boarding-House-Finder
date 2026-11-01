@@ -145,6 +145,17 @@ public class BofoMascot extends View {
         c.restore();
     }
 
+    /** v2.0.114: white cloud with a lavender outline (visible on white too); three dots light up one after the other. */
+    private void thoughtBubble(Canvas c, float a, double pt) {
+        dot(c, 166, 44, 6.2f, OUTLINE, a); dot(c, 172, 36, 7.7f, OUTLINE, a); rr(c, 147.8f, -0.2f, 50.4f, 32.4f, 16.2f, OUTLINE, a);
+        dot(c, 166, 44, 4, PURPLE, a); dot(c, 172, 36, 5.5f, PURPLE, a); rr(c, 150, 2, 46, 28, 14, PURPLE, a);
+        double m = (pt % 1200) / 400.0;
+        for (int i = 0; i < 3; i++) {
+            float v = (float) Math.max(0, 1 - Math.abs(m - i));
+            dot(c, 161 + 12 * i, 16, 3f + 1.8f * v, TINT, a * (0.35f + 0.65f * v));
+        }
+    }
+
     @Override
     protected void onDraw(Canvas c) {
         final float side = Math.min(getWidth(), getHeight());
@@ -173,6 +184,11 @@ public class BofoMascot extends View {
         }
         final double pt = now - poseStart;
         final boolean low = pose == Idle.SITTING || pose == Idle.SLEEPING;
+        if (pose == null || pose == Idle.THINKING) {                              // v2.0.114: breathing (a slow, tiny squash and stretch)
+            float br = (float) Math.sin(now / 2600.0 * Math.PI * 2);
+            poseY *= 1f + 0.012f * br; poseX *= 1f - 0.006f * br;
+        }
+        final float blinkS = (float) kf(now % 3700, new double[]{0, 3480, 3540, 3620, 3700}, new double[]{1, 1, 0.1, 1, 1}, new int[]{0, 0, 0, 0, 0});   // blink every 3.7 s
 
         // ---- pose parameters (all in 200-grid units, degrees) ----
         float tilt = 0, torsoDy = 0, torsoRot = 0, hatRot = 0, rotL = 0, rotR = 0;
@@ -188,7 +204,7 @@ public class BofoMascot extends View {
                 int[] es = {1, 1, 1, 1, 1};
                 eyeX = (float) kf(m, ts, new double[]{0, -7, 8, 0, 0}, es);
                 eyeY = (float) kf(m, ts, new double[]{0, -8, -8, 0, 0}, es);
-                thoughtA = (float) pingpong(pt, 900, 1.0, 0.35, 1);
+                thoughtA = (float) pingpong(pt, 900, 1.0, 0.85, 1);
                 thoughtDy = (float) pingpong(pt, 900, 0, -6, 1);
                 handDy = (float) pingpong(pt, 380, 0, -4, 1);
                 footRy = (float) pingpong(pt, 520, 0, -5, 1);
@@ -264,9 +280,12 @@ public class BofoMascot extends View {
             c.save(); c.scale(mouthSx, mouthSy, 100, 127.5f); rr(c, 94, 124, 12, 7, 3.5f, INK); c.restore();
         } else if (expr == Expression.THINKING) {
             c.save(); c.translate(eyeX, eyeY);
-            rr(c, 80, 90, 14, 18, 7, INK); rr(c, 110, 90, 14, 18, 7, INK);
+            c.save(); c.scale(1, blinkS, 87, 99); rr(c, 80, 90, 14, 18, 7, INK); c.restore();
+            c.save(); c.scale(1, blinkS, 117, 99); rr(c, 110, 90, 14, 18, 7, INK); c.restore();
             c.restore();
-            rr(c, 88, 119, 24, 5, 2.5f, INK);
+            float brow = (float) pingpong(pt, 700, 0, -4, 1);                     // one eyebrow goes up and down: "hmm"
+            arc(c, 108, 86 + brow, 117, 82 + brow, 126, 85 + brow, INK, 4);
+            rr(c, 88 + eyeX * 0.6f, 119, 24, 5, 2.5f, INK);                         // the mouth drifts with the gaze
         } else if (expr == Expression.WAVING) {
             arc(c, 72, 104, 81, 88, 90, 104, INK, 5);
             arc(c, 110, 104, 119, 88, 128, 104, INK, 5);
@@ -276,8 +295,8 @@ public class BofoMascot extends View {
             c.drawPath(path, paint);                                              // open smile
         } else {
             c.save(); c.translate(eyeX, eyeY);
-            c.save(); c.scale(1, eyeSy, 83, 103); rr(c, 76, 92, 14, 22, 7, INK); c.restore();
-            c.save(); c.scale(1, eyeSy, 117, 103); rr(c, 110, 92, 14, 22, 7, INK); c.restore();
+            c.save(); c.scale(1, eyeSy * blinkS, 83, 103); rr(c, 76, 92, 14, 22, 7, INK); c.restore();
+            c.save(); c.scale(1, eyeSy * blinkS, 117, 103); rr(c, 110, 92, 14, 22, 7, INK); c.restore();
             c.restore();
             arc(c, 86, 122, 100, 134, 114, 122, INK, 5);
         }
@@ -303,7 +322,7 @@ public class BofoMascot extends View {
         }
         if (expr == Expression.THINKING) {                                        // thought bubble
             c.save(); c.translate(0, thoughtDy);
-            dot(c, 168, 40, 5, AMBER, thoughtA); dot(c, 180, 26, 7, AMBER, thoughtA); rr(c, 166, 2, 30, 20, 10, AMBER, thoughtA);
+            thoughtBubble(c, thoughtA, pt);
             c.restore();
         }
 
@@ -332,6 +351,6 @@ public class BofoMascot extends View {
         c.restore();
 
         if (again) { Runnable n = pending; pending = null; if (n != null) swap(n); }
-        if (pose != null || hopStart >= 0 || expr == Expression.WAVING) postInvalidateOnAnimation();
+        postInvalidateOnAnimation();                                              // always: blink and breathing run in every pose
     }
 }
