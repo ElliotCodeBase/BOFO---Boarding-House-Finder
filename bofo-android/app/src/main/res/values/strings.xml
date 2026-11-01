@@ -108,7 +108,7 @@
     <string name="settings_use_location_desc">Centre the map and sort places by distance from where I am.</string>
     <string name="settings_switch_owner">Switch to an owner account</string>
     <string name="settings_switch_student">Switch to a student account</string>
-    <string name="settings_switch_done">Switched. Owner tools arrive in a later stage.</string>
+    <string name="settings_switch_done">Account switched.</string>
     <string name="settings_terms">Terms of Use</string>
     <string name="settings_privacy">Privacy Policy</string>
     <string name="settings_owner_agreement">Owner Agreement</string>

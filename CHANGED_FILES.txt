@@ -1,24 +1,6 @@
-new      supabase/migrations/014_ai_chat_log.sql
-new      supabase/migrations/014_ai_chat_log_REMOVE.sql
-new      REMOVE_AI_CHATS.md
-new      bofo-android/app/src/main/java/com/bofo/finder/ui/AiChatLogFragment.java
-new      bofo-android/app/src/main/java/com/bofo/finder/ui/AiChatLogAdapter.java
-new      bofo-android/app/src/main/java/com/bofo/finder/service/AiChatLogService.java
-new      bofo-android/app/src/main/java/com/bofo/finder/util/AiChatRules.java
-new      bofo-android/app/src/test/java/com/bofo/finder/util/AiChatRulesTest.java
-new      bofo-android/app/src/main/res/layout/fragment_ai_chat_log.xml
-new      bofo-android/app/src/main/res/layout/item_ai_chat.xml
-new      bofo-android/app/src/main/res/layout/item_ai_chat_msg.xml
-new      bofo-android/app/src/main/res/layout/item_ai_chat_skeleton.xml
-new      bofo-android/app/src/main/res/values/strings_ai_chats.xml
-changed  supabase/functions/bofo-chat/index.ts
-changed  bofo-android/app/src/main/res/layout/fragment_profile.xml
-changed  bofo-android/app/src/main/res/navigation/nav_graph.xml
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ProfileFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/LegalText.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/BofoChatOverlay.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/SettingsFragment.java
+changed  bofo-android/app/src/main/res/values/strings.xml
 changed  bofo-android/app/build.gradle
-changed  HANDOFF_ANDROID.md
 changed  CHANGES_ANDROID.md
-changed  CHANGED_FILES.txt
+changed  HANDOFF_ANDROID.md
 (no file to DELETE in this version)

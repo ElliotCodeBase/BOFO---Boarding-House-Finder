@@ -96,9 +96,12 @@ public class SettingsFragment extends Fragment {
             return Boolean.TRUE;
         }, ok -> {
             Cache.clear();
+            // v2.0.92: the tabs are built from AuthRouter.role when the shell opens, so set it and reopen the shell now (no re-login needed)
+            AuthRouter.role = target;
             if (b == null) return;
             role = target; applyRole();
-            message(getString(R.string.settings_switch_done));
+            android.widget.Toast.makeText(requireContext().getApplicationContext(), R.string.settings_switch_done, android.widget.Toast.LENGTH_SHORT).show();
+            AuthRouter.go(nav(), R.id.action_global_shell);
         }, e -> message(ErrorText.full("Could not switch the account", e)));
     }
 
