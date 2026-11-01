@@ -444,10 +444,10 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 PropertyFactory.iconIgnorePlacement(true),
                 PropertyFactory.iconSize(Expression.switchCase(sel, Expression.literal(PIN_SEL_SCALE), Expression.literal(1f))))
                 .withFilter(Expression.eq(Expression.get("kind"), Expression.literal("pin"))));
-        for (String[] l : new String[][]{{"place-labels", "labels-src"}, {"college-labels", "college-labels-src"}})
+        for (String[] l : new String[][]{{"college-labels", "college-labels-src"}, {"place-labels", "labels-src"}})       // v2.0.90: house names sit above college names and block them (they used to overlap)
             st.addLayer(new SymbolLayer(l[0], l[1]).withProperties(
                     PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAnchor(Property.ICON_ANCHOR_TOP),
-                    PropertyFactory.iconOffset(new Float[]{0f, 2f}), PropertyFactory.iconAllowOverlap(!l[0].equals("college-labels")), PropertyFactory.iconIgnorePlacement(!l[0].equals("college-labels")), PropertyFactory.iconPadding(l[0].equals("college-labels") ? 3f : 0f)));
+                    PropertyFactory.iconOffset(new Float[]{0f, 2f}), PropertyFactory.iconAllowOverlap(!l[0].equals("college-labels")), PropertyFactory.iconIgnorePlacement(false), PropertyFactory.iconPadding(l[0].equals("college-labels") ? 6f : 2f)));
         st.addLayer(new SymbolLayer("route-label", "routelabel-src").withProperties(
                 PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
                 PropertyFactory.iconOffset(new Float[]{0f, -12f}), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true)));
@@ -488,7 +488,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
      *  v2.0.81: a saved house gets a small red heart on the top-right corner, a verified owner a small check badge on the top-left corner (v2.0.88: it replaced the green "New" dot and the check inside the pill); v2.0.89: an owner who is not verified yet gets a grey "!" badge there. */
     private Bitmap pricePin(String text, boolean selected, boolean verified, boolean featured, boolean saved, boolean fresh, boolean seen) {
         float d = getResources().getDisplayMetrics().density;
-        Paint t = textPaint(selected ? 0xFFFFFFFF : seen ? 0xFF8A85A6 : 0xFF17142A, 12, true);       // v2.0.86: an opened place is a solid muted pill, not a see-through one
+        Paint t = textPaint(selected ? 0xFFFFFFFF : seen ? 0xFF4A4568 : 0xFF17142A, 12, true);       // v2.0.86: an opened place is a solid muted pill, not a see-through one
         float badge = 14 * d, gap = 4 * d, padX = 9 * d;
         float tw = t.measureText(text);
         float w = padX * 2 + tw + (featured ? badge + gap : 0);
@@ -498,7 +498,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         Canvas c = new Canvas(bmp);
         RectF body = new RectF(mx, mt, bw - mx, mt + bodyH);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        int fill = selected ? DARK_PURPLE : seen ? 0xFFEFEDF8 : 0xFFFFFFFF, edge = selected ? 0xFFFFFFFF : seen ? 0xFFD3CEEA : 0xFFC9C4E6;      // v2.0.90: solid edge (it was 25 % opaque, so the pin looked see-through on the map)
+        int fill = selected ? DARK_PURPLE : 0xFFFFFFFF, edge = selected ? 0xFFFFFFFF : seen ? 0xFF8F89B8 : 0xFFC9C4E6;      // v2.0.90: solid edge (it was 25 % opaque, so the pin looked see-through on the map)
         Path tailPath = new Path();
         tailPath.moveTo(bw / 2f - 5 * d, body.bottom - d);
         tailPath.lineTo(bw / 2f, body.bottom + tail);
@@ -538,7 +538,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         {                                                                    // v2.0.90: shield badge, top-left corner: green + check = verified owner, grey + "!" = not verified yet
             float dx = body.left + 6 * d, dy = body.top + 1 * d, rr = 8.5f * d;
             shield(c, p, dx, dy, rr + 1.6f * d, 0xFFFFFFFF);                 // white ring
-            shield(c, p, dx, dy, rr, verified ? 0xFF1E8E5E : 0xFF9A97AD);
+            shield(c, p, dx, dy, rr, verified ? 0xFF1E8E5E : 0xFF8F8CA3);
             p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(1.8f * d); p.setStrokeCap(Paint.Cap.ROUND); p.setStrokeJoin(Paint.Join.ROUND); p.setColor(0xFFFFFFFF);
             if (verified) {
                 Path ck = new Path();
