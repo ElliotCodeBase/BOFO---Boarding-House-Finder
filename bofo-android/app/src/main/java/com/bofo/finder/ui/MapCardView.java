@@ -1015,7 +1015,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 boolean isSel = p.id().equals(selectedId);
                 if (feats.length() > 0) feats.append(',');
                 feats.append(feat(pos[i][0], pos[i][1], "\"kind\":\"pin\",\"id\":\"" + esc(p.id()) + "\",\"icon\":\"" + esc(pinKey[i]) + "\",\"sel\":" + (isSel ? 1 : 0) + ",\"viewed\":" + (!isSel && viewed.contains(p.id()) ? 1 : 0)));
-                float zNow = map.getCameraPosition().zoom;      // v2.0.90 less clutter: the chosen house always shows its full name; the others show a short name from zoom 13.5 and the full name from zoom 15
+                double zNow = map.getCameraPosition().zoom;      // v2.0.90 less clutter: the chosen house always shows its full name; the others show a short name from zoom 13.5 and the full name from zoom 15
                 String text = isSel ? clip(p.name(), 60) : zNow >= 15f ? clip(p.name(), 40) : zNow >= 13.5f ? clip(p.name(), 16) : "";
                 if (text.isEmpty()) continue;
                 String key = "lb|" + text;
