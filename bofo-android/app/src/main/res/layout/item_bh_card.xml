@@ -69,7 +69,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="10dp">
+            android:paddingHorizontal="12dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="12dp">
 
             <TextView
                 android:id="@+id/name"
@@ -77,9 +79,9 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
+                android:fontFamily="sans-serif-medium"
                 android:textColor="@color/bofo_text"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textSize="15sp" />
 
             <!-- v2.0.90: green shield + "Verified" = verified owner, grey shield + "Not verified" = not yet -->
             <LinearLayout
@@ -109,10 +111,8 @@
                 android:id="@+id/price"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="@color/bofo_primary"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="4dp"
+                android:textAppearance="@style/Text.Bofo.Price" />
 
             <LinearLayout
                 android:layout_width="match_parent"

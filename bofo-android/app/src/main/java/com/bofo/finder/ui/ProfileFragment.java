@@ -73,7 +73,7 @@ public class ProfileFragment extends Fragment {
                     : p.role() == com.bofo.finder.model.Role.ADMIN ? R.string.account_role_admin : R.string.account_role_student);
             AiChatLogFragment.attachEntry(this, binding.aiChatsOpen, p.role());      // v2.0.91 AI Chats monitor (admin only): REMOVE this line with the feature
             if (p.photoUrl() != null && !p.photoUrl().isEmpty())
-                Glide.with(this).load(p.photoUrl()).circleCrop().placeholder(R.drawable.mascot_happy).into(binding.avatar);
+                Glide.with(this).load(p.photoUrl()).centerCrop().placeholder(R.drawable.mascot_happy).into(binding.avatar);
         }, e -> { if (binding != null && my == token) retry(attempt); });
     }
 

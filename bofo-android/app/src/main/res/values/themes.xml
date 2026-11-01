@@ -32,10 +32,10 @@
     </style>
     <style name="Shape.Bofo.Medium" parent="">
         <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">16dp</item>
+        <item name="cornerSize">12dp</item>
     </style>
     <style name="Shape.Bofo.Large" parent="">
         <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">24dp</item>
+        <item name="cornerSize">20dp</item>
     </style>
 </resources>

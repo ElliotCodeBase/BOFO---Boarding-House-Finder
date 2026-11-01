@@ -57,7 +57,7 @@ public class DockBarView extends ViewGroup {
         void onAction(int id);
     }
 
-    private static final int IDLE = 0xFFAAA3DC, ACTIVE = 0xFF5B3BF0, CREATE_LABEL = 0xFF2563EB;
+    private static final int IDLE = 0xFF9B98AA, ACTIVE = 0xFF1A1530, CREATE_LABEL = 0xFF1A1530;
     private static final ArgbEvaluator ARGB = new ArgbEvaluator();
     private static final PathInterpolator LEAD = new PathInterpolator(0.2f, 0.8f, 0.2f, 1f);
     private static final PathInterpolator TRAIL = new PathInterpolator(0.4f, 0f, 0.2f, 1f);
@@ -93,11 +93,11 @@ public class DockBarView extends ViewGroup {
 
         bar = new View(context);
         bar.setBackgroundResource(R.drawable.bg_dock_bar);
-        bar.setElevation(10 * dp);
+        bar.setElevation(6 * dp);
         bar.setOutlineProvider(ViewOutlineProvider.BACKGROUND);
         if (Build.VERSION.SDK_INT >= 28) {               // soft lavender glow, like the JavaFX bar
-            bar.setOutlineSpotShadowColor(0x995B3BF0);
-            bar.setOutlineAmbientShadowColor(0x205B3BF0);
+            bar.setOutlineSpotShadowColor(0x66000000);
+            bar.setOutlineAmbientShadowColor(0x14000000);
         }
         addView(bar);
 

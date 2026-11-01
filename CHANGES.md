@@ -1,3 +1,6 @@
+# v2.0.95 - Android UI refresh
+- Profile redesigned (flat ID panel, key-tag role, hairline rows), ink + amber dock bar, price-tag type on listing cards, no purple gradients, sentence-case section labels, 12 / 20 dp shapes, neutral buttons.
+
 # v1.20.0 - Login inside the app + phone keyboard
 - New sign-in screen that never opens a browser tab: type your email, get a 6-digit code, type it in the app (like the Claude app). Also email + password (sign in / create account) and Google.
 - Friendly error messages (wrong password, expired code, too many tries, no internet). Resend code with a 45 s timer.

@@ -7,17 +7,17 @@
     android:viewportHeight="40">
     <path
         android:pathData="M12,0 H28 A12,12 0 0,1 40,12 V28 A12,12 0 0,1 28,40 H12 A12,12 0 0,1 0,28 V12 A12,12 0 0,1 12,0 Z"
-        android:fillColor="@color/bofo_primary_tint" />
+        android:fillColor="@color/bofo_tile" />
     <group android:translateX="8" android:translateY="8">
         <path
             android:pathData="M2,12 C5,6.5 8.5,5 12,5 s7,1.5 10,7 c-3,5.5 -6.5,7 -10,7 s-7,-1.5 -10,-7 Z"
-            android:strokeColor="@color/bofo_primary"
+            android:strokeColor="@color/bofo_ink"
             android:strokeWidth="1.8"
             android:strokeLineCap="round"
             android:strokeLineJoin="round" />
         <path
             android:pathData="M12,9.5 a2.5,2.5 0 1,0 0,5 a2.5,2.5 0 1,0 0,-5"
-            android:strokeColor="@color/bofo_primary"
+            android:strokeColor="@color/bofo_ink"
             android:strokeWidth="1.8"
             android:strokeLineCap="round"
             android:strokeLineJoin="round" />

@@ -1,3 +1,6 @@
+# v2.0.95 - Android UI refresh
+- Profile redesigned (flat ID panel, key-tag role, hairline rows), ink + amber dock bar, price-tag type on listing cards, no purple gradients, sentence-case section labels, 12 / 20 dp shapes, neutral buttons.
+
 # v2.0.94 - Android: map group labels are not capsules any more
 - **Changed:** the purple labels on the zoomed-out map ("2 · ₱10–₱10k", "4 · ₱1.3k–₱2.05k") are now rounded-square tags (8 dp corners, same white edge, same text) instead of full-round capsules, so they no longer look like an AI chip. Single-number bubbles stay round; price pins and the route chip are unchanged.
 - Changed: `MapCardView.java` (`bubble`), `build.gradle` (2.0.94 / 294). No Supabase change. Not built or run by Claude.

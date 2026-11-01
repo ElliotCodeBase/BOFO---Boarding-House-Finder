@@ -1,3 +1,11 @@
+# Handoff (Android) - v2.0.95 UI refresh (less generic)
+- **PR title:** `v2.0.95 - Android: UI refresh (flat ID-style Profile, key-tag role, ink/amber dock, price-tag type, no purple gradients or ALL-CAPS labels)`
+- Colours (`colors.xml`): lavender wash removed (`bofo_bg` #F7F7F9, `bofo_border` #E9E8EE, icon tile = neutral `bofo_tile`), new `bofo_amber_wash`, `bofo_card_ink`, `bofo_idle`. Shapes: 8 / 12 / 20 dp (was 8 / 16 / 24). Buttons: 14 dp corners, not pills; Tint button is neutral.
+- Type: one entry per face in `styles.xml`. `Text.Bofo.Title` / `Text.Bofo.Price` use `sans-serif-condensed`, `Text.Bofo.Label` is sentence case (replaces tracked ALL-CAPS labels in Profile and Settings). To use a real font later: add `res/font/<name>.ttf` and replace the `fontFamily` values there.
+- Profile (`fragment_profile.xml`): left-aligned ID panel (flat colour, `ShapeableImageView` avatar with amber frame, amber key-tag role chip), flat hairline rows, no cards. Ids unchanged; `ProfileFragment` only swaps `circleCrop()` for `centerCrop()`. Settings: labels only.
+- Dock bar: ink active icon / neutral idle, amber wash behind the active tab, neutral shadow (was violet glow), 20 dp corners. Card (`item_bh_card.xml`): price in `Text.Bofo.Price` (ink, not violet). Gradients removed from `bg_profile_hero`, `bg_dash_hero`, `bg_avatar_ring`.
+- Not done: map pins and `RentCardView` (drawn in code), Login, Explore, Chat, Owner screens still use the old shapes and the lavender tint where they hard-code it. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.94 Group labels: rounded square
 - **PR title:** `v2.0.94 - Android: map group price labels are rounded squares, not capsules`
 - `MapCardView.bubble(count, from)` price variant: corner radius `8 * d` (outer) / `8 * d - 2.5 * d` (inner) instead of `h / 2`. Bitmap size and anchor unchanged. Price pins (`pricePin`) and route chips (still `h / 2`) were NOT changed. Not built or run by Claude.
