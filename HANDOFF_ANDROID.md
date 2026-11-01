@@ -1,9 +1,13 @@
+# Handoff (Android) - v2.0.88 Verified badge on map pins
+- **PR title:** `v2.0.88 - Android: verified-owner badge replaces the green "New" dot on map pins`
+- `MapCardView.pricePin`: the green "New" dot (top-left) is gone; a verified owner now gets a blue check badge with a white ring on that corner, and the old check inside the pill is removed (the pill is narrower). The `fresh` argument is still passed but unused; "New" still shows as the star text on cards. No Supabase change. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.87 Who can stay (female only / male only / both)
 - **PR title:** `v2.0.87 - Android: owners choose who can stay (female only, male only, both); shown on the card and filterable`
 - **Supabase:** run `supabase/migrations/012_gender_policy.sql` (adds `boarding_houses.gender_policy` = any / female / male, default any; copies the old "Female only" / "Male only" amenities into it and removes those two amenities; recreates `bh_cards` with `gender_policy`).
 - Owner: `ListingFormFragment` page 2 has "Who can stay here?" (`gender_group`) -> `Draft.gender` / `syncGender` (same pattern as rules: written on edit only if the place came back with the column; on create only sent when not "any").
 - Student: `item_bh_card.xml` `gender` badge (bottom-start of the photo, `BhAdapter`), a chip on the place page (`BhDetailFragment`), and a text on the map strip card (`MapCardView.fillCard`). Hidden when the database has no column yet (`GenderRules.normalize` -> "").
-- Filter: `BrowseState.gender` ("" / female / male / any = both), `FilterSheet` "Who can stay" segments (All / Female / Male / Both), map chips "Female only" and "Male only" (same value), server filter `gender_policy=eq.x` in `BhService.list`, `GenderRules.keep` on the phone and in `OfflineExplore.apply` (new overload; the old one still works). `BhService.cards` retries without the column if it is missing (`genderCol`).
+- Filter: `BrowseState.gender` ("" / female / male / any = both), `FilterSheet` "Who can stay" segments (All / Female / Male), map chips "Female only" and "Male only" (same value), server filter `gender_policy=eq.x` in `BhService.list`, `GenderRules.keep` on the phone and in `OfflineExplore.apply` (new overload; the old one still works). `BhService.cards` retries without the column if it is missing (`genderCol`).
 - Risky: filter is an exact match (Female = female-only places, Both = open places); a girl who wants every place she may stay in should pick "Female" and "Both" one after the other (one choice at a time). The sign-up "Sex" field is unchanged and is not used for filtering. Not built or run by Claude.
 ---
 # Handoff (Android) - v2.0.86 Solid opened pins

@@ -1,5 +1,9 @@
+# v2.0.88 - Android: verified badge on map pins
+- **Changed:** the green dot (house with no reviews yet) is removed from the map price pins. Houses of verified owners now show a check badge on the pin's top-left corner instead; the check that sat inside the pill moved there.
+- Files: `MapCardView.java`, `build.gradle` (2.0.88 / 288).
+
 # v2.0.87 - Android: who can stay (female only / male only / both)
-- **New:** owners pick "Who can stay here?" (Both / Female only / Male only) on the listing form. Students see it as a badge on every house card, as a chip on the place page and in the map card, and can filter by it: new "Who can stay" row in the filter sheet (All / Female / Male / Both) and the map chips "Female only" and "Male only".
+- **New:** owners pick "Who can stay here?" (Both / Female only / Male only) on the listing form. Students see it as a badge on every house card, as a chip on the place page and in the map card, and can filter by it: new "Who can stay" row in the filter sheet (All / Female / Male) and the map chips "Female only" and "Male only".
 - **Supabase:** `012_gender_policy.sql` (column `gender_policy`, old "Female only" / "Male only" amenities copied into it, `bh_cards` view recreated). Before it is run the app still works: no badge, no gender filter result.
 - Files: `012_gender_policy.sql` (new), `GenderRules.java` (new), `BoardingHouse.java`, `BhService.java`, `BrowseState.java`, `OfflineExplore.java`, `ExploreFragment.java`, `FilterSheet.java`, `ListingFormFragment.java`, `BhAdapter.java`, `BhDetailFragment.java`, `MapCardView.java`, `item_bh_card.xml`, `sheet_filter.xml`, `fragment_listing_form.xml`, `bg_badge_gender.xml` (new), `strings_gender.xml` (new), `strings_map_filters.xml`, `build.gradle` (2.0.87 / 287).
 
