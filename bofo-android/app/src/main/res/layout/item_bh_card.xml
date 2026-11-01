@@ -100,13 +100,26 @@
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_shield_unverified" />
 
+                <!-- v2.0.99: the words next to the shield ("Not verified" / "Verified") -->
                 <TextView
                     android:id="@+id/verifiedText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:visibility="gone" />
+                    android:layout_marginStart="4dp"
+                    android:maxLines="1"
+                    android:textSize="11sp" />
             </LinearLayout>
+
+            <!-- v2.0.99: where it is (e.g. Daro, Dumaguete City) -->
+            <TextView
+                android:id="@+id/location"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/bofo_text_2"
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/price"

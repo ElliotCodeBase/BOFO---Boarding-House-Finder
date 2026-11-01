@@ -1,3 +1,9 @@
+# v2.0.100 - Android: card shows "Not verified" text + location
+- Listing card: words next to the shield, and the place (from the address) under the name.
+
+# v2.0.99 - Android: search bar keyboard + place search
+- Home search bar: the keyboard no longer closes itself; typing a place (Dumaguete, Bayawan...) shows a "Search" row. Explore says no boarding houses are available in that place when empty.
+
 # v2.0.98 - Android: reviews + card
 - Students can rate and review a place (edit / delete their own). Listing card redesigned.
 

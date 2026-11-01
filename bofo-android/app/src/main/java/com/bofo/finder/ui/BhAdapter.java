@@ -63,6 +63,9 @@ public final class BhAdapter extends ListAdapter<BoardingHouse, BhAdapter.VH> {
         BoardingHouse b = getItem(position);
         ItemBhCardBinding v = h.b;
         v.name.setText(b.name());
+        String where = ListRules.locationText(b.address());                    // v2.0.99: place under the name
+        v.location.setText(where);
+        v.location.setVisibility(where.isEmpty() ? android.view.View.GONE : android.view.View.VISIBLE);
         v.price.setText(Money.perMonth(b.price()));
         v.rating.setText(ListRules.ratingText(b.avgRating(), b.reviewCount()));
         v.distance.setText(showDistance ? Geo.fmt(b.distanceKm()) : "");

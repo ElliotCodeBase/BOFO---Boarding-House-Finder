@@ -1,3 +1,12 @@
+# Handoff (Android) - v2.0.100 Card: verified text + location
+- **PR title:** `v2.0.100 - Android: listing card shows Not verified text and the location under the name`
+- `item_bh_card.xml`: `verifiedText` visible (11sp) after the shield; new `location` line under the name. `ListRules.locationText(address)` = last two comma parts without "Philippines". Address is free text, so the card shows what the owner typed. Not built or run by Claude.
+---
+# Handoff (Android) - v2.0.99 Search bar keyboard + place search
+- **PR title:** `v2.0.99 - Android: Home search keeps the keyboard, place search (Dumaguete, Bayawan) with "no boarding houses available" message`
+- Cause: opening the keyboard (adjustResize) moved the AppBar a few px, `onOffsetChanged` -> `HomeSearchBar.closeOnScroll()` -> `dismiss(true)` hid the keyboard. Now ignored for 1.5 s after focus; keyboard also requested explicitly.
+- Home dropdown: typed text always gets a last row `Search "text"` -> `host.searchPlace` -> Explore (name/address ilike, already in `BhService`). Explore empty text = `emptyText()` (`explore_empty_place`). Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.98 Write a review + new listing card
 - **PR title:** `v2.0.98 - Android: students can review a place (stars + comment, edit, delete); calmer listing card`
 - **No Supabase change.** `reviews` table, RLS (`reviews_insert` students only, `reviews_update`, `reviews_delete` own), the rating trigger (`trg_reviews_agg`, updates the card rating) and `reviews_v` already existed; only the app had no screen. `BhService.upsertReview` was already there (one review per student per place: posting again edits it); added `BhService.deleteReview`.

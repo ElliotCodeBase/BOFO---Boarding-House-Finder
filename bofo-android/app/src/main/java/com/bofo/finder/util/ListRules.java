@@ -76,4 +76,17 @@ public final class ListRules {
         for (String v : values) if (v != null && !v.trim().isEmpty() && !"null".equals(v)) return v.trim();
         return "";
     }
+
+    /** v2.0.99: the place for a card from the free-text address: the last two parts ("Daro, Dumaguete City"), without "Philippines". "" when there is no address. */
+    public static String locationText(String address) {
+        if (address == null || address.isBlank()) return "";
+        java.util.List<String> parts = new java.util.ArrayList<>();
+        for (String p : address.split(",")) {
+            String t = p.trim();
+            if (!t.isEmpty() && !t.equalsIgnoreCase("philippines") && !t.equalsIgnoreCase("ph")) parts.add(t);
+        }
+        if (parts.isEmpty()) return "";
+        if (parts.size() == 1) return parts.get(0);
+        return parts.get(parts.size() - 2) + ", " + parts.get(parts.size() - 1);
+    }
 }
