@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.103 Home: Best rated only
+- **PR title:** `v2.0.103 - Android: Home shows Best rated only (New / Hot chips hidden)`
+- `HomeFragment`: `tab` starts at 2 (BEST), `chipNew` / `chipHot` are GONE. Explore is unchanged. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.102 Keyboard does not push the app
 - **PR title:** `v2.0.102 - Android: keyboard covers the page instead of pushing the app up (Home + Explore search)`
 - `MainActivity.holdStill(on, view)` sets `keepAppStill` (already used by BofoChatOverlay) and re-applies insets, so `mainRoot` bottom padding ignores the keyboard. Called from the Home and Explore search focus listeners; released when the view detaches. Other screens (chat boxes, forms) still lift above the keyboard. Not built or run by Claude.

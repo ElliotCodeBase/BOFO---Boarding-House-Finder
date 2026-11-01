@@ -1,3 +1,6 @@
+# v2.0.103 - Android: Home shows Best rated only
+- New and Hot chips removed from Home; the list and map always follow Best rated.
+
 # v2.0.102 - Android: keyboard no longer pushes the whole app
 - While a search bar (Home, Explore) has the keyboard, the keyboard slides over the page; the screen and bottom bar stay still.
 

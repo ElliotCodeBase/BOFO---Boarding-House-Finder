@@ -55,7 +55,7 @@ public class HomeFragment extends Fragment {
     private int token;
     private int lastChange = -1;
     private boolean viewShownBefore, keepCamera;     // v2.0.71: coming back from a place page the map stays where it was (no overview / fit jump)
-    private int tab;
+    private int tab = 2;                                  // v2.0.103: Home shows Best rated only (2 = BEST in TABS)
     private static final int BATCH = 15;
     private int shown = BATCH;
     private final LocationHelper loc = new LocationHelper(this);   // registers the permission launcher: must be created with the Fragment
@@ -92,6 +92,8 @@ public class HomeFragment extends Fragment {
         area = new ListArea(this, b.area, adapter, this::reload);
 
         // Step 7: chips New / Hot / Best rated (selected = ink fill) and the rent card
+        b.chipNew.setVisibility(View.GONE);                    // v2.0.103: New and Hot are gone: only Best rated, so the list and the map always follow it
+        b.chipHot.setVisibility(View.GONE);
         TextView[] chips = {b.chipNew, b.chipHot, b.chipBest};
         for (int i = 0; i < chips.length; i++) {
             final int pos = i;

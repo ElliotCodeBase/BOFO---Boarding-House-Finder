@@ -1,6 +1,4 @@
 bofo-android/app/build.gradle  changed
-bofo-android/app/src/main/java/com/bofo/finder/app/MainActivity.java  changed
-bofo-android/app/src/main/java/com/bofo/finder/ui/HomeSearchBar.java  changed
-bofo-android/app/src/main/java/com/bofo/finder/ui/ExploreFragment.java  changed
+bofo-android/app/src/main/java/com/bofo/finder/ui/HomeFragment.java  changed
 CHANGES_ANDROID.md  changed
 HANDOFF_ANDROID.md  changed
