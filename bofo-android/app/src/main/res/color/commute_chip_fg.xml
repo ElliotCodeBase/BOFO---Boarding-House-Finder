@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.0.85: Commute chip text + icon: indigo, white while the chip shows the result line (activated) -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="#FFFFFF" android:state_activated="true" />
+    <item android:color="#5B3BF0" />
+</selector>

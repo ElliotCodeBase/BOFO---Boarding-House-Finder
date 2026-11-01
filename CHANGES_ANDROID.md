@@ -1,3 +1,10 @@
+# v2.0.85 - Android: cleaner Explore map cards (from a screenshot)
+- **Locate button was hidden:** the next card of the strip peeked out under the right edge and covered the locate button and the Ask BOFO corner. The strip now clips its cards at its own edge (`clipChildren="true"` in `view_map_card.xml`), so the next card still peeks about 24 dp on the left and inside the strip on the right, and the right corner stays free. Cards have 6 dp above and 12 dp below so the shadow is not cut.
+- **Card colour:** the card looked lavender (Material 3 tints a surface-white card that has elevation). It now uses a solid near-white (`#FEFEFF`) so it stands out from the map.
+- **Commute chip:** now a real button: route icon (`ic_commute`) + text, soft lavender fill with an indigo outline, 30 dp high; filled indigo with white text and icon while it shows the result line (colour selector `commute_chip_fg`).
+- Compare tray margin 168 dp -> 178 dp (the card is 6 dp taller). No Supabase change. Not built or run by Claude.
+- Files: `item_map_strip.xml`, `view_map_card.xml`, `fragment_explore.xml`, `MapCardView.java` (card margins, chip colour now from the selector), `bg_commute_chip.xml`, `ic_commute.xml` (new), `commute_chip_fg.xml` (new), `build.gradle` (2.0.85 / 285).
+
 # v2.0.84 - Android: polish and checks for the Explore map (Step 5 of 5)
 - **TalkBack:** the quick chips say "On" / "Off", the Commute chip says what it will do ("Show the commute from this place to your campus"), "Finding the commute" while it works, and "Commute: <mode and minutes>" once shown, the compare tray says how many places are picked, and the offline pill is a polite live region (read out when it appears). The Commute chip (28 dp) has a 44 dp touch area (`TouchDelegate`, 8 dp each side).
 - **Speed:** `setCompareIds` and the Commute chip updates re-bind only the strip cards on screen (`MapCardView.refreshStripRows`) instead of all 20; cards that scroll in read the current state when they bind. No new map layers, no per-frame work.

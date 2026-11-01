@@ -1,3 +1,8 @@
+# Handoff (Android) - v2.0.85 Cleaner map cards
+- **PR title:** `v2.0.85 - Android: locate button no longer covered, solid white map card, proper Commute button`
+- Strip `RecyclerView` clips children now; adapter margins (6 / 6 / 6 / 12 dp) leave room for the 6 dp card shadow. Card colour `#FEFEFF` on `item_map_strip.xml` (a colour equal to `colorSurface` gets a Material 3 tint). Chip text and icon colours come from `res/color/commute_chip_fg.xml` (activated = white), so `onBindViewHolder` only calls `setActivated`.
+- Risky: if the card still looks tinted on a device, set `app:cardElevation` to 0 and draw the shadow another way; the tray margin (178 dp) follows the card height. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.84 Map polish and checks (Step 5 of 5)
 - **PR title:** `v2.0.84 - Android: TalkBack labels, 44 dp Commute touch area and lighter strip refresh on the Explore map`
 - `MapCardView.refreshStripRows` (visible range only) is used by `setCompareIds`, `setCommuteBusy`, `clearCommute`. `StripAdapter.onCreateViewHolder` posts a `TouchDelegate` on the chip's parent column; `onBindViewHolder` sets the chip's content description. `ExploreFragment.paintChips` sets `ViewCompat.setStateDescription` (`map_state_on/off`), `paintTray` sets the tray description (`map_compare_cd`), `startCommute` rejects NaN positions. `offline_pill` has `accessibilityLiveRegion="polite"`.
