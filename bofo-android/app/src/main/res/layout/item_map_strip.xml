@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardCornerRadius="24dp"
+    app:cardBackgroundColor="#FEFEFF"
     app:cardElevation="6dp"
     app:strokeColor="#E7E2FB">
 
@@ -79,17 +80,20 @@
             <TextView
                 android:id="@+id/strip_commute"
                 android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:layout_marginTop="5dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="6dp"
                 android:background="@drawable/bg_commute_chip"
+                android:drawablePadding="6dp"
+                android:drawableStart="@drawable/ic_commute"
+                android:drawableTint="@color/commute_chip_fg"
                 android:clickable="true"
                 android:ellipsize="end"
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:maxLines="1"
-                android:paddingHorizontal="11dp"
+                android:paddingHorizontal="12dp"
                 android:text="@string/map_commute"
-                android:textColor="#5B3BF0"
+                android:textColor="@color/commute_chip_fg"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>

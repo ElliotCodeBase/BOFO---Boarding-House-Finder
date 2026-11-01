@@ -1447,7 +1447,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             int outer = parent.getWidth() - parent.getPaddingLeft() - parent.getPaddingRight();       // one card fills the middle, the next / previous peek out of the padding
             if (outer <= 0) outer = MapCardView.this.getWidth() - Math.round(122 * d);
             RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(Math.max(1, outer - Math.round(12 * d)), RecyclerView.LayoutParams.WRAP_CONTENT);
-            lp.setMargins(Math.round(6 * d), Math.round(2 * d), Math.round(6 * d), Math.round(8 * d));
+            lp.setMargins(Math.round(6 * d), Math.round(6 * d), Math.round(6 * d), Math.round(12 * d));       // v2.0.85: the strip clips its cards, so the shadow needs room
             v.getRoot().setLayoutParams(lp);
             v.stripPhoto.setOutlineProvider(new android.view.ViewOutlineProvider() {
                 @Override public void getOutline(View view, android.graphics.Outline o) { o.setRoundRect(0, 0, view.getWidth(), view.getHeight(), 16 * view.getResources().getDisplayMetrics().density); }
@@ -1491,7 +1491,6 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             boolean busy = hid.equals(commuteBusyId), shown = hid.equals(commuteId) && commuteLine != null;
             h.v.stripCommute.setText(busy ? getContext().getString(R.string.map_commute_busy) : shown ? commuteLine : getContext().getString(R.string.map_commute));
             h.v.stripCommute.setActivated(shown);
-            h.v.stripCommute.setTextColor(shown ? 0xFFFFFFFF : 0xFF5B3BF0);
             h.v.stripCommute.setAlpha(busy ? .6f : 1f);
             h.v.stripCommute.setContentDescription(busy ? getContext().getString(R.string.map_commute_cd_busy) : shown ? getContext().getString(R.string.map_commute_cd_result, commuteLine) : getContext().getString(R.string.map_commute_cd));     // v2.0.84
         }
