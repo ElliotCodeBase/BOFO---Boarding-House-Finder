@@ -427,7 +427,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         Expression dotColor = Expression.switchCase(sel, Expression.color(DARK_PURPLE), Expression.color(primary));      // v2.0.75: Expression.color, not literal(int) (a plain number drew black dots)
         st.addLayer(new CircleLayer("places-dots-halo", "places-src").withProperties(
                 PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(15f * BIG), Expression.literal(10f * BIG))),
-                PropertyFactory.circleColor(dotColor), PropertyFactory.circleOpacity(0.18f))
+                PropertyFactory.circleColor(Expression.switchCase(sel, Expression.color(0xFFC9C0EE), Expression.color(0xFFE2DCFC))), PropertyFactory.circleOpacity(1f))      // v2.0.90: solid tint, not 18 % opacity
                 .withFilter(isDot));
         st.addLayer(new CircleLayer("places-dots", "places-src").withProperties(
                 PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(8f * BIG), Expression.literal(5.5f * BIG))),
@@ -468,6 +468,21 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         return bmp;
     }
 
+    /** v2.0.90: a solid shield (flat top, pointed bottom) centred on (cx, cy), {@code r} = half its width. Same outline as ic_shield_verified. */
+    private static void shield(Canvas c, Paint p, float cx, float cy, float r, int color) {
+        float h = r * 1.1f;
+        Path sh = new Path();
+        sh.moveTo(cx, cy - h);
+        sh.lineTo(cx - r, cy - h * 0.62f);
+        sh.lineTo(cx - r, cy + h * 0.05f);
+        sh.cubicTo(cx - r, cy + h * 0.62f, cx - r * 0.55f, cy + h * 0.88f, cx, cy + h);
+        sh.cubicTo(cx + r * 0.55f, cy + h * 0.88f, cx + r, cy + h * 0.62f, cx + r, cy + h * 0.05f);
+        sh.lineTo(cx + r, cy - h * 0.62f);
+        sh.close();
+        p.setStyle(Paint.Style.FILL); p.setColor(color);
+        c.drawPath(sh, p);
+    }
+
     /** v2.0.80: price pin = white pill (thin border, ink text) with a small tail; the selected one is dark indigo with white text.
      *  A verified house gets a check badge in front, a featured house a star behind, in the same bitmap.
      *  v2.0.81: a saved house gets a small red heart on the top-right corner, a verified owner a small check badge on the top-left corner (v2.0.88: it replaced the green "New" dot and the check inside the pill); v2.0.89: an owner who is not verified yet gets a grey "!" badge there. */
@@ -483,7 +498,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         Canvas c = new Canvas(bmp);
         RectF body = new RectF(mx, mt, bw - mx, mt + bodyH);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        int fill = selected ? DARK_PURPLE : seen ? 0xFFEFEDF8 : 0xFFFFFFFF, edge = selected ? 0xFFFFFFFF : seen ? 0xFFD3CEEA : 0x40463C8C;
+        int fill = selected ? DARK_PURPLE : seen ? 0xFFEFEDF8 : 0xFFFFFFFF, edge = selected ? 0xFFFFFFFF : seen ? 0xFFD3CEEA : 0xFFC9C4E6;      // v2.0.90: solid edge (it was 25 % opaque, so the pin looked see-through on the map)
         Path tailPath = new Path();
         tailPath.moveTo(bw / 2f - 5 * d, body.bottom - d);
         tailPath.lineTo(bw / 2f, body.bottom + tail);
@@ -520,29 +535,22 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             star.close();
             c.drawPath(star, p);
         }
-        if (verified) {                                                      // v2.0.88: verified-owner badge, top-left corner (white ring, check inside)
-            float dx = body.left + 6 * d, dy = body.top + 1 * d, rr = 6.5f * d;
-            p.setStyle(Paint.Style.FILL); p.setColor(0xFFFFFFFF);
-            c.drawCircle(dx, dy, rr + 1.5f * d, p);
-            p.setColor(seen && !selected ? 0xFFAFA8D8 : primary);
-            c.drawCircle(dx, dy, rr, p);
+        {                                                                    // v2.0.90: shield badge, top-left corner: green + check = verified owner, grey + "!" = not verified yet
+            float dx = body.left + 6 * d, dy = body.top + 1 * d, rr = 8.5f * d;
+            shield(c, p, dx, dy, rr + 1.6f * d, 0xFFFFFFFF);                 // white ring
+            shield(c, p, dx, dy, rr, verified ? 0xFF1E8E5E : 0xFF9A97AD);
             p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(1.8f * d); p.setStrokeCap(Paint.Cap.ROUND); p.setStrokeJoin(Paint.Join.ROUND); p.setColor(0xFFFFFFFF);
-            Path ck = new Path();
-            ck.moveTo(dx - rr * 0.42f, dy + rr * 0.02f);
-            ck.lineTo(dx - rr * 0.1f, dy + rr * 0.36f);
-            ck.lineTo(dx + rr * 0.46f, dy - rr * 0.34f);
-            c.drawPath(ck, p);
-            p.setStrokeCap(Paint.Cap.BUTT);
-        } else {                                                             // v2.0.89: not verified yet = grey badge with "!"
-            float dx = body.left + 6 * d, dy = body.top + 1 * d, rr = 6.5f * d;
-            p.setStyle(Paint.Style.FILL); p.setColor(0xFFFFFFFF);
-            c.drawCircle(dx, dy, rr + 1.5f * d, p);
-            p.setColor(seen && !selected ? 0xFFC9C6DA : 0xFF8F8CA3);
-            c.drawCircle(dx, dy, rr, p);
-            p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(1.8f * d); p.setStrokeCap(Paint.Cap.ROUND); p.setColor(0xFFFFFFFF);
-            c.drawLine(dx, dy - rr * 0.5f, dx, dy + rr * 0.1f, p);
-            p.setStyle(Paint.Style.FILL);
-            c.drawCircle(dx, dy + rr * 0.48f, 1.1f * d, p);
+            if (verified) {
+                Path ck = new Path();
+                ck.moveTo(dx - rr * 0.36f, dy - rr * 0.02f);
+                ck.lineTo(dx - rr * 0.08f, dy + rr * 0.28f);
+                ck.lineTo(dx + rr * 0.40f, dy - rr * 0.30f);
+                c.drawPath(ck, p);
+            } else {
+                c.drawLine(dx, dy - rr * 0.46f, dx, dy + rr * 0.10f, p);
+                p.setStyle(Paint.Style.FILL);
+                c.drawCircle(dx, dy + rr * 0.44f, 1.1f * d, p);
+            }
             p.setStyle(Paint.Style.STROKE); p.setStrokeCap(Paint.Cap.BUTT);
         }
         if (saved) {                                                         // heart, top-right corner

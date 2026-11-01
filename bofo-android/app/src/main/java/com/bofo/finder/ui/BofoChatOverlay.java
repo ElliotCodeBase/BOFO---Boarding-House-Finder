@@ -321,6 +321,10 @@ public class BofoChatOverlay extends FrameLayout {
         v.badge.setVisibility(badge == null ? View.GONE : View.VISIBLE);
         if (badge != null) v.badge.setText(badge);
         v.verified.setVisibility(r.verified() ? View.VISIBLE : View.GONE);
+        if (r.verified()) {                                                  // v2.0.90: green shield in front of "Verified"
+            android.graphics.drawable.Drawable sh = androidx.core.content.ContextCompat.getDrawable(v.verified.getContext(), R.drawable.ic_shield_verified);
+            if (sh != null) { int s = Math.round(14 * v.verified.getResources().getDisplayMetrics().density); sh = sh.mutate(); sh.setBounds(0, 0, s, s); v.verified.setCompoundDrawablesRelative(sh, null, null, null); v.verified.setCompoundDrawablePadding(s / 3); }
+        }
 
         if (r.distanceKm() != null) { v.chipDist.setText(Geo.walkText(r.distanceKm())); v.chipDist.setVisibility(View.VISIBLE); }
         else v.chipDist.setVisibility(View.GONE);

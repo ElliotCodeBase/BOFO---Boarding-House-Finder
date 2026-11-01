@@ -160,6 +160,8 @@
     <string name="saved_error">Could not load your saved places.</string>
 
     <string name="detail_verified">Verified owner</string>
+    <string name="cd_verified">Verified owner</string>
+    <string name="cd_not_verified">Owner not verified yet</string>
     <string name="detail_not_verified">Not verified</string>
     <string name="detail_amenities">Amenities</string>
     <string name="detail_rules">House rules</string>

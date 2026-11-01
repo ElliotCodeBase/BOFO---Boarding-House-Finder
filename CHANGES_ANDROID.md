@@ -1,3 +1,7 @@
+# v2.0.90 - Android: verified shield icons, solid pins
+- **Changed:** students can see if a boarding house is verified on the list cards, the place page and the map pin: green shield = verified owner, grey shield = not verified yet (replaces the check / "!" circle). Map pins and zoomed-out dots no longer look see-through.
+- Files: `ic_shield_verified.xml`, `ic_shield_unverified.xml` (new), `item_bh_card.xml`, `BhAdapter.java`, `BhDetailFragment.java`, `BofoChatOverlay.java`, `MapCardView.java`, `strings.xml`, `strings_bofo.xml`, `build.gradle` (2.0.90 / 290).
+
 # v2.0.89 - Android: unverified owners can list
 - **Changed:** owners no longer need to be verified to publish. Places of unverified owners show a grey "!" badge on the map pin and a "Not verified" chip on the place page; verified owners keep the blue check. The verify banner still shows, with new wording. Chat with the owner works for unverified places too.
 - **Supabase:** `013_unverified_can_list.sql` (RLS on `boarding_houses`, chat function). Run it, or publishing is still refused by the database.

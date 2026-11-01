@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.90 Verified shield icons
+- **PR title:** `v2.0.90 - Android: green / grey shield shows verified owners on cards, place page and map pins; solid map pins`
+- App: new `ic_shield_verified` (green) / `ic_shield_unverified` (grey) drawables. Student card (`item_bh_card.xml` `verified`, `BhAdapter`) shows the shield next to the name; place page chip (`BhDetailFragment`) has the shield icon; map pin badge (`MapCardView.shield`) is a shield instead of a circle; BOFO chat result badge has the green shield. Pin edge is now solid and the zoomed-out dot halo is a solid tint (they were 25 % / 18 % opacity = see-through). No Supabase change. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.89 Unverified owners can list
 - **PR title:** `v2.0.89 - Android: unverified owners can list places; "not verified" icon on pins and place page`
 - **Supabase:** run `supabase/migrations/013_unverified_can_list.sql` (new `is_owner_or_admin`; `bh_insert` / `bh_update` no longer need verification; `get_or_create_conversation` no longer needs a verified owner). Boosts / featured still need verified (`is_featured` and the boost code are unchanged). Custom amenities (`get_or_create_amenity`) still need a verified owner.

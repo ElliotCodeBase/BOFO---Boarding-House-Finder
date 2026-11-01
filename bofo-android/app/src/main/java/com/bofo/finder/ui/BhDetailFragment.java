@@ -115,8 +115,12 @@ public class BhDetailFragment extends Fragment {
         b.infoChips.removeAllViews();
         String gp = com.bofo.finder.util.GenderRules.normalize(bh.genderPolicy());      // v2.0.87
         if (!gp.isEmpty()) b.infoChips.addView(Chips.create(b.infoChips, getString(com.bofo.finder.util.GenderRules.labelRes(gp)), false, false));
-        if (!bh.ownerVerified()) b.infoChips.addView(Chips.create(b.infoChips, getString(R.string.detail_not_verified), false, false));     // v2.0.89
-        if (bh.ownerVerified()) b.infoChips.addView(Chips.create(b.infoChips, getString(R.string.detail_verified), false, false));
+        com.google.android.material.chip.Chip vc = Chips.create(b.infoChips, getString(bh.ownerVerified() ? R.string.detail_verified : R.string.detail_not_verified), false, false);     // v2.0.90: shield icon (green = verified, grey = not)
+        vc.setChipIconResource(bh.ownerVerified() ? R.drawable.ic_shield_verified : R.drawable.ic_shield_unverified);
+        vc.setChipIconTint(null);
+        vc.setChipIconVisible(true);
+        vc.setChipIconSize(18 * getResources().getDisplayMetrics().density);
+        b.infoChips.addView(vc);
         int free = bh.availableBeds();
         b.infoChips.addView(Chips.create(b.infoChips, free == 1 ? getString(R.string.detail_bed_available) : getString(R.string.detail_beds_available, free), false, false));
         if (bh.distanceKm() > 0) b.infoChips.addView(Chips.create(b.infoChips, getString(R.string.detail_km_away, String.format(java.util.Locale.US, "%.1f", bh.distanceKm())), false, false));

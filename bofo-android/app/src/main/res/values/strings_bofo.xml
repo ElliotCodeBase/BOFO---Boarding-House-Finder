@@ -22,7 +22,7 @@
     <string name="bofo_badge_nearest">Nearest</string>
     <string name="bofo_badge_cheapest">Cheapest</string>
     <string name="bofo_badge_top">Top rated</string>
-    <string name="bofo_verified_badge">✓ Verified</string>
+    <string name="bofo_verified_badge">Verified</string>
     <string name="bofo_amen_water">✓ Water</string>
     <string name="bofo_amen_power">✓ Power</string>
     <string name="bofo_amen_wifi">✓ Wi-Fi</string>
