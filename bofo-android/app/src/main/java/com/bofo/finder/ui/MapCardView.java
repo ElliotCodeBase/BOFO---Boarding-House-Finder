@@ -1009,7 +1009,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 boolean isSel = p.id().equals(selectedId);
                 if (feats.length() > 0) feats.append(',');
                 feats.append(feat(pos[i][0], pos[i][1], "\"kind\":\"pin\",\"id\":\"" + esc(p.id()) + "\",\"icon\":\"" + esc(pinKey[i]) + "\",\"sel\":" + (isSel ? 1 : 0) + ",\"viewed\":" + (!isSel && viewed.contains(p.id()) ? 1 : 0)));
-                String text = clip(p.name(), 22);
+                String text = clip(p.name(), 60);
                 if (text.isEmpty()) continue;
                 String key = "lb|" + text;
                 if (imgs.add(key)) {
