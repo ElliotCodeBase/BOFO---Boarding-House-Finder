@@ -1,3 +1,6 @@
+# v2.0.111 - Android: mascot button is purple
+- Floating BOFO button and chat header mascot sit on the app purple instead of black.
+
 # v2.0.110 - Android: mascot looks like the loading mascot everywhere
 - Floating BOFO button, AI chat, empty states, login, profile and reviews now show the white / blue / lavender mascot from the loading screen. The floating button is dark so the white body shows.
 
