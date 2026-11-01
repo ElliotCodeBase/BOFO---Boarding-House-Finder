@@ -1,3 +1,8 @@
+# Handoff (Android) - v2.0.112 Mascot colours in colors.xml + outline
+- **PR title:** `v2.0.112 - Android: mascot colours are editable resources, outlined body, white button`
+- `values/colors.xml` `mascot_*` (body, outline, screen, glass, face, roof, roof_dark, feet, light) drive `drawable/mascot_happy.xml` and `BofoMascot` (loaded in its constructor). Body has a 3-unit `mascot_outline` stroke so it shows on white. `bg_bofo_fab` white again. `SplashStageView` still has its own colours. Not built or run by Claude.
+
+---
 # Handoff (Android) - v2.0.111 Mascot button purple, not black
 - **PR title:** `v2.0.111 - Android: mascot button background is app purple`
 - `bg_bofo_fab` solid = `bofo_primary` (was `bofo_ink` in v2.0.110). Used by the floating button and the chat header mascot. Not built or run by Claude.

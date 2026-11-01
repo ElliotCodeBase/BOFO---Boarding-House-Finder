@@ -26,4 +26,15 @@
     <color name="bofo_amber_wash">#FFF1C9</color>
     <color name="bofo_idle">#9B98AA</color>
     <color name="bofo_card_ink">#241A5C</color>
+
+    <!-- v2.0.112: BOFO mascot colours. Change these to recolour every mascot in the app (floating button, chat, empty states, login, profile). -->
+    <color name="mascot_body">#FFFFFF</color>
+    <color name="mascot_outline">#B7A0EC</color>
+    <color name="mascot_screen">#3A22B8</color>
+    <color name="mascot_glass">#5B3BF0</color>
+    <color name="mascot_face">#FFFFFF</color>
+    <color name="mascot_roof">#D9C8F5</color>
+    <color name="mascot_roof_dark">#C4ABEE</color>
+    <color name="mascot_feet">#E4D9F7</color>
+    <color name="mascot_light">#D9C8F5</color>
 </resources>

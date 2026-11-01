@@ -2,6 +2,7 @@ package com.bofo.finder.ui;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import com.bofo.finder.R;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -24,9 +25,8 @@ public class BofoMascot extends View {
     public enum Expression { HAPPY, THINKING, WAVING }
     public enum Idle { THINKING, SITTING, RUNNING, SLEEPING }
 
-    // v2.0.110: same colours as the splash mascot (white body, blue screen, lavender roof / feet, white face). Names kept so the drawing code is unchanged.
-    private static final int PURPLE = 0xFFFFFFFF, DARK = 0xFFC4ABEE, FEET = 0xFFE4D9F7, AMBER = 0xFFD9C8F5, AMBER_DARK = 0xFFC4ABEE,
-            TINT = 0xFF5B3BF0, INK = 0xFFFFFFFF, WHITE = 0xFF3A22B8;
+    // v2.0.112: colours come from res/values/colors.xml (mascot_*) so they can be changed in one place. Names kept so the drawing code is unchanged.
+    private int PURPLE, DARK, FEET, AMBER, AMBER_DARK, TINT, INK, WHITE, OUTLINE;
 
     private Expression expr = Expression.HAPPY;
     private Idle pose;                       // null = standing
@@ -40,7 +40,11 @@ public class BofoMascot extends View {
     private final Path path = new Path();
 
     public BofoMascot(Context c) { this(c, null); }
-    public BofoMascot(Context c, AttributeSet a) { super(c, a); poseStart = SystemClock.uptimeMillis(); }
+    public BofoMascot(Context c, AttributeSet a) { super(c, a); poseStart = SystemClock.uptimeMillis();
+        PURPLE = c.getColor(R.color.mascot_body); OUTLINE = c.getColor(R.color.mascot_outline); WHITE = c.getColor(R.color.mascot_screen);
+        TINT = c.getColor(R.color.mascot_glass); INK = c.getColor(R.color.mascot_face); AMBER = c.getColor(R.color.mascot_light);
+        AMBER_DARK = c.getColor(R.color.mascot_roof_dark); DARK = c.getColor(R.color.mascot_roof_dark); FEET = c.getColor(R.color.mascot_feet);
+    }
 
     // ------------------------------------------------------------------ public API (same names as the JavaFX class)
 
@@ -239,6 +243,8 @@ public class BofoMascot extends View {
         c.translate(0, (low ? 12 : 0) + torsoDy);
         c.rotate(torsoRot, 100, 162);
         rr(c, 40, 50, 120, 112, 32, PURPLE);
+        paint.setStyle(Paint.Style.STROKE); paint.setColor(OUTLINE); paint.setAlpha(255); paint.setStrokeWidth(3);    // outline so a white body stays visible on white / light backgrounds
+        rect.set(40, 50, 160, 162); c.drawRoundRect(rect, 32, 32, paint);
         rr(c, 56, 70, 88, 68, 22, WHITE);
         rr(c, 66, 77, 36, 5, 2.5f, TINT);
         rr(c, 86, 146, 28, 6, 3, AMBER);

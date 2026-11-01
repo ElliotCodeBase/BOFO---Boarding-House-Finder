@@ -1,3 +1,7 @@
+# v2.0.112 - Android: mascot colours you can edit
+- All mascot colours live in `res/values/colors.xml` (`mascot_*`); change them there to recolour every mascot.
+- The mascot body has a lavender outline so it no longer blends into white / light backgrounds. The floating button is white again.
+
 # v2.0.111 - Android: mascot button is purple
 - Floating BOFO button and chat header mascot sit on the app purple instead of black.
 
