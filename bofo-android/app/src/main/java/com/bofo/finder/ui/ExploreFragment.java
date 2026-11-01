@@ -154,6 +154,7 @@ public class ExploreFragment extends Fragment {
         BoardingHouse h = null;
         for (BoardingHouse x : lastItems) if (x.id().equals(id)) { h = x; break; }
         if (h == null) return;
+        if (Double.isNaN(h.lat()) || Double.isNaN(h.lng())) { ListArea.toast(this, getString(R.string.map_commute_fail)); return; }     // v2.0.84: a house without a position has no route
         College c = BrowseState.campus();
         if (c == null) {                                                    // no campus yet: ask for one instead of failing
             pendingCommuteId = id;
@@ -321,6 +322,7 @@ public class ExploreFragment extends Fragment {
             quickChips[i].setBackgroundResource(on ? R.drawable.bg_chip_on : R.drawable.bg_chip_off);
             quickChips[i].setTextColor(on ? 0xFFFFFFFF : ink);
             quickChips[i].setSelected(on);
+            androidx.core.view.ViewCompat.setStateDescription(quickChips[i], getString(on ? R.string.map_state_on : R.string.map_state_off));     // v2.0.84: TalkBack says "on" / "off"
         }
         chipReset.setBackgroundResource(R.drawable.bg_chip_off);
         chipReset.setTextColor(ContextCompat.getColor(requireContext(), R.color.bofo_primary));
@@ -375,6 +377,7 @@ public class ExploreFragment extends Fragment {
             b.compareThumbs.addView(iv);
         }
         b.compareLabel.setText(getString(R.string.map_compare_n, compare.size()));
+        tray.setContentDescription(getString(R.string.map_compare_cd, compare.size()));        // v2.0.84
         boolean wasShown = tray.getVisibility() == View.VISIBLE;
         tray.animate().cancel();
         tray.setVisibility(View.VISIBLE);

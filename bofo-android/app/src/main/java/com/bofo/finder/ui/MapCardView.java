@@ -1268,8 +1268,12 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private boolean stripLocked;
     private CameraPosition beforeCommute;
 
+    /** v2.0.84: only the cards on screen are re-bound (the others bind from the current state when they scroll in). */
     private void refreshStripRows() {
-        if (stripAdapter != null && !stripItems.isEmpty()) stripAdapter.notifyItemRangeChanged(0, stripItems.size());
+        if (stripAdapter == null || stripLm == null || stripItems.isEmpty()) return;
+        int a = stripLm.findFirstVisibleItemPosition(), z = stripLm.findLastVisibleItemPosition();
+        if (a < 0 || z < a) { stripAdapter.notifyItemRangeChanged(0, Math.min(stripItems.size(), 3)); return; }
+        stripAdapter.notifyItemRangeChanged(a, z - a + 1);
     }
 
     /** v2.0.83: this house's Commute chip shows "Finding..." while the route is worked out (null = none). */
@@ -1315,7 +1319,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     public void setCompareIds(Set<String> ids) {
         compareIds.clear();
         if (ids != null) compareIds.addAll(ids);
-        if (stripAdapter != null && !stripItems.isEmpty()) stripAdapter.notifyItemRangeChanged(0, stripItems.size());
+        refreshStripRows();
     }
 
     /** v2.0.82: the strip dips and comes back (180 ms) when a quick chip changed the houses. The pins just swap: no layer is animated. */
@@ -1458,6 +1462,14 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 listener.placeLongPressed(stripItems.get(pos).id());
                 return true;
             });
+            final View col = (View) v.stripCommute.getParent();                       // v2.0.84: 28 dp chip, 44 dp touch area
+            col.post(() -> {
+                android.graphics.Rect r = new android.graphics.Rect();
+                v.stripCommute.getHitRect(r);
+                int pad = Math.round(8 * d);
+                r.top -= pad; r.bottom += pad; r.left -= pad; r.right += pad;
+                col.setTouchDelegate(new android.view.TouchDelegate(r, v.stripCommute));
+            });
             v.stripCommute.setOnClickListener(x -> {
                 int pos = h.getBindingAdapterPosition();
                 if (pos >= 0 && pos < stripItems.size() && listener != null && commuteBusyId == null) listener.commuteTapped(stripItems.get(pos).id());
@@ -1481,6 +1493,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             h.v.stripCommute.setActivated(shown);
             h.v.stripCommute.setTextColor(shown ? 0xFFFFFFFF : 0xFF5B3BF0);
             h.v.stripCommute.setAlpha(busy ? .6f : 1f);
+            h.v.stripCommute.setContentDescription(busy ? getContext().getString(R.string.map_commute_cd_busy) : shown ? getContext().getString(R.string.map_commute_cd_result, commuteLine) : getContext().getString(R.string.map_commute_cd));     // v2.0.84
         }
 
         @Override public int getItemCount() { return stripItems.size(); }

@@ -8,4 +8,10 @@
     <string name="map_commute_fail">Couldn’t work out that commute. Try again.</string>
     <string name="map_offline_pill">Offline: showing your last search</string>
     <string name="map_offline_short">offline</string>
+    <string name="map_commute_cd">Show the commute from this place to your campus</string>
+    <string name="map_commute_cd_busy">Finding the commute</string>
+    <string name="map_commute_cd_result">Commute: %1$s</string>
+    <string name="map_state_on">On</string>
+    <string name="map_state_off">Off</string>
+    <string name="map_compare_cd">Compare, %1$d places picked. Tap to open the comparison.</string>
 </resources>
