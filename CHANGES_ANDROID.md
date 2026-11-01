@@ -1,3 +1,6 @@
+# v2.0.96 - Android: calmer UI
+- Plain Profile header, no amber / condensed type, neutral dock highlight.
+
 # v2.0.95 - Android UI refresh
 - Profile redesigned (flat ID panel, key-tag role, hairline rows), ink + amber dock bar, price-tag type on listing cards, no purple gradients, sentence-case section labels, 12 / 20 dp shapes, neutral buttons.
 

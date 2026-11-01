@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.96 UI refresh, calmer
+- **PR title:** `v2.0.96 - Android: calmer UI (plain Profile header, no coloured panel, no amber/condensed type)`
+- Reverts the loud parts of v2.0.95: Profile has no dark panel / amber frame / key-tag; avatar is a plain circle, role is a small grey tag. Condensed bold type removed (titles, prices, Home greeting use `sans-serif-medium`). Dock highlight is the neutral `bofo_tile`, not amber. Kept: neutral colours, 12 / 20 dp shapes, 14 dp buttons, sentence-case labels, ink active tab. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.95 UI refresh (less generic)
 - **PR title:** `v2.0.95 - Android: UI refresh (flat ID-style Profile, key-tag role, ink/amber dock, price-tag type, no purple gradients or ALL-CAPS labels)`
 - Colours (`colors.xml`): lavender wash removed (`bofo_bg` #F7F7F9, `bofo_border` #E9E8EE, icon tile = neutral `bofo_tile`), new `bofo_amber_wash`, `bofo_card_ink`, `bofo_idle`. Shapes: 8 / 12 / 20 dp (was 8 / 16 / 24). Buttons: 14 dp corners, not pills; Tint button is neutral.

@@ -122,11 +122,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
-                android:fontFamily="sans-serif-condensed"
+                android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
                 android:textColor="@color/bofo_ink"
-                android:textSize="26sp"
-                android:textStyle="bold" />
+                android:textSize="22sp" />
         </LinearLayout>
 
         <ImageButton
