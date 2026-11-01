@@ -5,6 +5,7 @@
     <string name="ex_seg_map">Map</string>
     <string name="ex_filter_cd">Filters</string>
     <string name="ex_close_cd">Close</string>
+    <string name="explore_empty_place">No boarding houses available in "%1$s" yet.</string>
     <string name="ex_empty_hint">Try removing a filter or raising the maximum price.</string>
     <string name="ex_sheet_title">Filters</string>
     <string name="ex_price_title">Maximum price per month</string>

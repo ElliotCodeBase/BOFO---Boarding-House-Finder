@@ -62,6 +62,7 @@ final class HomeSearchBar {
     private boolean settingText, open, synced;
     private String syncedCampusId;
     private boolean syncedNear;
+    private long focusAt;                                       // v2.0.99: when the field got focus (the keyboard resizing the page is not a scroll)
 
     HomeSearchBar(Fragment fragment, FragmentHomeBinding binding, Host host) {
         this.fragment = fragment; this.b = binding; this.host = host;
@@ -87,9 +88,9 @@ final class HomeSearchBar {
         });
         b.searchInput.setOnFocusChangeListener((v, has) -> {
             b.searchPill.setActivated(has);
-            if (has) { if (isChosenText()) b.searchInput.selectAll(); showFor(isChosenText() ? "" : text(), true); }
+            if (has) { focusAt = android.os.SystemClock.uptimeMillis(); if (isChosenText()) b.searchInput.selectAll(); showFor(isChosenText() ? "" : text(), true); showKeyboard(); }
         });
-        b.searchInput.setOnClickListener(v -> { if (!open) showFor(isChosenText() ? "" : text(), true); });
+        b.searchInput.setOnClickListener(v -> { if (!open) showFor(isChosenText() ? "" : text(), true); showKeyboard(); });
         b.searchInput.setOnEditorActionListener((v, action, ev) -> {
             if (action == EditorInfo.IME_ACTION_SEARCH || action == EditorInfo.IME_ACTION_DONE) { enter(); return true; }
             return false;
@@ -122,7 +123,19 @@ final class HomeSearchBar {
     boolean isEmpty() { return text().trim().isEmpty(); }
 
     /** The header scrolls with the list (Step 4): an open dropdown would be left behind, so it closes. */
-    void closeOnScroll() { if (open) dismiss(true); }
+    void closeOnScroll() {
+        // v2.0.99: opening the keyboard resizes the page and moves the header by a few pixels. That is not the person scrolling: it used to close the list AND hide the keyboard at once.
+        if (android.os.SystemClock.uptimeMillis() - focusAt < 1500 && b.searchInput.hasFocus()) return;
+        if (open) dismiss(true);
+    }
+
+    private void showKeyboard() {
+        b.searchInput.post(() -> {
+            if (b == null || !b.searchInput.hasFocus()) return;
+            InputMethodManager imm = (InputMethodManager) ctx().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) imm.showSoftInput(b.searchInput, InputMethodManager.SHOW_IMPLICIT);
+        });
+    }
 
     // ------------------------------------------------------------------ actions
 
@@ -164,8 +177,7 @@ final class HomeSearchBar {
         }
         String q = typed == null ? "" : typed.trim();
         List<College> list = q.isEmpty() ? ordered(all) : CampusMatch.match(all, q);
-        if (list.isEmpty() && !q.isEmpty()) { closeList(); return; }     // typed text is a place name, not a campus: no empty dropdown
-        adapter.set(list, q.isEmpty(), q);
+        adapter.set(list, q.isEmpty(), q);                        // v2.0.99: typed text that is not a campus (Dumaguete, Bayawan...) gets a "Search ..." row, never an empty dropdown
         int rows = Math.min(Math.max(adapter.getItemCount(), 1), MAX_ROWS);
         ViewGroup.LayoutParams lp = b.dropdownList.getLayoutParams();
         lp.height = Math.round(rows * ROW_DP * dp);
@@ -240,15 +252,16 @@ final class HomeSearchBar {
         private List<College> items = new ArrayList<>();
         private boolean nearRow;
         private String typed = "";
+        private String place;                                   // v2.0.99: last row = search this text as a place in Explore
 
         void set(List<College> list, boolean withNearMe, String q) {
-            items = list; nearRow = withNearMe; typed = q;
+            items = list; nearRow = withNearMe; typed = q; place = q.isEmpty() ? null : q;
             notifyDataSetChanged();
         }
 
         College firstCollege() { return items.isEmpty() ? null : items.get(0); }
 
-        @Override public int getItemCount() { return items.size() + (nearRow ? 1 : 0); }
+        @Override public int getItemCount() { return items.size() + (nearRow ? 1 : 0) + (place != null ? 1 : 0); }
 
         @NonNull @Override
         public Row onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -264,6 +277,16 @@ final class HomeSearchBar {
                 h.v.sub.setText(R.string.home_near_me_sub);
                 h.v.sub.setVisibility(View.VISIBLE);
                 h.v.getRoot().setOnClickListener(x -> { dismiss(true); host.nearMe(); });
+                return;
+            }
+            if (place != null && pos == getItemCount() - 1) {
+                final String t = place;
+                h.v.icon.setImageResource(R.drawable.ic_campus_dot);
+                ImageViewCompat.setImageTintList(h.v.icon, null);
+                h.v.title.setText(ctx().getString(R.string.home_search_place, t));
+                h.v.sub.setText(R.string.home_search_place_sub);
+                h.v.sub.setVisibility(View.VISIBLE);
+                h.v.getRoot().setOnClickListener(x -> { dismiss(true); host.searchPlace(t); });
                 return;
             }
             final College c = items.get(pos - (nearRow ? 1 : 0));

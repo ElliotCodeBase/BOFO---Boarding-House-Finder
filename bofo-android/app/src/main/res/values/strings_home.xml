@@ -10,6 +10,8 @@
     <string name="home_bell_toast">No new notifications</string>
     <string name="home_near_me_row">Near me</string>
     <string name="home_near_me_sub">Places closest to your phone</string>
+    <string name="home_search_place">Search "%1$s"</string>
+    <string name="home_search_place_sub">Boarding houses in this place</string>
     <string name="cd_notifications">Notifications</string>
     <string name="cd_clear_search">Clear search</string>
     <string name="cd_show_campuses">Show all campuses</string>

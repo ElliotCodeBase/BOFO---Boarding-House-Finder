@@ -222,7 +222,7 @@ public class ExploreFragment extends Fragment {
         lastItems = l;
         adapter.setShowDistance(c != null);
         b.resultCount.setText((l.size() == 1 ? getString(R.string.explore_result_one) : getString(R.string.explore_results, l.size())) + " \u00B7 " + getString(R.string.map_offline_short));
-        if (l.isEmpty()) area.showMessage(getString(BrowseState.activeFilters() > 0 ? R.string.ex_empty_hint : R.string.explore_empty), false);
+        if (l.isEmpty()) area.showMessage(emptyText(), false);
         else area.showList(l);
         paintOffline(true);
         if (commuteId != null && !has(l, commuteId)) endCommute();
@@ -495,11 +495,21 @@ public class ExploreFragment extends Fragment {
                 if (commuteId != null && !has(l, commuteId)) endCommute();       // the house left the results: its route goes with it
                 adapter.setShowDistance(c != null);
                 b.resultCount.setText((l.size() == 1 ? getString(R.string.explore_result_one) : getString(R.string.explore_results, l.size())) + (offlineShown ? " \u00B7 " + getString(R.string.map_offline_short) : ""));
-                if (l.isEmpty()) area.showMessage(getString(BrowseState.activeFilters() > 0 ? R.string.ex_empty_hint : R.string.explore_empty), false);
+                if (l.isEmpty()) area.showMessage(emptyText(), false);
                 else area.showList(l);
                 if (mapMode) { pushMap(box == null && !softNow); if (softNow) b.mapCard.softFade(); }      // after "Search this area" or a quick chip the camera stays where the person put it
             }, e -> fail(my, e, softNow));
         }, e -> fail(my, e, softNow));
+    }
+
+    /** v2.0.99: nothing found. A typed place (Dumaguete, Bayawan...) says there is no boarding house there; filters add their hint. */
+    private String emptyText() {
+        boolean filters = BrowseState.activeFilters() > 0;
+        if (query != null && !query.trim().isEmpty()) {
+            String t = getString(R.string.explore_empty_place, query.trim());
+            return filters ? t + "\n" + getString(R.string.ex_empty_hint) : t;
+        }
+        return getString(filters ? R.string.ex_empty_hint : R.string.explore_empty);
     }
 
     /** v2.0.80: locate button. Shows the blue dot, flies there, plays the "found you" ring; the dot is not kept live on Explore. */
