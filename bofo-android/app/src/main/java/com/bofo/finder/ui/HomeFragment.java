@@ -484,6 +484,7 @@ public class HomeFragment extends Fragment {
         search = null;
         finding = false;               // v2.0.71: haveFix stays, so the first location update after coming back does not re-zoom the map
         viewShownBefore = true;
+        paintedPhoto = null;           // v2.0.90: the new view after a trip to the place page has an empty avatar: paint the photo again
         b = null;
         super.onDestroyView();
     }
