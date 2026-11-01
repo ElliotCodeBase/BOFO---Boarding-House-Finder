@@ -1,3 +1,6 @@
+# v2.0.115 - Android: better loading screen
+- Loading screen eases in (mascot pops, text floats up), has a soft glow and rising sparkles behind BOFO, and the three dots move in one smooth wave.
+
 # v2.0.114 - Android: livelier BOFO chat + new thinking animation
 - BOFO now blinks and breathes in the chat and on the floating button.
 - Thinking: raised eyebrow, drifting eyes, a clear thought bubble with three dots lighting up, and a bouncing-dots typing bubble instead of the text dots.

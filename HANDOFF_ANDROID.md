@@ -1,3 +1,8 @@
+# Handoff (Android) - v2.0.115 Better loading screen
+- **PR title:** `v2.0.115 - Android: better loading screen animation`
+- `SplashFragment.enter()`: mascot pops in (overshoot), title / subtitle / dots / status float up in turn (ids `stage`, `title`, `subtitle`, `dots` added to fragment_splash.xml). `SplashDotsView`: one smooth sine wave, lavender to white. `SplashStageView`: radial glow behind the mascot (brighter at the jump apex) + 7 rising sparkles (`SPARKS`). Same 2400 ms loop. Not built or run by Claude.
+
+---
 # Handoff (Android) - v2.0.114 Chat mascot alive + new thinking animation
 - **PR title:** `v2.0.114 - Android: livelier chat mascot and new thinking animation`
 - `BofoMascot`: blink every 3.7 s (standing + thinking), breathing squash in standing / thinking, always redraws; THINKING pose gets a raised-eyebrow wiggle, mouth drifting with the gaze and a new `thoughtBubble` (white cloud, `mascot_outline` ring, 3 dots lighting in turn). New `TypingDotsDrawable` (3 bouncing dots, bofo_primary) replaces the text "● ○ ○" in `BofoChatOverlay.showTyping` (`dotsTick` / `DOTS` now unused). Not built or run by Claude.

@@ -9,11 +9,13 @@
     android:padding="24dp">
 
     <com.bofo.finder.ui.SplashStageView
+        android:id="@+id/stage"
         android:layout_width="230dp"
         android:layout_height="250dp"
         android:contentDescription="@string/cd_mascot" />
 
     <TextView
+        android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -23,6 +25,7 @@
         android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/subtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -31,6 +34,7 @@
         android:textSize="15sp" />
 
     <com.bofo.finder.ui.SplashDotsView
+        android:id="@+id/dots"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp" />

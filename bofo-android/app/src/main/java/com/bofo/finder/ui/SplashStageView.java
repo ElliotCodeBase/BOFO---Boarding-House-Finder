@@ -69,6 +69,9 @@ public class SplashStageView extends View {
     private final float density;
     private long startMs;
     private boolean running;
+    private final Paint glow = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint spark = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private static final float[][] SPARKS = {{0.12f, 5200, 0.00f, 3f}, {0.30f, 4300, 0.45f, 2f}, {0.50f, 6100, 0.20f, 2.5f}, {0.68f, 4700, 0.70f, 3.2f}, {0.86f, 5600, 0.35f, 2f}, {0.22f, 6800, 0.85f, 2.2f}, {0.78f, 3900, 0.10f, 1.8f}};   // {x 0..1, rise ms, phase, radius dp}
 
     public SplashStageView(Context c) { this(c, null); }
 
@@ -122,6 +125,12 @@ public class SplashStageView extends View {
         hatY.add(t, y, i); hatAng.add(t, ang, i); hatSx.add(t, sx, i); hatSy.add(t, sy, i);
     }
 
+    @Override protected void onSizeChanged(int w, int h, int ow, int oh) {
+        super.onSizeChanged(w, h, ow, oh);
+        float rad = Math.max(1f, Math.min(w, h) * 0.62f);
+        glow.setShader(new android.graphics.RadialGradient(w / 2f, h * 0.52f, rad, new int[]{argb(0.30f, 0x8D, 0x7B, 0xFF), argb(0f, 0x8D, 0x7B, 0xFF)}, null, android.graphics.Shader.TileMode.CLAMP));
+    }
+
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         running = true; startMs = SystemClock.uptimeMillis(); postInvalidateOnAnimation();
@@ -135,6 +144,17 @@ public class SplashStageView extends View {
         float s = 172f * d / 200f;                       // art unit -> px (mascot is 172 dp wide)
         float feetY = h - 12f * d;                       // ground line
         float ox = (w - 172f * d) / 2f, oy = feetY - 172f * s;
+
+        // v2.0.115: soft glow behind the mascot (brightest at the top of a jump) and slow sparkles rising through it
+        long el = SystemClock.uptimeMillis() - startMs;
+        glow.setAlpha(Math.round(255f * (0.65f + 0.35f * Math.min(1f, -bodyY.at(t) / 58f))));
+        c.drawCircle(w / 2f, h * 0.52f, Math.min(w, h) * 0.62f, glow);
+        spark.setStyle(Paint.Style.FILL);
+        for (float[] sp : SPARKS) {
+            float life = ((el / sp[1]) + sp[2]) % 1f;
+            spark.setColor(argb(0.55f * (float) Math.sin(Math.PI * life), 0xC9, 0xBB, 0xFF));
+            c.drawCircle(w * sp[0] + (float) Math.sin(life * 6.28f + sp[2] * 9f) * 7f * d, h * 0.92f - life * h * 0.8f, sp[3] * d, spark);
+        }
 
         // ground shadow (light purple: a black one is invisible on the dark background)
         float sc = shScale.at(t), sa = shAlpha.at(t);
