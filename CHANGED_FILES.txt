@@ -1,5 +1,0 @@
-bofo-android/app/build.gradle  changed
-bofo-android/app/src/main/java/com/bofo/finder/ui/HomeFragment.java  changed
-bofo-android/app/src/main/java/com/bofo/finder/ui/RentCardView.java  changed
-CHANGES_ANDROID.md  changed
-HANDOFF_ANDROID.md  changed

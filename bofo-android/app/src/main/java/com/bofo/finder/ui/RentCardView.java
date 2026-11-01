@@ -85,12 +85,12 @@ public class RentCardView extends View {
         Context c = getContext();
         if (r.count == 1 || r.lowest == r.highest) cells.add(new Cell(c.getString(best ? R.string.rent_best : R.string.rent_single), lo.id(), lo.price()));
         else {
-            // v2.0.106: every price is shown (up to 4 columns, cheapest to dearest). More than 4 houses: cheapest, two spread in between, dearest.
+            // Top 3 prices only (cheapest to dearest). More than 3 houses: cheapest, the middle one, dearest.
             List<BoardingHouse> sorted = new ArrayList<>(h);
             sorted.sort(java.util.Comparator.comparingDouble(BoardingHouse::price));
             List<BoardingHouse> pick = new ArrayList<>();
-            if (sorted.size() <= 4) pick.addAll(sorted);
-            else { int n = sorted.size(); pick.add(sorted.get(0)); pick.add(sorted.get(Math.round((n - 1) / 3f))); pick.add(sorted.get(Math.round((n - 1) * 2 / 3f))); pick.add(sorted.get(n - 1)); }
+            if (sorted.size() <= 3) pick.addAll(sorted);
+            else { int n = sorted.size(); pick.add(sorted.get(0)); pick.add(sorted.get(Math.round((n - 1) / 2f))); pick.add(sorted.get(n - 1)); }
             for (int k = 0; k < pick.size(); k++) {
                 BoardingHouse x = pick.get(k);
                 String label = k == 0 ? c.getString(R.string.rent_lowest) : k == pick.size() - 1 ? c.getString(R.string.rent_highest)

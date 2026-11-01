@@ -1,3 +1,6 @@
+# v2.0.108 - Android: price card shows only 3 prices
+- Home price card now shows 3 prices at most: Lowest, Middle, Highest (was up to 4).
+
 # v2.0.107 - Android: Best rated = only the top 3 rated houses
 - Best rated tab (list, map, price card) shows only rated houses, best 3; none rated = empty message and no price card.
 
