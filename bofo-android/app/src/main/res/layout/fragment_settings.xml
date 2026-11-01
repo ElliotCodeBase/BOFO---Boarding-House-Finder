@@ -2,13 +2,17 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:clipToPadding="false"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="120dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -19,58 +23,21 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/settings_account"
-            android:textAppearance="@style/Text.Bofo.Secondary"
-            android:textStyle="bold" />
-
-        <com.google.android.material.card.MaterialCardView
-            style="@style/Widget.Bofo.Card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/edit_profile"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:minHeight="52dp"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:text="@string/profile_edit"
-                android:textColor="@color/bofo_text"
-                android:textSize="15sp" />
-
-            <TextView
-                android:id="@+id/switch_role"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:minHeight="52dp"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:text="@string/settings_switch_owner"
-                android:textColor="@color/bofo_text"
-                android:textSize="15sp" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+            android:layout_marginTop="2dp"
+            android:text="@string/settings_subtitle"
+            android:textAppearance="@style/Text.Bofo.Secondary" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
             android:layout_marginTop="24dp"
-            android:text="@string/settings_preferences"
-            android:textAppearance="@style/Text.Bofo.Secondary"
+            android:letterSpacing="0.06"
+            android:text="@string/settings_account"
+            android:textAllCaps="true"
+            android:textColor="@color/bofo_muted"
+            android:textSize="12sp"
             android:textStyle="bold" />
-
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.Bofo.Card"
             android:layout_width="match_parent"
@@ -80,22 +47,88 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:divider="@drawable/divider_set_inset"
+                android:orientation="vertical"
+                android:showDividers="middle">
+                <TextView
+                    android:id="@+id/edit_profile"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_user"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/profile_edit"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp" />
+                <TextView
+                    android:id="@+id/switch_role"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_swap"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/settings_switch_owner"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="24dp"
+            android:letterSpacing="0.06"
+            android:text="@string/settings_preferences"
+            android:textAllCaps="true"
+            android:textColor="@color/bofo_muted"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Bofo.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@drawable/divider_set_inset"
+                android:orientation="vertical"
+                android:showDividers="middle">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
-                    android:minHeight="64dp"
+                    android:minHeight="72dp"
                     android:orientation="horizontal"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp">
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_set_pin" />
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginEnd="8dp"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:paddingTop="10dp"
+                        android:paddingBottom="10dp">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -107,6 +140,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="@string/settings_use_location_desc"
                             android:textAppearance="@style/Text.Bofo.Secondary"
                             android:textSize="12sp" />
@@ -118,21 +152,30 @@
                         android:layout_height="wrap_content"
                         android:contentDescription="@string/settings_use_location" />
                 </LinearLayout>
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
-                    android:minHeight="64dp"
+                    android:minHeight="72dp"
                     android:orientation="horizontal"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp">
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_set_eye" />
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginEnd="8dp"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:paddingTop="10dp"
+                        android:paddingBottom="10dp">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -144,6 +187,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="@string/settings_path_fade_desc"
                             android:textAppearance="@style/Text.Bofo.Secondary"
                             android:textSize="12sp" />
@@ -157,15 +201,17 @@
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
             android:layout_marginTop="24dp"
+            android:letterSpacing="0.06"
             android:text="@string/settings_legal"
-            android:textAppearance="@style/Text.Bofo.Secondary"
+            android:textAllCaps="true"
+            android:textColor="@color/bofo_muted"
+            android:textSize="12sp"
             android:textStyle="bold" />
-
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.Bofo.Card"
             android:layout_width="match_parent"
@@ -175,96 +221,129 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/terms"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:minHeight="52dp"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:text="@string/settings_terms"
-                android:textColor="@color/bofo_text"
-                android:textSize="15sp" />
-
-            <TextView
-                android:id="@+id/privacy"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:minHeight="52dp"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:text="@string/settings_privacy"
-                android:textColor="@color/bofo_text"
-                android:textSize="15sp" />
-
-            <TextView
-                android:id="@+id/owner_agreement"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:minHeight="52dp"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:text="@string/settings_owner_agreement"
-                android:textColor="@color/bofo_text"
-                android:textSize="15sp"
-                android:visibility="gone" />
+                android:divider="@drawable/divider_set_inset"
+                android:orientation="vertical"
+                android:showDividers="middle">
+                <TextView
+                    android:id="@+id/terms"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_doc"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/settings_terms"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp" />
+                <TextView
+                    android:id="@+id/privacy"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_shield"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/settings_privacy"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp" />
+                <TextView
+                    android:id="@+id/owner_agreement"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_doc"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/settings_owner_agreement"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp"
+                    android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="24dp"
+            android:letterSpacing="0.06"
+            android:text="@string/settings_session"
+            android:textAllCaps="true"
+            android:textColor="@color/bofo_muted"
+            android:textSize="12sp"
+            android:textStyle="bold" />
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.Bofo.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp">
+            android:layout_marginTop="8dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/sign_out"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:minHeight="52dp"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:text="@string/settings_sign_out"
-                android:textColor="@color/bofo_text"
-                android:textSize="15sp" />
-
-            <TextView
-                android:id="@+id/delete_account"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:minHeight="52dp"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:text="@string/settings_delete"
-                android:textColor="@color/bofo_error"
-                android:textSize="15sp" />
+                android:divider="@drawable/divider_set_inset"
+                android:orientation="vertical"
+                android:showDividers="middle">
+                <TextView
+                    android:id="@+id/sign_out"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_logout"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/settings_sign_out"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp" />
+                <TextView
+                    android:id="@+id/delete_account"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_trash"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/settings_delete"
+                    android:textColor="@color/bofo_error"
+                    android:textSize="15sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <ImageView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="28dp"
+            android:contentDescription="@string/cd_mascot"
+            android:src="@drawable/mascot_happy" />
 
         <TextView
             android:id="@+id/version"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="6dp"
             android:gravity="center"
-            android:textAppearance="@style/Text.Bofo.Secondary" />
+            android:textAppearance="@style/Text.Bofo.Secondary"
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/message"

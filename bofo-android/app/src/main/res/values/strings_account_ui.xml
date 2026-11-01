@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.0.93 Settings / Profile redesign: new texts only -->
+<resources>
+    <string name="settings_subtitle">Your account, your map and your privacy.</string>
+    <string name="settings_session">Session</string>
+    <string name="profile_section_account">Account</string>
+</resources>

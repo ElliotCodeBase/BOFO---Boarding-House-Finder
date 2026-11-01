@@ -1,3 +1,7 @@
+# v2.0.93 - Android: new Settings and Profile screens
+- **Changed:** **Profile** now has a purple hero card (big photo with a white ring, name, e-mail, role chip), an Account list (Edit profile, Settings, AI Chats for admins) with icon tiles and arrows, and an About card with the mascot and version. **Settings** rows have icon tiles, arrows and thin dividers; Account, Preferences (Use my location, See-through path, now with icons), Legal and a new Session group (Sign out, Delete my account in red); mascot + version at the bottom; extra bottom space so the floating tab bar never covers the last row.
+- Same ids and behaviour as before (no Java change). New: `ic_set_*` icon tiles, `ic_chevron_right`, `divider_set_inset`, `bg_profile_hero` / `_chip` / `_avatar`, `strings_account_ui.xml`. Changed: `fragment_settings.xml`, `fragment_profile.xml`, `build.gradle` (2.0.93 / 293). Edit profile screen not changed. Not built or run by Claude.
+
 # v2.0.92 - Android: switching Student / Owner works right away
 - **Fixed:** Settings > "Switch to an owner / student account" changed the account on the server but the app kept showing the old tabs until you signed in again. Cause: the tabs are built from `AuthRouter.role`, which was only set at login. Now the role is set and the app reopens on the new role's first tab. The old "Owner tools arrive in a later stage" message is now "Account switched.".
 - Changed: `SettingsFragment.java`, `strings.xml`, `build.gradle` (2.0.92 / 292). No Supabase change. Not built or run by Claude.
