@@ -208,6 +208,7 @@
         <!-- v2.0.83: with no network the map shows the last search; top right so the "Near campus" chip stays free -->
         <TextView
             android:id="@+id/offline_pill"
+            android:accessibilityLiveRegion="polite"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|end"
