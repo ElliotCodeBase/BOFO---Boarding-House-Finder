@@ -492,7 +492,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         float badge = 14 * d, gap = 4 * d, padX = 9 * d;
         float tw = t.measureText(text);
         float w = padX * 2 + tw + (featured ? badge + gap : 0);
-        float bodyH = 28 * d, tail = 6 * d, mx = 6 * d, mt = 7 * d, mb = 1.5f * d;
+        float bodyH = 28 * d, tail = 6 * d, mx = 8 * d, mt = 13 * d, mb = 1.5f * d;      // v2.0.90: more room above / left so the shield badge is not cut
         int bw = Math.round(w + 2 * mx), bh = Math.round(mt + bodyH + tail + mb);
         Bitmap bmp = Bitmap.createBitmap(bw, bh, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bmp);
