@@ -160,6 +160,7 @@
     <string name="saved_error">Could not load your saved places.</string>
 
     <string name="detail_verified">Verified owner</string>
+    <string name="detail_not_verified">Not verified</string>
     <string name="detail_amenities">Amenities</string>
     <string name="detail_rules">House rules</string>
     <string name="form_rules">House rules</string>
@@ -297,7 +298,7 @@
     <string name="form_publishing">Publishing...</string>
     <string name="form_done">Your place is published.</string>
     <string name="form_failed">Could not publish: %1$s</string>
-    <string name="form_not_verified">Publishing needs a verified owner account (My places > Verification). The database refuses unverified owners.</string>
+    <string name="form_not_verified">Please try again. If it keeps failing, make sure supabase/migrations/013_unverified_can_list.sql was run.</string>
     <string name="form_photo_failed">One photo could not be read.</string>
 
     <!-- Stage 8d: owner verification -->
@@ -306,7 +307,7 @@
     <string name="verify_intro">Owners verify once before listing. Send clear photos of the front and back of a valid government ID, and a live selfie. Only the BOFO admins who review your request can see them.</string>
     <string name="verify_state_unverified">You are not verified yet.</string>
     <string name="verify_state_pending">Waiting for review. An admin will check your photos; come back later to see the result.</string>
-    <string name="verify_state_verified">You are verified. You can publish places.</string>
+    <string name="verify_state_verified">You are verified. Your places show the verified badge.</string>
     <string name="verify_state_rejected">Your last request was not approved. You can send new photos below.</string>
     <string name="verify_reason">Reason: %1$s</string>
     <string name="verify_id_type">Type of ID</string>
@@ -332,9 +333,9 @@
     <string name="verify_need_consent">Tick the box to agree first.</string>
     <string name="verify_load_failed">Could not load your verification status.</string>
     <string name="verify_retry">Try again</string>
-    <string name="verify_banner_unverified">You are not verified yet. Verify to publish places.</string>
-    <string name="verify_banner_pending">Your verification is waiting for review.</string>
-    <string name="verify_banner_rejected">Your verification was not approved. Send new photos.</string>
+    <string name="verify_banner_unverified">You are not verified yet. You can list places, but they show a "not verified" icon until you verify.</string>
+    <string name="verify_banner_pending">Your verification is waiting for review. Your places show "not verified" until then.</string>
+    <string name="verify_banner_rejected">Your verification was not approved. Your places show "not verified". Send new photos.</string>
     <string name="verify_banner_btn">Verification</string>
     <string name="verify_gate_title">Verify first</string>
     <string name="verify_gate_msg">Publishing needs a verified owner account. Send your ID and selfie for review first.</string>

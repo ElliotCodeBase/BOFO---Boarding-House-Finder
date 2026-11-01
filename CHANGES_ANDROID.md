@@ -1,3 +1,8 @@
+# v2.0.89 - Android: unverified owners can list
+- **Changed:** owners no longer need to be verified to publish. Places of unverified owners show a grey "!" badge on the map pin and a "Not verified" chip on the place page; verified owners keep the blue check. The verify banner still shows, with new wording. Chat with the owner works for unverified places too.
+- **Supabase:** `013_unverified_can_list.sql` (RLS on `boarding_houses`, chat function). Run it, or publishing is still refused by the database.
+- Files: `013_unverified_can_list.sql` (new), `MapCardView.java`, `BhDetailFragment.java`, `ListingsFragment.java`, `strings.xml`, `build.gradle` (2.0.89 / 289).
+
 # v2.0.88 - Android: verified badge on map pins
 - **Changed:** the green dot (house with no reviews yet) is removed from the map price pins. Houses of verified owners now show a check badge on the pin's top-left corner instead; the check that sat inside the pill moved there.
 - Files: `MapCardView.java`, `build.gradle` (2.0.88 / 288).

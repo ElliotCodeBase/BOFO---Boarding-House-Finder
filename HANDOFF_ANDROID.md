@@ -1,3 +1,8 @@
+# Handoff (Android) - v2.0.89 Unverified owners can list
+- **PR title:** `v2.0.89 - Android: unverified owners can list places; "not verified" icon on pins and place page`
+- **Supabase:** run `supabase/migrations/013_unverified_can_list.sql` (new `is_owner_or_admin`; `bh_insert` / `bh_update` no longer need verification; `get_or_create_conversation` no longer needs a verified owner). Boosts / featured still need verified (`is_featured` and the boost code are unchanged). Custom amenities (`get_or_create_amenity`) still need a verified owner.
+- App: `ListingsFragment.add()` always opens the form (no verify gate); banner / state texts reworded; `MapCardView.pricePin` draws a grey "!" badge (top-left) when the owner is not verified, the blue check when verified; `BhDetailFragment` adds a "Not verified" chip. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.88 Verified badge on map pins
 - **PR title:** `v2.0.88 - Android: verified-owner badge replaces the green "New" dot on map pins`
 - `MapCardView.pricePin`: the green "New" dot (top-left) is gone; a verified owner now gets a blue check badge with a white ring on that corner, and the old check inside the pill is removed (the pill is narrower). The `fresh` argument is still passed but unused; "New" still shows as the star text on cards. No Supabase change. Not built or run by Claude.

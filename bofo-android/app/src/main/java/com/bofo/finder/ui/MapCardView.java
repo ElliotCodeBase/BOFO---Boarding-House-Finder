@@ -470,7 +470,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
 
     /** v2.0.80: price pin = white pill (thin border, ink text) with a small tail; the selected one is dark indigo with white text.
      *  A verified house gets a check badge in front, a featured house a star behind, in the same bitmap.
-     *  v2.0.81: a saved house gets a small red heart on the top-right corner, a verified owner a small check badge on the top-left corner (v2.0.88: it replaced the green "New" dot and the check inside the pill). */
+     *  v2.0.81: a saved house gets a small red heart on the top-right corner, a verified owner a small check badge on the top-left corner (v2.0.88: it replaced the green "New" dot and the check inside the pill); v2.0.89: an owner who is not verified yet gets a grey "!" badge there. */
     private Bitmap pricePin(String text, boolean selected, boolean verified, boolean featured, boolean saved, boolean fresh, boolean seen) {
         float d = getResources().getDisplayMetrics().density;
         Paint t = textPaint(selected ? 0xFFFFFFFF : seen ? 0xFF8A85A6 : 0xFF17142A, 12, true);       // v2.0.86: an opened place is a solid muted pill, not a see-through one
@@ -533,6 +533,17 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             ck.lineTo(dx + rr * 0.46f, dy - rr * 0.34f);
             c.drawPath(ck, p);
             p.setStrokeCap(Paint.Cap.BUTT);
+        } else {                                                             // v2.0.89: not verified yet = grey badge with "!"
+            float dx = body.left + 6 * d, dy = body.top + 1 * d, rr = 6.5f * d;
+            p.setStyle(Paint.Style.FILL); p.setColor(0xFFFFFFFF);
+            c.drawCircle(dx, dy, rr + 1.5f * d, p);
+            p.setColor(seen && !selected ? 0xFFC9C6DA : 0xFF8F8CA3);
+            c.drawCircle(dx, dy, rr, p);
+            p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(1.8f * d); p.setStrokeCap(Paint.Cap.ROUND); p.setColor(0xFFFFFFFF);
+            c.drawLine(dx, dy - rr * 0.5f, dx, dy + rr * 0.1f, p);
+            p.setStyle(Paint.Style.FILL);
+            c.drawCircle(dx, dy + rr * 0.48f, 1.1f * d, p);
+            p.setStyle(Paint.Style.STROKE); p.setStrokeCap(Paint.Cap.BUTT);
         }
         if (saved) {                                                         // heart, top-right corner
             float s2 = 11 * d, hx = body.right - 4 * d, hy = body.top + 1.5f * d;

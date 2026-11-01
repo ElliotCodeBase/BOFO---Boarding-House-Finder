@@ -81,17 +81,9 @@ public class ListingsFragment extends Fragment {
         androidx.navigation.fragment.NavHostFragment.findNavController(this).navigate(R.id.verificationFragment);
     }
 
+    /** v2.0.89: owners can list before they are verified (013_unverified_can_list.sql); their places carry a "not verified" icon until an admin approves them. */
     private void add() {
-        if (verification == null || verification == State.VERIFIED) {
-            androidx.navigation.fragment.NavHostFragment.findNavController(this).navigate(R.id.listingFormFragment);
-            return;
-        }
-        boolean pending = verification == State.PENDING;
-        new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.verify_gate_title)
-                .setMessage(pending ? R.string.verify_gate_pending : R.string.verify_gate_msg)
-                .setNegativeButton(R.string.common_cancel, null)
-                .setPositiveButton(R.string.verify_open, (d, w) -> openVerification())
-                .show();
+        androidx.navigation.fragment.NavHostFragment.findNavController(this).navigate(R.id.listingFormFragment);
     }
 
     private void showBanner() {
