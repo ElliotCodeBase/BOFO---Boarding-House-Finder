@@ -1,3 +1,12 @@
+# Handoff (Android) - v2.0.118 Security system: restricted AI role + hardening
+- **PR title:** `v2.0.118 - Security: restricted database role for AI, helper-function lockdown, view throttle, security docs`
+- No app code changed; only `versionName` / `versionCode` (318). **Not applied to the live Supabase project**: run in the SQL editor, in order: `015_security_hardening.sql`, `016_ai_dev_role.sql` (013 is still not run live; 015 works with or without it).
+- 015: `is_admin` / `is_verified_owner` / `is_owner_or_admin` and the app RPCs are no longer executable by anon / other roles; `bump_view` counts one view per user per place per hour (new table `bh_view_seen`, no policies).
+- 016: role `bofo_ai_dev` (nologin until the user sets a password): catalog read, demo listings and reviews only for `@example.com` test accounts, no access to users / auth / chats / ID scans / storage / payments. Tested on local Postgres 16 with stubbed Supabase schemas, not on the live project.
+- `docs/SECURITY.md` = findings table, dashboard to-dos, test list. `CLAUDE.md` section 7 = rules for any AI: no user PII, nothing under real accounts, ask before touching the live DB.
+- User to-do: delete or re-password the Dev Admin / Dev Student accounts before release (SQL at the bottom of 015).
+
+---
 # Handoff (Android) - v2.0.117 Orange theme + Settings switch
 - **PR title:** `v2.0.117 - Android: orange theme (default) with a Settings switch back to the classic purple look`
 - **How it works:** `res/values/colors.xml` = CLASSIC purple (values unchanged, new tokens added). `res/values-night/colors.xml` = ORANGE (same 76 names). "night" is only the switch: `util/ThemeMode` sets `AppCompatDelegate.MODE_NIGHT_YES` (orange) / `MODE_NIGHT_NO` (classic), never FOLLOW_SYSTEM. Choice saved in `AppPrefs.orangeTheme` (default on, survives sign-out). `BofoApp.onCreate` applies it before any activity; Settings > "Orange theme" (`orange_theme` row) calls `ThemeMode.set`, the activity recreates itself on Settings.

@@ -1,3 +1,6 @@
+# v2.0.118 - Security system
+- New database role for AI helpers that cannot see users, chats or ID scans; helper functions locked to signed-in users; view counter throttled; security audit in `docs/SECURITY.md`; AI access rules in `CLAUDE.md`. Supabase migrations 015 and 016 are run by hand.
+
 # v2.0.117 - Android: orange theme + switch back to classic
 - The app now has a new ORANGE look, on by default. Settings has a new "Orange theme" switch: turn it off to go back to the classic purple look, turn it on again any time. It changes at once and you stay on Settings.
 - Every screen follows the switch: map pins, clusters, price card, bottom bar, chips, tabs, buttons, cards, chat, loading screen (white in orange), profile, login and the empty states. The map's land and road colours turn warm too.
