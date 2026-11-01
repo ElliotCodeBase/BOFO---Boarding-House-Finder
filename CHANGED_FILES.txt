@@ -1,6 +1,8 @@
 changed bofo-android/app/build.gradle
 changed bofo-android/app/src/main/java/com/bofo/finder/ui/MapCardView.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/ExploreFragment.java
+changed bofo-android/app/src/main/java/com/bofo/finder/util/Money.java
 changed bofo-android/app/src/main/res/layout/view_map_card.xml
-new bofo-android/app/src/main/res/drawable/bg_peek_open.xml
+changed bofo-android/app/src/main/res/values/strings.xml
 changed CHANGES_ANDROID.md
 changed HANDOFF_ANDROID.md

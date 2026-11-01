@@ -189,6 +189,8 @@
     <string name="map_you">you</string>
     <string name="home_near_you">Near you</string>
     <string name="detail_show_map">Show on map</string>
+    <string name="map_search_area">Search this area</string>
+    <string name="map_near_campus">Near %1$s</string>
     <string name="cd_locate">Show my location</string>
     <string name="cd_map_full">Open the full map</string>
     <string name="loc_off">Location is off in Settings. Turn on \"Use my location\" to use this.</string>

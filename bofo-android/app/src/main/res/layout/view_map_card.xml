@@ -28,6 +28,7 @@
 
     <!-- Locate button: round, white, bottom-right (expand sits above it and is only shown where a screen asks for it) -->
     <LinearLayout
+        android:id="@+id/locate_col"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
@@ -79,6 +80,42 @@
         android:background="@drawable/bg_glass_pill"
         android:paddingHorizontal="12dp"
         android:paddingVertical="6dp"
+        android:textColor="@color/bofo_ink"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <!-- v2.0.80: "Near <campus>" chip, top-left (Explore): recentres the map on the chosen campus -->
+    <TextView
+        android:id="@+id/near_campus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="10dp"
+        android:background="@drawable/bg_glass_pill"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:maxWidth="150dp"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:textColor="@color/bofo_ink"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <!-- v2.0.80: "Search this area", top-centre, slides in after the person pans or zooms (Explore) -->
+    <TextView
+        android:id="@+id/search_area"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_glass_pill"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="9dp"
+        android:text="@string/map_search_area"
         android:textColor="@color/bofo_ink"
         android:textSize="12sp"
         android:textStyle="bold"

@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.80 Explore map pins (Step 1 of 5)
+- **PR title:** `v2.0.80 - Android: price pins, Search this area, locate button and campus chip on the Explore map`
+- `MapCardView`: `pricePin(text, selected, verified, featured)` bitmaps cached in `imgs` / `imgSize` under `pp|<price>|<sel><ver><feat>`; clusters use `bubble(count, from)` key `cl|n|from`; `PIN_SEL_SCALE` 1.12. "Search this area": `gestureMove` (set by `REASON_API_GESTURE` and cluster taps), `holdArea` (pin tap easing), `areaBase`, `checkArea()` on camera idle, `Listener.searchArea(s, w, n, e)`, enabled by `setSearchAreaEnabled(true)` (Explore only). `setCampusChip(name)`, `setLocateLift(dp)`. New layout ids `locate_col`, `near_campus`, `search_area`; strings `map_search_area`, `map_near_campus`.
+- `ExploreFragment`: `locateMe()` (own `LocationHelper`), `areaBox` filter inside `reload()` (cleared by new search text, `BrowseState.CHANGED`), `pushMap(box == null)`. `Money.shortPeso`. No new `AppPrefs` keys, no Supabase change.
+- Risky / not done: Home and the full-screen map keep the old look except that they now also draw price pins (shared view). Locate lift is a fixed 72 dp. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.79 Map house card
 - **PR title:** `v2.0.79 - Android: map house card with photo, amber rating, solid open button, slide-up`
 - `MapCardView.select`: loads `BoardingHouse.photoUrl()` into `peek_photo` with Glide (hidden when empty), amber `ForegroundColorSpan` on the star, slide-up/fade when the card goes from GONE to VISIBLE. `peek_photo` is clipped by a `ViewOutlineProvider` (16 dp) set in the constructor. Ids `peek_name/price/info/close/open` unchanged. No Supabase change. Not built or run by Claude.

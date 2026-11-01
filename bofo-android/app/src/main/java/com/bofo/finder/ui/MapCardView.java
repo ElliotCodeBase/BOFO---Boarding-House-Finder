@@ -89,9 +89,12 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         default void campusTapped(String id) { }
         /** Step 8: the person tapped a pin (id) or closed / left the preview (null). Not called for select() from code. */
         default void placeSelected(@Nullable String id) { }
+        /** v2.0.80: "Search this area" was tapped: the visible box (south, west, north, east). */
+        default void searchArea(double south, double west, double north, double east) { }
     }
 
     private static final float PIN_ZOOM = 12.5f;
+    private static final float PIN_SEL_SCALE = 1.12f;       // v2.0.80: the selected price pin is a little bigger
     private static final String STYLE_ASSET = "bofo-map-style.json";
     private static final long AMBIENT_CACHE_BYTES = 50L * 1024 * 1024;       // MapLibre's own tile cache, capped
     private static String styleJson;
@@ -159,6 +162,12 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             @Override public void onStopTrackingTouch(@NonNull Slider sl) { if (listener != null) listener.radiusChanged(sl.getValue(), true); }
         });
         b.radiusValue.setText(getContext().getString(R.string.map_radius_value, b.radiusSlider.getValue()));
+        b.searchArea.setOnClickListener(v -> {            // v2.0.80
+            double[] now = viewBox();
+            if (now != null) { areaBase = now; if (listener != null) listener.searchArea(now[0], now[1], now[2], now[3]); }
+            showAreaPill(false);
+        });
+        b.nearCampus.setOnClickListener(v -> { if (campusLat != null && campusLng != null) moveTo(campusLat, campusLng, 14.5); });
         b.peekClose.setOnClickListener(v -> userSelect(null));
         b.peekOpen.setOnClickListener(v -> { if (listener != null && selectedId != null) listener.openPlace(selectedId); });
     }
@@ -302,12 +311,13 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         m.addOnMapClickListener(this::onTap);
         double[] saved = cameraKey == null ? null : SAVED_CAMERA.get(cameraKey);
         if (saved != null) m.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(saved[0], saved[1]), saved[2]));     // back where it was
-        m.addOnCameraMoveStartedListener(reason -> { camMoving = true; removeCallbacks(idleRebuild); if (radar != null) radar.setMoving(true); });
+        m.addOnCameraMoveStartedListener(reason -> { camMoving = true; if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) gestureMove = true; removeCallbacks(idleRebuild); if (radar != null) radar.setMoving(true); });
         m.addOnCameraIdleListener(() -> {
             camMoving = false;
             saveCamera();
             removeCallbacks(idleRebuild);
             refreshRadar();                         // exact position again: the ripples come back
+            checkArea();
             postDelayed(idleRebuild, 160);          // fling / double-tap / pinch fire several idles in a row: rebuild once, after the hand is off
         });      // pins / clusters / labels depend on the zoom
         String json = loadStyle(getContext());
@@ -340,8 +350,6 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         imgs.clear();                                     // a new style starts without our label bitmaps
         int primary = ContextCompat.getColor(getContext(), R.color.bofo_primary);
         int amber = ContextCompat.getColor(getContext(), R.color.bofo_amber);
-        st.addImage("pin", pin(primary));
-        st.addImage("pin-star", pin(amber));
         st.addSource(new GeoJsonSource("radius-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("campus-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("user-src", MapGeo.EMPTY));
@@ -354,7 +362,6 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         st.addSource(new GeoJsonSource("ringlabel-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("glow-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("routelabel-src", MapGeo.EMPTY));
-        st.addImage("pin-sel", pin(DARK_PURPLE));
         st.addSource(new GeoJsonSource("route-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("route-start-src", MapGeo.EMPTY));
         st.addSource(new GeoJsonSource("route-end-src", MapGeo.EMPTY));
@@ -423,7 +430,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
                 PropertyFactory.iconAllowOverlap(true),
                 PropertyFactory.iconIgnorePlacement(true),
-                PropertyFactory.iconSize(Expression.switchCase(sel, Expression.literal(1.3f * 1.25f), Expression.literal(1.25f))))
+                PropertyFactory.iconSize(Expression.switchCase(sel, Expression.literal(PIN_SEL_SCALE), Expression.literal(1f))))
                 .withFilter(Expression.eq(Expression.get("kind"), Expression.literal("pin"))));
         for (String[] l : new String[][]{{"place-labels", "labels-src"}, {"college-labels", "college-labels-src"}})
             st.addLayer(new SymbolLayer(l[0], l[1]).withProperties(
@@ -449,31 +456,69 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         return bmp;
     }
 
-    /** Teardrop pin with a white edge and a white dot, 30 x 40 dp. */
-    private Bitmap pin(int color) {
+    /** v2.0.80: price pin = white pill (thin border, ink text) with a small tail; the selected one is dark indigo with white text.
+     *  A verified house gets a check badge in front, a featured house a star behind, in the same bitmap. */
+    private Bitmap pricePin(String text, boolean selected, boolean verified, boolean featured) {
         float d = getResources().getDisplayMetrics().density;
-        int w = Math.round(30 * d), h = Math.round(40 * d);
-        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Paint t = textPaint(selected ? 0xFFFFFFFF : 0xFF17142A, 12, true);
+        float badge = 14 * d, gap = 4 * d, padX = 9 * d;
+        float tw = t.measureText(text);
+        float w = padX * 2 + tw + (verified ? badge + gap : 0) + (featured ? badge + gap : 0);
+        float bodyH = 28 * d, tail = 6 * d, m = 1.5f * d;
+        int bw = Math.round(w + 2 * m), bh = Math.round(bodyH + tail + 2 * m);
+        Bitmap bmp = Bitmap.createBitmap(bw, bh, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bmp);
-        float r = w / 2f - 2 * d, cx = w / 2f, cy = r + 2 * d;
-        Path path = new Path();
-        path.moveTo(cx, h - d);
-        path.lineTo(cx - r * 0.78f, cy + r * 0.62f);
-        path.lineTo(cx + r * 0.78f, cy + r * 0.62f);
-        path.close();
+        RectF body = new RectF(m, m, bw - m, m + bodyH);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(3 * d);
-        p.setStrokeJoin(Paint.Join.ROUND);
-        p.setColor(0xFFFFFFFF);
-        c.drawCircle(cx, cy, r, p);
-        c.drawPath(path, p);
-        p.setStyle(Paint.Style.FILL);
-        p.setColor(color);
-        c.drawCircle(cx, cy, r, p);
-        c.drawPath(path, p);
-        p.setColor(0xFFFFFFFF);
-        c.drawCircle(cx, cy, r * 0.38f, p);
+        int fill = selected ? DARK_PURPLE : 0xFFFFFFFF, edge = selected ? 0xFFFFFFFF : 0x40463C8C;
+        Path tailPath = new Path();
+        tailPath.moveTo(bw / 2f - 5 * d, body.bottom - d);
+        tailPath.lineTo(bw / 2f, body.bottom + tail);
+        tailPath.lineTo(bw / 2f + 5 * d, body.bottom - d);
+        tailPath.close();
+        p.setColor(fill); p.setStyle(Paint.Style.FILL);
+        c.drawRoundRect(body, bodyH / 2f, bodyH / 2f, p);
+        c.drawPath(tailPath, p);
+        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(d); p.setColor(edge);
+        c.drawRoundRect(body, bodyH / 2f, bodyH / 2f, p);
+        p.setStyle(Paint.Style.FILL); p.setColor(fill);
+        c.drawRect(bw / 2f - 4 * d, body.bottom - 2 * d, bw / 2f + 4 * d, body.bottom + 0.5f * d, p);     // hides the border where the tail joins
+        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(d); p.setColor(edge); p.setStrokeJoin(Paint.Join.ROUND);
+        Path sides = new Path();
+        sides.moveTo(bw / 2f - 4.6f * d, body.bottom + 0.4f * d);
+        sides.lineTo(bw / 2f, body.bottom + tail - 0.5f * d);
+        sides.lineTo(bw / 2f + 4.6f * d, body.bottom + 0.4f * d);
+        c.drawPath(sides, p);
+        float x = m + padX, cy = body.centerY();
+        int primary = ContextCompat.getColor(getContext(), R.color.bofo_primary);
+        if (verified) {
+            p.setStyle(Paint.Style.FILL); p.setColor(selected ? 0xFFFFFFFF : primary);
+            c.drawCircle(x + badge / 2f, cy, badge / 2f, p);
+            p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(1.8f * d); p.setStrokeCap(Paint.Cap.ROUND); p.setColor(selected ? DARK_PURPLE : 0xFFFFFFFF);
+            Path ck = new Path();
+            ck.moveTo(x + badge * 0.28f, cy + badge * 0.02f);
+            ck.lineTo(x + badge * 0.44f, cy + badge * 0.2f);
+            ck.lineTo(x + badge * 0.74f, cy - badge * 0.18f);
+            c.drawPath(ck, p);
+            p.setStrokeCap(Paint.Cap.BUTT);
+            x += badge + gap;
+        }
+        c.drawText(text, x + tw / 2f, cy - (t.ascent() + t.descent()) / 2f, t);
+        x += tw;
+        if (featured) {
+            x += gap;
+            p.setStyle(Paint.Style.FILL); p.setColor(ContextCompat.getColor(getContext(), R.color.bofo_amber));
+            Path star = new Path();
+            float R = badge / 2f, r = R * 0.45f, sx = x + R, sy = cy + 0.5f * d;
+            for (int k = 0; k < 10; k++) {
+                double ang = -Math.PI / 2 + k * Math.PI / 5;
+                float rad = k % 2 == 0 ? R : r;
+                float px = sx + (float) Math.cos(ang) * rad, py = sy + (float) Math.sin(ang) * rad;
+                if (k == 0) star.moveTo(px, py); else star.lineTo(px, py);
+            }
+            star.close();
+            c.drawPath(star, p);
+        }
         return bmp;
     }
 
@@ -559,6 +604,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 : locState == Loc.APPROX ? R.string.loc_pill_approx : locState == Loc.OFF ? R.string.loc_pill_off : 0;
         if (res != 0) b.locPill.setText(res);
         b.locPill.setVisibility(res != 0 && !pillShown ? View.VISIBLE : View.GONE);
+        paintCampusChip();
     }
 
     /** v2.0.78: while the phone is being found a soft ring grows out of the round button and fades, and the button breathes a little. Nothing is scaled past a parent's edge any more (that clipped the round button into a rounded square). */
@@ -876,13 +922,29 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             List<Integer> order = new ArrayList<>();
             for (int i = 0; i < n; i++) if (sp[i] != null) { if (places.get(i).id().equals(selectedId)) order.add(0, i); else order.add(i); }
             List<RectF> bodies = new ArrayList<>(), taken = new ArrayList<>();
-            for (int i : order) bodies.add(new RectF(sp[i].x - 15 * d, sp[i].y - 40 * d, sp[i].x + 15 * d, sp[i].y));
+            final String[] pinKey = new String[n];
+            for (int i : order) {                                     // v2.0.80: one price-pin bitmap per (price text, selected, verified, featured), made once and reused
+                BoardingHouse p = places.get(i);
+                boolean isSel = p.id().equals(selectedId);
+                String price = Money.shortPeso(p.price());
+                if (price.isEmpty()) price = "\u2014";
+                String key = "pp|" + price + "|" + (isSel ? 1 : 0) + (p.ownerVerified() ? 1 : 0) + (p.featured() ? 1 : 0);
+                if (imgs.add(key)) {
+                    Bitmap pb = pricePin(price, isSel, p.ownerVerified(), p.featured());
+                    imgSize.put(key, new float[]{pb.getWidth(), pb.getHeight()});
+                    style.addImage(key, pb);
+                }
+                pinKey[i] = key;
+                float[] pw = imgSize.get(key);
+                float sc = isSel ? PIN_SEL_SCALE : 1f, w2 = (pw == null ? 52 * d : pw[0]) * sc / 2f, h2 = (pw == null ? 36 * d : pw[1]) * sc;
+                bodies.add(new RectF(sp[i].x - w2, sp[i].y - h2, sp[i].x + w2, sp[i].y));
+            }
             for (int k = 0; k < order.size(); k++) {
                 int i = order.get(k);
                 BoardingHouse p = places.get(i);
                 boolean isSel = p.id().equals(selectedId);
                 if (feats.length() > 0) feats.append(',');
-                feats.append(feat(pos[i][0], pos[i][1], "\"kind\":\"pin\",\"id\":\"" + esc(p.id()) + "\",\"icon\":\"" + (isSel ? "pin-sel" : p.featured() ? "pin-star" : "pin") + "\",\"sel\":" + (isSel ? 1 : 0)));
+                feats.append(feat(pos[i][0], pos[i][1], "\"kind\":\"pin\",\"id\":\"" + esc(p.id()) + "\",\"icon\":\"" + esc(pinKey[i]) + "\",\"sel\":" + (isSel ? 1 : 0)));
                 String text = clip(p.name(), 22);
                 if (text.isEmpty()) continue;
                 String key = "lb|" + text;
@@ -915,14 +977,16 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                     BoardingHouse p = places.get(i);
                     feats.append(feat(pos[i][0], pos[i][1], "\"kind\":\"dot\",\"id\":\"" + esc(p.id()) + "\",\"sel\":" + (p.id().equals(selectedId) ? 1 : 0)));
                 } else {
-                    double la = 0, ln = 0, bn = -90, bs = 90, be = -180, bw = 180;
+                    double la = 0, ln = 0, bn = -90, bs = 90, be = -180, bw = 180, low = Double.MAX_VALUE;
                     for (int j : m) {
                         BoardingHouse p = places.get(j);
+                        if (p.price() > 0) low = Math.min(low, p.price());
                         la += p.lat(); ln += p.lng();
                         bn = Math.max(bn, p.lat()); bs = Math.min(bs, p.lat()); be = Math.max(be, p.lng()); bw = Math.min(bw, p.lng());
                     }
-                    String key = "cl|" + m.size();
-                    if (imgs.add(key)) style.addImage(key, bubble(m.size()));
+                    String from = low == Double.MAX_VALUE ? "" : Money.shortPeso(low);        // v2.0.80: "4 · from ₱1.2k"
+                    String key = "cl|" + m.size() + "|" + from;
+                    if (imgs.add(key)) style.addImage(key, bubble(m.size(), from));
                     double[] cpos = clearOfUser(la / m.size(), ln / m.size(), 34 * d);
                     feats.append(feat(cpos[0], cpos[1], String.format(Locale.US,
                             "\"kind\":\"cluster\",\"icon\":\"%s\",\"bn\":%.6f,\"bs\":%.6f,\"be\":%.6f,\"bw\":%.6f", key, bn, bs, be, bw)));
@@ -1003,9 +1067,23 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         return bmp;
     }
 
-    /** Numbered purple bubble for merged dots. */
-    private Bitmap bubble(int count) {
+    /** Numbered purple bubble for merged dots; with a price it is a pill "4 · from ₱1.2k" (v2.0.80). */
+    private Bitmap bubble(int count, String from) {
         float d = getResources().getDisplayMetrics().density;
+        if (!from.isEmpty()) {
+            String text = count + " \u00B7 from " + from;
+            Paint t = textPaint(0xFFFFFFFF, 13, true);
+            int w = Math.round(t.measureText(text) + 26 * d), h = Math.round(34 * d);
+            Bitmap pb = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            Canvas pc = new Canvas(pb);
+            Paint pp = new Paint(Paint.ANTI_ALIAS_FLAG);
+            pp.setColor(0xFFFFFFFF);
+            pc.drawRoundRect(new RectF(0, 0, w, h), h / 2f, h / 2f, pp);
+            pp.setColor(ContextCompat.getColor(getContext(), R.color.bofo_primary));
+            pc.drawRoundRect(new RectF(2.5f * d, 2.5f * d, w - 2.5f * d, h - 2.5f * d), h / 2f, h / 2f, pp);
+            pc.drawText(text, w / 2f, h / 2f - (t.ascent() + t.descent()) / 2f, t);
+            return pb;
+        }
         int sz = Math.round((count >= 100 ? 42 : count >= 10 ? 38 : 34) * BIG * d);
         Bitmap bmp = Bitmap.createBitmap(sz, sz, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bmp);
@@ -1033,6 +1111,76 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         c.drawRoundRect(new RectF(d / 2, d / 2, w - d / 2, h - d / 2), h / 2f, h / 2f, p);
         c.drawText(text, w / 2f, h / 2f - (t.ascent() + t.descent()) / 2f, t);
         return bmp;
+    }
+
+    // ---- v2.0.80: "Search this area", campus chip, locate button position ---------------------------------------
+
+    private boolean searchAreaOn, gestureMove, areaShown, holdArea;
+    private double[] areaBase;                  // {south, west, north, east, zoom} the list was last matched to
+    private String campusChipName;
+
+    /** Explore only: after the person pans / zooms a glass pill "Search this area" slides in; the Listener gets the visible box when it is tapped. */
+    public void setSearchAreaEnabled(boolean on) { searchAreaOn = on; if (!on) showAreaPill(false); }
+
+    /** The visible box {south, west, north, east, zoom} (rotation and tilt are off, so it is a plain rectangle), or null before the map has a size. */
+    @Nullable private double[] viewBox() {
+        if (map == null || mapView == null || mapView.getWidth() == 0 || mapView.getHeight() == 0) return null;
+        try {
+            LatLng tl = map.getProjection().fromScreenLocation(new PointF(0, 0));
+            LatLng br = map.getProjection().fromScreenLocation(new PointF(mapView.getWidth(), mapView.getHeight()));
+            return new double[]{br.getLatitude(), tl.getLongitude(), tl.getLatitude(), br.getLongitude(), map.getCameraPosition().zoom};
+        } catch (Throwable t) { return null; }
+    }
+
+    /** Camera idle: a move by code (fit / locate / campus chip) is the new baseline; a finger move that went further than a third of the map or 1 zoom level shows the pill. */
+    private void checkArea() {
+        if (!searchAreaOn) return;
+        double[] now = viewBox();
+        if (now == null) return;
+        if (routeShown()) { gestureMove = false; showAreaPill(false); return; }       // never while a path is shown
+        if (gestureMove) {                                                            // the finger (or a cluster tap) moved the map: has it left the area the list was made for?
+            gestureMove = false;
+            if (areaBase == null) { areaBase = now; return; }
+            double w = areaBase[3] - areaBase[1], h = areaBase[2] - areaBase[0];
+            double dx = Math.abs((now[1] + now[3]) / 2 - (areaBase[1] + areaBase[3]) / 2), dy = Math.abs((now[0] + now[2]) / 2 - (areaBase[0] + areaBase[2]) / 2);
+            showAreaPill(dx > w / 3 || dy > h / 3 || Math.abs(now[4] - areaBase[4]) >= 1);
+            return;
+        }
+        if (holdArea) { holdArea = false; return; }                                   // a pin tap easing the camera does not hide or show anything
+        areaBase = now;                                                               // moved by code (fit, locate, campus chip): this view is the new baseline
+        showAreaPill(false);
+    }
+
+    private void showAreaPill(boolean show) {
+        if (show == areaShown) return;
+        areaShown = show;
+        final View v = b.searchArea;
+        v.animate().cancel();
+        if (!animationsOn()) { v.setVisibility(show ? View.VISIBLE : View.GONE); v.setAlpha(1f); v.setTranslationY(0f); return; }
+        float off = -16 * getResources().getDisplayMetrics().density;
+        if (show) {
+            v.setVisibility(View.VISIBLE); v.setAlpha(0f); v.setTranslationY(off);
+            v.animate().alpha(1f).translationY(0f).setDuration(240).setInterpolator(new android.view.animation.DecelerateInterpolator(1.8f)).start();
+        } else {
+            v.animate().alpha(0f).translationY(off).setDuration(160).setInterpolator(new android.view.animation.AccelerateInterpolator()).withEndAction(() -> { if (!areaShown) v.setVisibility(View.GONE); }).start();
+        }
+    }
+
+    /** "Near <campus>" chip, top-left (null hides it). Tapping it recentres the map on the campus. It steps aside while the location pill is showing. */
+    public void setCampusChip(@Nullable String campusName) {
+        campusChipName = campusName == null || campusName.trim().isEmpty() ? null : campusName.trim();
+        if (campusChipName != null) b.nearCampus.setText(getContext().getString(R.string.map_near_campus, campusChipName));
+        paintCampusChip();
+    }
+
+    private void paintCampusChip() { b.nearCampus.setVisibility(campusChipName != null && b.locPill.getVisibility() != View.VISIBLE ? View.VISIBLE : View.GONE); }
+
+    /** Lifts the round locate button (and the expand button above it) by this many dp, so a floating button of another screen never covers it. */
+    public void setLocateLift(int dp) {
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) b.locateCol.getLayoutParams();
+        int m = Math.round(10 * getResources().getDisplayMetrics().density);
+        lp.setMargins(m, m, m, m + Math.round(dp * getResources().getDisplayMetrics().density));
+        b.locateCol.setLayoutParams(lp);
     }
 
     // ---- camera ------------------------------------------------------------------------------------------------
@@ -1133,6 +1281,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             if ("cluster".equals(kind)) { zoomToCluster(f); return true; }
             if ("college".equals(kind) && id != null) { if (listener != null) listener.campusTapped(id); return true; }
             if (id != null) {
+                holdArea = true;
                 userSelect(id);
                 BoardingHouse p = findPlace(id);
                 if (p != null) map.easeCamera(CameraUpdateFactory.newLatLng(new LatLng(p.lat(), p.lng())), 300);
@@ -1145,6 +1294,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
 
     /** Tap on a numbered bubble: glide to a view of the whole group. */
     private void zoomToCluster(Feature f) {
+        gestureMove = true;
         try {
             double n = f.getNumberProperty("bn").doubleValue(), sth = f.getNumberProperty("bs").doubleValue();
             double e = f.getNumberProperty("be").doubleValue(), w = f.getNumberProperty("bw").doubleValue();
