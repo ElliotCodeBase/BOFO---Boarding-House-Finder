@@ -1,3 +1,6 @@
+# v2.0.119 - Admin two-step verification
+- Admins can protect their account with an authenticator app (Settings > Two-step verification). The server requirement (migration 017) is applied but OFF until you switch it on; steps in `docs/SECURITY.md`.
+
 # v2.0.118 - Security system
 - New database role for AI helpers that cannot see users, chats or ID scans; helper functions locked to signed-in users; view counter throttled; security audit in `docs/SECURITY.md`; AI access rules in `CLAUDE.md`. Supabase migrations 015 and 016 are run by hand.
 

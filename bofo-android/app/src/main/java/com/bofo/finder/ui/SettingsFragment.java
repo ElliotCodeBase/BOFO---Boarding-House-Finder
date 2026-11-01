@@ -42,6 +42,7 @@ public class SettingsFragment extends Fragment {
         });
         b.version.setText(getString(R.string.about_version, BuildConfig.VERSION_NAME));
         b.switchRole.setOnClickListener(v -> switchRole());
+        b.adminMfa.setOnClickListener(v -> AdminMfaSheet.show(this, null));      // v2.0.119: admins only (row is hidden for everyone else)
         b.useLocation.setChecked(AppPrefs.useLocation(requireContext()));
         b.useLocation.setOnCheckedChangeListener((btn, on) -> AppPrefs.setUseLocation(requireContext(), on));
         b.pathFade.setChecked(AppPrefs.seeThroughPath(requireContext()));
@@ -81,6 +82,7 @@ public class SettingsFragment extends Fragment {
         b.switchRole.setVisibility(role == Role.ADMIN ? View.GONE : View.VISIBLE);
         b.switchRole.setText(role == Role.OWNER ? R.string.settings_switch_student : R.string.settings_switch_owner);
         b.ownerAgreement.setVisibility(role == Role.OWNER ? View.VISIBLE : View.GONE);
+        b.adminMfa.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
     }
 
     private void message(String t) {

@@ -111,6 +111,15 @@ public final class SupabaseClient {
         return new JSONObject(send(base("/auth/v1/" + path, false).post(json(body.toString())).build()));
     }
 
+    /** v2.0.119: auth endpoints that need the signed-in user (two-step verification: /user, /factors...). method = GET, POST or DELETE. */
+    public String authCall(String method, String path, JSONObject body) throws Exception {
+        Request.Builder rb = base("/auth/v1/" + path, true);
+        if ("GET".equals(method)) rb.get();
+        else if ("DELETE".equals(method)) rb.delete();
+        else rb.post(json(body == null ? "{}" : body.toString()));
+        return send(rb.build());
+    }
+
     public void authLogout() {
         try { send(base("/auth/v1/logout", true).post(RequestBody.create(null, new byte[0])).build()); } catch (Exception ignored) {}
     }

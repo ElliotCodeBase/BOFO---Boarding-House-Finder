@@ -166,6 +166,61 @@ public final class AuthService {
         apply(r, true);
     }
 
+    /* ---------- two-step verification (v2.0.119, authenticator app, TOTP) ---------- */
+    /** "aal2" when a 6-digit code was entered in this session, otherwise "aal1". Read from the access token. */
+    public String aal() {
+        try {
+            String t = access;
+            if (t == null) return "aal1";
+            byte[] raw = android.util.Base64.decode(t.split("\\.")[1], android.util.Base64.URL_SAFE | android.util.Base64.NO_PADDING | android.util.Base64.NO_WRAP);
+            return new JSONObject(new String(raw, java.nio.charset.StandardCharsets.UTF_8)).optString("aal", "aal1");
+        } catch (Exception e) { return "aal1"; }
+    }
+
+    private org.json.JSONArray mfaFactors() throws Exception {
+        JSONObject u = new JSONObject(SupabaseClient.get().authCall("GET", "user", null));
+        org.json.JSONArray f = u.optJSONArray("factors");
+        return f == null ? new org.json.JSONArray() : f;
+    }
+
+    /** Id of this user's verified authenticator, or "" when none. */
+    public String mfaVerifiedFactor() throws Exception {
+        org.json.JSONArray fs = mfaFactors();
+        for (int i = 0; i < fs.length(); i++) {
+            JSONObject f = fs.optJSONObject(i);
+            if (f != null && "totp".equals(f.optString("factor_type")) && "verified".equals(f.optString("status"))) return f.optString("id");
+        }
+        return "";
+    }
+
+    /** Starts the setup: returns {factorId, secretKey, otpauthUri}. A half-finished earlier attempt is removed first. */
+    public String[] mfaEnroll() throws Exception {
+        org.json.JSONArray fs = mfaFactors();
+        for (int i = 0; i < fs.length(); i++) {
+            JSONObject f = fs.optJSONObject(i);
+            if (f != null && !"verified".equals(f.optString("status"))) {
+                try { SupabaseClient.get().authCall("DELETE", "factors/" + f.optString("id"), null); } catch (Exception ignored) { /* a stale one is harmless */ }
+            }
+        }
+        JSONObject r = new JSONObject(SupabaseClient.get().authCall("POST", "factors", new JSONObject()
+                .put("factor_type", "totp").put("friendly_name", "BOFO admin " + now()).put("issuer", "BOFO Finder")));
+        JSONObject t = r.getJSONObject("totp");
+        return new String[]{r.getString("id"), t.optString("secret"), t.optString("uri")};
+    }
+
+    /** Checks the 6-digit code. On success the server answers with a NEW session that is "aal2"; it replaces the current one. */
+    public void mfaVerify(String factorId, String code) throws Exception {
+        JSONObject c = new JSONObject(SupabaseClient.get().authCall("POST", "factors/" + factorId + "/challenge", new JSONObject()));
+        JSONObject r = new JSONObject(SupabaseClient.get().authCall("POST", "factors/" + factorId + "/verify",
+                new JSONObject().put("challenge_id", c.getString("id")).put("code", code.trim())));
+        apply(r, true);
+    }
+
+    /** Turns two-step verification off (the server only allows it in an "aal2" session). */
+    public void mfaRemove(String factorId) throws Exception {
+        SupabaseClient.get().authCall("DELETE", "factors/" + factorId, null);
+    }
+
     /* ---------- sign out / delete ---------- */
     public void signOut() {
         if (access != null) SupabaseClient.get().authLogout();
