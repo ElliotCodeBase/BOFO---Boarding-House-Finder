@@ -1,5 +1,5 @@
 # v2.0.123 - Android: calmer orange theme
-- Orange is less saturated and a bit darker (`#E85D0C` -> `#CC6030`), so it is easier on the eyes and reads more clearly on white. Pressed / dark orange is `#A94B22`.
+- Orange is softer (less saturated, still light) (`#E85D0C` -> `#F28C57`), so it is easier on the eyes and reads more clearly on white. Pressed orange is `#DB7541`.
 - Background is now a neutral near-white (`#FAF7F4` -> `#F6F5F3`), no longer cream. Cards stay pure white so they stand out from the page.
 - Sharper definition: borders and dividers are darker (`#EEE7E0` -> `#DDD9D3`), text is darker (ink `#1C1815`, secondary `#5C5550`), and map roads / building edges have stronger outlines on a neutral grey-beige map.
 - Only `res/values-night/colors.xml` changed (plus version). Classic purple theme untouched. Version 2.0.123 (versionCode 323). Not built or run by Claude.

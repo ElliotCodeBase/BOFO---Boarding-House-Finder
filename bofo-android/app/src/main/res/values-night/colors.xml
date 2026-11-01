@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- v2.0.123 ORANGE palette (calmer orange, neutral near-white bg, firmer borders; was v2.0.117). res/values-night is only the switch: Settings > "Orange theme" sets AppCompatDelegate MODE_NIGHT_YES (orange) / MODE_NIGHT_NO (classic purple, res/values/colors.xml).
+<!-- v2.0.123 ORANGE palette (soft light orange, neutral near-white bg, firmer borders; was v2.0.117). res/values-night is only the switch: Settings > "Orange theme" sets AppCompatDelegate MODE_NIGHT_YES (orange) / MODE_NIGHT_NO (classic purple, res/values/colors.xml).
      The app is NOT dark. Every name here must also exist in res/values/colors.xml (same names, new values). Change the orange look ONLY here. -->
 <resources>
-    <color name="bofo_primary">#CC6030</color>
-    <color name="bofo_primary_dark">#A94B22</color>
+    <color name="bofo_primary">#F28C57</color>
+    <color name="bofo_primary_dark">#DB7541</color>
     <color name="bofo_primary_tint">#FAEEE6</color>
     <color name="bofo_ink">#1C1815</color>
     <color name="bofo_amber">#F0B84A</color>
@@ -29,12 +29,12 @@
     <color name="mascot_body">#FFFFFF</color>
     <color name="mascot_outline">#EBCDB8</color>
     <color name="mascot_screen">#1C1815</color>
-    <color name="mascot_glass">#CC6030</color>
+    <color name="mascot_glass">#F28C57</color>
     <color name="mascot_face">#FFFFFF</color>
-    <color name="mascot_roof">#E8A27C</color>
-    <color name="mascot_roof_dark">#CC6030</color>
+    <color name="mascot_roof">#F7B590</color>
+    <color name="mascot_roof_dark">#F28C57</color>
     <color name="mascot_feet">#F6E4D8</color>
-    <color name="mascot_light">#E8A27C</color>
+    <color name="mascot_light">#F7B590</color>
     <color name="bofo_line_tint">#ECE8E3</color>
     <color name="bofo_stroke_soft">#E8E3DD</color>
     <color name="bofo_stroke_neutral">#D6D1CB</color>
@@ -44,16 +44,16 @@
     <color name="bofo_chip_tint">#FCF3EC</color>
     <color name="bofo_chip_stroke">#E5B496</color>
     <color name="bofo_day_chip">#F6E6DA</color>
-    <color name="bofo_ripple">#1ACC6030</color>
-    <color name="bofo_primary_wash">#26CC6030</color>
-    <color name="bofo_primary_ring">#99CC6030</color>
+    <color name="bofo_ripple">#1AF28C57</color>
+    <color name="bofo_primary_wash">#26F28C57</color>
+    <color name="bofo_primary_ring">#99F28C57</color>
     <color name="bofo_ink_10">#1A1C1815</color>
     <color name="bofo_ink_12">#1F1C1815</color>
     <color name="bofo_ink_15">#261C1815</color>
     <color name="bofo_ink_70">#B31C1815</color>
     <color name="bofo_ink_85">#D91C1815</color>
-    <color name="bofo_primary_deep">#8A3A1B</color>
-    <color name="bofo_primary_soft">#DC8E66</color>
+    <color name="bofo_primary_deep">#C46230</color>
+    <color name="bofo_primary_soft">#F7B28C</color>
     <color name="map_halo">#F3DACB</color>
     <color name="map_halo_selected">#E9BFA6</color>
     <color name="map_pin_edge">#D8D1CA</color>
@@ -71,10 +71,10 @@
     <color name="splash_title">#1C1815</color>
     <color name="splash_subtitle">#5C5550</color>
     <color name="splash_status">#8A837D</color>
-    <color name="splash_dots">#CC6030</color>
-    <color name="splash_shadow">#CC6030</color>
-    <color name="splash_dust">#CC6030</color>
-    <color name="splash_spark">#E8A27C</color>
+    <color name="splash_dots">#F28C57</color>
+    <color name="splash_shadow">#F28C57</color>
+    <color name="splash_dust">#F28C57</color>
+    <color name="splash_spark">#F7B590</color>
     <color name="splash_mascot_outline">#EBCDB8</color>
     <color name="launch_bg_classic">#17142A</color>
     <color name="launch_bg_orange">#FFFFFF</color>
