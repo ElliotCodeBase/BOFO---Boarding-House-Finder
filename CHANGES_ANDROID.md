@@ -1,3 +1,9 @@
+# v2.0.79 - Android: better house card on the map
+- **Card:** rounder (24 dp) with a soft shadow and a lavender border. The 44 dp house-icon square became a 64 dp **photo** of the place (rounded corners; the house icon shows until the photo loads or if there is none). Name in ink, price bigger (16 sp), amber star in front of the rating, distance after it.
+- **Buttons:** the close X is smaller and quiet (muted grey); the open arrow is now a solid indigo circle (44 dp) with a white arrow and a ripple.
+- **Motion:** the card slides up 20 dp and fades in (260 ms) when it first appears; moving from one pin to another just swaps the content. No motion if the phone's animations are off.
+- Files: `view_map_card.xml` (`peek` card, new `peek_photo`), `bg_peek_open.xml` (new), `MapCardView.java` (`select`, constructor outline for the photo), `build.gradle` (2.0.79 / 279). Not built or run by Claude.
+
 # v2.0.78 - Android: smoother locate button animation
 - **Fixed:** while "Finding your location" the round locate button grew inside its small box and was clipped, so it flickered between a circle and a rounded square, and it faded to 65 % (looked washed out).
 - **Now:** a soft indigo ring grows out of the button (44 dp -> ~62 dp, fading as it grows) and the button breathes by 5 % while the phone is being found. When the location is found the ring stops and the button pops (1.16x) and settles with a small overshoot. Pressing the button shrinks it to 88 % and springs back. The white and purple backgrounds cross-fade (200 ms) and the icon colour fades with them instead of swapping in one frame. Nothing animates if the phone's animations are off.

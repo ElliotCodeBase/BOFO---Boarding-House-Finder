@@ -25,6 +25,7 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import com.bumptech.glide.Glide;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 
@@ -143,6 +144,10 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         b = ViewMapCardBinding.inflate(LayoutInflater.from(c), this, true);      // 3 arguments: view_map_card.xml has a FrameLayout root, not <merge>
         setupAttribution();
         setupLocatePress();
+        b.peekPhoto.setOutlineProvider(new android.view.ViewOutlineProvider() {       // v2.0.79: rounded photo corners without a background (the icon tile shows through until it loads)
+            @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), 16 * v.getResources().getDisplayMetrics().density); }
+        });
+        b.peekPhoto.setClipToOutline(true);
         b.locate.setOnClickListener(v -> { if (listener != null) listener.locate(); });
         b.expand.setOnClickListener(v -> { if (listener != null) listener.expand(); });
         b.radiusSlider.addOnChangeListener((sl, v, fromUser) -> {
@@ -744,10 +749,21 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         if (p == null) { b.peek.setVisibility(View.GONE); if (style != null) rebuildPlaces(true); return; }
         b.peekName.setText(p.name());
         b.peekPrice.setText(Money.perMonth(p.price()));
-        StringBuilder info = new StringBuilder("\u2605 ").append(ListRules.ratingText(p.avgRating(), p.reviewCount()));
+        android.text.SpannableStringBuilder info = new android.text.SpannableStringBuilder("\u2605 ").append(ListRules.ratingText(p.avgRating(), p.reviewCount()));
+        info.setSpan(new android.text.style.ForegroundColorSpan(0xFFF5A524), 0, 1, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);     // v2.0.79: amber star
         if (p.distanceKm() > 0) info.append("  \u00B7  ").append(Geo.fmt(p.distanceKm()));
         b.peekInfo.setText(info);
+        String photo = p.photoUrl();
+        if (photo == null || photo.isEmpty()) { Glide.with(b.peekPhoto).clear(b.peekPhoto); b.peekPhoto.setVisibility(View.GONE); }
+        else { b.peekPhoto.setVisibility(View.VISIBLE); Glide.with(b.peekPhoto).load(photo).centerCrop().into(b.peekPhoto); }      // the house icon tile shows underneath until it loads
+        boolean wasShown = b.peek.getVisibility() == View.VISIBLE;
         b.peek.setVisibility(View.VISIBLE);
+        if (!wasShown && animationsOn()) {       // v2.0.79: slides up and fades in; moving to another pin just swaps the text
+            float dp = getResources().getDisplayMetrics().density;
+            b.peek.animate().cancel();
+            b.peek.setAlpha(0f); b.peek.setTranslationY(20 * dp);
+            b.peek.animate().alpha(1f).translationY(0f).setDuration(260).setInterpolator(new android.view.animation.DecelerateInterpolator(1.6f)).start();
+        } else { b.peek.animate().cancel(); b.peek.setAlpha(1f); b.peek.setTranslationY(0f); }
         if (style != null) rebuildPlaces(true);
     }
 

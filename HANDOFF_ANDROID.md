@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.79 Map house card
+- **PR title:** `v2.0.79 - Android: map house card with photo, amber rating, solid open button, slide-up`
+- `MapCardView.select`: loads `BoardingHouse.photoUrl()` into `peek_photo` with Glide (hidden when empty), amber `ForegroundColorSpan` on the star, slide-up/fade when the card goes from GONE to VISIBLE. `peek_photo` is clipped by a `ViewOutlineProvider` (16 dp) set in the constructor. Ids `peek_name/price/info/close/open` unchanged. No Supabase change. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.78 Locate button animation
 - **PR title:** `v2.0.78 - Android: smoother locate button (ring pulse, found pop, press spring, colour fade)`
 - `MapCardView`: pulse is a single `ValueAnimator` driving `locate_ring` scale / alpha + button breathing; `stopLocatePulse` pops and settles; `setupLocatePress` (touch listener returns false); `setLocateActive` uses a `TransitionDrawable` + `ArgbEvaluator` colour filter. `view_map_card.xml`: locate button wrapped in a 44 dp `FrameLayout` with `clipChildren=false` (also on the root and the button column). No Supabase change. Not built or run by Claude.
