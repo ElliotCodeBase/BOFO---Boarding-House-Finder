@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.102 Keyboard does not push the app
+- **PR title:** `v2.0.102 - Android: keyboard covers the page instead of pushing the app up (Home + Explore search)`
+- `MainActivity.holdStill(on, view)` sets `keepAppStill` (already used by BofoChatOverlay) and re-applies insets, so `mainRoot` bottom padding ignores the keyboard. Called from the Home and Explore search focus listeners; released when the view detaches. Other screens (chat boxes, forms) still lift above the keyboard. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.101 Search by place
 - **PR title:** `v2.0.101 - Android: city search finds all houses near the city, not only addresses that contain the name`
 - Cause: Explore searched only name/address text (`BhService` ilike), so a Dumaguete house with address "Demo address 5, Negros" was missed. New `util/PlaceSearch`: city centre from the campus list (city in brackets, averaged) or a built-in list; Explore runs a second `BhService.list` with `RADIUS_KM` (8) around it and merges by id; offline copy uses `PlaceSearch.keep`. A city with no campus and not in the built-in list is still text-only. CI fix: `CampusMatchTest.initialsMatch` ("norsu") failed because only first letters were compared; `CampusMatch.abbreviation` now also matches 4+ letters in order from the name's first letter. Not built or run by Claude.

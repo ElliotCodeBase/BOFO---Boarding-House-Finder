@@ -1,3 +1,6 @@
+# v2.0.102 - Android: keyboard no longer pushes the whole app
+- While a search bar (Home, Explore) has the keyboard, the keyboard slides over the page; the screen and bottom bar stay still.
+
 # v2.0.101 - Android: search by place
 - Typing a city (Dumaguete, Bayawan...) also finds every house within 8 km of it, even when its address does not say the city.
 

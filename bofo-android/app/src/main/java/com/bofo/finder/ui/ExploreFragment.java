@@ -111,7 +111,11 @@ public class ExploreFragment extends Fragment {
                 handler.postDelayed(pendingSearch, DEBOUNCE_MS);
             }
         });
-        b.search.setOnFocusChangeListener((v, focus) -> { if (b != null) b.searchPill.setActivated(focus); });
+        b.search.setOnFocusChangeListener((v, focus) -> { if (b != null) b.searchPill.setActivated(focus); com.bofo.finder.app.MainActivity.holdStill(focus, v); });      // v2.0.102: keyboard covers the page, no push
+        b.getRoot().addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override public void onViewAttachedToWindow(@NonNull View v) { }
+            @Override public void onViewDetachedFromWindow(@NonNull View v) { com.bofo.finder.app.MainActivity.holdStill(false, v); }
+        });
         b.search.setOnEditorActionListener((v, action, ev) -> {
             if (action != EditorInfo.IME_ACTION_SEARCH) return false;
             InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);

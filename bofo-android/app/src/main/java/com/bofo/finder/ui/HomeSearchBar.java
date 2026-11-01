@@ -88,12 +88,17 @@ final class HomeSearchBar {
         });
         b.searchInput.setOnFocusChangeListener((v, has) -> {
             b.searchPill.setActivated(has);
+            com.bofo.finder.app.MainActivity.holdStill(has, v);      // v2.0.102: the keyboard covers the page, it does not push the app up
             if (has) { focusAt = android.os.SystemClock.uptimeMillis(); if (isChosenText()) b.searchInput.selectAll(); showFor(isChosenText() ? "" : text(), true); showKeyboard(); }
         });
         b.searchInput.setOnClickListener(v -> { if (!open) showFor(isChosenText() ? "" : text(), true); showKeyboard(); });
         b.searchInput.setOnEditorActionListener((v, action, ev) -> {
             if (action == EditorInfo.IME_ACTION_SEARCH || action == EditorInfo.IME_ACTION_DONE) { enter(); return true; }
             return false;
+        });
+        b.getRoot().addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {      // leaving Home with the keyboard up: give the layout back
+            @Override public void onViewAttachedToWindow(@NonNull View v) { }
+            @Override public void onViewDetachedFromWindow(@NonNull View v) { com.bofo.finder.app.MainActivity.holdStill(false, v); }
         });
         b.searchClear.setOnClickListener(v -> clear());
         b.searchArrow.setOnClickListener(v -> {

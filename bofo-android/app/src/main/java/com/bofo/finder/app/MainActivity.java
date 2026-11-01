@@ -44,6 +44,12 @@ public class MainActivity extends AppCompatActivity {
         if (savedInstanceState == null) stashLink(getIntent());
     }
 
+    /** v2.0.102: true while a search field has the keyboard: the keyboard then slides OVER the screen instead of pushing the whole app (and the bottom bar) up. Chat boxes keep the old lift. */
+    public static void holdStill(boolean on, android.view.View anyView) {
+        keepAppStill = on;
+        if (anyView != null) androidx.core.view.ViewCompat.requestApplyInsets(anyView);
+    }
+
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
