@@ -42,6 +42,7 @@ public class SettingsFragment extends Fragment {
         });
         b.version.setText(getString(R.string.about_version, BuildConfig.VERSION_NAME));
         b.switchRole.setOnClickListener(v -> switchRole());
+        b.adminViewAs.setOnClickListener(v -> pickView());                          // v2.0.120: admins only
         b.adminMfa.setOnClickListener(v -> AdminMfaSheet.show(this, null));      // v2.0.119: admins only (row is hidden for everyone else)
         b.useLocation.setChecked(AppPrefs.useLocation(requireContext()));
         b.useLocation.setOnCheckedChangeListener((btn, on) -> AppPrefs.setUseLocation(requireContext(), on));
@@ -83,6 +84,26 @@ public class SettingsFragment extends Fragment {
         b.switchRole.setText(role == Role.OWNER ? R.string.settings_switch_student : R.string.settings_switch_owner);
         b.ownerAgreement.setVisibility(role == Role.OWNER ? View.VISIBLE : View.GONE);
         b.adminMfa.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
+        b.adminViewAs.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
+    }
+
+    /** v2.0.120: an admin looks at the app as admin, owner or student. Only the screens change: the account stays admin on the server, nothing is written. */
+    private void pickView() {
+        final Role[] opts = {Role.ADMIN, Role.OWNER, Role.STUDENT};
+        final String[] names = {getString(R.string.view_as_admin), getString(R.string.view_as_owner), getString(R.string.view_as_student)};
+        int cur = AuthRouter.role == Role.OWNER ? 1 : AuthRouter.role == Role.STUDENT ? 2 : 0;
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.view_as_title)
+                .setSingleChoiceItems(names, cur, (d, which) -> {
+                    d.dismiss();
+                    if (opts[which] == AuthRouter.role || b == null) return;
+                    Cache.clear();
+                    AuthRouter.role = opts[which];            // the shell builds its tabs from this when it opens
+                    android.widget.Toast.makeText(requireContext().getApplicationContext(), getString(R.string.view_as_done, names[which]), android.widget.Toast.LENGTH_SHORT).show();
+                    AuthRouter.go(nav(), R.id.action_global_shell);
+                })
+                .setNegativeButton(R.string.common_cancel, null)
+                .show();
     }
 
     private void message(String t) {

@@ -92,6 +92,22 @@
                     android:textColor="@color/bofo_text"
                     android:textSize="15sp"
                     android:visibility="gone" />
+                <TextView
+                    android:id="@+id/admin_view_as"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_swap"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/view_as_row"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp"
+                    android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
         <TextView
