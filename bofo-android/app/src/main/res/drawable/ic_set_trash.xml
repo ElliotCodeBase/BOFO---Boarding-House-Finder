@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.0.93 Settings / Profile row icon: rounded tile + line icon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="40"
+    android:viewportHeight="40">
+    <path
+        android:pathData="M12,0 H28 A12,12 0 0,1 40,12 V28 A12,12 0 0,1 28,40 H12 A12,12 0 0,1 0,28 V12 A12,12 0 0,1 12,0 Z"
+        android:fillColor="@color/bofo_error_tint" />
+    <group android:translateX="8" android:translateY="8">
+        <path
+            android:pathData="M5,7 H19 M10,7 V4 H14 V7"
+            android:strokeColor="@color/bofo_error"
+            android:strokeWidth="1.8"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="M7,7 L8,20 H16 L17,7"
+            android:strokeColor="@color/bofo_error"
+            android:strokeWidth="1.8"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="M10,11 V16 M14,11 V16"
+            android:strokeColor="@color/bofo_error"
+            android:strokeWidth="1.8"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+    </group>
+</vector>

@@ -2,13 +2,17 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:clipToPadding="false"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="120dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -16,93 +20,69 @@
             android:text="@string/profile_title"
             android:textAppearance="@style/Text.Bofo.Title" />
 
-        <com.google.android.material.card.MaterialCardView
-            style="@style/Widget.Bofo.Card"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp">
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_profile_hero"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="24dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <ImageView
+                android:id="@+id/avatar"
+                android:layout_width="92dp"
+                android:layout_height="92dp"
+                android:background="@drawable/bg_profile_avatar"
+                android:contentDescription="@string/cd_avatar"
+                android:padding="3dp"
+                android:src="@drawable/mascot_happy" />
+
+            <TextView
+                android:id="@+id/account_name"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="16dp">
+                android:layout_marginTop="14dp"
+                android:gravity="center"
+                android:textAppearance="@style/Text.Bofo.Title"
+                android:textColor="@color/bofo_white"
+                android:textSize="20sp" />
 
-                <ImageView
-                    android:id="@+id/avatar"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:contentDescription="@string/cd_avatar"
-                    android:src="@drawable/mascot_happy" />
+            <TextView
+                android:id="@+id/account_email"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center"
+                android:textColor="#CCFFFFFF"
+                android:textSize="13sp" />
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+            <TextView
+                android:id="@+id/account_role"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_profile_chip"
+                android:paddingStart="14dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="4dp"
+                android:textColor="@color/bofo_white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/account_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="@style/Text.Bofo.Title"
-                        android:textSize="18sp" />
-
-                    <TextView
-                        android:id="@+id/account_email"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="@style/Text.Bofo.Secondary" />
-
-                    <TextView
-                        android:id="@+id/account_role"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:textColor="@color/bofo_primary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <Button
-            android:id="@+id/open_edit"
-            style="@style/Widget.Bofo.Button.Tint"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/profile_edit" />
-
-        <Button
-            android:id="@+id/open_settings"
-            style="@style/Widget.Bofo.Button.Tint"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/profile_settings" />
-
-        <!-- v2.0.91 AI Chats monitor: hidden; ProfileFragment shows it for an admin while the switch is on. REMOVE with the feature (REMOVE_AI_CHATS.md). -->
-        <Button
-            android:id="@+id/ai_chats_open"
-            style="@style/Widget.Bofo.Button.Tint"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/ai_chats_open"
-            android:visibility="gone" />
-
-        <!-- About (version comes from BuildConfig.VERSION_NAME, set in ProfileFragment) -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
             android:layout_marginTop="24dp"
-            android:text="@string/about_title"
-            android:textAppearance="@style/Text.Bofo.Secondary"
+            android:letterSpacing="0.06"
+            android:text="@string/profile_section_account"
+            android:textAllCaps="true"
+            android:textColor="@color/bofo_muted"
+            android:textSize="12sp"
             android:textStyle="bold" />
-
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.Bofo.Card"
             android:layout_width="match_parent"
@@ -112,34 +92,114 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
+                android:divider="@drawable/divider_set_inset"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:showDividers="middle">
+                <TextView
+                    android:id="@+id/open_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_edit"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/profile_edit"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp" />
+                <TextView
+                    android:id="@+id/open_settings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_sliders"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/profile_settings"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp" />
+                <!-- v2.0.91 AI Chats monitor: hidden; ProfileFragment shows it for an admin while the switch is on. REMOVE with the feature (REMOVE_AI_CHATS.md). -->
+                <TextView
+                    android:id="@+id/ai_chats_open"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_chat"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/ai_chats_open"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="24dp"
+            android:letterSpacing="0.06"
+            android:text="@string/about_title"
+            android:textAllCaps="true"
+            android:textColor="@color/bofo_muted"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Bofo.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
 
                 <ImageView
-                    android:layout_width="54dp"
-                    android:layout_height="54dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:contentDescription="@string/cd_mascot"
                     android:src="@drawable/mascot_happy" />
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/about_brand"
-                    android:textAppearance="@style/Text.Bofo.Title"
-                    android:textSize="18sp" />
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/version"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:textAppearance="@style/Text.Bofo.Secondary" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/about_brand"
+                        android:textAppearance="@style/Text.Bofo.Title"
+                        android:textSize="17sp" />
+
+                    <!-- version comes from BuildConfig.VERSION_NAME, set in ProfileFragment -->
+                    <TextView
+                        android:id="@+id/version"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textAppearance="@style/Text.Bofo.Secondary" />
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Debug builds only (set visible in ProfileFragment). Removed with the "Developer" tools in Stage 9. -->
+        <!-- Debug builds only (set visible in ProfileFragment). -->
         <Button
             android:id="@+id/debug_open"
             style="@style/Widget.Bofo.Button.Tint"
