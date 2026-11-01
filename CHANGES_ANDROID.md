@@ -1,3 +1,6 @@
+# v2.0.109 - Android: cleaner Home map
+- Removed the second "3.0 km" tag on the radius circle; the pill at the top already shows the distance.
+
 # v2.0.108 - Android: price card shows only 3 prices
 - Home price card now shows 3 prices at most: Lowest, Middle, Highest (was up to 4).
 

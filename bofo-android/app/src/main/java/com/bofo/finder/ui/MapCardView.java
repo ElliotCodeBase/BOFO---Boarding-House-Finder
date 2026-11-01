@@ -1134,7 +1134,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** "500 m" / "4.5 km" chip on the east edge of the radius circle. */
     private void paintRingLabel() {
         if (style == null) return;
-        if (ringLat == null || ringKm <= 0 || routeShown()) { set("ringlabel-src", MapGeo.EMPTY); return; }
+        set("ringlabel-src", MapGeo.EMPTY); if (true) return;     // v2.0.109: no "3.0 km" tag on the circle, the radius pill at the top already says it (less clutter)
         String text = ringKm < 1 ? Math.round(ringKm * 1000) + " m" : String.format(Locale.US, "%.1f km", ringKm), key = "rl|" + text;
         if (imgs.add(key)) style.addImage(key, chip(text));
         double[] e = MapGeo.destination(ringLat, ringLng, ringKm, 90);

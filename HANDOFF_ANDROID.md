@@ -1,3 +1,8 @@
+# Handoff (Android) - v2.0.109 Map: less clutter
+- **PR title:** `v2.0.109 - Android: remove duplicate km tag from the Home map`
+- `MapCardView.paintRingLabel` now always clears the "3.0 km" chip on the circle edge (the radius pill at the top shows the same number). Not built or run by Claude.
+
+---
 # Handoff (Android) - v2.0.108 Rent card: top 3 prices
 - **PR title:** `v2.0.108 - Android: Home price card shows only 3 prices`
 - `RentCardView.setData`: at most 3 columns (Lowest / Middle / Highest); more than 3 houses = cheapest, middle, dearest. Was up to 4. Not built or run by Claude.
