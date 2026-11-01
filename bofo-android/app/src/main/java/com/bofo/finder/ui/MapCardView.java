@@ -423,7 +423,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         // Step 6: zoomed out = small dots that merge into numbered bubbles; zoomed in = full pins with names (rebuildPlaces decides, per zoom)
         Expression sel = Expression.eq(Expression.get("sel"), Expression.literal(1));
         Expression isDot = Expression.eq(Expression.get("kind"), Expression.literal("dot"));
-        Expression viewedOpacity = Expression.switchCase(Expression.eq(Expression.get("viewed"), Expression.literal(1)), Expression.literal(0.6f), Expression.literal(1f));
+        Expression isViewed = Expression.eq(Expression.get("viewed"), Expression.literal(1));
         Expression dotColor = Expression.switchCase(sel, Expression.color(DARK_PURPLE), Expression.color(primary));      // v2.0.75: Expression.color, not literal(int) (a plain number drew black dots)
         st.addLayer(new CircleLayer("places-dots-halo", "places-src").withProperties(
                 PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(15f * BIG), Expression.literal(10f * BIG))),
@@ -431,9 +431,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 .withFilter(isDot));
         st.addLayer(new CircleLayer("places-dots", "places-src").withProperties(
                 PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(8f * BIG), Expression.literal(5.5f * BIG))),
-                PropertyFactory.circleColor(dotColor),
-                PropertyFactory.circleStrokeWidth(2.5f), PropertyFactory.circleStrokeColor(0xFFFFFFFF),
-                PropertyFactory.circleOpacity(viewedOpacity), PropertyFactory.circleStrokeOpacity(viewedOpacity))      // v2.0.81: a place already opened is dimmed to 60 %
+                PropertyFactory.circleColor(Expression.switchCase(sel, Expression.color(DARK_PURPLE), isViewed, Expression.color(0xFFAFA8D8), Expression.color(primary))),
+                PropertyFactory.circleStrokeWidth(2.5f), PropertyFactory.circleStrokeColor(0xFFFFFFFF))      // v2.0.86: a place already opened is a solid muted colour (it was 60 % opacity: the map showed through)
                 .withFilter(isDot));
         st.addLayer(new SymbolLayer("places-clusters", "places-src").withProperties(
                 PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true))
@@ -443,7 +442,6 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
                 PropertyFactory.iconAllowOverlap(true),
                 PropertyFactory.iconIgnorePlacement(true),
-                PropertyFactory.iconOpacity(viewedOpacity),
                 PropertyFactory.iconSize(Expression.switchCase(sel, Expression.literal(PIN_SEL_SCALE), Expression.literal(1f))))
                 .withFilter(Expression.eq(Expression.get("kind"), Expression.literal("pin"))));
         for (String[] l : new String[][]{{"place-labels", "labels-src"}, {"college-labels", "college-labels-src"}})
@@ -473,9 +471,9 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** v2.0.80: price pin = white pill (thin border, ink text) with a small tail; the selected one is dark indigo with white text.
      *  A verified house gets a check badge in front, a featured house a star behind, in the same bitmap.
      *  v2.0.81: a saved house gets a small red heart on the top-right corner, a house nobody rated yet ("New") a small green dot on the top-left corner. */
-    private Bitmap pricePin(String text, boolean selected, boolean verified, boolean featured, boolean saved, boolean fresh) {
+    private Bitmap pricePin(String text, boolean selected, boolean verified, boolean featured, boolean saved, boolean fresh, boolean seen) {
         float d = getResources().getDisplayMetrics().density;
-        Paint t = textPaint(selected ? 0xFFFFFFFF : 0xFF17142A, 12, true);
+        Paint t = textPaint(selected ? 0xFFFFFFFF : seen ? 0xFF8A85A6 : 0xFF17142A, 12, true);       // v2.0.86: an opened place is a solid muted pill, not a see-through one
         float badge = 14 * d, gap = 4 * d, padX = 9 * d;
         float tw = t.measureText(text);
         float w = padX * 2 + tw + (verified ? badge + gap : 0) + (featured ? badge + gap : 0);
@@ -485,7 +483,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         Canvas c = new Canvas(bmp);
         RectF body = new RectF(mx, mt, bw - mx, mt + bodyH);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        int fill = selected ? DARK_PURPLE : 0xFFFFFFFF, edge = selected ? 0xFFFFFFFF : 0x40463C8C;
+        int fill = selected ? DARK_PURPLE : seen ? 0xFFEFEDF8 : 0xFFFFFFFF, edge = selected ? 0xFFFFFFFF : seen ? 0xFFD3CEEA : 0x40463C8C;
         Path tailPath = new Path();
         tailPath.moveTo(bw / 2f - 5 * d, body.bottom - d);
         tailPath.lineTo(bw / 2f, body.bottom + tail);
@@ -507,7 +505,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         float x = mx + padX, cy = body.centerY();
         int primary = ContextCompat.getColor(getContext(), R.color.bofo_primary);
         if (verified) {
-            p.setStyle(Paint.Style.FILL); p.setColor(selected ? 0xFFFFFFFF : primary);
+            p.setStyle(Paint.Style.FILL); p.setColor(selected ? 0xFFFFFFFF : seen ? 0xFFAFA8D8 : primary);
             c.drawCircle(x + badge / 2f, cy, badge / 2f, p);
             p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(1.8f * d); p.setStrokeCap(Paint.Cap.ROUND); p.setColor(selected ? DARK_PURPLE : 0xFFFFFFFF);
             Path ck = new Path();
@@ -977,10 +975,10 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 boolean isSel = p.id().equals(selectedId);
                 String price = Money.shortPeso(p.price());
                 if (price.isEmpty()) price = "\u2014";
-                boolean saved = favs.contains(p.id()), fresh = p.reviewCount() <= 0;      // "New" = nobody rated it yet, the same rule as the list cards (ListRules.ratingText)
-                String key = "pp|" + price + "|" + (isSel ? 1 : 0) + (p.ownerVerified() ? 1 : 0) + (p.featured() ? 1 : 0) + (saved ? 1 : 0) + (fresh ? 1 : 0);
+                boolean saved = favs.contains(p.id()), fresh = p.reviewCount() <= 0, seen = !isSel && viewed.contains(p.id());      // "New" = nobody rated it yet, the same rule as the list cards (ListRules.ratingText)
+                String key = "pp|" + price + "|" + (isSel ? 1 : 0) + (p.ownerVerified() ? 1 : 0) + (p.featured() ? 1 : 0) + (saved ? 1 : 0) + (fresh ? 1 : 0) + (seen ? 1 : 0);
                 if (imgs.add(key)) {
-                    Bitmap pb = pricePin(price, isSel, p.ownerVerified(), p.featured(), saved, fresh);
+                    Bitmap pb = pricePin(price, isSel, p.ownerVerified(), p.featured(), saved, fresh, seen);
                     imgSize.put(key, new float[]{pb.getWidth(), pb.getHeight()});
                     style.addImage(key, pb);
                 }

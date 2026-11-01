@@ -1,3 +1,8 @@
+# Handoff (Android) - v2.0.86 Solid opened pins
+- **PR title:** `v2.0.86 - Android: opened places are solid (no more see-through price pins)`
+- Removed `viewedOpacity` (the 0.6 opacity of v2.0.81). Viewed state is now part of the pin bitmap (`seen` = viewed and not selected, key `pp|price|sel ver feat saved new seen`) and of the dot colour (`isViewed` expression). `pinStateVer` still triggers the redraw when the viewed list changes.
+- Risky: the muted colours are fixed values (not theme colours). Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.85 Cleaner map cards
 - **PR title:** `v2.0.85 - Android: locate button no longer covered, solid white map card, proper Commute button`
 - Strip `RecyclerView` clips children now; adapter margins (6 / 6 / 6 / 12 dp) leave room for the 6 dp card shadow. Card colour `#FEFEFF` on `item_map_strip.xml` (a colour equal to `colorSurface` gets a Material 3 tint). Chip text and icon colours come from `res/color/commute_chip_fg.xml` (activated = white), so `onBindViewHolder` only calls `setActivated`.
