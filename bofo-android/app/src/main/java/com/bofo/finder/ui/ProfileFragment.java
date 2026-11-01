@@ -46,22 +46,47 @@ public class ProfileFragment extends Fragment {
         return binding.getRoot();
     }
 
-    /** Reloaded on every return from the edit screen. */
+    private boolean loaded;      // v2.0.90: true once a profile has been drawn; until then a failed load is retried by itself
+    private int token;
+
+    /** Reloaded on every return from the edit screen (onStart) and when the phone comes back online. v2.0.90: a failed load retries by itself (2 s, 5 s, 10 s). */
     @Override
     public void onStart() {
         super.onStart();
+        load(0);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        com.bofo.finder.util.Connectivity.OFFLINE.observe(getViewLifecycleOwner(), off -> { if (off != null && !off && !loaded) load(0); });
+    }
+
+    private void load(int attempt) {
+        final int my = ++token;
         Async.run(() -> new ProfileService().fetchMe(), (Profile p) -> {
-            if (binding == null || p == null) return;
+            if (binding == null || my != token) return;
+            if (p == null) { retry(attempt); return; }
+            loaded = true;
             binding.accountName.setText(p.fullName());
             binding.accountRole.setText(p.role() == com.bofo.finder.model.Role.OWNER ? R.string.account_role_owner
                     : p.role() == com.bofo.finder.model.Role.ADMIN ? R.string.account_role_admin : R.string.account_role_student);
             if (p.photoUrl() != null && !p.photoUrl().isEmpty())
                 Glide.with(this).load(p.photoUrl()).circleCrop().placeholder(R.drawable.mascot_happy).into(binding.avatar);
-        }, e -> { /* offline and nothing saved yet: the e-mail line is enough */ });
+        }, e -> { if (binding != null && my == token) retry(attempt); });
+    }
+
+    private void retry(int attempt) {
+        if (loaded || binding == null || attempt >= 3) return;
+        final int[] wait = {2000, 5000, 10000};
+        final int my = token;
+        binding.getRoot().postDelayed(() -> { if (binding != null && !loaded && my == token) load(attempt + 1); }, wait[attempt]);
     }
 
     @Override
     public void onDestroyView() {
+        token++;
+        loaded = false;
         binding = null;
         super.onDestroyView();
     }

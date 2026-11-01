@@ -1041,14 +1041,14 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                     BoardingHouse p = places.get(i);
                     feats.append(feat(pos[i][0], pos[i][1], "\"kind\":\"dot\",\"id\":\"" + esc(p.id()) + "\",\"sel\":" + (p.id().equals(selectedId) ? 1 : 0) + ",\"viewed\":" + (!p.id().equals(selectedId) && viewed.contains(p.id()) ? 1 : 0)));
                 } else {
-                    double la = 0, ln = 0, bn = -90, bs = 90, be = -180, bw = 180, low = Double.MAX_VALUE;
+                    double la = 0, ln = 0, bn = -90, bs = 90, be = -180, bw = 180, low = Double.MAX_VALUE, high = 0;
                     for (int j : m) {
                         BoardingHouse p = places.get(j);
-                        if (p.price() > 0) low = Math.min(low, p.price());
+                        if (p.price() > 0) { low = Math.min(low, p.price()); high = Math.max(high, p.price()); }
                         la += p.lat(); ln += p.lng();
                         bn = Math.max(bn, p.lat()); bs = Math.min(bs, p.lat()); be = Math.max(be, p.lng()); bw = Math.min(bw, p.lng());
                     }
-                    String from = low == Double.MAX_VALUE ? "" : Money.shortPeso(low);        // v2.0.80: "4 · from ₱1.2k"
+                    String from = low == Double.MAX_VALUE ? "" : high > low ? Money.shortPeso(low) + "\u2013" + Money.shortPeso(high) : Money.shortPeso(low);        // v2.0.90: a range "4 · ₱1.2k–₱2k" (one price when they are all the same)
                     String key = "cl|" + m.size() + "|" + from;
                     if (imgs.add(key)) style.addImage(key, bubble(m.size(), from));
                     double[] cpos = clearOfUser(la / m.size(), ln / m.size(), 34 * d);
@@ -1135,7 +1135,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private Bitmap bubble(int count, String from) {
         float d = getResources().getDisplayMetrics().density;
         if (!from.isEmpty()) {
-            String text = count + " \u00B7 from " + from;
+            String text = count + " \u00B7 " + from;
             Paint t = textPaint(0xFFFFFFFF, 13, true);
             int w = Math.round(t.measureText(text) + 26 * d), h = Math.round(34 * d);
             Bitmap pb = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
