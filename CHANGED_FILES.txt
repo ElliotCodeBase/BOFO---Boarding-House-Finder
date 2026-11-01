@@ -1,6 +1,6 @@
 BOFO Android v2.0.121 - changes only (includes everything from v2.0.118 to v2.0.120, so it is safe to unzip over any of those states).
 Unzip into C:\Users\user\bofo-finder (overwrite). No files to DELETE.
-Supabase: 017 and 018 are already applied live (018 switch OFF). NOT applied: 015, 016 (and 013).
+Supabase: 017, 018 and 019 are already applied live (the old-version lockout is ON, minimum 2.0.121). The app code is the same as before: if you already built v2.0.121, you only need the new migration file in the repo. NOT applied: 015, 016 (and 013).
 
 changed	CLAUDE.md
 changed	CHANGES_ANDROID.md
@@ -24,3 +24,4 @@ new	supabase/migrations/015_security_hardening.sql
 new	supabase/migrations/016_ai_dev_role.sql
 new	supabase/migrations/017_admin_mfa.sql
 new	supabase/migrations/018_min_admin_app_version.sql
+new	supabase/migrations/019_hide_admin_from_old_apps.sql

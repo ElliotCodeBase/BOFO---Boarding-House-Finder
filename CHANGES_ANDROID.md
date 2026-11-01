@@ -2,6 +2,7 @@
 - The "Developer: test accounts" buttons (Student / Owner / Admin) are gone from the login screen.
 - The app now sends its version on every request. Migration 018 (applied live, switch OFF) lets the server refuse admin data and admin actions to any app older than a minimum version. Turn it on with `select public.set_min_admin_app_version('2.0.121');` AFTER your own phone runs 2.0.121. Off again: `select public.set_min_admin_app_version('');`.
 - Limit: this stops old app builds, not someone writing their own requests. The two-step code (017) is the protection against people.
+- Migration 019 (applied live): an admin's own profile row is hidden from app versions below the minimum, so an old app can no longer see that the account is admin. Same switch as 018.
 - v2.0.120 (admin "View the app as...") is included in this zip.
 
 # v2.0.120 - Admin can view the app as owner or student
