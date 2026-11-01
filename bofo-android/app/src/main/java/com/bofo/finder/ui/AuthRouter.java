@@ -25,6 +25,9 @@ public final class AuthRouter {
     /** Role of the signed-in user, set by {@link #route} (the shell picks its tabs from it). */
     public static volatile com.bofo.finder.model.Role role = com.bofo.finder.model.Role.STUDENT;
 
+    /** v2.0.120: the role the server gave this account. {@link #role} is what the screens show; an admin can view the app as student or owner (Settings), this never changes. */
+    public static volatile com.bofo.finder.model.Role realRole = com.bofo.finder.model.Role.STUDENT;
+
     /** v2.0.119: true when the shell should open the admin two-step code sheet once. */
     private static volatile boolean mfaPrompt;
     static boolean takeMfaPrompt() { boolean p = mfaPrompt; mfaPrompt = false; return p; }
@@ -42,6 +45,7 @@ public final class AuthRouter {
                 Profile p = new ProfileService().fetchMe();
                 if (p == null) return R.id.action_global_role;
                 role = p.role();
+                realRole = role;
                 // v2.0.119: an admin with an authenticator who has not typed the code in this sign-in gets the code sheet when the shell opens
                 if (role == com.bofo.finder.model.Role.ADMIN) {
                     try { mfaPrompt = !a.mfaVerifiedFactor().isEmpty() && !"aal2".equals(a.aal()); } catch (Exception ignored) { mfaPrompt = false; }

@@ -1,6 +1,6 @@
-BOFO Android v2.0.119 - changes only (includes everything from v2.0.118, so it is safe to unzip over either state).
+BOFO Android v2.0.120 - changes only (includes everything from v2.0.118 and v2.0.119, so it is safe to unzip over any of those states).
 Unzip into C:\Users\user\bofo-finder (overwrite). No files to DELETE.
-Supabase: 017_admin_mfa.sql is already applied live (by Claude). 015_security_hardening.sql and 016_ai_dev_role.sql are NOT applied yet: run them by hand when ready.
+Supabase: nothing new to run for v2.0.120. Already applied live: 017_admin_mfa (switch now ON), Dev Admin account deleted. NOT applied: 015, 016 (and 013).
 
 changed	CLAUDE.md
 changed	CHANGES_ANDROID.md
@@ -11,10 +11,12 @@ changed	bofo-android/app/src/main/java/com/bofo/finder/service/SupabaseClient.ja
 changed	bofo-android/app/src/main/java/com/bofo/finder/ui/AuthRouter.java
 changed	bofo-android/app/src/main/java/com/bofo/finder/ui/SettingsFragment.java
 changed	bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
+changed	bofo-android/app/src/main/java/com/bofo/finder/ui/BhDetailFragment.java
 changed	bofo-android/app/src/main/res/layout/fragment_settings.xml
 new	bofo-android/app/src/main/java/com/bofo/finder/ui/AdminMfaSheet.java
 new	bofo-android/app/src/main/res/layout/sheet_admin_mfa.xml
 new	bofo-android/app/src/main/res/values/strings_admin_mfa.xml
+new	bofo-android/app/src/main/res/values/strings_admin_view.xml
 new	docs/SECURITY.md
 new	supabase/migrations/015_security_hardening.sql
 new	supabase/migrations/016_ai_dev_role.sql

@@ -1,3 +1,8 @@
+# v2.0.120 - Admin can view the app as owner or student
+- New row in an admin's Settings: "View the app as..." (Admin / Owner / Student). It only changes the screens: the account stays admin on the server and nothing is written to the database. Sign in again to start back in Admin.
+- Admin viewing as Student cannot chat or write reviews (the database allows students only), so those two buttons are off there. Admin viewing as Owner can create and edit listings (houses owned by the admin account).
+- Files: AuthRouter (realRole), SettingsFragment, fragment_settings.xml, BhDetailFragment, strings_admin_view.xml, build.gradle (2.0.120, versionCode 320).
+
 # v2.0.119 - Admin two-step verification
 - Admins can protect their account with an authenticator app (Settings > Two-step verification). The server requirement (migration 017) is applied but OFF until you switch it on; steps in `docs/SECURITY.md`.
 

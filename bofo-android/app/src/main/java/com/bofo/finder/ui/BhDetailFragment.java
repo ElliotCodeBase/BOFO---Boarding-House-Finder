@@ -161,6 +161,11 @@ public class BhDetailFragment extends Fragment {
             b.chat.setText(R.string.detail_chat_own);
             return;
         }
+        if (AuthRouter.realRole == com.bofo.finder.model.Role.ADMIN) {       // v2.0.120: an admin viewing as student cannot chat (the database allows students only)
+            b.chat.setEnabled(false);
+            b.chat.setText(R.string.view_as_no_chat);
+            return;
+        }
         b.chat.setEnabled(true);
         b.chat.setText(R.string.detail_chat);
         b.chat.setOnClickListener(v -> {
@@ -376,7 +381,7 @@ public class BhDetailFragment extends Fragment {
 
     /** Only students can review (the database allows nothing else). The same button edits a review that already exists. */
     private void bindWriteReview() {
-        boolean student = AuthRouter.role == com.bofo.finder.model.Role.STUDENT;
+        boolean student = AuthRouter.role == com.bofo.finder.model.Role.STUDENT && AuthRouter.realRole != com.bofo.finder.model.Role.ADMIN;      // v2.0.120: not for an admin viewing as student
         String me = AuthService.get().userId();
         boolean ownPlace = current != null && me != null && me.equals(current.ownerId());
         b.writeReview.setVisibility(student && !ownPlace ? View.VISIBLE : View.GONE);

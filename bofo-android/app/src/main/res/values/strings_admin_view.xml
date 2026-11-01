@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- v2.0.120: an admin can view the app as admin, owner or student -->
+    <string name="view_as_row">View the app as…</string>
+    <string name="view_as_title">View the app as</string>
+    <string name="view_as_admin">Admin</string>
+    <string name="view_as_owner">Owner</string>
+    <string name="view_as_student">Student</string>
+    <string name="view_as_done">Now viewing as %1$s</string>
+    <string name="view_as_no_chat">Chat is for student accounts</string>
+</resources>
