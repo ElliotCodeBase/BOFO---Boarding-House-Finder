@@ -38,11 +38,6 @@ public class ProfileFragment extends Fragment {
             NavHostFragment.findNavController(this).navigate(R.id.profileSetupFragment, args);
         });
         binding.openSettings.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.settingsFragment));
-        if (BuildConfig.DEBUG) {
-            binding.debugOpen.setVisibility(View.VISIBLE);
-            binding.debugOpen.setOnClickListener(v ->
-                    NavHostFragment.findNavController(this).navigate(R.id.debugFragment));
-        }
         return binding.getRoot();
     }
 

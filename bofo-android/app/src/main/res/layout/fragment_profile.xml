@@ -194,15 +194,5 @@
                     android:textAppearance="@style/Text.Bofo.Secondary" />
             </LinearLayout>
         </LinearLayout>
-
-        <!-- Debug builds only (set visible in ProfileFragment). -->
-        <Button
-            android:id="@+id/debug_open"
-            style="@style/Widget.Bofo.Button.Tint"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:text="@string/debug_open"
-            android:visibility="gone" />
     </LinearLayout>
 </ScrollView>

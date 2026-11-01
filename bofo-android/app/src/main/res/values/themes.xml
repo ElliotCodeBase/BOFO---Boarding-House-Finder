@@ -26,6 +26,13 @@
         <item name="shapeAppearanceLargeComponent">@style/Shape.Bofo.Large</item>
     </style>
 
+    <!-- v2.0.97 Launch theme: the window is the same dark ink as SplashFragment from the very first frame, so there is no light screen with a mascot before the real loading screen.
+         MainActivity switches back to Theme.Bofo before it inflates anything (setTheme in onCreate). -->
+    <style name="Theme.Bofo.Launch" parent="Theme.Bofo">
+        <item name="android:windowBackground">@color/bofo_ink</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
     <style name="Shape.Bofo.Small" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">8dp</item>

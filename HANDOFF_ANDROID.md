@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.0.97 Launch screen, tab fade, no Developer button
+- **PR title:** `v2.0.97 - Android: dark loading screen first (no light mascot splash, no white strips), smoother tab switch, remove Developer button`
+- Launch: manifest activity theme = `Theme.Bofo.Launch` (dark ink window; `values-v31` also sets the Android 12+ system splash to dark ink with the transparent `splash_empty` icon). `MainActivity.onCreate` calls `setTheme(R.style.Theme_Bofo)` first. White strips = `main_root` (light, padded by the system bars) behind the dark `SplashFragment`: it is dark on a fresh launch and `SplashFragment` paints it dark in `onStart` / light again in `onStop`.
+- Tabs: `ShellFragment.showTab` uses `tab_fade_in` / `tab_fade_out` (180 / 90 ms) and ignores a tap on the tab that is already open. Screens are still rebuilt on every switch (replace); keeping Home / Explore alive (hide / show) would remove the reload but needs `onHiddenChanged` handling for `ExploreHandoff`, `BrowseState` and Saved, so it was NOT done.
+- Profile: the debug-only "Developer: data layer check" button and its code are removed (`DebugFragment` stays in the nav graph). Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.96 UI refresh, calmer
 - **PR title:** `v2.0.96 - Android: calmer UI (plain Profile header, no coloured panel, no amber/condensed type)`
 - Reverts the loud parts of v2.0.95: Profile has no dark panel / amber frame / key-tag; avatar is a plain circle, role is a small grey tag. Condensed bold type removed (titles, prices, Home greeting use `sans-serif-medium`). Dock highlight is the neutral `bofo_tile`, not amber. Kept: neutral colours, 12 / 20 dp shapes, 14 dp buttons, sentence-case labels, ink active tab. Not built or run by Claude.

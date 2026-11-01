@@ -46,6 +46,7 @@ public class SplashFragment extends Fragment {
     public void onStart() {
         super.onStart();
         lightBars(false);                                   // dark screen: status / navigation bar icons turn white
+        paintRoot(R.color.bofo_ink);                        // v2.0.97: the strips behind the status / navigation bar were the light app colour = white lines
         handler.postDelayed(next, SPLASH_MS);
     }
 
@@ -53,7 +54,15 @@ public class SplashFragment extends Fragment {
     public void onStop() {
         handler.removeCallbacks(next);
         lightBars(true);                                    // the rest of the app has a light background
+        paintRoot(R.color.bofo_bg);
         super.onStop();
+    }
+
+    /** MainActivity pads main_root by the system bars; its own background shows in those strips. */
+    private void paintRoot(int color) {
+        if (getActivity() == null) return;
+        View root = getActivity().findViewById(R.id.main_root);
+        if (root != null) root.setBackgroundColor(androidx.core.content.ContextCompat.getColor(requireContext(), color));
     }
 
     private void lightBars(boolean light) {

@@ -1,3 +1,6 @@
+# v2.0.97 - Android: launch screen + tab fade
+- Dark loading screen first (no light mascot splash, no white strips), cross-fade between tabs, Developer button removed.
+
 # v2.0.96 - Android: calmer UI
 - Plain Profile header, no amber / condensed type, neutral dock highlight.
 

@@ -290,6 +290,7 @@ public class ShellFragment extends Fragment {
     }
 
     private void showTab(int id) {
+        if (id == selectedTab && getChildFragmentManager().findFragmentById(R.id.tab_container) != null) return;    // v2.0.97: tapping the open tab does not rebuild it
         selectedTab = id;
         Fragment f;
         if (id == R.id.tab_profile) {
@@ -315,6 +316,7 @@ public class ShellFragment extends Fragment {
         }
         getChildFragmentManager().beginTransaction()
                 .setReorderingAllowed(true)
+                .setCustomAnimations(R.anim.tab_fade_in, R.anim.tab_fade_out)      // v2.0.97: soft cross-fade instead of a hard swap
                 .replace(R.id.tab_container, f)
                 .commit();
     }

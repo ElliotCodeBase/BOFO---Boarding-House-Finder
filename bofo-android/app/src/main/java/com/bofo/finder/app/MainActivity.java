@@ -11,6 +11,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import androidx.navigation.NavController;
 
+import com.bofo.finder.R;
 import com.bofo.finder.databinding.ActivityMainBinding;
 import com.bofo.finder.ui.AuthRouter;
 import com.bofo.finder.util.AuthLinks;
@@ -22,10 +23,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.Theme_Bofo);               // v2.0.97: leave the dark launch theme (manifest) before any screen is built
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        if (savedInstanceState == null)             // fresh launch always starts on the dark loading screen (SplashFragment puts the light colour back when it leaves)
+            binding.mainRoot.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.bofo_ink));
 
         // Edge-to-edge: keep content clear of the status bar, the navigation bar and the keyboard.
         ViewCompat.setOnApplyWindowInsetsListener(binding.mainRoot, (v, windowInsets) -> {
