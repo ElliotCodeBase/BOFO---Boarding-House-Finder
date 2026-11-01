@@ -86,6 +86,7 @@ public class ShellFragment extends Fragment {
         admin = AuthRouter.role == com.bofo.finder.model.Role.ADMIN;
         binding.dock.setTabs(tabsFor());
         if (admin) binding.bofoFab.setVisibility(View.GONE);           // the Ask BOFO assistant is for students looking for a place
+        if (admin && AuthRouter.takeMfaPrompt()) view.post(() -> AdminMfaSheet.show(this, null));      // v2.0.119: ask for the 6-digit code once per sign-in
 
         // Floating tab bar: lift the bar and the mascot button above the system gesture area.
         final float dp = getResources().getDisplayMetrics().density;

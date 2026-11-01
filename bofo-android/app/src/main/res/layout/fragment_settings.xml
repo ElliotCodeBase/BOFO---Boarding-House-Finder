@@ -76,6 +76,22 @@
                     android:text="@string/settings_switch_owner"
                     android:textColor="@color/bofo_text"
                     android:textSize="15sp" />
+                <TextView
+                    android:id="@+id/admin_mfa"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_shield"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/mfa_row"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp"
+                    android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
         <TextView

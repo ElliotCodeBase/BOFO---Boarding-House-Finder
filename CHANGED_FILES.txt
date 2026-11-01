@@ -1,11 +1,21 @@
-BOFO Android v2.0.118 - changes only. Unzip into C:\Users\user\bofo-finder (overwrite).
-No files to DELETE.
-Supabase: run 015_security_hardening.sql then 016_ai_dev_role.sql by hand (not applied by Claude).
+BOFO Android v2.0.119 - changes only (includes everything from v2.0.118, so it is safe to unzip over either state).
+Unzip into C:\Users\user\bofo-finder (overwrite). No files to DELETE.
+Supabase: 017_admin_mfa.sql is already applied live (by Claude). 015_security_hardening.sql and 016_ai_dev_role.sql are NOT applied yet: run them by hand when ready.
 
 changed	CLAUDE.md
 changed	CHANGES_ANDROID.md
 changed	HANDOFF_ANDROID.md
 changed	bofo-android/app/build.gradle
+changed	bofo-android/app/src/main/java/com/bofo/finder/service/AuthService.java
+changed	bofo-android/app/src/main/java/com/bofo/finder/service/SupabaseClient.java
+changed	bofo-android/app/src/main/java/com/bofo/finder/ui/AuthRouter.java
+changed	bofo-android/app/src/main/java/com/bofo/finder/ui/SettingsFragment.java
+changed	bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
+changed	bofo-android/app/src/main/res/layout/fragment_settings.xml
+new	bofo-android/app/src/main/java/com/bofo/finder/ui/AdminMfaSheet.java
+new	bofo-android/app/src/main/res/layout/sheet_admin_mfa.xml
+new	bofo-android/app/src/main/res/values/strings_admin_mfa.xml
 new	docs/SECURITY.md
 new	supabase/migrations/015_security_hardening.sql
 new	supabase/migrations/016_ai_dev_role.sql
+new	supabase/migrations/017_admin_mfa.sql

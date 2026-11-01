@@ -1,3 +1,11 @@
+# Handoff (Android) - v2.0.119 Admin two-step verification
+- **PR title:** `v2.0.119 - Admin two-step verification (authenticator app), server switch and in-app setup`
+- **Supabase:** `017_admin_mfa.sql` is ALREADY APPLIED to the live project (2026-11-01, by Claude, with the user's OK). Switch `app_flags.require_admin_mfa` = false, so nothing changed yet. `is_admin()` = admin role AND (switch off OR token aal2). `set_admin_mfa_required(bool)` is owner / SQL editor only; turning ON refuses unless an admin has a verified TOTP. `015` and `016` are NOT applied live yet (files only).
+- **App:** `AuthService` (`aal`, `mfaVerifiedFactor`, `mfaEnroll`, `mfaVerify`, `mfaRemove`), `SupabaseClient.authCall` (authed GET / POST / DELETE on /auth/v1), new `AdminMfaSheet` (+ `sheet_admin_mfa.xml`, `strings_admin_mfa.xml`) with states INTRO > SETUP (key + code) / ENTER / ON. `SettingsFragment`: row "Two-step verification" for admins only. `AuthRouter.route` sets `mfaPrompt` for an admin with an authenticator but an aal1 session; `ShellFragment` opens the sheet once.
+- **Order to switch it on:** docs/SECURITY.md section 5. Not built or run by Claude (no Android SDK); Java syntax-checked with javac (only missing-Android-class errors), XML parsed, string ids cross-checked.
+- Supabase dashboard: Authentication > Sign In / Providers > Multi-Factor must have TOTP enabled (default on).
+
+---
 # Handoff (Android) - v2.0.118 Security system: restricted AI role + hardening
 - **PR title:** `v2.0.118 - Security: restricted database role for AI, helper-function lockdown, view throttle, security docs`
 - No app code changed; only `versionName` / `versionCode` (318). **Not applied to the live Supabase project**: run in the SQL editor, in order: `015_security_hardening.sql`, `016_ai_dev_role.sql` (013 is still not run live; 015 works with or without it).

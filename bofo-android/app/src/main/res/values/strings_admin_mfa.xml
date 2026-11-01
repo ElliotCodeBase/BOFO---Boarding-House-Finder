@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- v2.0.119: two-step verification for admin accounts -->
+    <string name="mfa_title">Two-step verification</string>
+    <string name="mfa_loading">Please wait…</string>
+    <string name="mfa_row">Two-step verification</string>
+    <string name="mfa_intro">Admins sign in with a 6-digit code from an authenticator app (Google Authenticator, Microsoft Authenticator, Aegis…) on top of their normal sign-in. Set it up now.</string>
+    <string name="mfa_start">Show my setup key</string>
+    <string name="mfa_setup_body">1. Open your authenticator app and add an account with this key (or tap Open authenticator).\n2. Type the 6-digit code it shows.</string>
+    <string name="mfa_key_label">Setup key</string>
+    <string name="mfa_copy">Copy key</string>
+    <string name="mfa_open_app">Open authenticator</string>
+    <string name="mfa_no_app">No authenticator app found. Install one, then add the key by hand.</string>
+    <string name="mfa_copied">Key copied</string>
+    <string name="mfa_code_hint">6-digit code</string>
+    <string name="mfa_verify_on">Verify and turn on</string>
+    <string name="mfa_enter_body">Type the 6-digit code from your authenticator app to use the admin tools in this session.</string>
+    <string name="mfa_verify">Verify</string>
+    <string name="mfa_on_body">Two-step verification is on for this account. Admin tools need a code each time you sign in.</string>
+    <string name="mfa_done">Done</string>
+    <string name="mfa_turn_off">Turn off</string>
+    <string name="mfa_turn_off_ask">Turn off two-step verification? Your admin account will be protected by the normal sign-in only.</string>
+    <string name="mfa_ok_on">Two-step verification is on</string>
+    <string name="mfa_ok_off">Two-step verification is off</string>
+    <string name="mfa_bad_code">That code did not work. Check the code and your phone clock, then try again.</string>
+</resources>
