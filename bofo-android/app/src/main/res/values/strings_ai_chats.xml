@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.0.91 AI Chats monitor (admin only). The whole file is removed with the feature (REMOVE_AI_CHATS.md). -->
+<resources>
+    <string name="ai_chats_title">AI Chats</string>
+    <string name="ai_chats_open">AI Chats (admin)</string>
+    <string name="ai_chats_sub">Read-only. Chats are kept for %1$d days, then deleted automatically.</string>
+    <string name="ai_chats_search_hint">Search name, e-mail or text</string>
+    <string name="ai_chats_today">Today</string>
+    <string name="ai_chats_week">7 days</string>
+    <string name="ai_chats_all">All</string>
+    <string name="ai_chats_group">Group by user</string>
+    <string name="ai_chats_q">Question</string>
+    <string name="ai_chats_a">BOFO answered</string>
+    <string name="ai_chats_tap_open">Tap to read the full answer</string>
+    <string name="ai_chats_tap_close">Tap to collapse</string>
+    <string name="ai_chats_more">Show more</string>
+    <string name="ai_chats_loading_more">Loading...</string>
+    <string name="ai_chats_open_all">%1$s - tap to open the whole conversation</string>
+    <string name="ai_chats_close_all">%1$s - tap to close</string>
+    <string name="ai_chats_empty">No AI chats yet.</string>
+    <string name="ai_chats_empty_filtered">No AI chats match this search or date filter.</string>
+    <string name="ai_chats_off">The AI Chats monitor is switched off.</string>
+    <string name="ai_chats_admins_only">This screen is only for administrators.</string>
+    <string name="ai_chats_error">Could not load the AI chats.</string>
+    <string name="ai_chats_wipe">Delete all stored AI chats</string>
+    <string name="ai_chats_wipe_title">Delete all stored AI chats?</string>
+    <string name="ai_chats_wipe_msg">Every stored question and answer of every user will be deleted from the server. This cannot be undone.</string>
+    <string name="ai_chats_wipe_do">Delete all</string>
+    <string name="ai_chats_cancel">Cancel</string>
+    <string name="ai_chats_wipe_done">Deleted %1$d stored AI chats.</string>
+    <string name="ai_chats_wipe_error">Could not delete the AI chats.</string>
+    <!-- Privacy notice: shown as the 2nd chat bubble when the BOFO chat opens for the first time (BofoChatOverlay). The same sentence is in LegalText (privacy). -->
+    <string name="ai_chats_notice">Conversations with the BOFO AI are stored and can be reviewed by admins.</string>
+</resources>

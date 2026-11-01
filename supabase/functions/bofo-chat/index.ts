@@ -386,6 +386,46 @@ function template(msg: string, intent: Intent, rs: Result[], note: string, p: Pa
   }
 }
 
+// ------------------------------------------------------------------ AI Chats monitor (v2.0.91) - ISOLATED, remove with REMOVE_AI_CHATS.md
+// Admins can read what users ask BOFO (table ai_chat_log, written only here with the service role). Switch: app_flags row 'ai_chat_monitor_enabled'
+// (missing row, read error or false = nothing is stored). A failure in here is caught and logged; it can never change or delay the answer.
+let monitorCache: { on: boolean; at: number } | null = null;
+async function monitorOn(admin: any): Promise<boolean> {
+  if (monitorCache && Date.now() - monitorCache.at < 30_000) return monitorCache.on;      // flag change takes at most 30 s to apply
+  const { data, error } = await admin.from("app_flags").select("value").eq("key", "ai_chat_monitor_enabled").maybeSingle();
+  const on = !error && data?.value === true;
+  monitorCache = { on, at: Date.now() };
+  return on;
+}
+/** Like clean() but keeps line breaks (answers can have several lines). */
+const logText = (s: unknown, n: number) => String(s ?? "").replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, " ").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim().slice(0, n);
+async function logAiChat(admin: any, user: any, question: string, answer: string): Promise<void> {
+  try {
+    if (!(await monitorOn(admin))) return;
+    const { data: p } = await admin.from("users").select("full_name").eq("id", user.id).maybeSingle();
+    const meta = user.user_metadata ?? {};
+    const { error } = await admin.from("ai_chat_log").insert({
+      user_id: user.id,
+      user_name: logText(p?.full_name || meta.full_name || meta.name || "", 120),
+      user_email: logText(user.email ?? "", 200),
+      question: logText(question, 1000),
+      answer: logText(answer, 4000),
+    });
+    if (error) console.error("bofo-chat: ai chat log insert failed:", error.message);
+    if (Math.random() < 0.01) await admin.rpc("ai_chat_log_purge", { days: 90 });           // backstop for the 90-day rule when pg_cron is not enabled
+  } catch (e) {
+    console.error("bofo-chat: ai chat log failed:", e);
+  }
+}
+/** Runs after the response has gone out when the platform supports it; otherwise it simply runs on its own. Never throws. */
+function logAfterAnswer(admin: any, user: any, question: string, answer: string): void {
+  try {
+    const job = logAiChat(admin, user, question, answer);
+    (globalThis as any).EdgeRuntime?.waitUntil?.(job);
+  } catch (_e) { /* logging must never break the chat */ }
+}
+// ------------------------------------------------------------------ end of AI Chats monitor
+
 // ------------------------------------------------------------------ main
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -425,6 +465,7 @@ Deno.serve(async (req) => {
 
     // ---- security: asking for private data is refused before anything else
     if (PRIVATE_ASK.test(message)) {
+      logAfterAnswer(admin, u.user, message, "Sorry, I can't share private information such as ID photos, selfies, passwords or other people's chats. I can help you find a boarding house instead!");   // AI Chats monitor
       return json({ reply: "Sorry, I can't share private information such as ID photos, selfies, passwords or other people's chats. I can help you find a boarding house instead!", intent: "unknown", results: [], actions: [], filters: {}, suggestions: ["Nearest boarding house", "Cheapest with wifi"] });
     }
 
@@ -625,6 +666,7 @@ Deno.serve(async (req) => {
     }
     if (!reply) reply = template(message, intent, results, note, params, where);
 
+    logAfterAnswer(admin, u.user, message, reply);   // AI Chats monitor (v2.0.91): never throws, never delays the answer
     return json({ reply, intent, results, compare, actions, filters, suggestions: suggestions.slice(0, 4), ...(degraded && !worded ? { degraded: true } : {}) });
   } catch (_e) {
     return json({ error: "server_error" }, 500);

@@ -84,6 +84,16 @@
             android:layout_marginTop="8dp"
             android:text="@string/profile_settings" />
 
+        <!-- v2.0.91 AI Chats monitor: hidden; ProfileFragment shows it for an admin while the switch is on. REMOVE with the feature (REMOVE_AI_CHATS.md). -->
+        <Button
+            android:id="@+id/ai_chats_open"
+            style="@style/Widget.Bofo.Button.Tint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/ai_chats_open"
+            android:visibility="gone" />
+
         <!-- About (version comes from BuildConfig.VERSION_NAME, set in ProfileFragment) -->
         <TextView
             android:layout_width="wrap_content"

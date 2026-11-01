@@ -39,6 +39,7 @@ public final class LegalText {
                         + "Why\nTo show boarding houses near you, let students and owners talk, keep the community safe, and review owner identity. We do not sell your data.\n\n"
                         + "Location\nOnly used when you allow it and keep \"Use my location\" on in Settings. You can turn it off at any time.\n\n"
                         + "ID and selfie\nVerification photos are stored in a private area and are seen only by BOFO administrators who review them.\n\n"
+                        + "BOFO AI chats\nConversations with the BOFO AI assistant (your questions and its answers, with your name and e-mail) are stored and can be reviewed by BOFO administrators, and they are deleted automatically after 90 days.\n\n"   // v2.0.91 AI Chats monitor: REMOVE this line with the feature
                         + "Your choices\nYou can edit your profile in Settings, and delete your account there. Deleting removes your profile, chats and listings.\n\n"
                         + "Contact\nQuestions about privacy: " + contact() + ".";
             case OWNER:
