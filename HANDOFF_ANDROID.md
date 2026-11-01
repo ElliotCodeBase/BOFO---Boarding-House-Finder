@@ -1,3 +1,10 @@
+# Handoff (Android) - v2.0.122 Minimum app version for everyone
+- **PR title:** `v2.0.122 - Server can refuse old app versions for all users (switch OFF), edge functions forward the version header`
+- **Supabase (NOT applied live):** run `019_min_app_version_all.sql` in the SQL editor after 018. It only creates the switch (`set_min_app_version`) and the check (`enforce_min_app_version`), both OFF. Hook step at the bottom of the file is manual. Earlier chat stopped mid-way (usage limit) so do not assume any of 019 exists live.
+- **Edge functions (NOT deployed):** `supabase functions deploy bofo-chat delete-account create-boost-checkout`.
+- **Order:** install 2.0.122 on your phone > run 019 > deploy functions > `select public.set_min_app_version('2.0.122');` > hook step. Undo: `select public.set_min_app_version('');` or `alter role authenticator reset pgrst.db_pre_request;`.
+- **Not done yet:** the app does not show a nice "please update" screen for HTTP 426.
+---
 # Handoff (Android) - v2.0.119 Admin two-step verification
 - **PR title:** `v2.0.119 - Admin two-step verification (authenticator app), server switch and in-app setup`
 - **Supabase:** `017_admin_mfa.sql` is ALREADY APPLIED to the live project (2026-11-01, by Claude, with the user's OK). Switch `app_flags.require_admin_mfa` = false, so nothing changed yet. `is_admin()` = admin role AND (switch off OR token aal2). `set_admin_mfa_required(bool)` is owner / SQL editor only; turning ON refuses unless an admin has a verified TOTP. `015` and `016` are NOT applied live yet (files only).

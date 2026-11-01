@@ -3,14 +3,14 @@
 // Secrets: PAYMONGO_SECRET_KEY (sk_test_... / sk_live_...), BOOST_SUCCESS_URL, BOOST_CANCEL_URL (https pages you host)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
-const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info" };
+const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info, x-bofo-app-version" };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
     const url = Deno.env.get("SUPABASE_URL")!;
-    const userClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } } });
+    const userClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: req.headers.get("Authorization") ?? "", "x-bofo-app-version": req.headers.get("x-bofo-app-version") ?? "" } } });
     const { data: u } = await userClient.auth.getUser();
     if (!u?.user) return json({ error: "unauthorized" }, 401);
     const { bh_id, plan_id } = await req.json();
