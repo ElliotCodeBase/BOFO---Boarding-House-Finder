@@ -74,6 +74,24 @@
                 android:gravity="center_vertical"
                 android:maxLines="1"
                 android:textAppearance="@style/Text.Bofo.Secondary" />
+
+            <!-- v2.0.83: Commute action; becomes the one-line result (mode + minutes) once the route is drawn -->
+            <TextView
+                android:id="@+id/strip_commute"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:layout_marginTop="5dp"
+                android:background="@drawable/bg_commute_chip"
+                android:clickable="true"
+                android:ellipsize="end"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:maxLines="1"
+                android:paddingHorizontal="11dp"
+                android:text="@string/map_commute"
+                android:textColor="#5B3BF0"
+                android:textSize="12sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <ImageButton

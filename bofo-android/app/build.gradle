@@ -34,8 +34,8 @@ android {
         minSdk 26
         targetSdk 36
         // Version rule: stage N = v2.0.N, versionCode = 200 + N. Bump in EVERY stage / pull request.
-        versionCode 282
-        versionName '2.0.82'
+        versionCode 283
+        versionName '2.0.83'
 
         buildConfigField 'String', 'SUPABASE_URL', "\"${cfg('supabase.url')}\""
         buildConfigField 'String', 'SUPABASE_ANON_KEY', "\"${cfg('supabase.anonKey')}\""

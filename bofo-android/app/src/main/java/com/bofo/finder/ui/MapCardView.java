@@ -99,6 +99,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         default void searchArea(double south, double west, double north, double east) { }
         /** v2.0.82: long-press on a pin or a strip card (Explore compare tray). */
         default void placeLongPressed(String id) { }
+        /** v2.0.83: the "Commute" chip of a strip card was tapped. */
+        default void commuteTapped(String id) { }
     }
 
     private static final float PIN_ZOOM = 12.5f;
@@ -1261,6 +1263,53 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private String stripSig = "";
     private final Set<String> compareIds = new HashSet<>();
     private int stripStroke0 = -1;
+    /** v2.0.83: Commute. commuteBusyId = the chip says "Finding..."; commuteId = a route to the campus is drawn and the strip holds only that house's card. */
+    private String commuteId, commuteBusyId, commuteLine;
+    private boolean stripLocked;
+    private CameraPosition beforeCommute;
+
+    private void refreshStripRows() {
+        if (stripAdapter != null && !stripItems.isEmpty()) stripAdapter.notifyItemRangeChanged(0, stripItems.size());
+    }
+
+    /** v2.0.83: this house's Commute chip shows "Finding..." while the route is worked out (null = none). */
+    public void setCommuteBusy(@Nullable String id) { commuteBusyId = id; refreshStripRows(); }
+
+    public boolean commuteShown() { return commuteId != null; }
+
+    /**
+     * v2.0.83: draws the route from this house to the campus, puts the minutes and mode on the house's card, keeps only that
+     * card in the strip and fits the camera to the path (the v2.0.74 rule: a shown path keeps the camera).
+     */
+    public void showCommute(String id, double[][] path, boolean approximate, String line, @Nullable String badge) {
+        BoardingHouse p = id == null ? null : findPlace(id);
+        commuteBusyId = null;
+        if (p == null || path == null || path.length < 2 || stripAdapter == null) { refreshStripRows(); return; }
+        if (map != null && commuteId == null) beforeCommute = map.getCameraPosition();       // clearCommute() eases back to it
+        commuteId = id; commuteLine = line; stripLocked = true;
+        stripItems.clear(); stripItems.add(p); stripSig = "";
+        stripAdapter.notifyDataSetChanged();
+        stripLm.scrollToPositionWithOffset(0, 0);
+        paintStripVisible();
+        select(id);
+        setRoute(path, approximate);
+        setRouteLabel(badge);
+        fitRoute();
+    }
+
+    /** v2.0.83: removes the route and the label, brings the strip back and eases the camera to where it was. */
+    public void clearCommute() {
+        boolean was = commuteId != null || stripLocked;
+        commuteId = null; commuteBusyId = null; commuteLine = null; stripLocked = false;
+        if (!was) return;
+        clearRoute();
+        if (map != null && beforeCommute != null) {
+            try { map.easeCamera(CameraUpdateFactory.newCameraPosition(beforeCommute), animationsOn() ? 320 : 0); } catch (Throwable ignored) { }
+        }
+        beforeCommute = null;
+        rebuildStrip(true);
+        refreshStripRows();
+    }
 
     /** v2.0.82: houses in the compare tray get a coloured outline on their strip card. */
     public void setCompareIds(Set<String> ids) {
@@ -1323,7 +1372,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
 
     /** Fills the strip from the houses inside the visible box. force = false is skipped for a moment after a pin tap / swipe. */
     private void rebuildStrip(boolean force) {
-        if (!stripOn || stripAdapter == null || map == null || style == null) return;
+        if (!stripOn || stripAdapter == null || map == null || style == null || stripLocked) return;     // v2.0.83: a commute holds the strip on one card
         if (!force && android.os.SystemClock.uptimeMillis() < stripLockUntil) return;
         double[] box = viewBox();
         LatLng c = map.getCameraPosition().target;
@@ -1361,7 +1410,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
 
     /** A pin was tapped (or select() was called from code): bring that house's card to the middle. */
     private void syncStrip(@Nullable String id) {
-        if (!stripOn || stripAdapter == null || id == null) return;
+        if (!stripOn || stripAdapter == null || id == null || (stripLocked && !id.equals(commuteId))) return;
         int idx = -1;
         for (int i = 0; i < stripItems.size(); i++) if (stripItems.get(i).id().equals(id)) { idx = i; break; }
         if (idx < 0) {
@@ -1409,6 +1458,10 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 listener.placeLongPressed(stripItems.get(pos).id());
                 return true;
             });
+            v.stripCommute.setOnClickListener(x -> {
+                int pos = h.getBindingAdapterPosition();
+                if (pos >= 0 && pos < stripItems.size() && listener != null && commuteBusyId == null) listener.commuteTapped(stripItems.get(pos).id());
+            });
             v.stripOpen.setOnClickListener(x -> {
                 int pos = h.getBindingAdapterPosition();
                 if (pos >= 0 && pos < stripItems.size() && listener != null) listener.openPlace(stripItems.get(pos).id());
@@ -1422,6 +1475,12 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             com.google.android.material.card.MaterialCardView card = h.v.getRoot();
             card.setStrokeWidth(inCompare ? Math.round(2 * getResources().getDisplayMetrics().density) : Math.max(0, stripStroke0));
             card.setStrokeColor(inCompare ? 0xFF5B3BF0 : 0xFFE7E2FB);
+            String hid = stripItems.get(pos).id();                    // v2.0.83: Commute chip: "Commute" / "Finding..." / the result line
+            boolean busy = hid.equals(commuteBusyId), shown = hid.equals(commuteId) && commuteLine != null;
+            h.v.stripCommute.setText(busy ? getContext().getString(R.string.map_commute_busy) : shown ? commuteLine : getContext().getString(R.string.map_commute));
+            h.v.stripCommute.setActivated(shown);
+            h.v.stripCommute.setTextColor(shown ? 0xFFFFFFFF : 0xFF5B3BF0);
+            h.v.stripCommute.setAlpha(busy ? .6f : 1f);
         }
 
         @Override public int getItemCount() { return stripItems.size(); }
@@ -1546,6 +1605,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             if ("cluster".equals(kind)) { zoomToCluster(f); return true; }
             if ("college".equals(kind) && id != null) { if (listener != null) listener.campusTapped(id); return true; }
             if (id != null) {
+                if (commuteId != null && !id.equals(commuteId)) return true;        // v2.0.83: while a commute is drawn only its house can be picked
                 holdArea = true;
                 stripLockUntil = android.os.SystemClock.uptimeMillis() + 900;       // the camera easing to the pin must not re-sort the strip under the card
                 userSelect(id);
@@ -1554,7 +1614,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 return true;
             }
         }
-        if (selectedId != null) userSelect(null);
+        if (selectedId != null && commuteId == null) userSelect(null);       // v2.0.83: a drawn commute keeps its house selected
         return false;
     }
 
