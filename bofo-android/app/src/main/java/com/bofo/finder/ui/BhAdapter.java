@@ -74,7 +74,8 @@ public final class BhAdapter extends ListAdapter<BoardingHouse, BhAdapter.VH> {
         v.gender.setText(gp.isEmpty() ? "" : v.getRoot().getContext().getString(com.bofo.finder.util.GenderRules.labelRes(gp)));
         v.gender.setVisibility(gp.isEmpty() ? android.view.View.GONE : android.view.View.VISIBLE);
         v.verified.setImageResource(b.ownerVerified() ? R.drawable.ic_shield_verified : R.drawable.ic_shield_unverified);      // v2.0.90: green shield = verified, grey shield = not verified
-        v.verified.setContentDescription(v.getRoot().getContext().getString(b.ownerVerified() ? R.string.cd_verified : R.string.cd_not_verified));
+        v.verifiedText.setText(b.ownerVerified() ? R.string.detail_verified : R.string.detail_not_verified);
+        v.verifiedText.setTextColor(androidx.core.content.ContextCompat.getColor(v.getRoot().getContext(), b.ownerVerified() ? R.color.bofo_success : R.color.bofo_text_2));
         v.badge.setVisibility(b.featured() ? android.view.View.VISIBLE : android.view.View.GONE);
         String url = b.photoUrl();
         Glide.with(v.photo).load(url == null || url.isEmpty() ? (String) null : url).centerCrop().placeholder(R.color.bofo_skeleton).into(v.photo);
