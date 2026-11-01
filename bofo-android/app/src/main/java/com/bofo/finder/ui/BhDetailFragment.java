@@ -113,6 +113,9 @@ public class BhDetailFragment extends Fragment {
         b.name.setText(bh.name());
         b.price.setText(getString(R.string.detail_per_month, Money.peso(bh.price()), "per_room".equals(d.optString("price_mode", "per_bed")) ? "room" : "bed"));
         b.infoChips.removeAllViews();
+        String gp = com.bofo.finder.util.GenderRules.normalize(bh.genderPolicy());      // v2.0.87
+        if (!gp.isEmpty()) b.infoChips.addView(Chips.create(b.infoChips, getString(com.bofo.finder.util.GenderRules.labelRes(gp)), false, false));
+        if (!bh.ownerVerified()) b.infoChips.addView(Chips.create(b.infoChips, getString(R.string.detail_not_verified), false, false));     // v2.0.89
         if (bh.ownerVerified()) b.infoChips.addView(Chips.create(b.infoChips, getString(R.string.detail_verified), false, false));
         int free = bh.availableBeds();
         b.infoChips.addView(Chips.create(b.infoChips, free == 1 ? getString(R.string.detail_bed_available) : getString(R.string.detail_beds_available, free), false, false));

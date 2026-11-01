@@ -1,3 +1,17 @@
+# v2.0.89 - Android: unverified owners can list
+- **Changed:** owners no longer need to be verified to publish. Places of unverified owners show a grey "!" badge on the map pin and a "Not verified" chip on the place page; verified owners keep the blue check. The verify banner still shows, with new wording. Chat with the owner works for unverified places too.
+- **Supabase:** `013_unverified_can_list.sql` (RLS on `boarding_houses`, chat function). Run it, or publishing is still refused by the database.
+- Files: `013_unverified_can_list.sql` (new), `MapCardView.java`, `BhDetailFragment.java`, `ListingsFragment.java`, `strings.xml`, `build.gradle` (2.0.89 / 289).
+
+# v2.0.88 - Android: verified badge on map pins
+- **Changed:** the green dot (house with no reviews yet) is removed from the map price pins. Houses of verified owners now show a check badge on the pin's top-left corner instead; the check that sat inside the pill moved there.
+- Files: `MapCardView.java`, `build.gradle` (2.0.88 / 288).
+
+# v2.0.87 - Android: who can stay (female only / male only / both)
+- **New:** owners pick "Who can stay here?" (Both / Female only / Male only) on the listing form. Students see it as a badge on every house card, as a chip on the place page and in the map card, and can filter by it: new "Who can stay" row in the filter sheet (All / Female / Male) and the map chips "Female only" and "Male only".
+- **Supabase:** `012_gender_policy.sql` (column `gender_policy`, old "Female only" / "Male only" amenities copied into it, `bh_cards` view recreated). Before it is run the app still works: no badge, no gender filter result.
+- Files: `012_gender_policy.sql` (new), `GenderRules.java` (new), `BoardingHouse.java`, `BhService.java`, `BrowseState.java`, `OfflineExplore.java`, `ExploreFragment.java`, `FilterSheet.java`, `ListingFormFragment.java`, `BhAdapter.java`, `BhDetailFragment.java`, `MapCardView.java`, `item_bh_card.xml`, `sheet_filter.xml`, `fragment_listing_form.xml`, `bg_badge_gender.xml` (new), `strings_gender.xml` (new), `strings_map_filters.xml`, `build.gradle` (2.0.87 / 287).
+
 # v2.0.86 - Android: opened places are solid, not see-through
 - **Fixed:** a place you already opened was drawn at 60 % opacity, so roads and labels showed through its price pin (and its dot). It is now drawn solid: the pin is a muted lavender pill (`#EFEDF8`, grey-violet text and badge, soft border), the dot a muted violet (`#AFA8D8`). The selected pin stays dark indigo and every other pin is unchanged.
 - `MapCardView`: `pricePin(..., seen)` (bitmap key gets a 6th flag, so the old pins are not reused), `places` layer has no `iconOpacity`, `places-dots` colour comes from an expression on the `viewed` property. No Supabase change, no new `AppPrefs` keys. Not built or run by Claude.

@@ -42,6 +42,7 @@ import com.bofo.finder.util.DirectionsRules;
 import com.bofo.finder.util.ErrorText;
 import com.bofo.finder.util.Geo;
 import com.bofo.finder.util.Images;
+import com.bofo.finder.util.GenderRules;
 import com.bofo.finder.util.ListingRules;
 import com.bofo.finder.util.LocationHelper;
 import com.bofo.finder.util.Router;
@@ -99,6 +100,7 @@ public class ListingFormFragment extends Fragment {
     private Set<String> pendingSelected;                // edit mode: ids to tick once the catalog is there
     private final List<String> rules = new ArrayList<>();   // house rules typed by the owner
     private static final int MAX_RULES = 20;
+    private boolean genderColumn;                       // edit mode: the place came back with a gender_policy column (012_gender_policy.sql is run)
     private boolean rulesColumn;                        // edit mode: the place came back with a rules column (011_rules.sql is run)
     private boolean[] freeFlags;                        // edit mode, old places: water / electricity / wifi columns
 
@@ -644,6 +646,9 @@ public class ListingFormFragment extends Fragment {
                 }
                 freeFlags = null;                                    // the real amenity rows win over the old columns
             }
+            genderColumn = o.has("gender_policy");
+            String gp = GenderRules.normalize(o.isNull("gender_policy") ? "" : o.optString("gender_policy", ""));
+            if (GenderRules.FEMALE.equals(gp)) b.genderFemale.setChecked(true); else if (GenderRules.MALE.equals(gp)) b.genderMale.setChecked(true); else b.genderAny.setChecked(true);
             JSONArray rl = o.optJSONArray("rules");
             rulesColumn = rl != null;
             rules.clear();
@@ -689,6 +694,8 @@ public class ListingFormFragment extends Fragment {
         d.name = text(b.name); d.address = text(b.address);
         d.price = ListingRules.money(text(b.price));
         d.priceMode = b.modeRoom.isChecked() ? "per_room" : "per_bed";
+        d.gender = b.genderFemale.isChecked() ? GenderRules.FEMALE : b.genderMale.isChecked() ? GenderRules.MALE : GenderRules.ANY;
+        d.syncGender = editId != null && genderColumn;                // never write a column the database does not have yet
         d.lat = pinLat; d.lng = pinLng;
         d.amenityIds.addAll(selected);
         addRule();                                                    // a rule typed but not yet added is kept

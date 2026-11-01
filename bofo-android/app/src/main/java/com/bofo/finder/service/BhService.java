@@ -21,6 +21,8 @@ public final class BhService {
         /** Amenity ids the place must have (ALL of them). */
         public final Set<String> amenityIds = new LinkedHashSet<>();
         public String text;
+        /** v2.0.87: "" / null = all, else female / male / any (= boys and girls). Needs 012_gender_policy.sql. */
+        public String gender;
     }
 
     private final SupabaseClient api = SupabaseClient.get();
@@ -29,18 +31,25 @@ public final class BhService {
 
     /** False once the database turned out not to have 005_amenities.sql yet: lists then load without amenity data instead of failing. */
     private static volatile boolean amenityCols = true;
-    private static String cols() { return amenityCols ? COLS + ",amenity_names" : COLS; }
+    /** False once the database turned out not to have 012_gender_policy.sql yet: lists then load without the gender policy instead of failing. */
+    private static volatile boolean genderCol = true;
+    private static String cols() { return (amenityCols ? COLS + ",amenity_names" : COLS) + (genderCol ? ",gender_policy" : ""); }
 
     /** Runs a bh_cards query. If the amenity column is missing (migration not run), retries once without it. */
     private JSONArray cards(String query) throws Exception {
         try { return api.select("bh_cards", query); }
         catch (SupabaseClient.ApiException e) {
+            if (e.status == 400 && e.getMessage().contains("gender_policy") && query.contains("gender_policy")) {
+                if (genderCol) System.err.println("[BhService] bh_cards has no gender_policy yet. Run supabase/migrations/012_gender_policy.sql in Supabase.");
+                genderCol = false; Cache.remove("list:");
+                return cards(query.replace(",gender_policy", "").replaceAll("&gender_policy=eq\\.[a-z]+", ""));
+            }
             if (e.status == 400 && e.getMessage().contains("amenity") && query.contains("amenity_names")) {
                 // No "amenityCols &&" check on purpose: two lists load at once, the first flips the flag and the second
                 // (its query already built with amenity_names) must still be allowed to retry instead of showing the error.
                 if (amenityCols) System.err.println("[BhService] bh_cards has no amenity columns yet. Run supabase/migrations/005_amenities.sql in Supabase.");
                 amenityCols = false; Cache.remove("list:");
-                return api.select("bh_cards", query.replace(",amenity_names", "").replaceAll("&amenity_ids=cs\\.%7B[^&]*%7D", ""));
+                return cards(query.replace(",amenity_names", "").replaceAll("&amenity_ids=cs\\.%7B[^&]*%7D", ""));
             }
             throw e;
         }
@@ -88,6 +97,8 @@ public final class BhService {
         List<String> amenityList = new ArrayList<>();
         if (f != null) {
             if (f.maxPrice != null) q.append("&price=lte.").append(f.maxPrice);
+            String g = com.bofo.finder.util.GenderRules.normalize(f.gender);
+            if (!g.isEmpty()) q.append("&gender_policy=eq.").append(g);          // only female / male / any ever reach the URL
             for (String id : f.amenityIds)                       // one "has all of these" filter on the amenity_ids array
                 if (id != null && id.matches("[0-9a-fA-F-]{36}")) amenityList.add(id);
             if (!amenityList.isEmpty()) q.append("&amenity_ids=cs.%7B").append(String.join(",", amenityList)).append("%7D");
@@ -219,6 +230,8 @@ public final class BhService {
         public boolean water, electricity, wifi;                 // kept in sync with the "Free water / electricity / Wi-Fi" amenities
         public List<String> amenityIds = new ArrayList<>();
         public List<String> rules = new ArrayList<>();           // house rules, one text each (needs 011_rules.sql)
+        public String gender = "any";                            // who may stay: any (boys and girls) / female / male (needs 012_gender_policy.sql)
+        public boolean syncGender;                               // editing: write the policy (only if the place came back with a gender_policy column)
         public boolean syncRules;                                // editing: write the rules even when empty (only if the place came back with a rules column)
         public List<RoomDraft> rooms = new ArrayList<>();
         public List<byte[]> photos = new ArrayList<>();          // NEW photos (when editing: added after the existing ones)
@@ -260,6 +273,7 @@ public final class BhService {
                     .put("lat", d.lat).put("lng", d.lng).put("price", d.price).put("price_mode", d.priceMode)
                     .put("free_water", d.water).put("free_electricity", d.electricity).put("free_wifi", d.wifi)
                     .put("status", "active");
+            if (!com.bofo.finder.util.GenderRules.ANY.equals(d.gender)) bh.put("gender_policy", d.gender);   // only sent when set, so publishing still works before 012_gender_policy.sql is run (the default is "any")
             if (!d.rules.isEmpty()) bh.put("rules", new JSONArray(d.rules));   // only sent when used, so publishing still works before 011_rules.sql is run
             id = api.insert("boarding_houses", bh).getJSONObject(0).getString("id");
             step = "saving the rooms";
@@ -322,6 +336,7 @@ public final class BhService {
             JSONArray done = api.update("boarding_houses", "id=eq." + id, new JSONObject().put("name", d.name).put("address", d.address)
                     .put("lat", d.lat).put("lng", d.lng).put("price", d.price).put("price_mode", d.priceMode)
                     .put("free_water", d.water).put("free_electricity", d.electricity).put("free_wifi", d.wifi));
+            if (d.syncGender) api.update("boarding_houses", "id=eq." + id, new JSONObject().put("gender_policy", d.gender));
             if (d.syncRules) api.update("boarding_houses", "id=eq." + id, new JSONObject().put("rules", new JSONArray(d.rules)));
             if (done.length() == 0) throw new IllegalStateException("Nothing was changed. The place is gone, or this account may not edit it (it must be a verified owner).");
             step = "saving the rooms";

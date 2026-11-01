@@ -4,7 +4,8 @@
     <string name="map_chip_under2k">Under ₱2k</string>
     <string name="map_chip_wifi">Wi-Fi</string>
     <string name="map_chip_verified">Verified</string>
-    <string name="map_chip_female">Female-only</string>
+    <string name="map_chip_female">Female only</string>
+    <string name="map_chip_male">Male only</string>
     <string name="map_chip_beds">Has beds</string>
     <string name="map_chip_reset">Reset</string>
     <string name="ex_quick_title">Quick filters</string>

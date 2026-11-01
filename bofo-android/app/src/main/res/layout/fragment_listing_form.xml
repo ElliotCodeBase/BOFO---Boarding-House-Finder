@@ -183,6 +183,37 @@
                         android:text="@string/form_per_room" />
                 </RadioGroup>
 
+                <!-- v2.0.87: who can stay (shown on the student card, used by the Explore filter) -->
+                <TextView style="@style/Text.Form.Label" android:text="@string/form_gender" />
+                <RadioGroup
+                    android:id="@+id/gender_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <RadioButton
+                        android:id="@+id/gender_any"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="@string/form_gender_any" />
+                    <RadioButton
+                        android:id="@+id/gender_female"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/form_gender_female" />
+                    <RadioButton
+                        android:id="@+id/gender_male"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/form_gender_male" />
+                </RadioGroup>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/form_gender_hint"
+                    android:textAppearance="@style/Text.Bofo.Secondary"
+                    android:textSize="13sp" />
+
                 <TextView style="@style/Text.Form.Label" android:text="@string/form_rooms" />
                 <LinearLayout
                     android:id="@+id/rooms"

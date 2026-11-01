@@ -139,6 +139,61 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- v2.0.87: who can stay (female only / male only / both); same value as the Female only / Male only chips on the map -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_ex_group"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/gender_filter_title"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/gender_filter_sub"
+                    android:textAppearance="@style/Text.Bofo.Secondary"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_ex_seg_wrap"
+                    android:orientation="horizontal"
+                    android:padding="3dp">
+
+                    <TextView
+                        android:id="@+id/gender0"
+                        style="@style/Text.Bofo.Seg"
+                        android:text="@string/gender_all" />
+
+                    <TextView
+                        android:id="@+id/gender1"
+                        style="@style/Text.Bofo.Seg"
+                        android:text="@string/gender_seg_female" />
+
+                    <TextView
+                        android:id="@+id/gender2"
+                        style="@style/Text.Bofo.Seg"
+                        android:text="@string/gender_seg_male" />
+
+                    <TextView
+                        android:id="@+id/gender3"
+                        style="@style/Text.Bofo.Seg"
+                        android:text="@string/gender_both" />
+                </LinearLayout>
+            </LinearLayout>
+
             <!-- v2.0.82: quick filters (same values as the chips on the Explore map) -->
             <LinearLayout
                 android:layout_width="match_parent"

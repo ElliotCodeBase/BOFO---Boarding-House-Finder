@@ -470,13 +470,13 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
 
     /** v2.0.80: price pin = white pill (thin border, ink text) with a small tail; the selected one is dark indigo with white text.
      *  A verified house gets a check badge in front, a featured house a star behind, in the same bitmap.
-     *  v2.0.81: a saved house gets a small red heart on the top-right corner, a house nobody rated yet ("New") a small green dot on the top-left corner. */
+     *  v2.0.81: a saved house gets a small red heart on the top-right corner, a verified owner a small check badge on the top-left corner (v2.0.88: it replaced the green "New" dot and the check inside the pill); v2.0.89: an owner who is not verified yet gets a grey "!" badge there. */
     private Bitmap pricePin(String text, boolean selected, boolean verified, boolean featured, boolean saved, boolean fresh, boolean seen) {
         float d = getResources().getDisplayMetrics().density;
         Paint t = textPaint(selected ? 0xFFFFFFFF : seen ? 0xFF8A85A6 : 0xFF17142A, 12, true);       // v2.0.86: an opened place is a solid muted pill, not a see-through one
         float badge = 14 * d, gap = 4 * d, padX = 9 * d;
         float tw = t.measureText(text);
-        float w = padX * 2 + tw + (verified ? badge + gap : 0) + (featured ? badge + gap : 0);
+        float w = padX * 2 + tw + (featured ? badge + gap : 0);
         float bodyH = 28 * d, tail = 6 * d, mx = 6 * d, mt = 7 * d, mb = 1.5f * d;
         int bw = Math.round(w + 2 * mx), bh = Math.round(mt + bodyH + tail + mb);
         Bitmap bmp = Bitmap.createBitmap(bw, bh, Bitmap.Config.ARGB_8888);
@@ -504,18 +504,6 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         c.drawPath(sides, p);
         float x = mx + padX, cy = body.centerY();
         int primary = ContextCompat.getColor(getContext(), R.color.bofo_primary);
-        if (verified) {
-            p.setStyle(Paint.Style.FILL); p.setColor(selected ? 0xFFFFFFFF : seen ? 0xFFAFA8D8 : primary);
-            c.drawCircle(x + badge / 2f, cy, badge / 2f, p);
-            p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(1.8f * d); p.setStrokeCap(Paint.Cap.ROUND); p.setColor(selected ? DARK_PURPLE : 0xFFFFFFFF);
-            Path ck = new Path();
-            ck.moveTo(x + badge * 0.28f, cy + badge * 0.02f);
-            ck.lineTo(x + badge * 0.44f, cy + badge * 0.2f);
-            ck.lineTo(x + badge * 0.74f, cy - badge * 0.18f);
-            c.drawPath(ck, p);
-            p.setStrokeCap(Paint.Cap.BUTT);
-            x += badge + gap;
-        }
         c.drawText(text, x + tw / 2f, cy - (t.ascent() + t.descent()) / 2f, t);
         x += tw;
         if (featured) {
@@ -532,12 +520,30 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             star.close();
             c.drawPath(star, p);
         }
-        if (fresh) {                                                         // "New" dot, top-left corner
-            float dx = body.left + 5 * d, dy = body.top + 1 * d;
+        if (verified) {                                                      // v2.0.88: verified-owner badge, top-left corner (white ring, check inside)
+            float dx = body.left + 6 * d, dy = body.top + 1 * d, rr = 6.5f * d;
             p.setStyle(Paint.Style.FILL); p.setColor(0xFFFFFFFF);
-            c.drawCircle(dx, dy, 5.5f * d, p);
-            p.setColor(0xFF22C55E);
-            c.drawCircle(dx, dy, 4 * d, p);
+            c.drawCircle(dx, dy, rr + 1.5f * d, p);
+            p.setColor(seen && !selected ? 0xFFAFA8D8 : primary);
+            c.drawCircle(dx, dy, rr, p);
+            p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(1.8f * d); p.setStrokeCap(Paint.Cap.ROUND); p.setStrokeJoin(Paint.Join.ROUND); p.setColor(0xFFFFFFFF);
+            Path ck = new Path();
+            ck.moveTo(dx - rr * 0.42f, dy + rr * 0.02f);
+            ck.lineTo(dx - rr * 0.1f, dy + rr * 0.36f);
+            ck.lineTo(dx + rr * 0.46f, dy - rr * 0.34f);
+            c.drawPath(ck, p);
+            p.setStrokeCap(Paint.Cap.BUTT);
+        } else {                                                             // v2.0.89: not verified yet = grey badge with "!"
+            float dx = body.left + 6 * d, dy = body.top + 1 * d, rr = 6.5f * d;
+            p.setStyle(Paint.Style.FILL); p.setColor(0xFFFFFFFF);
+            c.drawCircle(dx, dy, rr + 1.5f * d, p);
+            p.setColor(seen && !selected ? 0xFFC9C6DA : 0xFF8F8CA3);
+            c.drawCircle(dx, dy, rr, p);
+            p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(1.8f * d); p.setStrokeCap(Paint.Cap.ROUND); p.setColor(0xFFFFFFFF);
+            c.drawLine(dx, dy - rr * 0.5f, dx, dy + rr * 0.1f, p);
+            p.setStyle(Paint.Style.FILL);
+            c.drawCircle(dx, dy + rr * 0.48f, 1.1f * d, p);
+            p.setStyle(Paint.Style.STROKE); p.setStrokeCap(Paint.Cap.BUTT);
         }
         if (saved) {                                                         // heart, top-right corner
             float s2 = 11 * d, hx = body.right - 4 * d, hy = body.top + 1.5f * d;
@@ -853,6 +859,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         android.text.SpannableStringBuilder info = new android.text.SpannableStringBuilder("\u2605 ").append(ListRules.ratingText(p.avgRating(), p.reviewCount()));
         info.setSpan(new android.text.style.ForegroundColorSpan(0xFFF5A524), 0, 1, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);     // v2.0.79: amber star
         if (p.distanceKm() > 0) info.append("  \u00B7  ").append(Geo.fmt(p.distanceKm()));
+        String gp = com.bofo.finder.util.GenderRules.normalize(p.genderPolicy());                          // v2.0.87: who can stay
+        if (!gp.isEmpty()) info.append("  \u00B7  ").append(infoView.getContext().getString(com.bofo.finder.util.GenderRules.labelRes(gp)));
         infoView.setText(info);
         String photo = p.photoUrl();
         if (photo == null || photo.isEmpty()) { Glide.with(photoView).clear(photoView); photoView.setVisibility(View.GONE); }
