@@ -431,7 +431,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 .withFilter(isDot));
         st.addLayer(new CircleLayer("places-dots", "places-src").withProperties(
                 PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(8f * BIG), Expression.literal(5.5f * BIG))),
-                PropertyFactory.circleColor(Expression.switchCase(sel, Expression.color(DARK_PURPLE), isViewed, Expression.color(0xFFAFA8D8), Expression.color(primary))),
+                PropertyFactory.circleColor(Expression.switchCase(sel, Expression.color(DARK_PURPLE), isViewed, Expression.color(0xFF7A5CF5), Expression.color(primary))),      // v2.0.90: an opened place is a slightly lighter violet, not grey
                 PropertyFactory.circleStrokeWidth(2.5f), PropertyFactory.circleStrokeColor(0xFFFFFFFF))      // v2.0.86: a place already opened is a solid muted colour (it was 60 % opacity: the map showed through)
                 .withFilter(isDot));
         st.addLayer(new SymbolLayer("places-clusters", "places-src").withProperties(
