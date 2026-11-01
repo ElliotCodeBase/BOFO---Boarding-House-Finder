@@ -1,3 +1,11 @@
+# Handoff (Android) - v2.0.105 Rent card: Best rated only
+- **PR title:** `v2.0.105 - Android: Best rated tab shows only the best rated price on the Home price card`
+- `RentCardView.setData(basis, best)`: when `best` and a house has reviews, one cell ("Best rated") and one marker; otherwise unchanged (Lowest / Middle / Highest). If no house has reviews yet, Best rated still shows the normal three. Not built or run by Claude.
+---
+# Handoff (Android) - v2.0.104 Revert v2.0.103
+- **PR title:** `v2.0.104 - Android: revert Best-rated-only on Home`
+- `HomeFragment` back to the v2.0.102 chips (New / Hot / Best rated, starts on New). Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.103 Home: Best rated only
 - **PR title:** `v2.0.103 - Android: Home shows Best rated only (New / Hot chips hidden)`
 - `HomeFragment`: `tab` starts at 2 (BEST), `chipNew` / `chipHot` are GONE. Explore is unchanged. Not built or run by Claude.

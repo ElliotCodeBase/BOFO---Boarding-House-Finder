@@ -1,3 +1,9 @@
+# v2.0.105 - Android: Best rated tab shows only the best rated price
+- Home price card: with Best rated selected it shows just the top rated house's price (no Lowest / Highest).
+
+# v2.0.104 - Android: New / Hot / Best rated chips are back
+- Reverts v2.0.103 (Home showed Best rated only).
+
 # v2.0.103 - Android: Home shows Best rated only
 - New and Hot chips removed from Home; the list and map always follow Best rated.
 

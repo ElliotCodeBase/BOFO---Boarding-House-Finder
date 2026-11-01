@@ -83,6 +83,14 @@ public class RentCardView extends View {
             if (x.reviewCount() > 0 && (top == null || x.avgRating() > top.avgRating() || (x.avgRating() == top.avgRating() && x.price() < top.price()))) top = x;
         }
         Context c = getContext();
+        if (best && top != null) {                                              // v2.0.105: Best rated tab = only the best rated price (no Lowest / Highest, one marker)
+            marks.clear(); marks.add(new Mark(top.id(), top.price()));
+            min = max = top.price();
+            cells.add(new Cell(c.getString(R.string.rent_best), top.id(), top.price()));
+            setVisibility(VISIBLE);
+            requestLayout(); invalidate();
+            return;
+        }
         if (r.count == 1 || r.lowest == r.highest) cells.add(new Cell(c.getString(R.string.rent_single), lo.id(), lo.price()));
         else {
             cells.add(new Cell(c.getString(R.string.rent_lowest), lo.id(), lo.price()));
