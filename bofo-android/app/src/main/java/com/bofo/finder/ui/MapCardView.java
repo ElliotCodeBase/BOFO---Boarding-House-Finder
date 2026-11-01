@@ -447,7 +447,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         for (String[] l : new String[][]{{"college-labels", "college-labels-src"}, {"place-labels", "labels-src"}})       // v2.0.90: house names sit above college names and block them (they used to overlap)
             st.addLayer(new SymbolLayer(l[0], l[1]).withProperties(
                     PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAnchor(Property.ICON_ANCHOR_TOP),
-                    PropertyFactory.iconOffset(new Float[]{0f, 2f}), PropertyFactory.iconAllowOverlap(!l[0].equals("college-labels")), PropertyFactory.iconIgnorePlacement(false), PropertyFactory.iconPadding(l[0].equals("college-labels") ? 6f : 2f)));
+                    PropertyFactory.iconOffset(new Float[]{0f, 2f}), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(l[0].equals("college-labels")), PropertyFactory.iconPadding(0f)));      // v2.0.90: every campus name shows; house names (collision-checked in rebuildPlaces) yield to them
         st.addLayer(new SymbolLayer("route-label", "routelabel-src").withProperties(
                 PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
                 PropertyFactory.iconOffset(new Float[]{0f, -12f}), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true)));
@@ -985,6 +985,15 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             List<Integer> order = new ArrayList<>();
             for (int i = 0; i < n; i++) if (sp[i] != null) { if (places.get(i).id().equals(selectedId)) order.add(0, i); else order.add(i); }
             List<RectF> bodies = new ArrayList<>(), taken = new ArrayList<>();
+            if (map.getCameraPosition().zoom >= 11f && !routeShown()) {           // v2.0.90: campus names are always drawn, so house names keep clear of them
+                Paint cp = textPaint(CAMPUS_TEXT, 11, true);
+                for (College c : colleges) {
+                    if (Double.isNaN(c.lat()) || Double.isNaN(c.lng())) continue;
+                    PointF q = map.getProjection().toScreenLocation(new LatLng(c.lat(), c.lng()));
+                    float cw = cp.measureText(clip(c.name(), 26)) + 8 * d, ch = cp.getTextSize() + 6 * d;
+                    taken.add(new RectF(q.x - cw / 2, q.y + 2 * d, q.x + cw / 2, q.y + 2 * d + ch));
+                }
+            }
             final String[] pinKey = new String[n];
             for (int i : order) {                                     // v2.0.80: one price-pin bitmap per (price text, selected, verified, featured), made once and reused
                 BoardingHouse p = places.get(i);
