@@ -27,8 +27,10 @@
 
             <com.bofo.finder.ui.BofoMascot
                 android:id="@+id/mascot"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_bofo_fab"
+                android:padding="2dp"
                 android:importantForAccessibility="no" />
 
             <LinearLayout

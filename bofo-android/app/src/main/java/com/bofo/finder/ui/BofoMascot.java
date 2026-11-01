@@ -24,8 +24,9 @@ public class BofoMascot extends View {
     public enum Expression { HAPPY, THINKING, WAVING }
     public enum Idle { THINKING, SITTING, RUNNING, SLEEPING }
 
-    private static final int PURPLE = 0xFF6C3FC5, DARK = 0xFF4A2A8F, AMBER = 0xFFFFB400, AMBER_DARK = 0xFFE39B00,
-            TINT = 0xFFEDE4FA, INK = 0xFF1F1A2E, WHITE = 0xFFFFFFFF;
+    // v2.0.110: same colours as the splash mascot (white body, blue screen, lavender roof / feet, white face). Names kept so the drawing code is unchanged.
+    private static final int PURPLE = 0xFFFFFFFF, DARK = 0xFFC4ABEE, FEET = 0xFFE4D9F7, AMBER = 0xFFD9C8F5, AMBER_DARK = 0xFFC4ABEE,
+            TINT = 0xFF5B3BF0, INK = 0xFFFFFFFF, WHITE = 0xFF3A22B8;
 
     private Expression expr = Expression.HAPPY;
     private Idle pose;                       // null = standing
@@ -229,8 +230,8 @@ public class BofoMascot extends View {
         c.scale(k, k);
 
         if (!low) {                                                               // standing feet are under the body
-            c.save(); c.translate(footLx, footLy); rr(c, 60, 156, 30, 16, 8, DARK); c.restore();
-            c.save(); c.translate(footRx, footRy); rr(c, 110, 156, 30, 16, 8, DARK); c.restore();
+            c.save(); c.translate(footLx, footLy); rr(c, 60, 156, 30, 16, 8, FEET); c.restore();
+            c.save(); c.translate(footRx, footRy); rr(c, 110, 156, 30, 16, 8, FEET); c.restore();
         }
 
         // torso: body, face screen, glass highlight, status light, hat, face, arms
@@ -280,8 +281,8 @@ public class BofoMascot extends View {
         c.restore();
 
         if (low) {                                                                // sitting feet are in FRONT of the body
-            c.save(); c.translate(footLx, footLy); rr(c, 18, 164, 46, 20, 10, DARK); c.restore();
-            c.save(); c.translate(footRx, footRy); rr(c, 136, 164, 46, 20, 10, DARK); c.restore();
+            c.save(); c.translate(footLx, footLy); rr(c, 18, 164, 46, 20, 10, FEET); c.restore();
+            c.save(); c.translate(footRx, footRy); rr(c, 136, 164, 46, 20, 10, FEET); c.restore();
         }
 
         if (pose == Idle.THINKING) {

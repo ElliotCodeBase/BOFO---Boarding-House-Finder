@@ -1,3 +1,8 @@
+# Handoff (Android) - v2.0.110 Mascot colours = splash mascot
+- **PR title:** `v2.0.110 - Android: every mascot uses the splash mascot colours`
+- `BofoMascot` colour constants (white body, #3A22B8 screen, lavender roof/feet, white face); `drawable/mascot_happy.xml` recoloured the same; `bg_bofo_fab` is now dark ink (white body needs it) and the chat header mascot sits on it. Launcher icon not touched. Not built or run by Claude.
+
+---
 # Handoff (Android) - v2.0.109 Map: less clutter
 - **PR title:** `v2.0.109 - Android: remove duplicate km tag from the Home map`
 - `MapCardView.paintRingLabel` now always clears the "3.0 km" chip on the circle edge (the radius pill at the top shows the same number). Not built or run by Claude.

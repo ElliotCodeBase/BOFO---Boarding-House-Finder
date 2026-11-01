@@ -1,3 +1,6 @@
+# v2.0.110 - Android: mascot looks like the loading mascot everywhere
+- Floating BOFO button, AI chat, empty states, login, profile and reviews now show the white / blue / lavender mascot from the loading screen. The floating button is dark so the white body shows.
+
 # v2.0.109 - Android: cleaner Home map
 - Removed the second "3.0 km" tag on the radius circle; the pill at the top already shows the distance.
 
