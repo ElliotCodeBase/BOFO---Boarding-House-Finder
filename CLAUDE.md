@@ -28,4 +28,11 @@ Patch (x.y.Z) for fixes, minor (x.Y.0) for new features.
 
 ## 4. Safety
 - Never commit `config.local.properties` or `KEYS.local.md`.
-- Supabase: the user allows Claude to change the Supabase project when a feature needs it. Look at the existing tables first and say what was changed (also add a migration file under `supabase/migrations/`).
+- Supabase: changes to the Supabase project only with the user's current OK in this chat (an older note is not enough). Look at the existing tables first and say what was changed (also add a migration file under `supabase/migrations/`). Rules for AI database access: section 7.
+
+## 7. AI access to user data (v2.0.118, see docs/SECURITY.md)
+- Never read or print `auth.users`, `public.users` (names, phones, emails), chats, ID verifications, user agreements, favorites or AI chat logs. If a task seems to need them, stop and ask the user.
+- Never attribute anything (reviews, chats, favorites, listings, messages) to a real person's account. Demo and test data uses only test accounts (`@example.com`).
+- Prefer the restricted role `bofo_ai_dev` (migration 016) over an owner-level connector. Use the owner-level connector only for a schema change the user asked for in this chat, and write a migration file for it.
+- Before touching the live database, say in one line what will change; afterwards list exactly what changed. Select only the columns you need (never `select *` on user tables).
+- Never request, store or paste the postgres password or the service_role key.
