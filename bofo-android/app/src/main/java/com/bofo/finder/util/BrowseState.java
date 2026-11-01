@@ -40,6 +40,12 @@ public final class BrowseState {
     /** Step 9: Explore sort (ExploreRules.SORT_*) and amenities picked from the built-in fallback list (matched by name on the cards). */
     public static int sort;
     public static final Set<String> amenityNames = new LinkedHashSet<>();
+    /** v2.0.82: quick filters. verifiedOnly = owner verified, bedsOnly = at least one free bed. Applied in Explore (client side). */
+    public static boolean verifiedOnly, bedsOnly;
+    /** v2.0.82: id -> name of the catalog amenities ticked in the filter sheet, so a quick chip ("Wi-Fi", "Female-only") can tell it is on. */
+    public static final java.util.Map<String, String> amenityLabels = new java.util.HashMap<>();
+    public static final double QUICK_PRICE = 2000;
+    public static final String AMEN_WIFI = "Free Wi-Fi", AMEN_FEMALE = "Female only";
     private static boolean loaded;
 
     public static void bump() { Integer v = CHANGED.getValue(); CHANGED.setValue(v == null ? 1 : v + 1); }
@@ -73,9 +79,28 @@ public final class BrowseState {
     }
 
     /** Price range counts as one filter, each amenity as one. */
-    public static int activeFilters() { return (minPrice != null || maxPrice != null ? 1 : 0) + (sort != 0 ? 1 : 0) + amenityIds.size() + amenityNames.size(); }
+    public static int activeFilters() { return (minPrice != null || maxPrice != null ? 1 : 0) + (sort != 0 ? 1 : 0) + amenityIds.size() + amenityNames.size() + (verifiedOnly ? 1 : 0) + (bedsOnly ? 1 : 0); }
 
-    public static void clearFilters() { minPrice = null; maxPrice = null; sort = 0; amenityIds.clear(); amenityNames.clear(); }
+    private static String norm(String s) { return s == null ? "" : s.toLowerCase(java.util.Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]", ""); }
+
+    /** Is the amenity called this (spaces / punctuation / case ignored) part of the filters, as a name or as a ticked catalog id? */
+    public static boolean hasAmenityNamed(String name) {
+        String k = norm(name);
+        for (String n : amenityNames) if (norm(n).equals(k)) return true;
+        for (String id : amenityIds) if (norm(amenityLabels.get(id)).equals(k)) return true;
+        return false;
+    }
+
+    /** Quick chip: adds the amenity by name (matched on the cards like the built-in list), or removes it whichever way it was ticked. */
+    public static void setAmenityNamed(String name, boolean on) {
+        String k = norm(name);
+        if (on) { if (!hasAmenityNamed(name)) amenityNames.add(name); return; }
+        amenityNames.removeIf(n -> norm(n).equals(k));
+        java.util.Iterator<String> it = amenityIds.iterator();
+        while (it.hasNext()) { String id = it.next(); if (norm(amenityLabels.get(id)).equals(k)) { it.remove(); amenityLabels.remove(id); } }
+    }
+
+    public static void clearFilters() { minPrice = null; maxPrice = null; sort = 0; amenityIds.clear(); amenityNames.clear(); amenityLabels.clear(); verifiedOnly = false; bedsOnly = false; }
 
     /** Loads colleges + my profile once (offline copies are used when there is no network). */
     public static void ensureLoaded(Runnable done, Consumer<Throwable> fail) {

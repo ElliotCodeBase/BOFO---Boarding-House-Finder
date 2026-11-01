@@ -53,6 +53,8 @@ public class FilterSheet extends BottomSheetDialogFragment {
     private final Set<String> selNames = new LinkedHashSet<>();     // names picked from the built-in list
     private final List<Chip> priceChips = new ArrayList<>();
     private int sort;
+    private boolean verified, beds;                                  // v2.0.82: quick filters (same values as the map chips)
+    private Chip verifiedChip, bedsChip;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
@@ -60,6 +62,15 @@ public class FilterSheet extends BottomSheetDialogFragment {
         selected.addAll(BrowseState.amenityIds);
         selNames.addAll(BrowseState.amenityNames);
         sort = BrowseState.sort;
+        verified = BrowseState.verifiedOnly; beds = BrowseState.bedsOnly;
+
+        // quick filters (the chips on the Explore map read and write the same values)
+        verifiedChip = Chips.create(b.quickChips, getString(R.string.ex_quick_verified), true, verified);
+        verifiedChip.setOnCheckedChangeListener((v, on) -> verified = on);
+        b.quickChips.addView(verifiedChip);
+        bedsChip = Chips.create(b.quickChips, getString(R.string.ex_quick_beds), true, beds);
+        bedsChip.setOnCheckedChangeListener((v, on) -> beds = on);
+        b.quickChips.addView(bedsChip);
 
         // price: Any + 4 quick chips, the field is the single source of truth
         addPriceChip(getString(R.string.ex_price_any), null);
@@ -79,6 +90,7 @@ public class FilterSheet extends BottomSheetDialogFragment {
         Async.run(() -> new BhService().amenities(), (List<Amenity> l) -> {
             if (b == null) return;
             amenities = l; catalog = l != null && !l.isEmpty(); loaded = true;
+            adoptNames();
             renderChips();
         }, e -> {
             if (b == null) return;
@@ -89,6 +101,7 @@ public class FilterSheet extends BottomSheetDialogFragment {
         b.close.setOnClickListener(v -> dismiss());
         b.reset.setOnClickListener(v -> {                          // clears the sheet only: the list changes at "Show results"
             b.priceCustom.setText(""); sort = 0; selected.clear(); selNames.clear();
+            verified = false; beds = false; verifiedChip.setChecked(false); bedsChip.setChecked(false);
             b.amenitySearch.setText("");
             paintSort(); renderChips();
         });
@@ -102,10 +115,30 @@ public class FilterSheet extends BottomSheetDialogFragment {
         BrowseState.minPrice = null;                               // the old range slider is gone: only a maximum now
         BrowseState.maxPrice = max;
         BrowseState.sort = sort;
+        BrowseState.verifiedOnly = verified;
+        BrowseState.bedsOnly = beds;
+        java.util.Map<String, String> labels = new HashMap<>();                       // lets the map's quick chips (Wi-Fi, Female-only) see what is ticked here
+        for (String id : selected) {
+            String name = BrowseState.amenityLabels.get(id);
+            for (Amenity a : amenities) if (a.id().equals(id)) name = a.name();
+            if (name != null) labels.put(id, name);
+        }
+        BrowseState.amenityLabels.clear(); BrowseState.amenityLabels.putAll(labels);
         BrowseState.amenityIds.clear(); BrowseState.amenityIds.addAll(selected);
         BrowseState.amenityNames.clear(); BrowseState.amenityNames.addAll(selNames);
         BrowseState.bump();
         dismiss();
+    }
+
+    private static String norm(String s) { return s == null ? "" : s.toLowerCase(java.util.Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]", ""); }
+
+    /** Names picked from the map's quick chips (\"Free Wi-Fi\") become ticked catalog amenities once the catalog is here, so the sheet shows them ticked and nothing counts twice. */
+    private void adoptNames() {
+        if (!catalog || selNames.isEmpty()) return;
+        for (Amenity a : amenities) {
+            String k = norm(a.name());
+            if (selNames.removeIf(n -> norm(n).equals(k))) selected.add(a.id());
+        }
     }
 
     private void addPriceChip(String text, Integer value) {

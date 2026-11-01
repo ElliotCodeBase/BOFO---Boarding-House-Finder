@@ -104,6 +104,23 @@ public class BofoChatOverlay extends FrameLayout {
         b.scrim.animate().alpha(1f).setDuration(200).start();
     }
 
+    /** v2.0.82: opens the chat (if it is closed) and shows a compare table of the houses picked on the Explore map. Local data, so it works offline. */
+    public void openCompare(float cx, float cy, List<BoardingHouse> hs) {
+        if (hs == null || hs.size() < 2) return;
+        final List<BoardingHouse> list = new ArrayList<>(hs);
+        final boolean wasOpen = shown;
+        open(cx, cy);
+        final int my = ++token;
+        Runnable go = () -> {
+            if (my != token || !isAttachedToWindow()) return;
+            String q = getContext().getString(R.string.bofo_compare_sent, list.size());
+            say(q, true);
+            remember(true, q, null);
+            show(BofoIntentLocal.compareAnswer(list, BrowseState.refLat(), BrowseState.refLng()));
+        };
+        if (wasOpen) go.run(); else postDelayed(go, 300);      // after the pop-out, so the card has its width when the table is laid out
+    }
+
     public void close() {
         if (!shown) return;
         shown = false;
