@@ -28,9 +28,13 @@ import androidx.core.content.ContextCompat;
 import com.bumptech.glide.Glide;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.PagerSnapHelper;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bofo.finder.R;
 import com.bofo.finder.config.AppConfig;
+import com.bofo.finder.databinding.ItemMapStripBinding;
 import com.bofo.finder.databinding.ViewMapCardBinding;
 import com.bofo.finder.model.BoardingHouse;
 import com.bofo.finder.model.College;
@@ -67,6 +71,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
@@ -412,6 +418,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         // Step 6: zoomed out = small dots that merge into numbered bubbles; zoomed in = full pins with names (rebuildPlaces decides, per zoom)
         Expression sel = Expression.eq(Expression.get("sel"), Expression.literal(1));
         Expression isDot = Expression.eq(Expression.get("kind"), Expression.literal("dot"));
+        Expression viewedOpacity = Expression.switchCase(Expression.eq(Expression.get("viewed"), Expression.literal(1)), Expression.literal(0.6f), Expression.literal(1f));
         Expression dotColor = Expression.switchCase(sel, Expression.color(DARK_PURPLE), Expression.color(primary));      // v2.0.75: Expression.color, not literal(int) (a plain number drew black dots)
         st.addLayer(new CircleLayer("places-dots-halo", "places-src").withProperties(
                 PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(15f * BIG), Expression.literal(10f * BIG))),
@@ -420,7 +427,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         st.addLayer(new CircleLayer("places-dots", "places-src").withProperties(
                 PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(8f * BIG), Expression.literal(5.5f * BIG))),
                 PropertyFactory.circleColor(dotColor),
-                PropertyFactory.circleStrokeWidth(2.5f), PropertyFactory.circleStrokeColor(0xFFFFFFFF))
+                PropertyFactory.circleStrokeWidth(2.5f), PropertyFactory.circleStrokeColor(0xFFFFFFFF),
+                PropertyFactory.circleOpacity(viewedOpacity), PropertyFactory.circleStrokeOpacity(viewedOpacity))      // v2.0.81: a place already opened is dimmed to 60 %
                 .withFilter(isDot));
         st.addLayer(new SymbolLayer("places-clusters", "places-src").withProperties(
                 PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true))
@@ -430,6 +438,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
                 PropertyFactory.iconAllowOverlap(true),
                 PropertyFactory.iconIgnorePlacement(true),
+                PropertyFactory.iconOpacity(viewedOpacity),
                 PropertyFactory.iconSize(Expression.switchCase(sel, Expression.literal(PIN_SEL_SCALE), Expression.literal(1f))))
                 .withFilter(Expression.eq(Expression.get("kind"), Expression.literal("pin"))));
         for (String[] l : new String[][]{{"place-labels", "labels-src"}, {"college-labels", "college-labels-src"}})
@@ -457,18 +466,19 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     }
 
     /** v2.0.80: price pin = white pill (thin border, ink text) with a small tail; the selected one is dark indigo with white text.
-     *  A verified house gets a check badge in front, a featured house a star behind, in the same bitmap. */
-    private Bitmap pricePin(String text, boolean selected, boolean verified, boolean featured) {
+     *  A verified house gets a check badge in front, a featured house a star behind, in the same bitmap.
+     *  v2.0.81: a saved house gets a small red heart on the top-right corner, a house nobody rated yet ("New") a small green dot on the top-left corner. */
+    private Bitmap pricePin(String text, boolean selected, boolean verified, boolean featured, boolean saved, boolean fresh) {
         float d = getResources().getDisplayMetrics().density;
         Paint t = textPaint(selected ? 0xFFFFFFFF : 0xFF17142A, 12, true);
         float badge = 14 * d, gap = 4 * d, padX = 9 * d;
         float tw = t.measureText(text);
         float w = padX * 2 + tw + (verified ? badge + gap : 0) + (featured ? badge + gap : 0);
-        float bodyH = 28 * d, tail = 6 * d, m = 1.5f * d;
-        int bw = Math.round(w + 2 * m), bh = Math.round(bodyH + tail + 2 * m);
+        float bodyH = 28 * d, tail = 6 * d, mx = 6 * d, mt = 7 * d, mb = 1.5f * d;
+        int bw = Math.round(w + 2 * mx), bh = Math.round(mt + bodyH + tail + mb);
         Bitmap bmp = Bitmap.createBitmap(bw, bh, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bmp);
-        RectF body = new RectF(m, m, bw - m, m + bodyH);
+        RectF body = new RectF(mx, mt, bw - mx, mt + bodyH);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         int fill = selected ? DARK_PURPLE : 0xFFFFFFFF, edge = selected ? 0xFFFFFFFF : 0x40463C8C;
         Path tailPath = new Path();
@@ -489,7 +499,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         sides.lineTo(bw / 2f, body.bottom + tail - 0.5f * d);
         sides.lineTo(bw / 2f + 4.6f * d, body.bottom + 0.4f * d);
         c.drawPath(sides, p);
-        float x = m + padX, cy = body.centerY();
+        float x = mx + padX, cy = body.centerY();
         int primary = ContextCompat.getColor(getContext(), R.color.bofo_primary);
         if (verified) {
             p.setStyle(Paint.Style.FILL); p.setColor(selected ? 0xFFFFFFFF : primary);
@@ -519,6 +529,25 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             star.close();
             c.drawPath(star, p);
         }
+        if (fresh) {                                                         // "New" dot, top-left corner
+            float dx = body.left + 5 * d, dy = body.top + 1 * d;
+            p.setStyle(Paint.Style.FILL); p.setColor(0xFFFFFFFF);
+            c.drawCircle(dx, dy, 5.5f * d, p);
+            p.setColor(0xFF22C55E);
+            c.drawCircle(dx, dy, 4 * d, p);
+        }
+        if (saved) {                                                         // heart, top-right corner
+            float s2 = 11 * d, hx = body.right - 4 * d, hy = body.top + 1.5f * d;
+            Path h = new Path();
+            h.moveTo(hx, hy + s2 * 0.5f);
+            h.cubicTo(hx - s2 * 0.95f, hy - s2 * 0.05f, hx - s2 * 0.5f, hy - s2 * 0.8f, hx, hy - s2 * 0.25f);
+            h.cubicTo(hx + s2 * 0.5f, hy - s2 * 0.8f, hx + s2 * 0.95f, hy - s2 * 0.05f, hx, hy + s2 * 0.5f);
+            h.close();
+            p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(2.4f * d); p.setStrokeJoin(Paint.Join.ROUND); p.setColor(0xFFFFFFFF);
+            c.drawPath(h, p);
+            p.setStyle(Paint.Style.FILL); p.setColor(GLOW);
+            c.drawPath(h, p);
+        }
         return bmp;
     }
 
@@ -530,7 +559,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         places = next;
         placesVer++;
         if (selectedId != null && findPlace(selectedId) == null) { selectedId = null; b.peek.setVisibility(View.GONE); }
-        if (style != null) rebuildPlaces(true);
+        if (style != null) { rebuildPlaces(true); rebuildStrip(true); }
     }
 
     /** The radius ring (null centre or km <= 0 removes it). */
@@ -721,7 +750,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     }
 
     private volatile boolean camMoving;
-    private final Runnable idleRebuild = () -> { if (!camMoving) { rebuildPlaces(false); rebuildColleges(false); } };      // false = skip when nothing but the position changed
+    private final Runnable idleRebuild = () -> { if (!camMoving) { rebuildPlaces(false); rebuildColleges(false); rebuildStrip(false); } };      // false = skip when nothing but the position changed
 
     /** Puts the overlay on the dot's current screen spot (cheap: one projection call). Called when the map is idle, a fix arrives or the card is resized. */
     private void refreshRadar() {
@@ -793,15 +822,13 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         BoardingHouse p = id == null ? null : findPlace(id);
         selectedId = p == null ? null : id;
         if (p == null) { b.peek.setVisibility(View.GONE); if (style != null) rebuildPlaces(true); return; }
-        b.peekName.setText(p.name());
-        b.peekPrice.setText(Money.perMonth(p.price()));
-        android.text.SpannableStringBuilder info = new android.text.SpannableStringBuilder("\u2605 ").append(ListRules.ratingText(p.avgRating(), p.reviewCount()));
-        info.setSpan(new android.text.style.ForegroundColorSpan(0xFFF5A524), 0, 1, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);     // v2.0.79: amber star
-        if (p.distanceKm() > 0) info.append("  \u00B7  ").append(Geo.fmt(p.distanceKm()));
-        b.peekInfo.setText(info);
-        String photo = p.photoUrl();
-        if (photo == null || photo.isEmpty()) { Glide.with(b.peekPhoto).clear(b.peekPhoto); b.peekPhoto.setVisibility(View.GONE); }
-        else { b.peekPhoto.setVisibility(View.VISIBLE); Glide.with(b.peekPhoto).load(photo).centerCrop().into(b.peekPhoto); }      // the house icon tile shows underneath until it loads
+        if (stripOn) {                                           // v2.0.81: Explore shows the swipeable strip instead of the single card
+            b.peek.setVisibility(View.GONE);
+            syncStrip(selectedId);
+            if (style != null) rebuildPlaces(true);
+            return;
+        }
+        fillCard(p, b.peekName, b.peekPrice, b.peekInfo, b.peekPhoto);
         boolean wasShown = b.peek.getVisibility() == View.VISIBLE;
         b.peek.setVisibility(View.VISIBLE);
         if (!wasShown && animationsOn()) {       // v2.0.79: slides up and fades in; moving to another pin just swaps the text
@@ -811,6 +838,19 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             b.peek.animate().alpha(1f).translationY(0f).setDuration(260).setInterpolator(new android.view.animation.DecelerateInterpolator(1.6f)).start();
         } else { b.peek.animate().cancel(); b.peek.setAlpha(1f); b.peek.setTranslationY(0f); }
         if (style != null) rebuildPlaces(true);
+    }
+
+    /** Name, rent, amber rating + distance and photo of one house card (the peek card and the strip cards share it). */
+    private void fillCard(BoardingHouse p, android.widget.TextView name, android.widget.TextView price, android.widget.TextView infoView, android.widget.ImageView photoView) {
+        name.setText(p.name());
+        price.setText(Money.perMonth(p.price()));
+        android.text.SpannableStringBuilder info = new android.text.SpannableStringBuilder("\u2605 ").append(ListRules.ratingText(p.avgRating(), p.reviewCount()));
+        info.setSpan(new android.text.style.ForegroundColorSpan(0xFFF5A524), 0, 1, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);     // v2.0.79: amber star
+        if (p.distanceKm() > 0) info.append("  \u00B7  ").append(Geo.fmt(p.distanceKm()));
+        infoView.setText(info);
+        String photo = p.photoUrl();
+        if (photo == null || photo.isEmpty()) { Glide.with(photoView).clear(photoView); photoView.setVisibility(View.GONE); }
+        else { photoView.setVisibility(View.VISIBLE); Glide.with(photoView).load(photo).centerCrop().into(photoView); }      // the house icon tile shows underneath until it loads
     }
 
     private void userSelect(String id) {
@@ -830,6 +870,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         rebuildPlaces();
         paintRing(); paintCampusDot();
         rebuildColleges(); paintGlow(); paintRouteLabel();
+        rebuildStrip(true);
         set("user-src", MapGeo.pointJson(userLat, userLng));
         set("cone-src", coneJson());
         paintUser();
@@ -897,7 +938,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private void rebuildPlaces(boolean force) {
         if (style == null || map == null) return;
         String sig = placesVer + "|" + selectedId + "|" + Math.round(map.getCameraPosition().zoom * 20) + "|" + getWidth() + "x" + getHeight()
-                + "|" + (routeShown() ? "r" + routePts.length + "," + Math.round(routePts[routePts.length - 1][0] * 10000) : "-") + "|" + (userLat == null ? "-" : Math.round(userLat * 10000) + "," + Math.round(userLng * 10000));       // v2.0.72: a pin that was moved off the phone's dot follows the phone
+                + "|" + (routeShown() ? "r" + routePts.length + "," + Math.round(routePts[routePts.length - 1][0] * 10000) : "-") + "|" + (userLat == null ? "-" : Math.round(userLat * 10000) + "," + Math.round(userLng * 10000)) + "|" + pinStateVer;       // v2.0.72: a pin that was moved off the phone's dot follows the phone
         if (!force && sig.equals(placesSig)) return;
         placesSig = sig;
         float d = getResources().getDisplayMetrics().density;
@@ -928,9 +969,10 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 boolean isSel = p.id().equals(selectedId);
                 String price = Money.shortPeso(p.price());
                 if (price.isEmpty()) price = "\u2014";
-                String key = "pp|" + price + "|" + (isSel ? 1 : 0) + (p.ownerVerified() ? 1 : 0) + (p.featured() ? 1 : 0);
+                boolean saved = favs.contains(p.id()), fresh = p.reviewCount() <= 0;      // "New" = nobody rated it yet, the same rule as the list cards (ListRules.ratingText)
+                String key = "pp|" + price + "|" + (isSel ? 1 : 0) + (p.ownerVerified() ? 1 : 0) + (p.featured() ? 1 : 0) + (saved ? 1 : 0) + (fresh ? 1 : 0);
                 if (imgs.add(key)) {
-                    Bitmap pb = pricePin(price, isSel, p.ownerVerified(), p.featured());
+                    Bitmap pb = pricePin(price, isSel, p.ownerVerified(), p.featured(), saved, fresh);
                     imgSize.put(key, new float[]{pb.getWidth(), pb.getHeight()});
                     style.addImage(key, pb);
                 }
@@ -944,7 +986,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 BoardingHouse p = places.get(i);
                 boolean isSel = p.id().equals(selectedId);
                 if (feats.length() > 0) feats.append(',');
-                feats.append(feat(pos[i][0], pos[i][1], "\"kind\":\"pin\",\"id\":\"" + esc(p.id()) + "\",\"icon\":\"" + esc(pinKey[i]) + "\",\"sel\":" + (isSel ? 1 : 0)));
+                feats.append(feat(pos[i][0], pos[i][1], "\"kind\":\"pin\",\"id\":\"" + esc(p.id()) + "\",\"icon\":\"" + esc(pinKey[i]) + "\",\"sel\":" + (isSel ? 1 : 0) + ",\"viewed\":" + (!isSel && viewed.contains(p.id()) ? 1 : 0)));
                 String text = clip(p.name(), 22);
                 if (text.isEmpty()) continue;
                 String key = "lb|" + text;
@@ -975,7 +1017,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 if (feats.length() > 0) feats.append(',');
                 if (m.size() == 1) {
                     BoardingHouse p = places.get(i);
-                    feats.append(feat(pos[i][0], pos[i][1], "\"kind\":\"dot\",\"id\":\"" + esc(p.id()) + "\",\"sel\":" + (p.id().equals(selectedId) ? 1 : 0)));
+                    feats.append(feat(pos[i][0], pos[i][1], "\"kind\":\"dot\",\"id\":\"" + esc(p.id()) + "\",\"sel\":" + (p.id().equals(selectedId) ? 1 : 0) + ",\"viewed\":" + (!p.id().equals(selectedId) && viewed.contains(p.id()) ? 1 : 0)));
                 } else {
                     double la = 0, ln = 0, bn = -90, bs = 90, be = -180, bw = 180, low = Double.MAX_VALUE;
                     for (int j : m) {
@@ -1116,6 +1158,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     // ---- v2.0.80: "Search this area", campus chip, locate button position ---------------------------------------
 
     private boolean searchAreaOn, gestureMove, areaShown, holdArea;
+    private Set<String> viewed = new HashSet<>(), favs = new HashSet<>();      // v2.0.81 pin states
+    private int pinStateVer;
     private double[] areaBase;                  // {south, west, north, east, zoom} the list was last matched to
     private String campusChipName;
 
@@ -1181,6 +1225,164 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         int m = Math.round(10 * getResources().getDisplayMetrics().density);
         lp.setMargins(m, m, m, m + Math.round(dp * getResources().getDisplayMetrics().density));
         b.locateCol.setLayoutParams(lp);
+    }
+
+    // ---- v2.0.81: pin states + card strip ------------------------------------------------------------------------
+
+    /** Saved houses get a small heart on the pin. */
+    public void setFavorites(@Nullable Collection<String> ids) {
+        Set<String> next = ids == null ? new HashSet<>() : new HashSet<>(ids);
+        if (next.equals(favs)) return;
+        favs = next; pinStateVer++;
+        if (style != null) rebuildPlaces(true);
+    }
+
+    /** Pins of places the person already opened are dimmed (the list lives in AppPrefs). */
+    private void refreshViewed() {
+        Set<String> next = new HashSet<>(AppPrefs.viewedIds(getContext()));
+        if (next.equals(viewed)) return;
+        viewed = next; pinStateVer++;
+        if (style != null) rebuildPlaces(true);
+    }
+
+    private static final int STRIP_MAX = 20;
+    private boolean stripOn, stripShown;
+    private final List<BoardingHouse> stripItems = new ArrayList<>();
+    private StripAdapter stripAdapter;
+    private LinearLayoutManager stripLm;
+    private PagerSnapHelper stripSnap;
+    private long stripLockUntil;
+    private String stripSig = "";
+
+    /** Explore only: a horizontal strip of house cards (the houses in view, nearest the map centre first, at most 20) replaces the single peek card. */
+    public void setStripEnabled(boolean on) {
+        if (on == stripOn) return;
+        stripOn = on;
+        if (on) {
+            if (stripAdapter == null) setupStrip();
+            b.peek.setVisibility(View.GONE);
+            refreshViewed();
+            rebuildStrip(true);
+        } else { b.strip.setVisibility(View.GONE); stripShown = false; }
+    }
+
+    private void setupStrip() {
+        stripLm = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
+        stripAdapter = new StripAdapter();
+        b.strip.setLayoutManager(stripLm);
+        b.strip.setAdapter(stripAdapter);
+        b.strip.setItemAnimator(null);
+        stripSnap = new PagerSnapHelper();
+        stripSnap.attachToRecyclerView(b.strip);
+        b.strip.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override public void onScrollStateChanged(@NonNull RecyclerView rv, int state) {
+                if (state != RecyclerView.SCROLL_STATE_IDLE) return;
+                View v = stripSnap.findSnapView(stripLm);
+                int pos = v == null ? -1 : rv.getChildAdapterPosition(v);
+                if (pos < 0 || pos >= stripItems.size()) return;
+                BoardingHouse h = stripItems.get(pos);
+                if (h.id().equals(selectedId)) return;                       // came from a pin tap or the strip was only re-centred
+                holdArea = true;
+                stripLockUntil = android.os.SystemClock.uptimeMillis() + 900;
+                userSelect(h.id());
+                if (map != null && !Double.isNaN(h.lat()) && !Double.isNaN(h.lng()))
+                    map.easeCamera(CameraUpdateFactory.newLatLng(new LatLng(h.lat(), h.lng())), animationsOn() ? 320 : 0);
+            }
+        });
+    }
+
+    /** Fills the strip from the houses inside the visible box. force = false is skipped for a moment after a pin tap / swipe. */
+    private void rebuildStrip(boolean force) {
+        if (!stripOn || stripAdapter == null || map == null || style == null) return;
+        if (!force && android.os.SystemClock.uptimeMillis() < stripLockUntil) return;
+        double[] box = viewBox();
+        LatLng c = map.getCameraPosition().target;
+        if (box == null || c == null) return;
+        final double cl = c.getLatitude(), cn = c.getLongitude(), k = Math.cos(Math.toRadians(cl));
+        List<BoardingHouse> in = new ArrayList<>();
+        for (BoardingHouse p : places)
+            if (!Double.isNaN(p.lat()) && !Double.isNaN(p.lng()) && p.lat() >= box[0] && p.lat() <= box[2] && p.lng() >= box[1] && p.lng() <= box[3]) in.add(p);
+        Collections.sort(in, (x, y) -> Double.compare(Math.hypot(x.lat() - cl, (x.lng() - cn) * k), Math.hypot(y.lat() - cl, (y.lng() - cn) * k)));
+        if (in.size() > STRIP_MAX) in = new ArrayList<>(in.subList(0, STRIP_MAX));
+        BoardingHouse sel = selectedId == null ? null : findPlace(selectedId);
+        if (sel != null) { in.remove(sel); in.add(0, sel); if (in.size() > STRIP_MAX) in.remove(in.size() - 1); }       // the selected house always has its card
+        StringBuilder sig = new StringBuilder();
+        for (BoardingHouse p : in) sig.append(p.id()).append(',').append(p.price()).append(';');
+        if (!force && sig.toString().equals(stripSig)) return;
+        stripSig = sig.toString();
+        stripItems.clear(); stripItems.addAll(in);
+        stripAdapter.notifyDataSetChanged();
+        stripLm.scrollToPositionWithOffset(0, 0);
+        paintStripVisible();
+    }
+
+    private void paintStripVisible() {
+        boolean show = !stripItems.isEmpty();
+        if (show == stripShown) return;
+        stripShown = show;
+        b.strip.animate().cancel();
+        if (!show) { b.strip.setVisibility(View.GONE); return; }
+        b.strip.setVisibility(View.VISIBLE);
+        if (animationsOn()) {                                   // first show: slides up and fades in (260 ms), like the peek card
+            b.strip.setAlpha(0f); b.strip.setTranslationY(20 * getResources().getDisplayMetrics().density);
+            b.strip.animate().alpha(1f).translationY(0f).setDuration(260).setInterpolator(new android.view.animation.DecelerateInterpolator(1.6f)).start();
+        } else { b.strip.setAlpha(1f); b.strip.setTranslationY(0f); }
+    }
+
+    /** A pin was tapped (or select() was called from code): bring that house's card to the middle. */
+    private void syncStrip(@Nullable String id) {
+        if (!stripOn || stripAdapter == null || id == null) return;
+        int idx = -1;
+        for (int i = 0; i < stripItems.size(); i++) if (stripItems.get(i).id().equals(id)) { idx = i; break; }
+        if (idx < 0) {
+            BoardingHouse p = findPlace(id);
+            if (p == null) return;
+            stripItems.add(0, p);
+            if (stripItems.size() > STRIP_MAX) stripItems.remove(stripItems.size() - 1);
+            stripAdapter.notifyDataSetChanged();
+            stripLm.scrollToPositionWithOffset(0, 0);
+            paintStripVisible();
+            return;
+        }
+        View cur = stripSnap.findSnapView(stripLm);
+        if (cur != null && b.strip.getChildAdapterPosition(cur) == idx) return;
+        View target = stripLm.findViewByPosition(idx);
+        if (target == null) { stripLm.scrollToPositionWithOffset(idx, 0); return; }
+        int dx = (target.getLeft() + target.getRight()) / 2 - b.strip.getWidth() / 2;
+        if (animationsOn()) b.strip.smoothScrollBy(dx, 0, new android.view.animation.DecelerateInterpolator(1.4f), 280); else b.strip.scrollBy(dx, 0);
+    }
+
+    private final class StripAdapter extends RecyclerView.Adapter<StripAdapter.VH> {
+        final class VH extends RecyclerView.ViewHolder {
+            final ItemMapStripBinding v;
+            VH(ItemMapStripBinding v) { super(v.getRoot()); this.v = v; }
+        }
+
+        @NonNull @Override public VH onCreateViewHolder(@NonNull android.view.ViewGroup parent, int type) {
+            ItemMapStripBinding v = ItemMapStripBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+            float d = parent.getResources().getDisplayMetrics().density;
+            int outer = parent.getWidth() - parent.getPaddingLeft() - parent.getPaddingRight();       // one card fills the middle, the next / previous peek out of the padding
+            if (outer <= 0) outer = MapCardView.this.getWidth() - Math.round(122 * d);
+            RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(Math.max(1, outer - Math.round(12 * d)), RecyclerView.LayoutParams.WRAP_CONTENT);
+            lp.setMargins(Math.round(6 * d), Math.round(2 * d), Math.round(6 * d), Math.round(8 * d));
+            v.getRoot().setLayoutParams(lp);
+            v.stripPhoto.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                @Override public void getOutline(View view, android.graphics.Outline o) { o.setRoundRect(0, 0, view.getWidth(), view.getHeight(), 16 * view.getResources().getDisplayMetrics().density); }
+            });
+            v.stripPhoto.setClipToOutline(true);
+            final VH h = new VH(v);
+            v.stripOpen.setOnClickListener(x -> {
+                int pos = h.getBindingAdapterPosition();
+                if (pos >= 0 && pos < stripItems.size() && listener != null) listener.openPlace(stripItems.get(pos).id());
+            });
+            return h;
+        }
+
+        @Override public void onBindViewHolder(@NonNull VH h, int pos) {
+            fillCard(stripItems.get(pos), h.v.stripName, h.v.stripPrice, h.v.stripInfo, h.v.stripPhoto);
+        }
+
+        @Override public int getItemCount() { return stripItems.size(); }
     }
 
     // ---- camera ------------------------------------------------------------------------------------------------
@@ -1282,6 +1484,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             if ("college".equals(kind) && id != null) { if (listener != null) listener.campusTapped(id); return true; }
             if (id != null) {
                 holdArea = true;
+                stripLockUntil = android.os.SystemClock.uptimeMillis() + 900;       // the camera easing to the pin must not re-sort the strip under the card
                 userSelect(id);
                 BoardingHouse p = findPlace(id);
                 if (p != null) map.easeCamera(CameraUpdateFactory.newLatLng(new LatLng(p.lat(), p.lng())), 300);
@@ -1321,7 +1524,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     // ---- lifecycle ---------------------------------------------------------------------------------------------
 
     @Override public void onStart(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onStart(); }
-    @Override public void onResume(@NonNull LifecycleOwner o) { if (mapView != null) { mapView.onResume(); if (map != null && style != null) { if (!renderedFully) scheduleRefresh(); styleRetries = 0; scheduleBlankCheck(); } } startRipples(); applyRouteOpacity(); }   // picks up the Settings switch
+    @Override public void onResume(@NonNull LifecycleOwner o) { if (mapView != null) { mapView.onResume(); if (map != null && style != null) { if (!renderedFully) scheduleRefresh(); styleRetries = 0; scheduleBlankCheck(); } } startRipples(); applyRouteOpacity(); refreshViewed(); }   // picks up the Settings switch; pins of places opened meanwhile dim
     @Override public void onPause(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onPause(); stopRipples(); }
     @Override public void onStop(@NonNull LifecycleOwner o) { if (mapView != null) mapView.onStop(); }
 

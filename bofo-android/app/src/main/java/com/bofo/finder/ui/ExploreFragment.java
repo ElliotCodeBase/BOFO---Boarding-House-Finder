@@ -104,7 +104,7 @@ public class ExploreFragment extends Fragment {
         if (handoff != null) { query = handoff; b.search.setText(handoff); b.search.setSelection(handoff.length()); }
 
         Favorites.load(null);
-        Favorites.IDS.observe(getViewLifecycleOwner(), ids -> adapter.setFavorites(ids));
+        Favorites.IDS.observe(getViewLifecycleOwner(), ids -> { adapter.setFavorites(ids); if (mapReady && b != null) b.mapCard.setFavorites(ids); });
         BrowseState.CHANGED.observe(getViewLifecycleOwner(), n -> { if (n == null || n == lastChange) return; lastChange = n; areaBox = null; paintFilterButton(); reload(); });
     }
 
@@ -157,6 +157,8 @@ public class ExploreFragment extends Fragment {
         b.mapCard.showLocate(true);                 // v2.0.80: lifted above the floating Ask BOFO button, which sits in the same corner
         b.mapCard.setLocateLift(72);
         b.mapCard.setSearchAreaEnabled(true);
+        b.mapCard.setStripEnabled(true);            // v2.0.81: swipeable card strip instead of the single peek card
+        b.mapCard.setFavorites(Favorites.IDS.getValue());
         b.mapCard.showExpand(false);
         b.mapCard.setLocState(MapCardView.Loc.NONE);
         b.mapCard.activate(getViewLifecycleOwner());

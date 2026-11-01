@@ -277,4 +277,18 @@
                 app:tint="@color/bofo_white" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
+
+    <!-- v2.0.81: Explore only: swipeable strip of house cards for the visible area (replaces the single peek card there). 30 dp padding = the next / previous card peeks ~24 dp. -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/strip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="30dp"
+        android:layout_marginEnd="62dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:paddingHorizontal="30dp"
+        android:visibility="gone" />
 </FrameLayout>
