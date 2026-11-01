@@ -985,14 +985,11 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             List<Integer> order = new ArrayList<>();
             for (int i = 0; i < n; i++) if (sp[i] != null) { if (places.get(i).id().equals(selectedId)) order.add(0, i); else order.add(i); }
             List<RectF> bodies = new ArrayList<>(), taken = new ArrayList<>();
-            if (map.getCameraPosition().zoom >= 11f && !routeShown()) {           // v2.0.90: campus names are always drawn, so house names keep clear of them
+            for (College c : shownCollegeNames()) {                               // v2.0.90: campus names that are drawn; house names keep clear of them
                 Paint cp = textPaint(CAMPUS_TEXT, 11, true);
-                for (College c : colleges) {
-                    if (Double.isNaN(c.lat()) || Double.isNaN(c.lng())) continue;
-                    PointF q = map.getProjection().toScreenLocation(new LatLng(c.lat(), c.lng()));
-                    float cw = cp.measureText(clip(c.name(), 26)) + 8 * d, ch = cp.getTextSize() + 6 * d;
-                    taken.add(new RectF(q.x - cw / 2, q.y + 2 * d, q.x + cw / 2, q.y + 2 * d + ch));
-                }
+                PointF q = map.getProjection().toScreenLocation(new LatLng(c.lat(), c.lng()));
+                float cw = cp.measureText(clip(c.name(), 26)) + 8 * d, ch = cp.getTextSize() + 6 * d;
+                taken.add(new RectF(q.x - cw / 2, q.y + 2 * d, q.x + cw / 2, q.y + 2 * d + ch));
             }
             final String[] pinKey = new String[n];
             for (int i : order) {                                     // v2.0.80: one price-pin bitmap per (price text, selected, verified, featured), made once and reused
@@ -1018,7 +1015,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 boolean isSel = p.id().equals(selectedId);
                 if (feats.length() > 0) feats.append(',');
                 feats.append(feat(pos[i][0], pos[i][1], "\"kind\":\"pin\",\"id\":\"" + esc(p.id()) + "\",\"icon\":\"" + esc(pinKey[i]) + "\",\"sel\":" + (isSel ? 1 : 0) + ",\"viewed\":" + (!isSel && viewed.contains(p.id()) ? 1 : 0)));
-                String text = clip(p.name(), 60);
+                float zNow = map.getCameraPosition().zoom;      // v2.0.90 less clutter: the chosen house always shows its full name; the others show a short name from zoom 13.5 and the full name from zoom 15
+                String text = isSel ? clip(p.name(), 60) : zNow >= 15f ? clip(p.name(), 40) : zNow >= 13.5f ? clip(p.name(), 16) : "";
                 if (text.isEmpty()) continue;
                 String key = "lb|" + text;
                 if (imgs.add(key)) {
@@ -1082,19 +1080,41 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         return new double[]{ll.getLatitude(), ll.getLongitude()};
     }
 
+    /** v2.0.90: the campuses whose name is drawn: from zoom 12.5, first come first served, a name that would touch an already placed one is left out (its dot stays). */
+    private List<College> shownCollegeNames() {
+        List<College> out = new ArrayList<>();
+        if (map == null || routeShown() || map.getCameraPosition().zoom < 12.5f) return out;
+        float d = getResources().getDisplayMetrics().density;
+        Paint cp = textPaint(CAMPUS_TEXT, 11, true);
+        List<RectF> taken = new ArrayList<>();
+        for (College c : colleges) {
+            if (Double.isNaN(c.lat()) || Double.isNaN(c.lng())) continue;
+            PointF q = map.getProjection().toScreenLocation(new LatLng(c.lat(), c.lng()));
+            if (q.x < -120 * d || q.y < -40 * d || q.x > getWidth() + 120 * d || q.y > getHeight() + 40 * d) continue;
+            float cw = cp.measureText(clip(c.name(), 26)) + 8 * d, ch = cp.getTextSize() + 6 * d;
+            RectF r = new RectF(q.x - cw / 2, q.y + 2 * d, q.x + cw / 2, q.y + 2 * d + ch);
+            boolean clash = false;
+            for (RectF t : taken) if (RectF.intersects(t, r)) { clash = true; break; }
+            if (clash) continue;
+            taken.add(r); out.add(c);
+        }
+        return out;
+    }
+
     private void rebuildColleges() { rebuildColleges(true); }
 
     private void rebuildColleges(boolean force) {
         if (style == null || map == null) return;
-        boolean showNames = map.getCameraPosition().zoom >= 11f;
-        String sig = collegesVer + "|" + showNames + "|" + routeShown();
+        boolean showNames = map.getCameraPosition().zoom >= 12.5f;
+        String sig = collegesVer + "|" + showNames + "|" + routeShown() + "|" + Math.round(map.getCameraPosition().zoom * 20) + "|" + getWidth() + "x" + getHeight();
         if (!force && sig.equals(collegesSig)) return;      // the campus list is the same and the names are still on / off: nothing to send
         collegesSig = sig;
         StringBuilder dots = new StringBuilder(), names = new StringBuilder();
+        final List<College> nameOn = shownCollegeNames();
         for (College c : routeShown() ? new ArrayList<College>() : colleges) {      // no campus dots / names while a path is shown
             if (dots.length() > 0) dots.append(',');
             dots.append(feat(c.lat(), c.lng(), "\"kind\":\"college\",\"id\":\"" + esc(c.id()) + "\""));
-            if (!showNames) continue;
+            if (!showNames || !nameOn.contains(c)) continue;
             String text = clip(c.name(), 26), key = "cn|" + text;
             if (imgs.add(key)) style.addImage(key, label(text, CAMPUS_TEXT, 11));
             if (names.length() > 0) names.append(',');
