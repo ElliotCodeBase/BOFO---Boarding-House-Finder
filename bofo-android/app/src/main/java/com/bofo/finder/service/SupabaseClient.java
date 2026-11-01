@@ -38,6 +38,7 @@ public final class SupabaseClient {
         String bearer = authed ? tokenProvider.get() : null;
         return new Request.Builder().url(url + path)
                 .header("apikey", AppConfig.anonKey())
+                .header("x-bofo-app-version", com.bofo.finder.BuildConfig.VERSION_NAME)      // v2.0.120: the server (migration 018) can refuse admin access to old app versions
                 .header("Authorization", "Bearer " + (bearer != null ? bearer : AppConfig.anonKey()));
     }
 

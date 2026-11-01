@@ -26,7 +26,6 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.bofo.finder.R;
 import com.bofo.finder.config.AppConfig;
 import com.bofo.finder.databinding.FragmentLoginBinding;
-import com.bofo.finder.model.Role;
 import com.bofo.finder.service.AuthService;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.ErrorText;
@@ -59,11 +58,6 @@ public class LoginFragment extends Fragment {
         b.signUp.setOnClickListener(v -> password(true));
         b.toggleMode.setOnClickListener(v -> { passwordMode = !passwordMode; message(null); render(); });
         b.legalNote.setOnClickListener(v -> LegalSheet.show(getParentFragmentManager(), LegalText.Doc.TERMS));
-        // DEBUG builds with dev.* test accounts in config.local.properties: Student / Owner / Admin force-login buttons.
-        b.devGroup.setVisibility(AppConfig.hasDevAccounts() ? View.VISIBLE : View.GONE);
-        b.devStudent.setOnClickListener(v -> forceLogin(Role.STUDENT));
-        b.devOwner.setOnClickListener(v -> forceLogin(Role.OWNER));
-        b.devAdmin.setOnClickListener(v -> forceLogin(Role.ADMIN));
         render();
         return b.getRoot();
     }
@@ -92,7 +86,7 @@ public class LoginFragment extends Fragment {
         busy = on;
         if (b == null) return;
         b.progress.setVisibility(on ? View.VISIBLE : View.GONE);
-        for (View v : new View[]{b.google, b.googleBrowser, b.sendCode, b.verify, b.signIn, b.signUp, b.toggleMode, b.devStudent, b.devOwner, b.devAdmin}) v.setEnabled(!on);
+        for (View v : new View[]{b.google, b.googleBrowser, b.sendCode, b.verify, b.signIn, b.signUp, b.toggleMode}) v.setEnabled(!on);
     }
 
     private void message(String text) {
@@ -160,15 +154,6 @@ public class LoginFragment extends Fragment {
             if (e instanceof AuthService.ConfirmEmailException) { setBusy(false); message(e.getMessage()); }
             else fail(create ? "Could not create the account" : "Could not sign in", e);
         });
-    }
-
-    /* ---------- DEBUG: force login with a test account ---------- */
-    private void forceLogin(Role role) {
-        if (busy) return;
-        setBusy(true);
-        message(getString(R.string.login_dev_signing, role.db()));
-        Async.run(() -> { AuthService.get().devSignIn(role); return Boolean.TRUE; }, ok -> signedIn(),
-                e -> fail("Test sign-in as " + role.db() + " failed", e));
     }
 
     /* ---------- Google ---------- */
