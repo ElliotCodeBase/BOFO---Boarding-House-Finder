@@ -1,3 +1,8 @@
+# Handoff (Android) - v2.0.113 Livelier loading mascot
+- **PR title:** `v2.0.113 - Android: loading mascot animation is more lifelike`
+- `SplashStageView`: new tracks `lean`, `feetUp`, `eyeX/eyeY/eyeSy`, `smile` (per jump in `addJump`) + `dust` puffs at take-off / landing. Same 2400 ms loop, same hat pop. Body leans into the jump, feet tuck and spread, eyes squint on the crouch, look up / sideways in the air, blink on impact; smile grows at the apex. Not built or run by Claude.
+
+---
 # Handoff (Android) - v2.0.112 Mascot colours in colors.xml + outline
 - **PR title:** `v2.0.112 - Android: mascot colours are editable resources, outlined body, white button`
 - `values/colors.xml` `mascot_*` (body, outline, screen, glass, face, roof, roof_dark, feet, light) drive `drawable/mascot_happy.xml` and `BofoMascot` (loaded in its constructor). Body has a 3-unit `mascot_outline` stroke so it shows on white. `bg_bofo_fab` white again. `SplashStageView` still has its own colours. Not built or run by Claude.

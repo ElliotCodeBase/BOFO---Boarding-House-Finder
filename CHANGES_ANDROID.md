@@ -1,3 +1,6 @@
+# v2.0.113 - Android: livelier loading mascot
+- Loading mascot leans into each jump, tucks its feet, looks where it jumps, blinks when it lands, smiles wider in the air and kicks up dust.
+
 # v2.0.112 - Android: mascot colours you can edit
 - All mascot colours live in `res/values/colors.xml` (`mascot_*`); change them there to recolour every mascot.
 - The mascot body has a lavender outline so it no longer blends into white / light backgrounds. The floating button is white again.

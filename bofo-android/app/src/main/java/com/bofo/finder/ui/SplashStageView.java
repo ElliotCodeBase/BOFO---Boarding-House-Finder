@@ -19,6 +19,7 @@ import java.util.List;
  * Loading screen mascot (port of the JavaFX SplashView + white Mascot, v2.0.20).
  * A WHITE BOFO jumps twice per 2400 ms loop: crouch, stretch, airtime, landing squash (pivot on the soles).
  * Near the top the hat POPS off with a spark burst, floats, falls back and pops on with a squash, a rebound and a second burst.
+ * v2.0.113: lifelike extras: lean into the jump, feet tuck in the air, eyes look where it jumps and blink on impact, the smile grows in the air, dust puffs.
  * A soft purple ground shadow shrinks while it is in the air. Drawn on a 200 x 200 art grid; only transform and alpha change.
  * Time comes from the clock (not ValueAnimator), so it still plays when the system animation scale is 0. Stops when detached.
  */
@@ -56,7 +57,10 @@ public class SplashStageView extends View {
 
     private final Track bodyY = new Track(), sqX = new Track(), sqY = new Track(), shScale = new Track(), shAlpha = new Track();
     private final Track hatY = new Track(), hatAng = new Track(), hatSx = new Track(), hatSy = new Track();
+    // v2.0.113 life: lean (deg), feet lift (art units), eye gaze / blink, smile depth
+    private final Track lean = new Track(), feetUp = new Track(), eyeX = new Track(), eyeY = new Track(), eyeSy = new Track(), smile = new Track();
     private final List<float[]> bursts = new ArrayList<>();      // {start, duration}
+    private final List<float[]> dust = new ArrayList<>();        // {start, duration, strength}
 
     private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint line = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -100,6 +104,15 @@ public class SplashStageView extends View {
         hat(t0 + 950,  3,          0,          1.18f, 0.80f, IN);     // lands on the head
         hat(t0 + 1015, -4,         0,          0.94f, 1.10f, OUT);    // rebound
         hat(t0 + 1070, 0,          0,          1.00f, 1.00f, OUT);    // settle
+        float lk = tilt * 0.35f;                                        // lean follows the jump direction: back on the crouch, forward in the air, a nudge on landing
+        lean.add(t0, 0, LIN).add(t0 + 180, -lk * 0.5f, BOTH).add(t0 + 560, lk, OUT).add(t0 + 950, -lk * 0.4f, IN).add(t0 + 1050, 0, OUT);
+        feetUp.add(t0, 0, LIN).add(t0 + 180, 0, LIN).add(t0 + 400, -2f, OUT).add(t0 + 560, -7f, OUT).add(t0 + 800, -5f, BOTH).add(t0 + 950, 0, IN);   // feet tuck up in the air
+        eyeX.add(t0, 0, LIN).add(t0 + 180, 0, LIN).add(t0 + 560, tilt / 3f, OUT).add(t0 + 950, 0, IN);                                                 // looks where it is jumping
+        eyeY.add(t0, 0, LIN).add(t0 + 180, 2f, BOTH).add(t0 + 560, -4f, OUT).add(t0 + 950, 1f, IN).add(t0 + 1050, 0, OUT);                               // down on the crouch, up at the apex
+        eyeSy.add(t0, 1f, LIN).add(t0 + 180, 0.85f, BOTH).add(t0 + 300, 1f, OUT).add(t0 + 940, 1f, LIN).add(t0 + 985, 0.12f, LIN).add(t0 + 1040, 1f, OUT);  // squint, then a blink on impact
+        smile.add(t0, 134f, LIN).add(t0 + 180, 130f, BOTH).add(t0 + 560, 141f, OUT).add(t0 + 950, 136f, IN).add(t0 + 1040, 134f, OUT);                  // grin grows in the air
+        dust.add(new float[]{t0 + 190, 300, 0.6f});                    // take-off puff
+        dust.add(new float[]{t0 + 940, 420, 1f});                      // landing puff
         bursts.add(new float[]{t0 + 670, 270});                        // pop off
         bursts.add(new float[]{t0 + 950, 240});                        // pop on
     }
@@ -132,14 +145,32 @@ public class SplashStageView extends View {
         c.drawOval(r, fill);
         c.restore();
 
+        // dust puffs at the feet on take-off and landing (stay on the ground, fade out)
+        c.save();
+        c.translate(ox, oy);
+        c.scale(s, s);
+        fill.setStyle(Paint.Style.FILL);
+        for (float[] dp : dust) {
+            if (t < dp[0] || t > dp[0] + dp[1]) continue;
+            float e = OUT.getInterpolation((t - dp[0]) / dp[1]), k = dp[2];
+            fill.setColor(argb(0.5f * k * (1f - e), 0xC9, 0xBB, 0xFF));
+            for (int sd = -1; sd <= 1; sd += 2) {
+                c.drawCircle(100f + sd * (34f + 30f * e * k), 168f - 6f * e, (6f + 5f * e) * k, fill);
+                c.drawCircle(100f + sd * (22f + 18f * e * k), 170f - 2f * e, (4f + 3f * e) * k, fill);
+            }
+        }
+        c.restore();
+
         // body: jump offset, then squash / stretch around the soles
         c.save();
         c.translate(ox, oy + bodyY.at(t) * d);
         c.scale(s, s);
         c.scale(sqX.at(t), sqY.at(t), 100f, 172f);
+        c.rotate(lean.at(t), 100f, 172f);
 
-        rr(c, 60, 156, 30, 16, 8, 0xFFE4D9F7);           // feet
-        rr(c, 110, 156, 30, 16, 8, 0xFFE4D9F7);
+        float fu = feetUp.at(t), sp = -fu * 0.7f;
+        rr(c, 60 - sp, 156 + fu, 30, 16, 8, 0xFFE4D9F7);  // feet (tuck up and spread a little in the air)
+        rr(c, 110 + sp, 156 + fu, 30, 16, 8, 0xFFE4D9F7);
         rr(c, 40, 50, 120, 112, 32, 0xFFFFFFFF);         // body (white variant)
         rr(c, 56, 70, 88, 68, 22, 0xFF3A22B8);           // face screen
         rr(c, 66, 77, 36, 5, 2.5f, 0xFF5B3BF0);          // glass highlight
@@ -158,9 +189,12 @@ public class SplashStageView extends View {
         c.restore();
 
         // eyes and smile
-        rr(c, 76, 92, 14, 22, 7, 0xFFFFFFFF);
-        rr(c, 110, 92, 14, 22, 7, 0xFFFFFFFF);
-        path.reset(); path.moveTo(86, 122); path.quadTo(100, 134, 114, 122);
+        float es = eyeSy.at(t);
+        c.save(); c.translate(eyeX.at(t), eyeY.at(t));
+        c.save(); c.scale(1f, es, 83f, 103f); rr(c, 76, 92, 14, 22, 7, 0xFFFFFFFF); c.restore();
+        c.save(); c.scale(1f, es, 117f, 103f); rr(c, 110, 92, 14, 22, 7, 0xFFFFFFFF); c.restore();
+        c.restore();
+        path.reset(); path.moveTo(86, 122); path.quadTo(100, smile.at(t), 114, 122);
         line.setColor(0xFFFFFFFF); line.setStrokeWidth(5f); c.drawPath(path, line);
 
         // pop bursts (ring + sparks), above everything, follow the jump
