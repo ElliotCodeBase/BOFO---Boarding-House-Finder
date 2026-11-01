@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.107 Best rated: top 3 only
+- **PR title:** `v2.0.107 - Android: Best rated tab shows only the top 3 rated houses and their prices`
+- `HomeFragment.load`: BEST list re-sorted by rating / reviews / distance, cut to 3; `basis` = that list (was every house nearby, so the card showed prices of unrated houses). Empty -> `home_empty_best`, card hidden. `RentCardView`: single price on Best rated is labelled "Best rated". Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.106 Rent card shows all prices
 - **PR title:** `v2.0.106 - Android: Home price card shows all prices`
 - `RentCardView.setData`: columns = up to 4 houses sorted by price (more than 4: cheapest, two spread, dearest), spread over the width; labels Lowest / Highest, Middle when 3, "Best rated" on the top rated house in the Best rated tab. Replaces the v2.0.105 single-price card. Not built or run by Claude.

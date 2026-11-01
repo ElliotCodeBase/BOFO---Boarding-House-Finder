@@ -252,7 +252,14 @@ public class HomeFragment extends Fragment {
         BhService s = new BhService();
         Double rad = lat == null ? null : radius;
         List<BoardingHouse> list = s.list(t, lat, lng, rad, null);
-        List<BoardingHouse> basis = t == BhService.Tab.BEST ? s.list(BhService.Tab.NEW, lat, lng, rad, null) : list;
+        if (t == BhService.Tab.BEST) {                                       // v2.0.107: Best rated = only the rated houses, the top 3 (none rated = empty list, no price card)
+            list = new java.util.ArrayList<>(list);
+            list.sort(java.util.Comparator.<BoardingHouse>comparingDouble(BoardingHouse::avgRating).reversed()
+                    .thenComparing(java.util.Comparator.<BoardingHouse>comparingInt(BoardingHouse::reviewCount).reversed())
+                    .thenComparingDouble(BoardingHouse::distanceKm));
+            if (list.size() > 3) list = new java.util.ArrayList<>(list.subList(0, 3));
+        }
+        List<BoardingHouse> basis = list;                                    // the price card follows the same houses as the list
         return new Result(list, PriceRange.of(ListRules.prices(basis)), basis);
     }
 

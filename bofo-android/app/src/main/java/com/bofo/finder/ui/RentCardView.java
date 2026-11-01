@@ -83,7 +83,7 @@ public class RentCardView extends View {
             if (x.reviewCount() > 0 && (top == null || x.avgRating() > top.avgRating() || (x.avgRating() == top.avgRating() && x.price() < top.price()))) top = x;
         }
         Context c = getContext();
-        if (r.count == 1 || r.lowest == r.highest) cells.add(new Cell(c.getString(R.string.rent_single), lo.id(), lo.price()));
+        if (r.count == 1 || r.lowest == r.highest) cells.add(new Cell(c.getString(best ? R.string.rent_best : R.string.rent_single), lo.id(), lo.price()));
         else {
             // v2.0.106: every price is shown (up to 4 columns, cheapest to dearest). More than 4 houses: cheapest, two spread in between, dearest.
             List<BoardingHouse> sorted = new ArrayList<>(h);
