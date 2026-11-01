@@ -1,3 +1,9 @@
+# v2.0.124 - Android: profile photo shows on Home and Profile
+- Home greeting avatar and the Profile picture now fall back to your Google account photo when no photo was saved in your profile (before, only the saved photo was used, so you saw initials like "DS").
+- Home avatar: if the photo fails to load (slow network), it is retried on the next refresh instead of staying on initials.
+- Test accounts (Dev) have no photo at all, so they still show initials: upload one in Profile > edit, or sign in with Google.
+- Files: HomeFragment, ProfileFragment, build.gradle (2.0.124, versionCode 324). Not built or run by Claude.
+
 # v2.0.123 - Android: calmer orange theme
 - Orange is softer (less saturated, still light) (`#E85D0C` -> `#F28C57`), so it is easier on the eyes and reads more clearly on white. Pressed orange is `#DB7541`.
 - Background is now a neutral near-white (`#FAF7F4` -> `#F6F5F3`), no longer cream. Cards stay pure white so they stand out from the page.

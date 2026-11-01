@@ -286,10 +286,21 @@ public class HomeFragment extends Fragment {
         b.greetingName.setText(first.isEmpty() ? getString(R.string.home_name_there) : first);
         b.avatarInitials.setText(CampusMatch.initialsOf(full));
         String url = me == null || me.photoUrl() == null ? "" : me.photoUrl().trim();
+        if (url.isEmpty()) url = com.bofo.finder.service.AuthService.get().metaPhoto().trim();   // v2.0.124: no saved photo yet -> use the Google account photo
         if (!url.equals(paintedPhoto)) {
             paintedPhoto = url;
             if (url.isEmpty()) { Glide.with(b.avatarImg).clear(b.avatarImg); b.avatarImg.setImageDrawable(null); }
-            else Glide.with(b.avatarImg).load(url).circleCrop().into(b.avatarImg);
+            else Glide.with(b.avatarImg).load(url).circleCrop()
+                    .listener(new com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable>() {
+                        @Override public boolean onLoadFailed(@Nullable com.bumptech.glide.load.engine.GlideException e, Object model,
+                                                              com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> t, boolean first) {
+                            paintedPhoto = null;           // v2.0.124: a failed load is tried again on the next paint (initials stay meanwhile)
+                            return false;
+                        }
+                        @Override public boolean onResourceReady(android.graphics.drawable.Drawable r, Object model,
+                                                                 com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> t,
+                                                                 com.bumptech.glide.load.DataSource ds, boolean first) { return false; }
+                    }).into(b.avatarImg);
         }
     }
 

@@ -67,8 +67,10 @@ public class ProfileFragment extends Fragment {
             binding.accountRole.setText(p.role() == com.bofo.finder.model.Role.OWNER ? R.string.account_role_owner
                     : p.role() == com.bofo.finder.model.Role.ADMIN ? R.string.account_role_admin : R.string.account_role_student);
             AiChatLogFragment.attachEntry(this, binding.aiChatsOpen, p.role());      // v2.0.91 AI Chats monitor (admin only): REMOVE this line with the feature
-            if (p.photoUrl() != null && !p.photoUrl().isEmpty())
-                Glide.with(this).load(p.photoUrl()).centerCrop().placeholder(R.drawable.mascot_happy).into(binding.avatar);
+            String photo = p.photoUrl() == null ? "" : p.photoUrl().trim();
+            if (photo.isEmpty()) photo = AuthService.get().metaPhoto().trim();            // v2.0.124: Google photo when no photo was saved
+            if (!photo.isEmpty())
+                Glide.with(this).load(photo).centerCrop().placeholder(R.drawable.mascot_happy).into(binding.avatar);
         }, e -> { if (binding != null && my == token) retry(attempt); });
     }
 
