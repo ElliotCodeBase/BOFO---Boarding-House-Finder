@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- v2.0.82: tiny round photo in the compare tray (ring in the tray colour so the overlapping photos stay apart) -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
-    <solid android:color="#E7E2FB" />
+    <solid android:color="@color/bofo_stroke_soft" />
     <stroke android:width="2dp" android:color="@color/bofo_ink" />
 </shape>

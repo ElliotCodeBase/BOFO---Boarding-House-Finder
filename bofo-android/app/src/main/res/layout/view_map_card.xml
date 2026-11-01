@@ -163,7 +163,7 @@
             app:thumbStrokeColor="@color/bofo_ink"
             app:thumbStrokeWidth="2dp"
             app:trackColorActive="@color/bofo_ink"
-            app:trackColorInactive="#E3E3EA"
+            app:trackColorInactive="@color/bofo_stroke_neutral"
             app:trackHeight="3dp" />
     </LinearLayout>
 
@@ -180,7 +180,7 @@
         android:visibility="gone"
         app:cardCornerRadius="24dp"
         app:cardElevation="6dp"
-        app:strokeColor="#E7E2FB">
+        app:strokeColor="@color/bofo_stroke_soft">
 
         <LinearLayout
             android:layout_width="match_parent"

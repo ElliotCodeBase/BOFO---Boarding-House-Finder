@@ -55,8 +55,8 @@ public class SplashFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        lightBars(false);                                   // dark screen: status / navigation bar icons turn white
-        paintRoot(R.color.bofo_ink);                        // v2.0.97: the strips behind the status / navigation bar were the light app colour = white lines
+        lightBars(getResources().getBoolean(R.bool.splash_light_bars));   // v2.0.117: classic = dark screen (white icons), orange = white screen (dark icons)
+        paintRoot(R.color.splash_bg);                       // v2.0.97: the strips behind the status / navigation bar must match the screen
         handler.postDelayed(next, SPLASH_MS);
     }
 

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Bofo" parent="Theme.Material3.Light.NoActionBar">
+    <!-- v2.0.117: the look lives in Base.Theme.Bofo; Theme.Bofo only exists so values-v29 can add forceDarkAllowed=false on top of it.
+         Both themes (classic purple / orange) are LIGHT: res/values-night/colors.xml is just the switch (AppCompatDelegate MODE_NIGHT_YES = orange). -->
+    <style name="Base.Theme.Bofo" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">@color/bofo_primary</item>
         <item name="colorOnPrimary">@color/bofo_white</item>
         <item name="colorPrimaryContainer">@color/bofo_primary_tint</item>
@@ -26,10 +28,18 @@
         <item name="shapeAppearanceLargeComponent">@style/Shape.Bofo.Large</item>
     </style>
 
-    <!-- v2.0.97 Launch theme: the window is the same dark ink as SplashFragment from the very first frame, so there is no light screen with a mascot before the real loading screen.
+    <style name="Theme.Bofo" parent="Base.Theme.Bofo" />
+
+    <!-- v2.0.117 Launch theme (manifest, the very first frame). The system draws this window BEFORE the app runs, so it follows the phone's own
+         light / dark setting, not the in-app switch. Default = orange, so it is the white loading screen colour (launch_bg_orange).
+         Android 13+ also gets Theme.Bofo.Launch.Classic (dark ink) when the user picks Classic: MainActivity calls SplashScreen.setSplashScreenTheme.
          MainActivity switches back to Theme.Bofo before it inflates anything (setTheme in onCreate). -->
     <style name="Theme.Bofo.Launch" parent="Theme.Bofo">
-        <item name="android:windowBackground">@color/bofo_ink</item>
+        <item name="android:windowBackground">@color/launch_bg_orange</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+    <style name="Theme.Bofo.Launch.Classic" parent="Theme.Bofo.Launch">
+        <item name="android:windowBackground">@color/launch_bg_classic</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 

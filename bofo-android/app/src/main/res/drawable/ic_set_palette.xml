@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.0.117 Settings row icon (theme): rounded tile + line drop, same style as ic_set_eye -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="40"
+    android:viewportHeight="40">
+    <path
+        android:pathData="M12,0 H28 A12,12 0 0,1 40,12 V28 A12,12 0 0,1 28,40 H12 A12,12 0 0,1 0,28 V12 A12,12 0 0,1 12,0 Z"
+        android:fillColor="@color/bofo_tile" />
+    <group android:translateX="8" android:translateY="8">
+        <path
+            android:pathData="M12,3 C12,3 5.5,10 5.5,14.5 a6.5,6.5 0 0,0 13,0 C18.5,10 12,3 12,3 Z"
+            android:strokeColor="@color/bofo_ink"
+            android:strokeWidth="1.8"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="M8.8,15 a3.4,3.4 0 0,0 3.2,3"
+            android:strokeColor="@color/bofo_ink"
+            android:strokeWidth="1.8"
+            android:strokeLineCap="round" />
+    </group>
+</vector>

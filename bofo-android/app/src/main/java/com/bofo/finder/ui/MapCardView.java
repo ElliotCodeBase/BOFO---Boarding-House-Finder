@@ -148,7 +148,9 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     private final Set<String> imgs = new HashSet<>();      // bitmaps already added to the style (labels, cluster bubbles)
     private List<College> colleges = new ArrayList<>();
     private String glowId, routeLabel;
-    private static final int DARK_PURPLE = 0xFF2A1C8F, GLOW = 0xFFF43F5E, CAMPUS_TEXT = 0xFFB45309;
+    private static final int GLOW = 0xFFF43F5E, CAMPUS_TEXT = 0xFFB45309;      // kept on purpose: meaning colours (highlight glow, campus label)
+    /** v2.0.117: the selected pin / dot colour (was the DARK_PURPLE literal); follows the theme. */
+    private int deep() { return ContextCompat.getColor(getContext(), R.color.bofo_primary_deep); }
 
     public MapCardView(@NonNull Context c) { this(c, null); }
 
@@ -342,15 +344,28 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             + "\"attribution\":\"\\u00a9 OpenStreetMap contributors\"}},"
             + "\"layers\":[{\"id\":\"background\",\"type\":\"background\",\"paint\":{\"background-color\":\"#F5F6FC\"}},{\"id\":\"raster-test\",\"type\":\"raster\",\"source\":\"raster-test\"}]}";
 
+    /** v2.0.117: the basemap colours that are tinted lavender in assets/bofo-map-style.json (land, buildings, road casings), swapped for the map_* colours of the current theme.
+     *  Classic = the original values, so the classic map is unchanged. Water and parks stay as they are. */
+    private static final String[] MAP_LITERALS = {"#E8EAF2", "#E0DFF3", "#D2CFE5", "#BDB9D8", "#C7C9DA", "#A9ABC6", "#FAFAFD", "#F5F6FC"};
+    private static final int[] MAP_COLORS = {R.color.map_bg, R.color.map_landuse, R.color.map_building, R.color.map_building_edge,
+            R.color.map_road_casing, R.color.map_road_major_casing, R.color.map_road_service, R.color.map_raster_bg};
+
+    private static String themed(Context c, String json) {
+        if (json == null) return null;
+        for (int i = 0; i < MAP_LITERALS.length; i++)
+            json = json.replace(MAP_LITERALS[i], String.format("#%06X", 0xFFFFFF & ContextCompat.getColor(c, MAP_COLORS[i])));
+        return json;
+    }
+
     private static String loadStyle(Context c) {
-        if ("raster".equalsIgnoreCase(AppConfig.get("map.mode").trim())) return RASTER_TEST_STYLE;
-        if (styleJson != null) return styleJson;
+        if ("raster".equalsIgnoreCase(AppConfig.get("map.mode").trim())) return themed(c, RASTER_TEST_STYLE);
+        if (styleJson != null) return themed(c, styleJson);
         try (InputStream in = c.getAssets().open(STYLE_ASSET)) {
             java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
             byte[] buf = new byte[8192];
             for (int n; (n = in.read(buf)) > 0; ) out.write(buf, 0, n);      // readAllBytes() needs API 33
             styleJson = new String(out.toByteArray(), StandardCharsets.UTF_8);
-            return styleJson;
+            return themed(c, styleJson);
         } catch (IOException e) {
             Log.e("BOFO", "Map style missing", e);
             return null;
@@ -415,7 +430,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
                 PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconIgnorePlacement(true)));
         st.addLayer(new CircleLayer("user-shadow", "user-src").withProperties(
-                PropertyFactory.circleRadius(13f * BIG), PropertyFactory.circleColor(0xFF17142A), PropertyFactory.circleOpacity(0.22f)));
+                PropertyFactory.circleRadius(13f * BIG), PropertyFactory.circleColor(ContextCompat.getColor(getContext(), R.color.bofo_ink)), PropertyFactory.circleOpacity(0.22f)));
         st.addLayer(new CircleLayer("user-ring", "user-src").withProperties(
                 PropertyFactory.circleRadius(10f * BIG), PropertyFactory.circleColor(0xFFFFFFFF)));
         st.addLayer(new CircleLayer("user-dot", "user-src").withProperties(
@@ -424,14 +439,14 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         Expression sel = Expression.eq(Expression.get("sel"), Expression.literal(1));
         Expression isDot = Expression.eq(Expression.get("kind"), Expression.literal("dot"));
         Expression isViewed = Expression.eq(Expression.get("viewed"), Expression.literal(1));
-        Expression dotColor = Expression.switchCase(sel, Expression.color(DARK_PURPLE), Expression.color(primary));      // v2.0.75: Expression.color, not literal(int) (a plain number drew black dots)
+        Expression dotColor = Expression.switchCase(sel, Expression.color(deep()), Expression.color(primary));      // v2.0.75: Expression.color, not literal(int) (a plain number drew black dots)
         st.addLayer(new CircleLayer("places-dots-halo", "places-src").withProperties(
                 PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(15f * BIG), Expression.literal(10f * BIG))),
-                PropertyFactory.circleColor(Expression.switchCase(sel, Expression.color(0xFFC9C0EE), Expression.color(0xFFE2DCFC))), PropertyFactory.circleOpacity(1f))      // v2.0.90: solid tint, not 18 % opacity
+                PropertyFactory.circleColor(Expression.switchCase(sel, Expression.color(ContextCompat.getColor(getContext(), R.color.map_halo_selected)), Expression.color(ContextCompat.getColor(getContext(), R.color.map_halo)))), PropertyFactory.circleOpacity(1f))      // v2.0.90: solid tint, not 18 % opacity
                 .withFilter(isDot));
         st.addLayer(new CircleLayer("places-dots", "places-src").withProperties(
                 PropertyFactory.circleRadius(Expression.switchCase(sel, Expression.literal(8f * BIG), Expression.literal(5.5f * BIG))),
-                PropertyFactory.circleColor(Expression.switchCase(sel, Expression.color(DARK_PURPLE), isViewed, Expression.color(0xFF7A5CF5), Expression.color(primary))),      // v2.0.90: an opened place is a slightly lighter violet, not grey
+                PropertyFactory.circleColor(Expression.switchCase(sel, Expression.color(deep()), isViewed, Expression.color(ContextCompat.getColor(getContext(), R.color.bofo_primary_soft)), Expression.color(primary))),      // v2.0.90: an opened place is a slightly lighter violet, not grey
                 PropertyFactory.circleStrokeWidth(2.5f), PropertyFactory.circleStrokeColor(0xFFFFFFFF))      // v2.0.86: a place already opened is a solid muted colour (it was 60 % opacity: the map showed through)
                 .withFilter(isDot));
         st.addLayer(new SymbolLayer("places-clusters", "places-src").withProperties(
@@ -488,7 +503,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
      *  v2.0.81: a saved house gets a small red heart on the top-right corner, a verified owner a small check badge on the top-left corner (v2.0.88: it replaced the green "New" dot and the check inside the pill); v2.0.89: an owner who is not verified yet gets a grey "!" badge there. */
     private Bitmap pricePin(String text, boolean selected, boolean verified, boolean featured, boolean saved, boolean fresh, boolean seen) {
         float d = getResources().getDisplayMetrics().density;
-        Paint t = textPaint(selected ? 0xFFFFFFFF : seen ? 0xFF4A4568 : 0xFF17142A, 12, true);       // v2.0.86: an opened place is a solid muted pill, not a see-through one
+        Paint t = textPaint(selected ? 0xFFFFFFFF : seen ? ContextCompat.getColor(getContext(), R.color.map_pin_seen_text) : ContextCompat.getColor(getContext(), R.color.bofo_ink), 12, true);       // v2.0.86: an opened place is a solid muted pill, not a see-through one
         float badge = 14 * d, gap = 4 * d, padX = 9 * d;
         float tw = t.measureText(text);
         float w = padX * 2 + tw + (featured ? badge + gap : 0);
@@ -498,7 +513,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         Canvas c = new Canvas(bmp);
         RectF body = new RectF(mx, mt, bw - mx, mt + bodyH);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        int fill = selected ? DARK_PURPLE : 0xFFFFFFFF, edge = selected ? 0xFFFFFFFF : seen ? 0xFF8F89B8 : 0xFFC9C4E6;      // v2.0.90: solid edge (it was 25 % opaque, so the pin looked see-through on the map)
+        int fill = selected ? deep() : 0xFFFFFFFF, edge = selected ? 0xFFFFFFFF : seen ? ContextCompat.getColor(getContext(), R.color.map_pin_edge_seen) : ContextCompat.getColor(getContext(), R.color.map_pin_edge);      // v2.0.90: solid edge (it was 25 % opaque, so the pin looked see-through on the map)
         Path tailPath = new Path();
         tailPath.moveTo(bw / 2f - 5 * d, body.bottom - d);
         tailPath.lineTo(bw / 2f, body.bottom + tail);
@@ -538,7 +553,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         {                                                                    // v2.0.90: shield badge, top-left corner: green + check = verified owner, grey + "!" = not verified yet
             float dx = body.left + 6 * d, dy = body.top + 1 * d, rr = 8.5f * d;
             shield(c, p, dx, dy, rr + 1.6f * d, 0xFFFFFFFF);                 // white ring
-            shield(c, p, dx, dy, rr, verified ? 0xFF1E8E5E : 0xFF8F8CA3);
+            shield(c, p, dx, dy, rr, verified ? 0xFF1E8E5E : ContextCompat.getColor(getContext(), R.color.bofo_muted));
             p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(1.8f * d); p.setStrokeCap(Paint.Cap.ROUND); p.setStrokeJoin(Paint.Join.ROUND); p.setColor(0xFFFFFFFF);
             if (verified) {
                 Path ck = new Path();
@@ -701,7 +716,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         if (locateOn != null && locateOn == on) return;
         boolean first = locateOn == null;
         locateOn = on;
-        int white = 0xFFFFFFFF, own = 0xFF5B3BF0;
+        int white = 0xFFFFFFFF, own = ContextCompat.getColor(getContext(), R.color.bofo_primary);
         android.graphics.drawable.Drawable from = ContextCompat.getDrawable(getContext(), on ? R.drawable.bg_map_button : R.drawable.bg_map_button_on);
         android.graphics.drawable.Drawable to = ContextCompat.getDrawable(getContext(), on ? R.drawable.bg_map_button_on : R.drawable.bg_map_button);
         if (locateTint != null) locateTint.cancel();
@@ -865,7 +880,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         name.setText(p.name());
         price.setText(Money.perMonth(p.price()));
         android.text.SpannableStringBuilder info = new android.text.SpannableStringBuilder("\u2605 ").append(ListRules.ratingText(p.avgRating(), p.reviewCount()));
-        info.setSpan(new android.text.style.ForegroundColorSpan(0xFFF5A524), 0, 1, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);     // v2.0.79: amber star
+        info.setSpan(new android.text.style.ForegroundColorSpan(ContextCompat.getColor(getContext(), R.color.bofo_amber)), 0, 1, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);     // v2.0.79: amber star
         if (p.distanceKm() > 0) info.append("  \u00B7  ").append(Geo.fmt(p.distanceKm()));
         String gp = com.bofo.finder.util.GenderRules.normalize(p.genderPolicy());                          // v2.0.87: who can stay
         if (!gp.isEmpty()) info.append("  \u00B7  ").append(infoView.getContext().getString(com.bofo.finder.util.GenderRules.labelRes(gp)));
@@ -1027,7 +1042,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
                 if (text.isEmpty()) continue;
                 String key = "lb|" + text;
                 if (imgs.add(key)) {
-                    Bitmap lb = label(text, 0xFF17142A, 11);
+                    Bitmap lb = label(text, ContextCompat.getColor(getContext(), R.color.bofo_ink), 11);
                     imgSize.put(key, new float[]{lb.getWidth(), lb.getHeight()});
                     style.addImage(key, lb);
                 }
@@ -1202,14 +1217,14 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** v2.0.90: route distance / time: white pill with a soft edge and a small route dot, the same look as the price pins. */
     private Bitmap routeChip(String text) {
         float d = getResources().getDisplayMetrics().density;
-        Paint t = textPaint(0xFF17142A, 12, true);
+        Paint t = textPaint(ContextCompat.getColor(getContext(), R.color.bofo_ink), 12, true);
         float dot = 5 * d, gap = 6 * d, pad = 11 * d;
         int w = Math.round(pad * 2 + dot * 2 + gap + t.measureText(text)), h = Math.round(28 * d);
         Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bmp);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         p.setColor(0xFFFFFFFF); c.drawRoundRect(new RectF(0, 0, w, h), h / 2f, h / 2f, p);
-        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(d); p.setColor(0xFFC9C4E6);
+        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(d); p.setColor(ContextCompat.getColor(getContext(), R.color.map_pin_edge));
         c.drawRoundRect(new RectF(d / 2, d / 2, w - d / 2, h - d / 2), h / 2f, h / 2f, p);
         p.setStyle(Paint.Style.FILL); p.setColor(ContextCompat.getColor(getContext(), R.color.bofo_primary));
         c.drawCircle(pad + dot, h / 2f, dot, p);
@@ -1226,8 +1241,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         Canvas c = new Canvas(bmp);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         p.setColor(0xFFFFFFFF);
-        p.setColor(0xFF17142A); c.drawRoundRect(new RectF(0, 0, w, h), h / 2f, h / 2f, p);
-        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(d); p.setColor(0xFF17142A);
+        p.setColor(ContextCompat.getColor(getContext(), R.color.bofo_ink)); c.drawRoundRect(new RectF(0, 0, w, h), h / 2f, h / 2f, p);
+        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(d); p.setColor(ContextCompat.getColor(getContext(), R.color.bofo_ink));
         c.drawRoundRect(new RectF(d / 2, d / 2, w - d / 2, h - d / 2), h / 2f, h / 2f, p);
         c.drawText(text, w / 2f, h / 2f - (t.ascent() + t.descent()) / 2f, t);
         return bmp;
@@ -1556,7 +1571,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             boolean inCompare = compareIds.contains(stripItems.get(pos).id());
             com.google.android.material.card.MaterialCardView card = h.v.getRoot();
             card.setStrokeWidth(inCompare ? Math.round(2 * getResources().getDisplayMetrics().density) : Math.max(0, stripStroke0));
-            card.setStrokeColor(inCompare ? 0xFF5B3BF0 : 0xFFE7E2FB);
+            card.setStrokeColor(ContextCompat.getColor(getContext(), inCompare ? R.color.bofo_primary : R.color.bofo_stroke_soft));
             String hid = stripItems.get(pos).id();                    // v2.0.83: Commute chip: "Commute" / "Finding..." / the result line
             boolean busy = hid.equals(commuteBusyId), shown = hid.equals(commuteId) && commuteLine != null;
             h.v.stripCommute.setText(busy ? getContext().getString(R.string.map_commute_busy) : shown ? commuteLine : getContext().getString(R.string.map_commute));

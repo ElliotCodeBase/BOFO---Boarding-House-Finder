@@ -8,7 +8,11 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.animation.PathInterpolator;
 
-/** Three white dots rising and fading one after another. */
+import androidx.core.content.ContextCompat;
+
+import com.bofo.finder.R;
+
+/** Three dots (colour splash_dots) rising and fading one after another. */
 public class SplashDotsView extends View {
     private static final PathInterpolator BOTH = new PathInterpolator(0.42f, 0f, 0.58f, 1f);
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -20,7 +24,7 @@ public class SplashDotsView extends View {
     public SplashDotsView(Context c, AttributeSet a) {
         super(c, a);
         d = c.getResources().getDisplayMetrics().density;
-        p.setColor(0xFFFFFFFF);
+        p.setColor(ContextCompat.getColor(c, R.color.splash_dots));   // v2.0.117: white in classic, orange in the orange theme
     }
 
     @Override protected void onMeasure(int wSpec, int hSpec) { setMeasuredDimension(Math.round(50 * d), Math.round(24 * d)); }

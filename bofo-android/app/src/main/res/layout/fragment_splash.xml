@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- v2.0.20: dark ink background + white jumping mascot (original SplashView). Ids status / retry unchanged. -->
+<!-- v2.0.20: jumping mascot (original SplashView). v2.0.117: every colour is splash_* (dark ink in classic, white in orange). Ids status / retry unchanged. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bofo_ink"
+    android:background="@color/splash_bg"
     android:gravity="center"
     android:orientation="vertical"
     android:padding="24dp">
@@ -20,7 +20,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="@string/splash_title"
-        android:textColor="@color/bofo_white"
+        android:textColor="@color/splash_title"
         android:textSize="38sp"
         android:textStyle="bold" />
 
@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="@string/splash_subtitle"
-        android:textColor="@color/bofo_primary_tint"
+        android:textColor="@color/splash_subtitle"
         android:textSize="15sp" />
 
     <com.bofo.finder.ui.SplashDotsView
@@ -46,7 +46,7 @@
         android:layout_marginTop="10dp"
         android:gravity="center"
         android:text="@string/splash_status"
-        android:textColor="@color/bofo_muted"
+        android:textColor="@color/splash_status"
         android:textSize="13sp" />
 
     <Button

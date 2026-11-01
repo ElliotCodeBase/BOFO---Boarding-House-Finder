@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- v2.0.97 Android 12+: the system splash screen is dark ink with no icon, so the first thing shown is the app's own dark loading screen. -->
+<!-- v2.0.117 Android 12+: the system splash screen is a plain colour with no icon, the same colour as the loading screen (white = orange, dark ink = classic), so the first thing shown is the app's own loading screen. -->
 <resources>
     <style name="Theme.Bofo.Launch" parent="Theme.Bofo">
-        <item name="android:windowBackground">@color/bofo_ink</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowSplashScreenBackground">@color/bofo_ink</item>
+        <item name="android:windowBackground">@color/launch_bg_orange</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowSplashScreenBackground">@color/launch_bg_orange</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_empty</item>
+    </style>
+    <style name="Theme.Bofo.Launch.Classic" parent="Theme.Bofo.Launch">
+        <item name="android:windowBackground">@color/launch_bg_classic</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowSplashScreenBackground">@color/launch_bg_classic</item>
     </style>
 </resources>
