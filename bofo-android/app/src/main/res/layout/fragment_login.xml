@@ -190,59 +190,6 @@
             android:textIsSelectable="true"
             android:visibility="gone" />
 
-        <!-- DEBUG builds only: force login with the test accounts (shown by LoginFragment when config.local.properties has dev.* keys) -->
-        <LinearLayout
-            android:id="@+id/dev_group"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="@string/login_dev_title"
-                android:textAppearance="@style/Text.Bofo.Secondary"
-                android:textSize="12sp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/dev_student"
-                    style="@style/Widget.Bofo.Button.Tint"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="4dp"
-                    android:layout_weight="1"
-                    android:text="@string/login_dev_student" />
-
-                <Button
-                    android:id="@+id/dev_owner"
-                    style="@style/Widget.Bofo.Button.Tint"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"
-                    android:layout_weight="1"
-                    android:text="@string/login_dev_owner" />
-
-                <Button
-                    android:id="@+id/dev_admin"
-                    style="@style/Widget.Bofo.Button.Tint"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:layout_weight="1"
-                    android:text="@string/login_dev_admin" />
-            </LinearLayout>
-        </LinearLayout>
-
         <TextView
             android:id="@+id/legal_note"
             android:layout_width="match_parent"
