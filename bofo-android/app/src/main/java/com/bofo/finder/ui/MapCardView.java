@@ -821,8 +821,8 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         if (style == null) return;
         if (routeLabel == null || routePts == null) { set("routelabel-src", MapGeo.EMPTY); return; }
         String key = "rt|" + routeLabel;
-        if (imgs.add(key)) style.addImage(key, routeChip(routeLabel));
-        double[] e = routePts[routePts.length / 2];      // v2.0.90: the distance / time chip sits in the middle of the path, clear of the pin and its name
+        if (imgs.add(key)) style.addImage(key, chip(routeLabel));
+        double[] e = routePts[routePts.length - 1];
         set("routelabel-src", collection(new StringBuilder(feat(e[0], e[1], "\"icon\":\"" + esc(key) + "\""))));
     }
 
@@ -906,7 +906,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         set("route-src", MapGeo.lineJson(routePts, routeApprox));
         boolean has = routePts != null;
         set("route-start-src", has ? MapGeo.pointJson(routePts[0][0], routePts[0][1]) : MapGeo.EMPTY);
-        set("route-end-src", MapGeo.EMPTY);      // v2.0.90: no red dot, the selected pin already marks the destination (the dot sat under the pin and its name)
+        set("route-end-src", has ? MapGeo.pointJson(routePts[routePts.length - 1][0], routePts[routePts.length - 1][1]) : MapGeo.EMPTY);
         applyRouteOpacity();
     }
 
@@ -1191,25 +1191,6 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     }
 
     /** White pill with purple text (radius edge label). */
-    /** v2.0.90: route distance / time: white pill with a soft edge and a small route dot, the same look as the price pins. */
-    private Bitmap routeChip(String text) {
-        float d = getResources().getDisplayMetrics().density;
-        Paint t = textPaint(0xFF17142A, 12, true);
-        float dot = 5 * d, gap = 6 * d, pad = 11 * d;
-        int w = Math.round(pad * 2 + dot * 2 + gap + t.measureText(text)), h = Math.round(28 * d);
-        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(bmp);
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setColor(0xFFFFFFFF); c.drawRoundRect(new RectF(0, 0, w, h), h / 2f, h / 2f, p);
-        p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(d); p.setColor(0xFFC9C4E6);
-        c.drawRoundRect(new RectF(d / 2, d / 2, w - d / 2, h - d / 2), h / 2f, h / 2f, p);
-        p.setStyle(Paint.Style.FILL); p.setColor(ContextCompat.getColor(getContext(), R.color.bofo_primary));
-        c.drawCircle(pad + dot, h / 2f, dot, p);
-        t.setTextAlign(Paint.Align.LEFT);
-        c.drawText(text, pad + dot * 2 + gap, h / 2f - (t.ascent() + t.descent()) / 2f, t);
-        return bmp;
-    }
-
     private Bitmap chip(String text) {
         float d = getResources().getDisplayMetrics().density;
         Paint t = textPaint(0xFFFFFFFF, 11, true);
