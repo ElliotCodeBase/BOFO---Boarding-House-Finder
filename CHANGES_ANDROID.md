@@ -1,3 +1,8 @@
+# v2.0.86 - Android: opened places are solid, not see-through
+- **Fixed:** a place you already opened was drawn at 60 % opacity, so roads and labels showed through its price pin (and its dot). It is now drawn solid: the pin is a muted lavender pill (`#EFEDF8`, grey-violet text and badge, soft border), the dot a muted violet (`#AFA8D8`). The selected pin stays dark indigo and every other pin is unchanged.
+- `MapCardView`: `pricePin(..., seen)` (bitmap key gets a 6th flag, so the old pins are not reused), `places` layer has no `iconOpacity`, `places-dots` colour comes from an expression on the `viewed` property. No Supabase change, no new `AppPrefs` keys. Not built or run by Claude.
+- Files: `MapCardView.java`, `build.gradle` (2.0.86 / 286).
+
 # v2.0.85 - Android: cleaner Explore map cards (from a screenshot)
 - **Locate button was hidden:** the next card of the strip peeked out under the right edge and covered the locate button and the Ask BOFO corner. The strip now clips its cards at its own edge (`clipChildren="true"` in `view_map_card.xml`), so the next card still peeks about 24 dp on the left and inside the strip on the right, and the right corner stays free. Cards have 6 dp above and 12 dp below so the shadow is not cut.
 - **Card colour:** the card looked lavender (Material 3 tints a surface-white card that has elevation). It now uses a solid near-white (`#FEFEFF`) so it stands out from the map.
