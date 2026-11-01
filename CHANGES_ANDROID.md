@@ -1,3 +1,7 @@
+# v2.0.94 - Android: map group labels are not capsules any more
+- **Changed:** the purple labels on the zoomed-out map ("2 · ₱10–₱10k", "4 · ₱1.3k–₱2.05k") are now rounded-square tags (8 dp corners, same white edge, same text) instead of full-round capsules, so they no longer look like an AI chip. Single-number bubbles stay round; price pins and the route chip are unchanged.
+- Changed: `MapCardView.java` (`bubble`), `build.gradle` (2.0.94 / 294). No Supabase change. Not built or run by Claude.
+
 # v2.0.93 - Android: new Settings and Profile screens
 - **Changed:** **Profile** now has a purple hero card (big photo with a white ring, name, e-mail, role chip), an Account list (Edit profile, Settings, AI Chats for admins) with icon tiles and arrows, and an About card with the mascot and version. **Settings** rows have icon tiles, arrows and thin dividers; Account, Preferences (Use my location, See-through path, now with icons), Legal and a new Session group (Sign out, Delete my account in red); mascot + version at the bottom; extra bottom space so the floating tab bar never covers the last row.
 - Same ids and behaviour as before (no Java change). New: `ic_set_*` icon tiles, `ic_chevron_right`, `divider_set_inset`, `bg_profile_hero` / `_chip` / `_avatar`, `strings_account_ui.xml`. Changed: `fragment_settings.xml`, `fragment_profile.xml`, `build.gradle` (2.0.93 / 293). Edit profile screen not changed. Not built or run by Claude.

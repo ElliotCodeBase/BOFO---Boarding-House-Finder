@@ -1167,7 +1167,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
         return bmp;
     }
 
-    /** Numbered purple bubble for merged dots; with a price it is a pill "4 · from ₱1.2k" (v2.0.80). */
+    /** Numbered purple bubble for merged dots; with a price it is a rounded-square tag "4 · ₱1.2k–₱2k" (v2.0.80; v2.0.94: no longer a capsule). */
     private Bitmap bubble(int count, String from) {
         float d = getResources().getDisplayMetrics().density;
         if (!from.isEmpty()) {
@@ -1178,9 +1178,10 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
             Canvas pc = new Canvas(pb);
             Paint pp = new Paint(Paint.ANTI_ALIAS_FLAG);
             pp.setColor(0xFFFFFFFF);
-            pc.drawRoundRect(new RectF(0, 0, w, h), h / 2f, h / 2f, pp);
+            float rad = 8 * d;      // v2.0.94: a rounded square tag, not a capsule (a full-round pill reads as an AI chip)
+            pc.drawRoundRect(new RectF(0, 0, w, h), rad, rad, pp);
             pp.setColor(ContextCompat.getColor(getContext(), R.color.bofo_primary));
-            pc.drawRoundRect(new RectF(2.5f * d, 2.5f * d, w - 2.5f * d, h - 2.5f * d), h / 2f, h / 2f, pp);
+            pc.drawRoundRect(new RectF(2.5f * d, 2.5f * d, w - 2.5f * d, h - 2.5f * d), rad - 2.5f * d, rad - 2.5f * d, pp);
             pc.drawText(text, w / 2f, h / 2f - (t.ascent() + t.descent()) / 2f, t);
             return pb;
         }
