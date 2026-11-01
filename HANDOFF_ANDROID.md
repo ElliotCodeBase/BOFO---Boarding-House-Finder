@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.92 Switch role without re-login
+- **PR title:** `v2.0.92 - Android: switching Student / Owner updates the app at once (no re-login)`
+- `SettingsFragment.switchRole` sets `AuthRouter.role = target` after the server call, then `AuthRouter.go(nav(), R.id.action_global_shell)` (global action pops the whole graph, so ShellFragment rebuilds its tabs). Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.91 AI Chats monitor (admin only)
 - **PR title:** `v2.0.91 - Android: admin-only AI Chats monitor (what users ask BOFO), on/off switch, 90-day retention, privacy notice`
 - **Supabase (run in this order):** 1) `supabase/migrations/014_ai_chat_log.sql` (adds `app_flags`, `ai_chat_log`, `ai_chat_log_wipe()`, `ai_chat_log_purge()`, pg_cron job `ai-chat-log-retention` daily 03:15 UTC; if pg_cron is off it prints a notice: enable it under Database > Extensions and run the file again). 2) `supabase functions deploy bofo-chat`. 3) Release the app, THEN switch on: `update public.app_flags set value = true, updated_at = now() where key = 'ai_chat_monitor_enabled';` (seeded OFF so older app versions, which do not show the privacy notice, are not logged before the update is out). Existing tables and policies are untouched.
