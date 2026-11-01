@@ -31,7 +31,11 @@ import com.bofo.finder.model.College;
 import com.bofo.finder.service.BhService;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BrowseState;
+import com.bofo.finder.util.CommuteRules;
 import com.bofo.finder.util.Connectivity;
+import com.bofo.finder.util.OfflineExplore;
+import com.bofo.finder.util.Trip;
+import com.bofo.finder.util.TripPlanner;
 import com.bofo.finder.util.ErrorText;
 import com.bofo.finder.util.ExploreRules;
 import com.bofo.finder.util.Favorites;
@@ -73,6 +77,10 @@ public class ExploreFragment extends Fragment {
     /** v2.0.82: compare tray (max 3, in the order they were added). Lives as long as this Explore tab: a new tab starts empty. */
     private static final int COMPARE_MAX = 3;
     private final Map<String, BoardingHouse> compare = new LinkedHashMap<>();
+    /** v2.0.83: commuteId = the house whose route to the campus is drawn; pendingCommuteId = waiting for the person to pick a campus; offlineShown = the screen shows the saved last search. */
+    private String commuteId, pendingCommuteId;
+    private int commuteToken;
+    private boolean offlineShown;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
@@ -125,7 +133,104 @@ public class ExploreFragment extends Fragment {
         Favorites.load(null);
         Favorites.IDS.observe(getViewLifecycleOwner(), ids -> { adapter.setFavorites(ids); if (mapReady && b != null) b.mapCard.setFavorites(ids); });
         if (mapMode) { mapMode = false; setMapMode(true); }       // v2.0.82: back from a place page with a new view: the map starts again (mapReady is reset in onDestroyView)
-        BrowseState.CHANGED.observe(getViewLifecycleOwner(), n -> { if (n == null || n == lastChange) return; lastChange = n; if (keepArea) keepArea = false; else areaBox = null; paintFilterButton(); paintChips(); reload(); });
+        b.commuteClear.setOnClickListener(v -> endCommute());
+        BrowseState.CHANGED.observe(getViewLifecycleOwner(), n -> {
+            if (n == null || n == lastChange) return;
+            lastChange = n;
+            if (keepArea) keepArea = false; else areaBox = null;
+            if (commuteId != null) endCommute();                            // v2.0.83: a new campus or filter makes the drawn route out of date
+            paintFilterButton(); paintChips(); reload();
+            if (pendingCommuteId != null && BrowseState.campus() != null) { String id = pendingCommuteId; pendingCommuteId = null; startCommute(id); }     // the person just picked the campus the Commute tap asked for
+        });
+        Connectivity.OFFLINE.observe(getViewLifecycleOwner(), off -> {      // v2.0.83: the network is back: replace the saved last search by a fresh one (the camera stays)
+            if (off != null && !off && offlineShown) { soft = true; reload(); }
+        });
+    }
+
+    // ---- v2.0.83: commute from a strip card ------------------------------------------------------------------------
+
+    private void startCommute(String id) {
+        if (b == null || !mapReady || id == null) return;
+        BoardingHouse h = null;
+        for (BoardingHouse x : lastItems) if (x.id().equals(id)) { h = x; break; }
+        if (h == null) return;
+        College c = BrowseState.campus();
+        if (c == null) {                                                    // no campus yet: ask for one instead of failing
+            pendingCommuteId = id;
+            ListArea.toast(this, getString(R.string.map_commute_pick));
+            new CampusPickerSheet().show(getChildFragmentManager(), "campus");
+            return;
+        }
+        pendingCommuteId = null;
+        final int my = ++commuteToken;
+        final String houseId = id;
+        final double[] from = {h.lat(), h.lng()}, to = {c.lat(), c.lng()};
+        b.mapCard.setCommuteBusy(houseId);
+        Async.run(() -> TripPlanner.planWithin(from, to, 8), (Trip.Plan plan) -> {          // the same planner as the Directions card (Router, TransitRoutes, LocalTransit, TransitMatch)
+            if (b == null || my != commuteToken) return;
+            Trip.Option o = CommuteRules.best(plan);
+            if (!CommuteRules.drawable(o)) { b.mapCard.setCommuteBusy(null); ListArea.toast(this, getString(R.string.map_commute_fail)); return; }
+            commuteId = houseId;
+            b.mapCard.showCommute(houseId, o.path(), o.approximate(), CommuteRules.line(o), o.badge());
+            paintCommuteUi();
+        }, e -> {
+            if (b == null || my != commuteToken) return;
+            b.mapCard.setCommuteBusy(null);
+            ListArea.toast(this, getString(R.string.map_commute_fail));
+        });
+    }
+
+    /** Removes the drawn route (Clear route chip, a new filter or campus, leaving the map): the strip comes back. */
+    private void endCommute() {
+        commuteToken++;
+        commuteId = null;
+        if (b == null) return;
+        if (mapReady) b.mapCard.clearCommute();
+        paintCommuteUi();
+    }
+
+    /** "Clear route" replaces the quick chips while a route is drawn. */
+    private void paintCommuteUi() {
+        if (b == null) return;
+        boolean on = commuteId != null;
+        b.commuteClear.setVisibility(on ? View.VISIBLE : View.GONE);
+        b.mapChips.setVisibility(on ? View.GONE : View.VISIBLE);
+        if (mapReady) b.mapCard.setSearchAreaEnabled(!on && !offlineShown);
+    }
+
+    // ---- v2.0.83: offline copy of the last search -----------------------------------------------------------------
+
+    /** The pill on the map and the word "offline" next to the count in the list; the "Search this area" pill steps aside (same corner of the map). */
+    private void paintOffline(boolean on) {
+        if (b == null) return;
+        offlineShown = on;
+        b.offlinePill.setVisibility(on ? View.VISIBLE : View.GONE);
+        if (mapReady) b.mapCard.setSearchAreaEnabled(!on && commuteId == null);
+    }
+
+    /** No network: the saved last search, filtered on the phone with the same chips and filters. Returns false when nothing was saved. */
+    private boolean showSaved(boolean softNow) {
+        List<BoardingHouse> saved = OfflineExplore.load();
+        if (saved.isEmpty() || b == null) return false;
+        College c = BrowseState.campus();
+        Set<String> names = new LinkedHashSet<>(BrowseState.amenityNames);
+        for (String id : BrowseState.amenityIds) { String n = BrowseState.amenityLabels.get(id); if (n != null) names.add(n); }
+        List<BoardingHouse> l = OfflineExplore.apply(saved, query, BrowseState.minPrice, BrowseState.maxPrice, names, BrowseState.verifiedOnly,
+                BrowseState.bedsOnly, BrowseState.sort, c == null ? null : c.lat(), c == null ? null : c.lng(), areaBox);
+        lastItems = l;
+        adapter.setShowDistance(c != null);
+        b.resultCount.setText((l.size() == 1 ? getString(R.string.explore_result_one) : getString(R.string.explore_results, l.size())) + " \u00B7 " + getString(R.string.map_offline_short));
+        if (l.isEmpty()) area.showMessage(getString(BrowseState.activeFilters() > 0 ? R.string.ex_empty_hint : R.string.explore_empty), false);
+        else area.showList(l);
+        paintOffline(true);
+        if (commuteId != null && !has(l, commuteId)) endCommute();
+        if (mapMode) { pushMap(areaBox == null && !softNow); if (softNow) b.mapCard.softFade(); }
+        return true;
+    }
+
+    private static boolean has(List<BoardingHouse> l, String id) {
+        for (BoardingHouse h : l) if (h.id().equals(id)) return true;
+        return false;
     }
 
     private void paintFilterButton() {
@@ -295,6 +400,7 @@ public class ExploreFragment extends Fragment {
 
     private void setMapMode(boolean on) {
         if (b == null || mapMode == on) return;
+        if (!on && commuteId != null) endCommute();                         // v2.0.83: the route is not kept when the person goes back to the list
         mapMode = on;
         paintSeg();
         b.area.getRoot().setVisibility(on ? View.GONE : View.VISIBLE);
@@ -314,6 +420,7 @@ public class ExploreFragment extends Fragment {
                 reload();
             }
             @Override public void placeLongPressed(String id) { toggleCompare(id); }
+            @Override public void commuteTapped(String id) { startCommute(id); }
             @Override public void campusTapped(String id) {
                 for (College c : BrowseState.colleges) if (c.id().equals(id)) { BrowseState.setCampus(c); return; }
             }
@@ -321,6 +428,7 @@ public class ExploreFragment extends Fragment {
         b.mapCard.showLocate(true);                 // v2.0.80: lifted above the floating Ask BOFO button, which sits in the same corner
         b.mapCard.setLocateLift(72);
         b.mapCard.setSearchAreaEnabled(true);
+        if (offlineShown || commuteId != null) b.mapCard.setSearchAreaEnabled(false);       // v2.0.83: same corner as the offline pill; never while a route is drawn
         b.mapCard.setStripEnabled(true);            // v2.0.81: swipeable card strip instead of the single peek card
         b.mapCard.setFavorites(Favorites.IDS.getValue());
         b.mapCard.setCompareIds(compare.keySet());
@@ -361,6 +469,7 @@ public class ExploreFragment extends Fragment {
                 Double lat = c == null ? null : c.lat();
                 Double lng = c == null ? null : c.lng();
                 List<BoardingHouse> l = new BhService().list(BhService.Tab.NEW, lat, lng, null, f);   // no radius: search everywhere, nearest first
+                if (!Connectivity.isOffline()) OfflineExplore.save(l);          // v2.0.83: the last good result set, for the offline map (not when the answer itself came from the old copy)
                 l = ListRules.inPriceRange(l, min, max);
                 l = ExploreRules.withAll(l, names);
                 l = ExploreRules.quick(l, onlyVerified, onlyBeds);
@@ -374,13 +483,15 @@ public class ExploreFragment extends Fragment {
             }, (List<BoardingHouse> l) -> {
                 if (my != token || b == null) return;
                 lastItems = l;
+                paintOffline(Connectivity.isOffline());                          // v2.0.83: the answer may be the old copy (BhService.Offline) when the network is down
+                if (commuteId != null && !has(l, commuteId)) endCommute();       // the house left the results: its route goes with it
                 adapter.setShowDistance(c != null);
-                b.resultCount.setText(l.size() == 1 ? getString(R.string.explore_result_one) : getString(R.string.explore_results, l.size()));
+                b.resultCount.setText((l.size() == 1 ? getString(R.string.explore_result_one) : getString(R.string.explore_results, l.size())) + (offlineShown ? " \u00B7 " + getString(R.string.map_offline_short) : ""));
                 if (l.isEmpty()) area.showMessage(getString(BrowseState.activeFilters() > 0 ? R.string.ex_empty_hint : R.string.explore_empty), false);
                 else area.showList(l);
                 if (mapMode) { pushMap(box == null && !softNow); if (softNow) b.mapCard.softFade(); }      // after "Search this area" or a quick chip the camera stays where the person put it
-            }, e -> fail(my, e));
-        }, e -> fail(my, e));
+            }, e -> fail(my, e, softNow));
+        }, e -> fail(my, e, softNow));
     }
 
     /** v2.0.80: locate button. Shows the blue dot, flies there, plays the "found you" ring; the dot is not kept live on Explore. */
@@ -414,8 +525,9 @@ public class ExploreFragment extends Fragment {
 
     @Override public void onStop() { loc.stop(); super.onStop(); }
 
-    private void fail(int my, Throwable e) {
+    private void fail(int my, Throwable e, boolean softNow) {
         if (my != token || b == null) return;
+        if (Connectivity.isNetworkError(e) && showSaved(softNow)) return;        // v2.0.83: no network: the saved last search, with the chips and compare tray still working
         b.resultCount.setText("");
         if (Connectivity.isNetworkError(e)) area.showOffline();
         else area.showMessage(ErrorText.full(getString(R.string.list_error), e), true);
@@ -424,6 +536,8 @@ public class ExploreFragment extends Fragment {
     @Override
     public void onDestroyView() {
         token++;
+        commuteToken++;
+        commuteId = null; pendingCommuteId = null;
         mapReady = false;
         if (pendingSearch != null) handler.removeCallbacks(pendingSearch);
         if (area != null) area.destroy();

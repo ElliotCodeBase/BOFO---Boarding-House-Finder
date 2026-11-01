@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.0.83: Commute on the Explore map cards and the offline map pill -->
+<resources>
+    <string name="map_commute">Commute</string>
+    <string name="map_commute_busy">Finding…</string>
+    <string name="map_commute_clear">Clear route</string>
+    <string name="map_commute_pick">Pick your campus to see the commute.</string>
+    <string name="map_commute_fail">Couldn’t work out that commute. Try again.</string>
+    <string name="map_offline_pill">Offline: showing your last search</string>
+    <string name="map_offline_short">offline</string>
+</resources>

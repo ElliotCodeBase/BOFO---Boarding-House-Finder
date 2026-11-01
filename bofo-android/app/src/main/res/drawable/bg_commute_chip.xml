@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.0.83: small "Commute" chip on a strip card; filled indigo while it shows the result line -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_activated="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#5B3BF0" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#EFEBFF" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+</selector>

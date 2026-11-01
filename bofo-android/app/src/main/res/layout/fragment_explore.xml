@@ -185,13 +185,50 @@
                 android:orientation="horizontal" />
         </HorizontalScrollView>
 
+        <!-- v2.0.83: shown instead of the chips while a commute route is drawn; puts the strip back -->
+        <TextView
+            android:id="@+id/commute_clear"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_gravity="top|start"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="56dp"
+            android:background="@drawable/bg_chip_on"
+            android:clickable="true"
+            android:elevation="8dp"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
+            android:text="@string/map_commute_clear"
+            android:textColor="@color/bofo_white"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <!-- v2.0.83: with no network the map shows the last search; top right so the "Near campus" chip stays free -->
+        <TextView
+            android:id="@+id/offline_pill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_margin="10dp"
+            android:background="@drawable/bg_offline_pill"
+            android:maxWidth="150dp"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            android:text="@string/map_offline_pill"
+            android:textColor="@color/bofo_ink"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
         <!-- v2.0.82: compare tray, above the card strip. Long-press a pin or a card to add it. -->
         <LinearLayout
             android:id="@+id/compare_tray"
             android:layout_width="wrap_content"
             android:layout_height="44dp"
             android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="136dp"
+            android:layout_marginBottom="168dp"
             android:background="@drawable/bg_chip_on"
             android:clickable="true"
             android:elevation="8dp"
