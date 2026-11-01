@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.0.106 Rent card shows all prices
+- **PR title:** `v2.0.106 - Android: Home price card shows all prices`
+- `RentCardView.setData`: columns = up to 4 houses sorted by price (more than 4: cheapest, two spread, dearest), spread over the width; labels Lowest / Highest, Middle when 3, "Best rated" on the top rated house in the Best rated tab. Replaces the v2.0.105 single-price card. Not built or run by Claude.
+---
 # Handoff (Android) - v2.0.105 Rent card: Best rated only
 - **PR title:** `v2.0.105 - Android: Best rated tab shows only the best rated price on the Home price card`
 - `RentCardView.setData(basis, best)`: when `best` and a house has reviews, one cell ("Best rated") and one marker; otherwise unchanged (Lowest / Middle / Highest). If no house has reviews yet, Best rated still shows the normal three. Not built or run by Claude.

@@ -83,22 +83,21 @@ public class RentCardView extends View {
             if (x.reviewCount() > 0 && (top == null || x.avgRating() > top.avgRating() || (x.avgRating() == top.avgRating() && x.price() < top.price()))) top = x;
         }
         Context c = getContext();
-        if (best && top != null) {                                              // v2.0.105: Best rated tab = only the best rated price (no Lowest / Highest, one marker)
-            marks.clear(); marks.add(new Mark(top.id(), top.price()));
-            min = max = top.price();
-            cells.add(new Cell(c.getString(R.string.rent_best), top.id(), top.price()));
-            setVisibility(VISIBLE);
-            requestLayout(); invalidate();
-            return;
-        }
         if (r.count == 1 || r.lowest == r.highest) cells.add(new Cell(c.getString(R.string.rent_single), lo.id(), lo.price()));
         else {
-            cells.add(new Cell(c.getString(R.string.rent_lowest), lo.id(), lo.price()));
-            if (r.count >= 3) {
-                if (best && top != null) cells.add(new Cell(c.getString(R.string.rent_best), top.id(), top.price()));
-                else cells.add(new Cell(c.getString(R.string.rent_middle), mid.id(), mid.price()));
+            // v2.0.106: every price is shown (up to 4 columns, cheapest to dearest). More than 4 houses: cheapest, two spread in between, dearest.
+            List<BoardingHouse> sorted = new ArrayList<>(h);
+            sorted.sort(java.util.Comparator.comparingDouble(BoardingHouse::price));
+            List<BoardingHouse> pick = new ArrayList<>();
+            if (sorted.size() <= 4) pick.addAll(sorted);
+            else { int n = sorted.size(); pick.add(sorted.get(0)); pick.add(sorted.get(Math.round((n - 1) / 3f))); pick.add(sorted.get(Math.round((n - 1) * 2 / 3f))); pick.add(sorted.get(n - 1)); }
+            for (int k = 0; k < pick.size(); k++) {
+                BoardingHouse x = pick.get(k);
+                String label = k == 0 ? c.getString(R.string.rent_lowest) : k == pick.size() - 1 ? c.getString(R.string.rent_highest)
+                        : pick.size() == 3 ? c.getString(R.string.rent_middle) : "";
+                if (best && top != null && x.id().equals(top.id()) && !label.equals(c.getString(R.string.rent_best))) label = c.getString(R.string.rent_best);   // Best rated tab: the top rated house is named wherever it is
+                cells.add(new Cell(label, x.id(), x.price()));
             }
-            cells.add(new Cell(c.getString(R.string.rent_highest), hi.id(), hi.price()));
         }
         setVisibility(VISIBLE);
         requestLayout(); invalidate();
@@ -136,10 +135,10 @@ public class RentCardView extends View {
         for (int i = 0; i < cells.size(); i++) {
             Cell cell = cells.get(i);
             Paint.Align al = cells.size() == 1 || i == 0 ? Paint.Align.LEFT : i == cells.size() - 1 ? Paint.Align.RIGHT : Paint.Align.CENTER;
-            float x = al == Paint.Align.LEFT ? pad : al == Paint.Align.RIGHT ? w - pad : w / 2f;
+            float x = al == Paint.Align.LEFT ? pad : al == Paint.Align.RIGHT ? w - pad : pad + (w - 2 * pad) * i / (cells.size() - 1f);      // v2.0.106: columns spread over the width
             boolean on = cell.id().equals(glowId);
             p.setTextAlign(al); p.setTypeface(Typeface.DEFAULT); p.setTextSize(11 * sd()); p.setColor(text2);
-            c.drawText(cell.label(), x, 22 * d, p);
+            if (!cell.label().isEmpty()) c.drawText(cell.label(), x, 22 * d, p);
             String val = Money.peso(cell.price());
             p.setTypeface(Typeface.DEFAULT_BOLD); p.setTextSize(18 * sd()); p.setColor(on ? GLOW : ink);
             float vw = p.measureText(val);
