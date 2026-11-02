@@ -161,6 +161,8 @@ public class RentCardView extends View {
         for (Mark m : marks) {
             float x = markX(m, l, r);
             boolean on = m.id().equals(glowId);
+            p.setColor(0xFFFFFFFF);                                        // v2.0.125: white ring so dots that overlap stay separate
+            c.drawCircle(x, lineY, 9.5f * d, p);
             p.setColor(on ? GLOW : primary);
             c.drawCircle(x, lineY, 7.5f * d, p);
             p.setColor(0xFFFFFFFF);
@@ -170,7 +172,19 @@ public class RentCardView extends View {
 
     private float sd() { return getResources().getDisplayMetrics().scaledDensity; }
 
-    private float markX(Mark m, float l, float r) { return max <= min ? (l + r) / 2f : l + (float) ((m.price() - min) / (max - min)) * (r - l); }
+    /**
+     * v2.0.130: with Lowest / Middle / Highest the Middle price is pinned to the exact centre of the line, right under its label (before, the line was spaced by
+     * price, so a different house, e.g. 3,800, sat under "Middle 2,200" and pressing it lit the wrong house). Houses between are spread inside their half.
+     */
+    private float markX(Mark m, float l, float r) {
+        if (max <= min) return (l + r) / 2f;
+        double mid = cells.size() == 3 ? cells.get(1).price() : Double.NaN;
+        if (!Double.isNaN(mid) && mid > min && mid < max) {
+            double t = m.price() <= mid ? 0.5 * (m.price() - min) / (mid - min) : 0.5 + 0.5 * (m.price() - mid) / (max - mid);
+            return l + (float) Math.max(0, Math.min(1, t)) * (r - l);
+        }
+        return l + (float) ((m.price() - min) / (max - min)) * (r - l);
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
@@ -183,9 +197,12 @@ public class RentCardView extends View {
         }
         float pad = 16 * d, l = pad + 8 * d, r = getWidth() - pad - 8 * d, lineY = getHeight() - 22 * d;
         String hit = null;
-        float best = 22 * d;                                                   // markers: nearest within 22 dp
-        if (Math.abs(y - lineY) < 24 * d) for (Mark m : marks) { float dx = Math.abs(markX(m, l, r) - x); if (dx < best) { best = dx; hit = m.id(); } }
-        if (hit == null) for (int i = 0; i < cellHit.size() && i < cells.size(); i++) if (cellHit.get(i).contains(x, y)) { hit = cells.get(i).id(); break; }
+        // v2.0.129: the price texts are checked FIRST. Before, the dots won within 22 dp, and the 3.8k dot sat right under "Middle 2,200", so pressing 2,200 lit the 3.8k house.
+        for (int i = 0; i < cellHit.size() && i < cells.size(); i++) if (cellHit.get(i).contains(x, y)) { hit = cells.get(i).id(); break; }
+        if (hit == null && Math.abs(y - lineY) < 16 * d) {                    // dots: only when the finger is on the line itself, nearest one within 16 dp
+            float best = 16 * d;
+            for (Mark m : marks) { float dx = Math.abs(markX(m, l, r) - x); if (dx < best) { best = dx; hit = m.id(); } }
+        }
         if (hit != null) {
             glowId = hit.equals(glowId) ? null : hit;                          // tap again = off
             invalidate();

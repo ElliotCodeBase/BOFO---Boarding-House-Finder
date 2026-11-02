@@ -142,8 +142,9 @@ public class ExploreFragment extends Fragment {
         b.commuteClear.setOnClickListener(v -> endCommute());
         BrowseState.CHANGED.observe(getViewLifecycleOwner(), n -> {
             if (n == null || n == lastChange) return;
+            final boolean freshView = lastChange == -1;                      // v2.0.131: first tick for this view (also when coming back from a place page): load the list, keep the "Search this area" box
             lastChange = n;
-            if (keepArea) keepArea = false; else areaBox = null;
+            if (keepArea) keepArea = false; else if (!freshView) areaBox = null;
             if (commuteId != null) endCommute();                            // v2.0.83: a new campus or filter makes the drawn route out of date
             paintFilterButton(); paintChips(); reload();
             if (pendingCommuteId != null && BrowseState.campus() != null) { String id = pendingCommuteId; pendingCommuteId = null; startCommute(id); }     // the person just picked the campus the Commute tap asked for
@@ -569,6 +570,7 @@ public class ExploreFragment extends Fragment {
     @Override
     public void onDestroyView() {
         token++;
+        lastChange = -1;               // v2.0.131: this Fragment survives a trip to the place page, its view does not: forget the last tick so the list loads again when Explore comes back (Home does the same)
         commuteToken++;
         commuteId = null; pendingCommuteId = null;
         mapReady = false;

@@ -76,7 +76,7 @@ public final class TripPlanner {
     public static Trip.Plan planWithin(double[] from, double[] to, int seconds) {
         Future<Trip.Plan> f = Async.fanout().submit(() -> plan(from, to));
         try { return f.get(seconds, TimeUnit.SECONDS); }
-        catch (Throwable t) { return quick(from, to, "The route servers are slow right now, so distances are rough estimates. Tap the tab again in a moment for exact roads."); }
+        catch (Throwable t) { return quick(from, to, "The route servers are slow right now, so distances are rough estimates. The exact roads load by themselves in a moment."); }
     }
 
     /** Offline plan from straight-line estimates only (no network). Never throws. */
