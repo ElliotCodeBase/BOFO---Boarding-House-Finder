@@ -150,6 +150,7 @@ public class BhDetailFragment extends Fragment {
         showContact(d.optJSONArray("contact"));
         showReviews(reviews);
         b.directions.bind(this, location, bh);
+        bindReport(bh);
 
         b.loading.setVisibility(View.GONE);
         b.content.setVisibility(View.VISIBLE);
@@ -380,6 +381,14 @@ public class BhDetailFragment extends Fragment {
             b.reviews.addView(r.getRoot());
         }
         bindWriteReview();
+    }
+
+    /** v2.1.8: any signed-in user can report the owner of this place; not your own place, not an admin (admins review reports). */
+    private void bindReport(BoardingHouse bh) {
+        String me = AuthService.get().userId();
+        boolean ok = com.bofo.finder.util.SuspendRules.canReport(me, bh.ownerId()) && AuthRouter.realRole != com.bofo.finder.model.Role.ADMIN;
+        b.report.setVisibility(ok ? View.VISIBLE : View.GONE);
+        b.report.setOnClickListener(v -> ReportDialog.show(this, bh.ownerId(), bh.id()));
     }
 
     /** Only students can review (the database allows nothing else). The same button edits a review that already exists. */

@@ -351,6 +351,17 @@
                     android:text="@string/detail_no_reviews"
                     android:textAppearance="@style/Text.Bofo.Secondary"
                     android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/report"
+                    style="@style/Widget.Bofo.Button.Tint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="20dp"
+                    android:minHeight="0dp"
+                    android:text="@string/report_button"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

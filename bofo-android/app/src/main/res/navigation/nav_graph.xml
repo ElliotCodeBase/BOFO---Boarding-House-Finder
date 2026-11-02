@@ -26,6 +26,17 @@
         app:popUpTo="@id/nav_graph"
         app:popUpToInclusive="true" />
 
+    <action
+        android:id="@+id/action_global_suspended"
+        app:destination="@id/suspendedFragment"
+        app:popUpTo="@id/nav_graph"
+        app:popUpToInclusive="true" />
+
+    <fragment
+        android:id="@+id/suspendedFragment"
+        android:name="com.bofo.finder.ui.SuspendedFragment"
+        android:label="Suspended" />
+
     <fragment
         android:id="@+id/splashFragment"
         android:name="com.bofo.finder.ui.SplashFragment"
