@@ -1,3 +1,17 @@
+<<<<<<< HEAD
+=======
+# v2.1.1 - AI smarter, step 1 of 3: BOFO backend brain (function + migration 020)
+- Planner: up to 3 requests in one message ("cheapest with wifi, then compare them and show on the map"), typo and Tagalog/Hiligaynon tolerant, long sentences go to the model.
+- Memory: 10 turns x 300 characters; optional `session` (budget, wifi/water/electricity) fills what the new message leaves open.
+- One short clarifying question instead of a guess (never twice in a row); "nearest" with no campus/location now returns quick replies.
+- Knowledge base (20 entries: deposit, safety, report, owner, verify...) for app help and rental advice; the model may use only those and the real results.
+- Answers are worded by the model by default (set secret `LLM_WORDING=0` to go back to instant templates); up to 3 models.
+- Safety: "ignore your rules / act as / reveal prompt" gets one friendly refusal.
+- Response adds optional `clarify`, `quick_replies`, `lang`, `log_id`. Old apps still work.
+- Migration `020_ai_feedback.sql` (already applied live): tables `ai_unanswered`, `ai_feedback`.
+- Files: `supabase/functions/bofo-chat/index.ts`, `supabase/migrations/020_ai_feedback.sql`, `app/build.gradle` (2.1.1 / 332), `BOFO-AI-SMARTER-STATUS.md`. Deploy: `supabase functions deploy bofo-chat`. Not run against Supabase by Claude.
+
+>>>>>>> backup-ai-step1
 # v2.0.131 - Android: loading animation, directions refresh by themselves, Explore reloads after a place page
 - Loading animation: while directions are worked out, the card shows a moving progress bar and the grey boxes breathe. While the exact roads are still being fetched, a thin bar shows above the plan.
 - BH -> Campus (and every directions tab): no more tapping the tab twice. The first look waits 5 s (was 12 s), shows a rough plan, then asks the road servers again by itself (after 2, 4, 8, 15 s ... up to 8 tries) and swaps in the exact path. A failed retry no longer replaces a plan you can already see with an error.

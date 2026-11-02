@@ -73,10 +73,16 @@ public final class DirectionsRules {
         return Geo.fmtTime(o.minutes()) + " " + how;
     }
 
-    /** Small line under it, e.g. "3.0 km  ·  ₱14–17  ·  estimate". */
+    /** v2.1.0: distance pill of the result panel, e.g. "3.0 km" or "800 m". */
+    public static String heroDistance(Trip.Option o) { return Geo.fmt(o.meters() / 1000.0); }
+
+    /** v2.1.0: fare pill of the result panel, e.g. "\u20B114\u201317"; empty for a walk or when the fare is unknown (the pill is then hidden). */
+    public static String heroFare(Trip.Option o) { return o.mode() == Trip.Mode.WALK ? "" : o.fareText(); }
+
+    /** Small line under it, e.g. "3.0 km  ·  ₱14–17  ·  estimate". Same words as the pills of the result panel (kept for tests and screen readers). */
     public static String heroMeta(Trip.Option o) {
-        String fare = o.mode() == Trip.Mode.WALK || o.fareText().isEmpty() ? "" : "  \u00B7  " + o.fareText();
-        return Geo.fmt(o.meters() / 1000.0) + fare + (o.approximate() ? "  \u00B7  estimate" : "");
+        String fare = heroFare(o).isEmpty() ? "" : "  \u00B7  " + heroFare(o);
+        return heroDistance(o) + fare + (o.approximate() ? "  \u00B7  estimate" : "");
     }
 
     /** openstreetmap.org directions page for the same trip (foot engine for a walk, car engine otherwise). */

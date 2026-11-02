@@ -225,6 +225,7 @@
     <string name="dir_try_again">Try again</string>
     <string name="dir_ways">Ways to go</string>
     <string name="dir_best">Best for you</string>
+    <string name="dir_estimate">Estimate</string>
     <string name="dir_far_line">About %1$s in a straight line, too far to walk.</string>
     <string name="dir_open_osm">Open in OpenStreetMap</string>
     <string name="dir_more">More info</string>

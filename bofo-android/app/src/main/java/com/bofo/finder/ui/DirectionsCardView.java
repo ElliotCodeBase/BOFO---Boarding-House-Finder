@@ -296,7 +296,13 @@ public class DirectionsCardView extends MaterialCardView {
         stopPulse();
         b.dirLoading.setVisibility(View.GONE);
         b.messageBox.setVisibility(View.GONE);
+        final boolean firstShow = b.planBox.getVisibility() != View.VISIBLE;
         b.planBox.setVisibility(View.VISIBLE);
+        if (firstShow) {                                                // v2.1.0: the result eases in (short fade + rise); a later swap to the exact road does not replay it
+            b.planBox.setAlpha(0f);
+            b.planBox.setTranslationY(dp(8));
+            b.planBox.animate().alpha(1f).translationY(0f).setDuration(220).start();
+        }
         b.notes.removeAllViews();
         b.options.removeAllViews();
         b.moreBox.removeAllViews();
@@ -364,12 +370,26 @@ public class DirectionsCardView extends MaterialCardView {
         if (plan == null || idx < 0 || idx >= plan.options().size()) return;
         chosen = idx;
         Trip.Option o = plan.options().get(idx);
-        b.heroIcon.setText(o.mode().icon);
+        b.heroIcon.setImageResource(iconFor(o.mode()));
         b.heroHead.setText(DirectionsRules.heroHead(o));
-        b.heroMeta.setText(DirectionsRules.heroMeta(o));
+        b.chipDist.setText(DirectionsRules.heroDistance(o));
+        String fare = DirectionsRules.heroFare(o);
+        b.chipFare.setText(fare);
+        b.chipFare.setVisibility(fare.isEmpty() ? View.GONE : View.VISIBLE);
+        b.chipEst.setVisibility(o.approximate() ? View.VISIBLE : View.GONE);
+        b.heroPanel.setContentDescription(DirectionsRules.heroHead(o) + ", " + DirectionsRules.heroMeta(o));
         for (int i = 0; i < rows.size(); i++) rows.get(i).getRoot().setBackgroundResource(i == idx ? R.drawable.bg_dir_option_on : R.drawable.bg_dir_option);
         b.map.setRoute(o.path(), o.approximate());
         b.map.fitRoute();
+    }
+
+    /** v2.1.0: drawn icon for the way of travelling (the emoji is not used any more). */
+    private static int iconFor(Trip.Mode m) {
+        switch (m) {
+            case WALK: return R.drawable.ic_dir_walk;
+            case TRICYCLE: return R.drawable.ic_dir_ride;
+            default: return R.drawable.ic_dir_bus;                      // jeepney, bus / van
+        }
     }
 
     private void toggleMore() {

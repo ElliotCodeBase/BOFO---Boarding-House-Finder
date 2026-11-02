@@ -1,3 +1,8 @@
+# Handoff (Android) - v2.1.1 AI smarter, step 1 of 3
+- **PR title:** `v2.1.1 - AI smarter step 1: planner, memory, clarify question, knowledge base (bofo-chat + migration 020)`
+- Migration 020 is applied live. Function NOT deployed: `supabase functions deploy bofo-chat`. Next: step 2 in `BOFO-AI-SMARTER-PROMPT.md` (v2.1.2). Status: `BOFO-AI-SMARTER-STATUS.md`.
+- Risky: every answer now waits for the model (up to ~5 s) before the template; set secret `LLM_WORDING=0` to undo. Free models may ignore the JSON plan: then the old regex path answers.
+---
 # Handoff (Android) - v2.0.122 Minimum app version for everyone
 - **PR title:** `v2.0.122 - Server can refuse old app versions for all users (switch OFF), edge functions forward the version header`
 - **Supabase (NOT applied live):** run `019_min_app_version_all.sql` in the SQL editor after 018. It only creates the switch (`set_min_app_version`) and the check (`enforce_min_app_version`), both OFF. Hook step at the bottom of the file is manual. Earlier chat stopped mid-way (usage limit) so do not assume any of 019 exists live.
