@@ -239,6 +239,7 @@ public final class AuthService {
         prefs.edit().clear().apply();
         Cache.clear();
         DiskCache.deletePrefix("user_");          // saved offline copies belong to the previous user
+        com.bofo.finder.util.BofoMemory.clear();  // v2.1.2: the saved Ask BOFO chat + what the student said (budget, wifi...)
     }
 
     /* ---------- internals ---------- */

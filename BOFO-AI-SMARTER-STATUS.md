@@ -2,5 +2,5 @@
 | Step | Status | Version | Notes for the next AI |
 |---|---|---|---|
 | 1 Backend brain | DONE (function not deployed by Claude) | 2.1.1 | `index.ts`: PLAN prompt, `planSteps`/`chain`, `sessionParams`, `KNOWLEDGE`/`knowledgeFor`, `INJECT_ASK`, `noteUnanswered`, `log_id` (= ai_chat_log.id when monitor on). Migration 020 applied live. Checked: tsc syntax, node run of helpers. Not run against Supabase. Not done: `response_format` JSON mode (free models may reject it). |
-| 2 Android data layer | NOT DONE | next = 2.1.2 | Send `session` {filters_in_effect:{max_price,free_*}}, history 10x300, parse `clarify`/`quick_replies`/`lang`/`log_id`, `rate()` -> insert into `ai_feedback` (user_id defaults to auth.uid()), BofoMemory, smarter BofoIntentLocal, tests. |
+| 2 Android data layer | DONE (not built on a phone) | 2.1.2 | `BofoMemory` (+ `loadHistory()` for the UI to restore bubbles), `BofoAiService.session/rate`, `BofoAnswer` clarify/quickReplies/lang/logId, smarter `BofoIntentLocal` (clarify answers also fill `suggestions`). 25 logic tests passed against stubs. Next = step 3, version 2.1.3. |
 | 3 Chat UI + admin + docs | NOT DONE | 2.1.3 | clarify chips, thumbs, New chat, admin "Needs attention" from `ai_unanswered`, docs, acceptance list. |
