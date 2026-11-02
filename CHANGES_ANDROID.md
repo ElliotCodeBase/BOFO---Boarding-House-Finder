@@ -1,3 +1,9 @@
+# v2.1.10 - Place page: owner profile card, Report moved into it
+- New **owner card** in the place info (under the address / Show on map): the owner's photo (or the first letter of their name when there is none), name, and a Verified / Not verified line. It shows only when the owner has a name or photo (or when you can report them).
+- **Report** is now a small outlined pill with a flag inside the owner card, instead of a button at the very bottom under the reviews. Same rules as before: not on your own place, not for admins.
+- Owner photo comes from the existing view `bh_owner_v` (migration 021 already exposes `owner_photo`), so **no Supabase change**.
+- Files: `fragment_bh_detail.xml`, `BhDetailFragment`, `BhService`, `bg_owner_card.xml`, `bg_report_pill.xml`, `ic_flag.xml`, `strings_owner.xml` (new), `app/build.gradle` (2.1.10 / 20110). Not built or run by Claude (no Android SDK); Java parse-checked only.
+
 # v2.1.9 - Safety series step 3 of 3: ban by ID, Banned users, Unban
 - Owner verification asks for the **ID number** (4-30 letters/digits). The app sends it only to the server, which keeps a keyed hash (HMAC-SHA256 with a secret pepper), never the number. A banned ID is stopped BEFORE any photo uploads, with exactly "You are banned." and no hint about the old account.
 - Admin approval now needs the admin to **retype the number** from the ID photo; a wrong number is refused, and a banned ID cannot be approved. (The old approve call is refused by the server; Reject is unchanged.)

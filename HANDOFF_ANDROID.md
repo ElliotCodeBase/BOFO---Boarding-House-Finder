@@ -1,3 +1,8 @@
+# Handoff (Android) - v2.1.10 owner card on the place page
+- **PR title:** `v2.1.10 - Place page: owner profile card with Report inside it`
+- No Supabase change. `BhService.detailOnline` now selects `owner_name,owner_photo` from `bh_owner_v`; `BhDetailFragment.bindOwner()` fills the card and the Report pill (replaces `bindReport`).
+- Risks: not built or run by Claude. Check on a device: place with photo, place without photo/name, own place (no Report), admin (no Report), long owner name (ellipsized on one line).
+---
 # Handoff (Android) - v2.1.9 safety series step 3 of 3
 - **PR title:** `v2.1.9 - Safety series step 3 of 3: ban by ID, Banned users, Unban`
 - **Supabase:** migration **022 IS APPLIED LIVE** (project BOFO, 2026-11-02, with the user's OK; verified: `reports`, `admin_review_report`, `is_suspended`, `my_suspension`, `reports_admin_v`, 7 `susp_block_*` policies, 2 `users` columns). **023 is written but NOT applied live** (needs the user's OK): it adds `users.banned_at/banned_by/ban_reason`, private `app_secrets` (random pepper), `id_hash()`, `owner_verifications.id_hash` (+ trigger `protect_ov`), `banned_identities`, `check_id_number`, `submit_id_number`, `admin_approve_verification`, `admin_unban`, `admin_banned_list`, and replaces `admin_review_report` (adds `ban`), `review_verification` (approve is now refused: use `admin_approve_verification`), `is_suspended`, `my_suspension`, `protect_users`.

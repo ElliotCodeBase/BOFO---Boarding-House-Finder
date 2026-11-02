@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- v2.1.10: owner card on the place page -->
+    <string name="detail_owner_label">OWNER</string>
+    <string name="detail_owner_fallback">Boarding house owner</string>
+    <string name="report_short">Report</string>
+</resources>
