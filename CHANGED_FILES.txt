@@ -1,5 +1,6 @@
 changed bofo-android/app/build.gradle
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/BoardingFragment.java
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/BoardingChatFragment.java
-new BOFO-v2.2.3-CHANGELOG.md
+changed java/com/bofo/finder/ui/BoardingChatFragment.java
+changed res/layout/fragment_boarding_chat.xml, item_group_msg.xml
+changed res/drawable/bg_ann_card, bg_bubble_mine, bg_bubble_theirs, bg_role_owner, bg_role_student
+new res/drawable/bg_chat_header.xml, bg_chat_composer.xml
+new BOFO-v2.2.4-CHANGELOG.md

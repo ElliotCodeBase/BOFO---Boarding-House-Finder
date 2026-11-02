@@ -5,7 +5,8 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:paddingHorizontal="12dp"
-    android:paddingVertical="3dp">
+    android:paddingTop="6dp"
+    android:paddingBottom="1dp">
 
     <TextView
         android:id="@+id/day"
@@ -25,10 +26,10 @@
         android:id="@+id/who"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="2dp"
+        android:layout_marginBottom="3dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingHorizontal="4dp">
+        android:paddingHorizontal="6dp">
 
         <TextView
             android:id="@+id/name"
@@ -74,26 +75,36 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:drawablePadding="6dp"
+                android:drawableStart="@drawable/ic_announce"
+                android:drawableTint="@color/bofo_role_owner_text"
+                android:gravity="center_vertical"
                 android:text="@string/boarding_announcement"
-                android:textColor="@color/bofo_muted"
-                android:textSize="12sp" />
+                android:textAllCaps="true"
+                android:textColor="@color/bofo_role_owner_text"
+                android:textSize="11sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/ann_pinned"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="@drawable/bg_role_owner"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
                 android:text="@string/boarding_pinned_label"
-                android:textColor="@color/bofo_muted"
-                android:textSize="12sp" />
+                android:textColor="@color/bofo_role_owner_text"
+                android:textSize="11sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/ann_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
             android:textColor="@color/bofo_ink"
-            android:textSize="16sp"
+            android:textSize="17sp"
             android:textStyle="bold" />
 
         <TextView
@@ -166,9 +177,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:lineSpacingMultiplier="1.15"
-        android:maxWidth="300dp"
+        android:maxWidth="290dp"
         android:paddingHorizontal="14dp"
-        android:paddingVertical="10dp"
+        android:paddingVertical="9dp"
         android:textIsSelectable="false"
         android:textSize="15sp" />
 
@@ -176,8 +187,9 @@
         android:id="@+id/meta"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:paddingHorizontal="4dp"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="5dp"
+        android:paddingHorizontal="6dp"
         android:textColor="@color/bofo_muted"
         android:textSize="11sp" />
 </LinearLayout>
