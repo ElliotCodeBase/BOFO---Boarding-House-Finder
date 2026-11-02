@@ -129,6 +129,12 @@
         android:name="com.bofo.finder.ui.AnnounceFragment"
         android:label="New announcement" />
 
+    <!-- v2.2.0 step 5: owner's Group info (invite code + members). Arguments: bhId, title (GroupInfoFragment.ARG_*). -->
+    <fragment
+        android:id="@+id/groupInfoFragment"
+        android:name="com.bofo.finder.ui.GroupInfoFragment"
+        android:label="Group info" />
+
     <fragment
         android:id="@+id/chatFragment"
         android:name="com.bofo.finder.ui.ChatFragment"

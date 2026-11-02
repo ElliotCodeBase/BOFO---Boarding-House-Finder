@@ -95,4 +95,40 @@
     <string name="boarding_pin_full">Only 3 announcements can be pinned. Unpin one first.</string>
     <string name="boarding_pin_failed">Could not change the pin. Try again.</string>
     <string name="boarding_edit_failed">Could not save the changes. Try again.</string>
+    <!-- step 5: group info (invite code + members), notice, owner empty chat -->
+    <string name="boarding_menu_info">Group info and invite code</string>
+    <string name="group_info_title">Group info</string>
+    <string name="group_code_label">Invite code</string>
+    <string name="group_code_none">No code yet. Create one so students can join.</string>
+    <string name="group_code_note">Give this code to your tenants. They enter it in the Boarding tab. Only people who have it can read the chat.</string>
+    <string name="group_code_copy">Copy</string>
+    <string name="group_code_copied">Code copied.</string>
+    <string name="group_code_share">Share</string>
+    <string name="group_code_new">New code</string>
+    <string name="group_code_create">Create code</string>
+    <string name="group_code_new_title">Create a new code?</string>
+    <string name="group_code_new_msg">The old code stops working at once. People who are already in the group stay.</string>
+    <string name="group_code_failed">Could not change the code. Try again.</string>
+    <string name="group_share_chooser">Share invite code</string>
+    <string name="group_members_title">Members</string>
+    <plurals name="group_members_count">
+        <item quantity="one">%1$d student in this group</item>
+        <item quantity="other">%1$d students in this group</item>
+    </plurals>
+    <string name="group_members_empty">No one has joined yet. Share the invite code above.</string>
+    <string name="group_members_error">Could not load the members.</string>
+    <string name="group_member_muted">Muted</string>
+    <string name="group_member_removed">Removed</string>
+    <string name="group_member_owner">Owner</string>
+    <string name="group_member_student">Student</string>
+    <string name="group_member_mute">Mute (cannot post)</string>
+    <string name="group_member_unmute">Unmute</string>
+    <string name="group_member_remove">Remove from group</string>
+    <string name="group_member_remove_title">Remove this student?</string>
+    <string name="group_member_remove_msg">They can no longer read or post in this chat and cannot join again with the code.</string>
+    <string name="group_member_failed">Could not change the member. Try again.</string>
+    <string name="boarding_empty_sub_owner">Share your invite code so students can join (menu > Group info and invite code).</string>
+    <string name="boarding_notice_one">New announcement: %1$s</string>
+    <string name="boarding_notice_many">%1$d new announcements. Latest: %2$s</string>
+    <string name="boarding_notice_open">Open</string>
 </resources>

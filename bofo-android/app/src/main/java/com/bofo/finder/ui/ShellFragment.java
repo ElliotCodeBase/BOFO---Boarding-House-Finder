@@ -19,7 +19,12 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.bofo.finder.R;
 import com.bofo.finder.databinding.FragmentShellBinding;
 import com.bofo.finder.model.BofoAnswer;
+import com.bofo.finder.model.GroupMessage;
+import com.bofo.finder.service.AuthService;
+import com.bofo.finder.service.BhGroupService;
 import com.bofo.finder.service.ChatService;
+import com.bofo.finder.util.BoardingRules;
+import com.google.android.material.snackbar.Snackbar;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.AppPrefs;
 import com.bofo.finder.util.LocationHelper;
@@ -139,6 +144,35 @@ public class ShellFragment extends Fragment {
     public void onResume() {
         super.onResume();
         refreshBadge();
+        showNotice();
+    }
+
+    /** Announcement ids already shown as a notice in this app run: each one notifies once (v2.2.0 step 5). */
+    private static final java.util.Set<String> SHOWN = new java.util.HashSet<>();
+
+    /**
+     * Students: owner announcements I have not pressed "Got it" on show as one bar above the dock (Open = the Boarding tab). Derived from the
+     * unacknowledged announcements, so there is no extra table. Errors are ignored (migration 024 may not be live yet).
+     */
+    private void showNotice() {
+        if (binding == null || admin || owner) return;
+        String me = AuthService.get().userId();
+        if (me == null || me.isEmpty()) return;
+        Async.run(() -> new BhGroupService().unackedAnnouncements(me), (List<GroupMessage> list) -> {
+            if (binding == null || !isAdded()) return;
+            List<GroupMessage> fresh = BoardingRules.newNotices(list, SHOWN);
+            if (fresh.isEmpty()) return;
+            String title = BoardingRules.noticeTitle(fresh);
+            String text = fresh.size() == 1 ? getString(R.string.boarding_notice_one, title) : getString(R.string.boarding_notice_many, fresh.size(), title);
+            Snackbar.make(binding.getRoot(), text, Snackbar.LENGTH_LONG)
+                    .setAnchorView(binding.dock)
+                    .setAction(R.string.boarding_notice_open, v -> {
+                        if (binding == null) return;
+                        binding.dock.select(R.id.tab_boarding, true);
+                        showTab(R.id.tab_boarding);
+                    })
+                    .show();
+        }, e -> { });
     }
 
     /** Tabs per user type, in the same order and with the same icons as the JavaFX app. */
@@ -158,7 +192,7 @@ public class ShellFragment extends Fragment {
         } else {
             t.add(tab(R.id.tab_home, R.drawable.ic_dock_home, getString(R.string.tab_home), false, false));
             t.add(tab(R.id.tab_explore, R.drawable.ic_dock_explore, getString(R.string.tab_explore), false, false));
-            t.add(tab(R.id.tab_boarding, R.drawable.ic_dock_boarding, getString(R.string.tab_boarding), false, false));      // v2.2.0: centre slot (Saved moved to Profile)
+            t.add(tab(R.id.tab_boarding, R.drawable.ic_dock_boarding, getString(R.string.tab_boarding), false, true));      // v2.2.0: centre slot (Saved moved to Profile)
             t.add(tab(R.id.tab_chats, R.drawable.ic_dock_chats, getString(R.string.tab_chats), false, true));
             t.add(tab(R.id.tab_profile, R.drawable.ic_dock_profile, getString(R.string.tab_profile), false, false));
         }
@@ -175,6 +209,10 @@ public class ShellFragment extends Fragment {
         Async.run(() -> new ChatService().totalUnread(), (Integer n) -> {
             if (binding != null) binding.dock.setBadge(n == null ? 0 : n);
         }, e -> { });
+        if (owner) return;                                  // v2.2.0 step 5: students also get an unread count on Boarding (the owner has no such tab)
+        Async.run(() -> new BhGroupService().totalUnread(), (Integer n) -> {
+            if (binding != null) binding.dock.setBadge(R.id.tab_boarding, n == null ? 0 : n);
+        }, e -> { });                                       // migration 024 may not be live: the badge just stays off
     }
 
     /** Home search bar: Enter on a place name switches to the Explore tab (Explore reads ExploreHandoff when it opens). */

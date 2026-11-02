@@ -1,5 +1,6 @@
 package com.bofo.finder.util;
 
+import com.bofo.finder.model.BhMember;
 import com.bofo.finder.model.GroupMessage;
 
 import java.util.ArrayList;
@@ -190,5 +191,49 @@ public final class BoardingRules {
         if (t.isEmpty()) return "";
         String s = sender == null ? "" : sender.trim();
         return s.isEmpty() ? t : s + ": " + t;
+    }
+
+    // ---- step 5: members, invite code, announcement notice -------------------------------------------------------
+
+    /** Invite code shown as two blocks: "ABCD2345" -> "ABCD-2345" (anything else is returned as it is). */
+    public static String formatCode(String code) {
+        String c = code == null ? "" : code.trim();
+        return c.length() == 8 && c.indexOf('-') < 0 ? c.substring(0, 4) + "-" + c.substring(4) : c;
+    }
+
+    /** Text handed to the share sheet. */
+    public static String shareText(String house, String code) {
+        return "Join " + (house == null || house.trim().isEmpty() ? "my boarding house" : house.trim()) + " on BOFO Finder. Open the Boarding tab and enter the code " + formatCode(code) + ".";
+    }
+
+    /** Mute / remove apply to active students only (the owner row and already removed people have no actions). */
+    public static boolean canModerate(BhMember m) {
+        return m != null && !m.isOwner() && "active".equals(m.status());
+    }
+
+    /** Members for the owner's list: the owner first, then active students, then removed ones; joined order is kept inside each group. */
+    public static List<BhMember> memberOrder(List<BhMember> in) {
+        List<BhMember> owner = new ArrayList<>(), active = new ArrayList<>(), gone = new ArrayList<>();
+        for (BhMember m : in) (m.isOwner() ? owner : "active".equals(m.status()) ? active : gone).add(m);
+        owner.addAll(active); owner.addAll(gone);
+        return owner;
+    }
+
+    public static int activeStudents(List<BhMember> in) {
+        int n = 0; for (BhMember m : in) if (!m.isOwner() && "active".equals(m.status())) n++; return n;
+    }
+
+    /** Announcements not shown as a notice yet in this app run ({@code shown} is updated), newest first. */
+    public static List<GroupMessage> newNotices(List<GroupMessage> unacked, java.util.Set<String> shown) {
+        List<GroupMessage> out = new ArrayList<>();
+        for (GroupMessage m : unacked) if (shown.add(m.id())) out.add(m);
+        return out;
+    }
+
+    /** Title of the newest fresh announcement, one line (the body when it has no title); "" when the list is empty. */
+    public static String noticeTitle(List<GroupMessage> fresh) {
+        if (fresh.isEmpty()) return "";
+        GroupMessage m = fresh.get(0);
+        return oneLine(m.title() == null || m.title().isEmpty() ? m.body() : m.title(), 60);
     }
 }
