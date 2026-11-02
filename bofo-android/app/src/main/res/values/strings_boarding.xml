@@ -36,12 +36,12 @@
         <item quantity="other">Seen by %1$d members</item>
     </plurals>
     <string name="boarding_got_it">Got it</string>
-    <string name="boarding_got_it_done">You got it \u2713</string>
+    <string name="boarding_got_it_done">You acknowledged this</string>
     <string name="boarding_ack_failed">Could not save your \"Got it\". Try again.</string>
     <string name="boarding_report_message">Report message</string>
     <string name="report_message_title">Report this message</string>
     <string name="report_message_hint">Why are you reporting this message? The text is sent to the admins with your report.</string>
-    <string name="cd_pinned_bar">Pinned announcements. Tap to read.</string>
+    <string name="cd_pinned_bar">Announcement waiting for Got it. Tap to read.</string>
     <string name="boarding_leave">Leave group</string>
     <string name="boarding_leave_title">Leave this group?</string>
     <string name="boarding_leave_msg">You will stop seeing this chat. You can join again with the code.</string>
@@ -96,6 +96,8 @@
     <string name="boarding_pin_failed">Could not change the pin. Try again.</string>
     <string name="boarding_edit_failed">Could not save the changes. Try again.</string>
     <!-- step 5: group info (invite code + members), notice, owner empty chat -->
+    <string name="boarding_menu_pinned">Pinned announcements (%1$d)</string>
+    <string name="boarding_pinned_more">+%1$d more</string>
     <string name="boarding_menu_info">Group info and invite code</string>
     <string name="group_info_title">Group info</string>
     <string name="group_code_label">Invite code</string>

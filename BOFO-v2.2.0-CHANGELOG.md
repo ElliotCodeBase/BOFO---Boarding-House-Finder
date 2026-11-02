@@ -41,3 +41,8 @@ Not built or run by Claude. Java checked with `javac` against stubs only; the SQ
 - Not built or run by Claude (no Android SDK). 22 rules tests pass on a plain JVM (org.json and BhGroupService stubbed); the 3 touched screens were checked with `javac` (only missing-Android-class errors remain); strings, view ids and binding fields cross-checked by script. Needs migration 024 live (apply 023 first). No Supabase change in this step.
 - Known limits: owner has no unread badge; no brute-force limit on code guesses; a removed student cannot be restored; the notice bar appears when the main screen resumes.
 - Apply steps 2-4 first.
+
+## Polish: announcement card + pinned bar
+- Announcement card redone as a plain white card (no amber, no speaker icon, no tick). Footer: Got it button, "You acknowledged this", or "Seen by N members" for the owner.
+- The top bar now only shows announcements that still wait for your Got it, and disappears after pressing it. The 3-dot menu has **Pinned announcements (N)** with the full list.
+- Changed: `item_group_msg.xml`, `fragment_boarding_chat.xml`, `bg_pinned_banner.xml`, `strings_boarding.xml`, `BoardingChatFragment`, `BoardingRules` (+ test); new `bg_ann_card.xml`. `ic_announce` is no longer used by the chat. Not built or run (no Android SDK); 23 rules tests pass on a plain JVM.

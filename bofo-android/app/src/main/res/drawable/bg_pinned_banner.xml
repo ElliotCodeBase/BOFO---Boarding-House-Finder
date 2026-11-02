@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- v2.2.0 step 3: pinned announcement strip under the chat header -->
+<!-- v2.2.1: slim bar under the chat header for announcements that still wait for "Got it": white with a hairline underneath -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
-        <shape android:shape="rectangle"><solid android:color="@color/bofo_amber_wash" /></shape>
+        <shape android:shape="rectangle"><solid android:color="@color/bofo_white" /></shape>
     </item>
     <item android:gravity="bottom">
         <shape android:shape="rectangle">
             <size android:height="1dp" />
-            <solid android:color="@color/bofo_amber" />
+            <solid android:color="@color/bofo_border" />
         </shape>
     </item>
 </layer-list>

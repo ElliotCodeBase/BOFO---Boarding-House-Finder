@@ -83,7 +83,7 @@
         android:textSize="12sp"
         android:visibility="gone" />
 
-    <!-- step 3: pinned announcement strip (tap = read all pinned; "Got it" right here) -->
+    <!-- pinned bar (v2.2.1): only announcements that still wait for my "Got it"; gone once pressed. All pinned ones: 3-dot menu > Pinned -->
     <LinearLayout
         android:id="@+id/pinned_bar"
         android:layout_width="match_parent"
@@ -94,20 +94,14 @@
         android:gravity="center_vertical"
         android:minHeight="52dp"
         android:orientation="horizontal"
-        android:paddingHorizontal="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="12dp"
         android:paddingVertical="6dp"
         android:visibility="gone">
-
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:importantForAccessibility="no"
-            android:src="@drawable/ic_announce" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -118,7 +112,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="@color/bofo_ink"
-                android:textSize="13sp"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -128,7 +122,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="@color/bofo_text_2"
-                android:textSize="12sp" />
+                android:textSize="13sp" />
         </LinearLayout>
 
         <TextView
@@ -136,9 +130,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:textColor="@color/bofo_role_owner_text"
-            android:textSize="11sp"
-            android:textStyle="bold" />
+            android:textColor="@color/bofo_muted"
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/pinned_got_it"

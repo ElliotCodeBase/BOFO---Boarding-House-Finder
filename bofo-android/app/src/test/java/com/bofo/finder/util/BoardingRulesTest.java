@@ -127,6 +127,16 @@ public class BoardingRulesTest {
         assertEquals(2, BoardingRules.unackedCount(pins));
     }
 
+    @Test public void topBarListsOnlyAnnouncementsStillWaitingForGotIt() {
+        List<BoardingRules.Row> pins = Arrays.asList(
+                ann("done", false, true, true, BoardingRules.State.SENT), ann("todo", false, false, true, BoardingRules.State.SENT), ann("mine", true, false, true, BoardingRules.State.SENT));
+        List<BoardingRules.Row> bar = BoardingRules.toAck(pins);
+        assertEquals(1, bar.size());
+        assertEquals("todo", bar.get(0).id);
+        assertTrue(BoardingRules.toAck(BoardingRules.markAcked(pins, "todo")).isEmpty());   // after Got it the bar is gone
+        assertTrue(BoardingRules.toAck(new ArrayList<>()).isEmpty());
+    }
+
     @Test public void markAckedChangesOnlyThatRowAndLeavesTheInputAlone() {
         List<BoardingRules.Row> rows = Arrays.asList(ann("a", false, false, true, BoardingRules.State.SENT), ann("b", false, false, true, BoardingRules.State.SENT));
         List<BoardingRules.Row> out = BoardingRules.markAcked(rows, "b");
