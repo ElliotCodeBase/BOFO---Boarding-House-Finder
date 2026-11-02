@@ -32,6 +32,8 @@ public final class BoardingRules {
             this.pinned = pinned; this.iAcked = iAcked; this.ackCount = ackCount; this.state = state;
         }
         public Row withState(State s) { return new Row(id, senderId, name, role, body, title, createdAt, mine, announcement, pinned, iAcked, ackCount, s); }
+        public Row withPinned(boolean p) { return new Row(id, senderId, name, role, body, title, createdAt, mine, announcement, p, iAcked, ackCount, state); }
+        public Row withContent(String newTitle, String newBody) { return new Row(id, senderId, name, role, newBody, newTitle, createdAt, mine, announcement, pinned, iAcked, ackCount, state); }
         public Row withAcked(boolean acked) { return new Row(id, senderId, name, role, body, title, createdAt, mine, announcement, pinned, acked, ackCount, state); }
         public boolean fromOwner() { return GroupMessage.OWNER.equals(role); }
     }
@@ -151,5 +153,42 @@ public final class BoardingRules {
     /** How many pinned announcements still wait for my "Got it". */
     public static int unackedCount(List<Row> pinned) {
         int n = 0; for (Row r : pinned) if (canAck(r)) n++; return n;
+    }
+
+    // ---- step 4: owner side (announce form, pin / edit / delete) ---------------------------------------------------
+
+    public enum AnnounceProblem { NONE, NO_TITLE, NO_BODY, NO_HOUSE, TOO_MANY }
+
+    /** Checks the Announce form before it is sent (the database checks the same limits again). */
+    public static AnnounceProblem checkAnnouncement(String title, String body, int houses) {
+        if (title == null || title.trim().isEmpty()) return AnnounceProblem.NO_TITLE;
+        if (title.trim().length() > 120) return AnnounceProblem.NO_TITLE;
+        if (body == null || body.trim().isEmpty() || body.trim().length() > 1000) return AnnounceProblem.NO_BODY;
+        if (houses < 1) return AnnounceProblem.NO_HOUSE;
+        if (houses > 20) return AnnounceProblem.TOO_MANY;
+        return AnnounceProblem.NONE;
+    }
+
+    /** The owner may edit / pin his own announcements. */
+    public static boolean canManageAnnouncement(Row r, String myRole) {
+        return r != null && r.announcement && r.state == State.SENT && r.mine && GroupMessage.OWNER.equals(myRole);
+    }
+
+    /** Delete: my own server messages; the owner also deletes anybody's message in his house. */
+    public static boolean canDelete(Row r, String myRole) {
+        return r != null && r.state == State.SENT && (r.mine || GroupMessage.OWNER.equals(myRole));
+    }
+
+    /** True when the refused pin is the "only 3 pinned" rule (unpin one first). */
+    public static boolean pinIsFull(String text) {
+        return text != null && text.toLowerCase(Locale.ROOT).contains("only 3 pinned");
+    }
+
+    /** Group list line 2: "12 members" style numbers are formatted by the screen; this picks the preview "Name: text" (or just the text). */
+    public static String preview(String sender, String text) {
+        String t = oneLine(text, 80);
+        if (t.isEmpty()) return "";
+        String s = sender == null ? "" : sender.trim();
+        return s.isEmpty() ? t : s + ": " + t;
     }
 }

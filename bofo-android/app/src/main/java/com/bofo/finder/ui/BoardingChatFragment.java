@@ -53,7 +53,8 @@ import java.util.List;
  * later when offline. Every message shows the sender name, a role badge (Owner / Student) and the time.
  * Step 3: announcements get their own card (title, text, "Got it" button; the owner sees "Seen by N"), the pinned ones sit in a banner
  * under the header (unanswered first, with "Got it" in the banner) and a long press on somebody else's message offers "Report message".
- * Used by the student tab (BoardingFragment, step 2) and by the owner screen (step 4: showBack = true, myRole = owner).
+ * Step 4: with myRole = owner the same screen lets the owner pin / unpin, edit and delete announcements, delete any message, and open the Announce form
+ * from the header menu. Used by the student tab (BoardingFragment) and by the owner screen (OwnerBoardingFragment: showBack = true, myRole = owner).
  */
 public class BoardingChatFragment extends Fragment {
 
@@ -62,6 +63,13 @@ public class BoardingChatFragment extends Fragment {
     public static final String RESULT_LEFT = "boarding_left";
 
     public static BoardingChatFragment newInstance(String bhId, String title, int members, String myRole, boolean showBack, boolean canLeave) {
+        BoardingChatFragment f = new BoardingChatFragment();
+        f.setArguments(args(bhId, title, members, myRole, showBack, canLeave));
+        return f;
+    }
+
+    /** The arguments of one chat; also used as the bundle when the owner screen navigates to {@code boardingChatFragment}. */
+    public static Bundle args(String bhId, String title, int members, String myRole, boolean showBack, boolean canLeave) {
         Bundle a = new Bundle();
         a.putString(ARG_BH, bhId);
         a.putString(ARG_TITLE, title == null ? "" : title);
@@ -69,9 +77,7 @@ public class BoardingChatFragment extends Fragment {
         a.putString(ARG_ROLE, myRole == null ? GroupMessage.STUDENT : myRole);
         a.putBoolean(ARG_BACK, showBack);
         a.putBoolean(ARG_LEAVE, canLeave);
-        BoardingChatFragment f = new BoardingChatFragment();
-        f.setArguments(a);
-        return f;
+        return a;
     }
 
     private FragmentBoardingChatBinding b;
@@ -132,10 +138,16 @@ public class BoardingChatFragment extends Fragment {
             b.back.setVisibility(View.VISIBLE);
             b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
         }
-        if (args.getBoolean(ARG_LEAVE, false)) {
+        boolean canLeave = args.getBoolean(ARG_LEAVE, false), isOwner = GroupMessage.OWNER.equals(myRole);
+        if (canLeave || isOwner) {                                   // students: Leave group. Owner (step 4): New announcement
             b.more.setVisibility(View.VISIBLE);
-            b.more.setOnClickListener(v -> new MaterialAlertDialogBuilder(requireContext())
-                    .setItems(new String[]{getString(R.string.boarding_leave)}, (d, which) -> confirmLeave()).show());
+            b.more.setOnClickListener(v -> {
+                List<String> labels = new ArrayList<>();
+                List<Runnable> acts = new ArrayList<>();
+                if (isOwner) { labels.add(getString(R.string.boarding_menu_announce)); acts.add(this::openAnnounce); }
+                if (canLeave) { labels.add(getString(R.string.boarding_leave)); acts.add(this::confirmLeave); }
+                new MaterialAlertDialogBuilder(requireContext()).setItems(labels.toArray(new String[0]), (d, which) -> acts.get(which).run()).show();
+            });
         }
 
         adapter = new Adapter(myRole, new Adapter.Listener() {
@@ -350,9 +362,17 @@ public class BoardingChatFragment extends Fragment {
         if (r.state == State.FAILED) {
             labels.add(getString(R.string.chats_delete));
             acts.add(() -> { failed.remove(r); render(false); });
-        } else if (r.mine) {
-            labels.add(getString(R.string.boarding_delete_mine));
-            acts.add(() -> delete(r));
+        } else {
+            if (BoardingRules.canManageAnnouncement(r, myRole)) {         // step 4: the owner pins, edits and deletes his announcements
+                labels.add(getString(r.pinned ? R.string.boarding_unpin : R.string.boarding_pin));
+                acts.add(() -> setPinned(r, !r.pinned));
+                labels.add(getString(R.string.boarding_edit));
+                acts.add(() -> editAnnouncement(r));
+            }
+            if (BoardingRules.canDelete(r, myRole)) {
+                labels.add(getString(r.announcement ? R.string.boarding_delete_announcement : r.mine ? R.string.boarding_delete_mine : R.string.boarding_delete_message));
+                acts.add(() -> { if (r.mine && !r.announcement) delete(r); else confirmDelete(r); });
+            }
         }
         new MaterialAlertDialogBuilder(requireContext())
                 .setItems(labels.toArray(new String[0]), (d, which) -> acts.get(which).run())
@@ -364,8 +384,86 @@ public class BoardingChatFragment extends Fragment {
             if (b == null) return;
             if (!ok) { ListArea.toast(this, getString(R.string.boarding_delete_failed)); return; }
             server.removeIf(s -> s.id.equals(r.id));
+            pinned.removeIf(s -> s.id.equals(r.id));
+            renderBanner();
             render(false);
         }, e -> ListArea.toast(this, getString(R.string.boarding_delete_failed)));
+    }
+
+    /** Owner deleting somebody else's message or an announcement: ask first (it disappears for everyone). */
+    private void confirmDelete(Row r) {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.boarding_delete_confirm_title)
+                .setMessage(R.string.boarding_delete_confirm_msg)
+                .setNegativeButton(R.string.common_cancel, null)
+                .setPositiveButton(r.announcement ? R.string.boarding_delete_announcement : R.string.boarding_delete_message, (d, w) -> delete(r))
+                .show();
+    }
+
+    // ---- owner: announce, pin, edit (step 4) -------------------------------------------------------------------
+
+    private void openAnnounce() {
+        Bundle a = new Bundle();
+        a.putString(AnnounceFragment.ARG_BH, bhId);
+        NavHostFragment.findNavController(this).navigate(R.id.announceFragment, a);
+    }
+
+    private void setPinned(Row r, boolean pin) {
+        Async.run(() -> { if (pin) svc.pin(r.id); else svc.unpin(r.id); return Boolean.TRUE; }, ok -> {
+            if (b == null) return;
+            replaceServerRow(r.withPinned(pin));
+            loadPinned();
+            render(false);
+        }, e -> {
+            if (b == null) return;
+            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline)
+                    : BoardingRules.pinIsFull(String.valueOf(e.getMessage())) ? getString(R.string.boarding_pin_full) : getString(R.string.boarding_pin_failed));
+        });
+    }
+
+    private void editAnnouncement(Row r) {
+        Context c = requireContext();
+        float dp = getResources().getDisplayMetrics().density;
+        LinearLayout box = new LinearLayout(c);
+        box.setOrientation(LinearLayout.VERTICAL);
+        int pad = Math.round(20 * dp);
+        box.setPadding(pad, Math.round(10 * dp), pad, 0);
+        android.widget.EditText title = new android.widget.EditText(c);
+        title.setText(r.title == null ? "" : r.title);
+        title.setHint(R.string.announce_title_hint);
+        title.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(BhGroupService.MAX_TITLE)});
+        title.setSingleLine(true);
+        box.addView(title);
+        android.widget.EditText body = new android.widget.EditText(c);
+        body.setText(r.body);
+        body.setHint(R.string.announce_body_hint);
+        body.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        body.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(BhGroupService.MAX_LEN)});
+        body.setMinLines(3);
+        body.setMaxLines(8);
+        box.addView(body);
+        androidx.appcompat.app.AlertDialog d = new MaterialAlertDialogBuilder(c).setTitle(R.string.boarding_edit).setView(box)
+                .setNegativeButton(R.string.common_cancel, null)
+                .setPositiveButton(R.string.boarding_edit_save, null).create();
+        d.setOnShowListener(x -> d.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            final String nt = title.getText().toString().trim(), nb = body.getText().toString().trim();
+            if (BoardingRules.checkAnnouncement(nt, nb, 1) != BoardingRules.AnnounceProblem.NONE) {
+                ListArea.toast(this, getString(nt.isEmpty() || nt.length() > 120 ? R.string.announce_err_title : R.string.announce_err_body));
+                return;
+            }
+            d.dismiss();
+            Async.run(() -> { svc.editAnnouncement(r.id, nt, nb); return Boolean.TRUE; }, ok -> {
+                if (b == null) return;
+                replaceServerRow(r.withContent(nt, nb));
+                loadPinned();
+                render(false);
+            }, e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : getString(R.string.boarding_edit_failed)));
+        }));
+        d.show();
+    }
+
+    private void replaceServerRow(Row n) {
+        for (int i = 0; i < server.size(); i++) if (server.get(i).id.equals(n.id)) { server.set(i, n); return; }
     }
 
     // ---- announcements: pinned banner, "Got it" ---------------------------------------------------------------
@@ -534,7 +632,7 @@ public class BoardingChatFragment extends Fragment {
                 @Override public boolean areItemsTheSame(@NonNull Row a, @NonNull Row c) { return a.id.equals(c.id); }
                 @Override public boolean areContentsTheSame(@NonNull Row a, @NonNull Row c) {
                     return a.state == c.state && a.body.equals(c.body) && a.createdAt.equals(c.createdAt) && a.name.equals(c.name) && java.util.Objects.equals(a.role, c.role)
-                            && a.pinned == c.pinned && a.iAcked == c.iAcked && a.ackCount == c.ackCount;
+                            && a.pinned == c.pinned && a.iAcked == c.iAcked && a.ackCount == c.ackCount && java.util.Objects.equals(a.title, c.title);
                 }
             });
             this.myRole = myRole;

@@ -152,4 +152,36 @@ public class BoardingRulesTest {
         assertFalse(r.mine);
         assertEquals(4, r.withState(BoardingRules.State.SENT).ackCount);                                  // copies keep the new fields
     }
+
+    // ---- step 4: owner side -------------------------------------------------------------------------------------------
+
+    @Test public void announceFormChecksTitleBodyAndHouseCount() {
+        assertEquals(BoardingRules.AnnounceProblem.NO_TITLE, BoardingRules.checkAnnouncement("  ", "x", 1));
+        assertEquals(BoardingRules.AnnounceProblem.NO_TITLE, BoardingRules.checkAnnouncement("t".repeat(121), "x", 1));
+        assertEquals(BoardingRules.AnnounceProblem.NO_BODY, BoardingRules.checkAnnouncement("t", "", 1));
+        assertEquals(BoardingRules.AnnounceProblem.NO_BODY, BoardingRules.checkAnnouncement("t", "b".repeat(1001), 1));
+        assertEquals(BoardingRules.AnnounceProblem.NO_HOUSE, BoardingRules.checkAnnouncement("t", "b", 0));
+        assertEquals(BoardingRules.AnnounceProblem.TOO_MANY, BoardingRules.checkAnnouncement("t", "b", 21));
+        assertEquals(BoardingRules.AnnounceProblem.NONE, BoardingRules.checkAnnouncement("t", "b".repeat(1000), 20));
+    }
+
+    @Test public void ownerManagesOwnAnnouncementsAndDeletesAnyMessage() {
+        BoardingRules.Row mine = ann("a", true, false, true, BoardingRules.State.SENT);
+        BoardingRules.Row theirs = srv("m", "t", false, "student");
+        assertTrue(BoardingRules.canManageAnnouncement(mine, "owner"));
+        assertFalse(BoardingRules.canManageAnnouncement(mine, "student"));                              // a student never manages
+        assertFalse(BoardingRules.canManageAnnouncement(theirs, "owner"));                              // not an announcement
+        assertTrue(BoardingRules.canDelete(theirs, "owner"));                                           // owner moderates
+        assertFalse(BoardingRules.canDelete(theirs, "student"));
+        assertTrue(BoardingRules.canDelete(srv("m", "t", true, "student"), "student"));                 // own message
+        assertFalse(BoardingRules.canDelete(mine.withState(BoardingRules.State.PENDING), "owner"));
+    }
+
+    @Test public void pinLimitAndPreviewText() {
+        assertTrue(BoardingRules.pinIsFull("HTTP 400 {\"message\":\"only 3 pinned announcements: unpin one first\"}"));
+        assertFalse(BoardingRules.pinIsFull("announcement not found"));
+        assertEquals("Ana: hi there", BoardingRules.preview("Ana", " hi\n there "));
+        assertEquals("hello", BoardingRules.preview(" ", "hello"));
+        assertEquals("", BoardingRules.preview("Ana", null));
+    }
 }

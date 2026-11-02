@@ -55,4 +55,44 @@
     </plurals>
     <!-- Saved moved from the tab bar to Profile (v2.2.0) -->
     <string name="profile_saved">Saved places</string>
+    <!-- step 4: owner side -->
+    <string name="profile_boarding_groups">Boarding groups</string>
+    <string name="owner_boarding_title">Boarding groups</string>
+    <string name="owner_boarding_empty_title">No boarding groups yet</string>
+    <string name="owner_boarding_empty_sub">Every boarding house you list gets its own group chat. List a house first.</string>
+    <string name="owner_boarding_load_error">Could not load your boarding groups.</string>
+    <string name="owner_boarding_meta">%1$s \u00b7 %2$s</string>
+    <string name="owner_boarding_no_messages">No messages yet</string>
+    <string name="announce_button">Announce</string>
+    <string name="announce_title">New announcement</string>
+    <string name="announce_title_hint">Title (for example: Water cut tomorrow)</string>
+    <string name="announce_body_hint">Message to your tenants</string>
+    <string name="announce_to">Send to</string>
+    <string name="announce_select_all">Select all</string>
+    <string name="announce_select_none">Clear</string>
+    <string name="announce_post">Post announcement</string>
+    <string name="announce_posting">Posting\u2026</string>
+    <string name="announce_note">It is pinned at the top of each chat. Members can press Got it, and you see how many did.</string>
+    <string name="announce_err_title">Add a title (up to 120 characters).</string>
+    <string name="announce_err_body">Write the message (up to 1000 characters).</string>
+    <string name="announce_err_house">Choose at least one boarding house.</string>
+    <string name="announce_err_many">Choose up to 20 boarding houses.</string>
+    <string name="announce_error">Could not post the announcement.</string>
+    <plurals name="announce_done">
+        <item quantity="one">Announcement posted to %1$d house.</item>
+        <item quantity="other">Announcement posted to %1$d houses.</item>
+    </plurals>
+    <string name="announce_no_groups">You have no boarding house with a group yet.</string>
+    <string name="boarding_menu_announce">New announcement</string>
+    <string name="boarding_pin">Pin announcement</string>
+    <string name="boarding_unpin">Unpin announcement</string>
+    <string name="boarding_edit">Edit announcement</string>
+    <string name="boarding_edit_save">Save</string>
+    <string name="boarding_delete_message">Delete message</string>
+    <string name="boarding_delete_announcement">Delete announcement</string>
+    <string name="boarding_delete_confirm_title">Delete for everyone?</string>
+    <string name="boarding_delete_confirm_msg">The message disappears from the chat for all members.</string>
+    <string name="boarding_pin_full">Only 3 announcements can be pinned. Unpin one first.</string>
+    <string name="boarding_pin_failed">Could not change the pin. Try again.</string>
+    <string name="boarding_edit_failed">Could not save the changes. Try again.</string>
 </resources>

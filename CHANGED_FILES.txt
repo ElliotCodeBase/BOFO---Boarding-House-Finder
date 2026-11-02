@@ -1,15 +1,17 @@
-BOFO v2.2.0 - Boarding step 3 (changes only). Needs step 2 merged first. Unzip over the repo folder and overwrite.
-new      bofo-android/app/src/main/res/drawable/bg_announcement.xml
-new      bofo-android/app/src/main/res/drawable/bg_pinned_banner.xml
-new      bofo-android/app/src/main/res/drawable/ic_announce.xml
+BOFO v2.2.0 - Boarding step 4 (changes only). Needs steps 2 and 3 merged first. Unzip over the repo folder and overwrite.
+new      bofo-android/app/src/main/java/com/bofo/finder/ui/AnnounceFragment.java
+new      bofo-android/app/src/main/java/com/bofo/finder/ui/OwnerBoardingFragment.java
+new      bofo-android/app/src/main/res/drawable/ic_set_boarding.xml
+new      bofo-android/app/src/main/res/layout/fragment_announce.xml
+new      bofo-android/app/src/main/res/layout/fragment_owner_boarding.xml
 changed  BOFO-v2.2.0-CHANGELOG.md
 changed  CHANGES_ANDROID.md
 changed  HANDOFF_ANDROID.md
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/BoardingChatFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ReportDialog.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ProfileFragment.java
 changed  bofo-android/app/src/main/java/com/bofo/finder/util/BoardingRules.java
-changed  bofo-android/app/src/main/res/layout/fragment_boarding_chat.xml
-changed  bofo-android/app/src/main/res/layout/item_group_msg.xml
+changed  bofo-android/app/src/main/res/layout/fragment_profile.xml
+changed  bofo-android/app/src/main/res/navigation/nav_graph.xml
 changed  bofo-android/app/src/main/res/values/strings_boarding.xml
 changed  bofo-android/app/src/test/java/com/bofo/finder/util/BoardingRulesTest.java
 changed  CHANGED_FILES.txt
