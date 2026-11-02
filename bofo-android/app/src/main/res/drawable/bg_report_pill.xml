@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.1.10: quiet outlined pill for "Report" (red text, soft red outline, ripple) -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="@color/bofo_error_tint">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/bofo_white" />
+            <stroke android:width="1dp" android:color="@color/bofo_error_tint" />
+            <corners android:radius="18dp" />
+        </shape>
+    </item>
+</ripple>

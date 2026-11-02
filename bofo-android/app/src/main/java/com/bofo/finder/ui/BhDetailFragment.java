@@ -128,9 +128,7 @@ public class BhDetailFragment extends Fragment {
         b.rating.setText(ListRules.ratingText(bh.avgRating(), bh.reviewCount()));
         b.address.setText(bh.address());
         b.address.setVisibility(bh.address().isEmpty() ? View.GONE : View.VISIBLE);
-        String ownerName = d.optString("owner_name", "").trim();      // v2.1.7: owner's name (blank = hide the line)
-        b.ownerName.setText(getString(R.string.detail_owner_name, ownerName));
-        b.ownerName.setVisibility(ownerName.isEmpty() ? View.GONE : View.VISIBLE);
+        bindOwner(d, bh);
         b.showMap.setOnClickListener(v -> MapFragment.open(this, bh.id(), bh.lat(), bh.lng()));
         bindChat(bh);
 
@@ -150,7 +148,6 @@ public class BhDetailFragment extends Fragment {
         showContact(d.optJSONArray("contact"));
         showReviews(reviews);
         b.directions.bind(this, location, bh);
-        bindReport(bh);
 
         b.loading.setVisibility(View.GONE);
         b.content.setVisibility(View.VISIBLE);
@@ -383,12 +380,39 @@ public class BhDetailFragment extends Fragment {
         bindWriteReview();
     }
 
-    /** v2.1.8: any signed-in user can report the owner of this place; not your own place, not an admin (admins review reports). */
-    private void bindReport(BoardingHouse bh) {
+    /**
+     * v2.1.10: owner card in the place info: photo (or the first letter of the name), name, verified state, and the Report pill.
+     * The card shows when the owner has a name or photo, or when you can report them; it stays hidden otherwise (e.g. your own place with no profile yet).
+     * Report: any signed-in user, not on your own place, not for admins (admins review reports).
+     */
+    private void bindOwner(JSONObject d, BoardingHouse bh) {
+        String name = d.optString("owner_name", "").trim();
+        String photo = d.optString("owner_photo", "").trim();
         String me = AuthService.get().userId();
-        boolean ok = com.bofo.finder.util.SuspendRules.canReport(me, bh.ownerId()) && AuthRouter.realRole != com.bofo.finder.model.Role.ADMIN;
-        b.report.setVisibility(ok ? View.VISIBLE : View.GONE);
+        boolean canReport = com.bofo.finder.util.SuspendRules.canReport(me, bh.ownerId()) && AuthRouter.realRole != com.bofo.finder.model.Role.ADMIN;
+        boolean show = !name.isEmpty() || !photo.isEmpty() || canReport;
+        b.ownerCard.setVisibility(show ? View.VISIBLE : View.GONE);
+        b.report.setVisibility(canReport ? View.VISIBLE : View.GONE);
         b.report.setOnClickListener(v -> ReportDialog.show(this, bh.ownerId(), bh.id()));
+        if (!show) return;
+
+        b.ownerName.setText(name.isEmpty() ? getString(R.string.detail_owner_fallback) : name);
+        b.ownerInitial.setText(name.isEmpty() ? "O" : name.substring(0, name.offsetByCodePoints(0, 1)).toUpperCase(java.util.Locale.ROOT));
+        if (photo.isEmpty()) b.ownerPhoto.setVisibility(View.GONE);
+        else {                                                           // the initial stays underneath: if the photo cannot load, the circle is not empty
+            b.ownerPhoto.setVisibility(View.VISIBLE);
+            Glide.with(b.ownerPhoto).load(photo).circleCrop().into(b.ownerPhoto);
+        }
+        boolean ok = bh.ownerVerified();
+        b.ownerStatus.setText(ok ? R.string.detail_verified : R.string.detail_not_verified);
+        b.ownerStatus.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), ok ? R.color.bofo_success : R.color.bofo_muted));
+        android.graphics.drawable.Drawable ic = androidx.core.content.ContextCompat.getDrawable(requireContext(), ok ? R.drawable.ic_shield_verified : R.drawable.ic_shield_unverified);
+        if (ic != null) {
+            int px = (int) (14 * getResources().getDisplayMetrics().density);
+            ic = ic.mutate(); ic.setBounds(0, 0, px, px);
+            b.ownerStatus.setCompoundDrawablesRelative(ic, null, null, null);
+            b.ownerStatus.setCompoundDrawablePadding((int) (5 * getResources().getDisplayMetrics().density));
+        }
     }
 
     /** Only students can review (the database allows nothing else). The same button edits a review that already exists. */
