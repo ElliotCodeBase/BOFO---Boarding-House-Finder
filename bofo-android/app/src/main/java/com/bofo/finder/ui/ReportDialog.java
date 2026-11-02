@@ -31,8 +31,15 @@ final class ReportDialog {
         return i >= 0 && i < labels.length ? labels[i] : key;
     }
 
-    static void show(Fragment f, String reportedUserId, String bhId) {
+    static void show(Fragment f, String reportedUserId, String bhId) { show(f, reportedUserId, bhId, ""); }
+
+    /**
+     * v2.2.0 step 3: report a group-chat message. {@code quote} (BoardingRules.reportQuote) is put in front of the reporter's own words in
+     * reports.details so the admin sees what was said; "" = the plain "Report this place" dialog.
+     */
+    static void show(Fragment f, String reportedUserId, String bhId, String quote) {
         if (!f.isAdded()) return;
+        final String q = quote == null ? "" : quote;
         Context c = f.requireContext();
         float dp = f.getResources().getDisplayMetrics().density;
         LinearLayout box = new LinearLayout(c);
@@ -41,7 +48,7 @@ final class ReportDialog {
         box.setPadding(m, Math.round(10 * dp), m, 0);
 
         TextView hint = new TextView(c);
-        hint.setText(R.string.report_hint);
+        hint.setText(q.isEmpty() ? R.string.report_hint : R.string.report_message_hint);
         box.addView(hint);
 
         Spinner reason = new Spinner(c);
@@ -50,19 +57,20 @@ final class ReportDialog {
 
         EditText details = new EditText(c);
         details.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
-        details.setFilters(new InputFilter[]{new InputFilter.LengthFilter(500)});
+        details.setFilters(new InputFilter[]{new InputFilter.LengthFilter(Math.max(50, 500 - q.length() - 1))});
         details.setHint(R.string.report_details_hint);
         details.setMaxLines(5);
         box.addView(details);
 
-        androidx.appcompat.app.AlertDialog d = new MaterialAlertDialogBuilder(c).setTitle(R.string.report_title).setView(box)
+        androidx.appcompat.app.AlertDialog d = new MaterialAlertDialogBuilder(c).setTitle(q.isEmpty() ? R.string.report_title : R.string.report_message_title).setView(box)
                 .setNegativeButton(R.string.common_cancel, null)
                 .setPositiveButton(R.string.report_send, null).create();
         d.setOnShowListener(x -> d.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener((View v) -> {
             int pos = reason.getSelectedItemPosition();
             if (pos < 0 || pos >= SuspendRules.REASONS.length) return;
             final String key = SuspendRules.REASONS[pos];
-            final String text = details.getText().toString();
+            final String typed = details.getText().toString().trim();
+            final String text = q.isEmpty() ? typed : (typed.isEmpty() ? q : q + "\n" + typed);
             d.dismiss();
             Async.run(() -> { new ReportService().submit(reportedUserId, bhId, key, text); return Boolean.TRUE; },
                     ok -> ListArea.toast(f, f.getString(R.string.report_sent)),

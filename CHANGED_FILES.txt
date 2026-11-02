@@ -1,30 +1,17 @@
-BOFO v2.2.0 - Boarding step 2 (changes only). Unzip over the repo folder and overwrite.
-new      bofo-android/app/src/main/java/com/bofo/finder/ui/BoardingFragment.java
-new      bofo-android/app/src/main/java/com/bofo/finder/ui/BoardingChatFragment.java
-new      bofo-android/app/src/main/java/com/bofo/finder/util/BoardingRules.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/util/Outbox.java              (also queues Boarding group messages)
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java         (Boarding in the centre slot, Saved removed from the bar)
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ProfileFragment.java       (Saved places row, students only)
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/SavedFragment.java         (back button)
-new      bofo-android/app/src/test/java/com/bofo/finder/util/BoardingRulesTest.java
-new      bofo-android/app/src/main/res/layout/fragment_boarding.xml
-new      bofo-android/app/src/main/res/layout/fragment_boarding_chat.xml
-new      bofo-android/app/src/main/res/layout/item_group_msg.xml
-changed  bofo-android/app/src/main/res/layout/fragment_saved.xml
-changed  bofo-android/app/src/main/res/layout/fragment_profile.xml
-changed  bofo-android/app/src/main/res/navigation/nav_graph.xml
-new      bofo-android/app/src/main/res/values/strings_boarding.xml
-new      bofo-android/app/src/main/res/values/colors_boarding.xml
-new      bofo-android/app/src/main/res/values-night/colors_boarding.xml
-changed  bofo-android/app/src/main/res/values/ids_dock.xml
-new      bofo-android/app/src/main/res/drawable/ic_dock_boarding.xml
-new      bofo-android/app/src/main/res/drawable/ic_more_vert.xml
-new      bofo-android/app/src/main/res/drawable/ic_set_saved.xml
-new      bofo-android/app/src/main/res/drawable/bg_role_owner.xml
-new      bofo-android/app/src/main/res/drawable/bg_role_student.xml
+BOFO v2.2.0 - Boarding step 3 (changes only). Needs step 2 merged first. Unzip over the repo folder and overwrite.
+new      bofo-android/app/src/main/res/drawable/bg_announcement.xml
+new      bofo-android/app/src/main/res/drawable/bg_pinned_banner.xml
+new      bofo-android/app/src/main/res/drawable/ic_announce.xml
+changed  BOFO-v2.2.0-CHANGELOG.md
 changed  CHANGES_ANDROID.md
 changed  HANDOFF_ANDROID.md
-changed  BOFO-v2.2.0-CHANGELOG.md
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/BoardingChatFragment.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ReportDialog.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/util/BoardingRules.java
+changed  bofo-android/app/src/main/res/layout/fragment_boarding_chat.xml
+changed  bofo-android/app/src/main/res/layout/item_group_msg.xml
+changed  bofo-android/app/src/main/res/values/strings_boarding.xml
+changed  bofo-android/app/src/test/java/com/bofo/finder/util/BoardingRulesTest.java
 changed  CHANGED_FILES.txt
 DELETE   (nothing)
 Version stays 2.2.0 (bumped once in step 1, by the brief).
