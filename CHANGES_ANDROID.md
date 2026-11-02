@@ -1,3 +1,7 @@
+# v2.2.0 - Boarding series, step 1 of 5: database + models + services (no screen yet)
+- New migration `024_boarding_groups.sql` (NOT applied live yet): one group chat per boarding house, join with the owner's invite code, announcements (pinned, max 3), "Got it" acknowledgments, mute / remove, and database rules so muted, banned or suspended users cannot post.
+- New code: `model/GroupMessage`, `BhMember`, `BhGroup`, `service/BhGroupService`. Nothing in the app calls them yet, so the app looks and works exactly as in v2.1.10.
+
 # v2.1.10 - Place page: owner profile card, Report moved into it
 - New **owner card** in the place info (under the address / Show on map): the owner's photo (or the first letter of their name when there is none), name, and a Verified / Not verified line. It shows only when the owner has a name or photo (or when you can report them).
 - **Report** is now a small outlined pill with a flag inside the owner card, instead of a button at the very bottom under the reviews. Same rules as before: not on your own place, not for admins.
