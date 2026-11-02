@@ -539,6 +539,13 @@
         <item>Dismissed</item>
         <item>Actioned</item>
     </string-array>
+    <string-array name="rep_actions">
+        <item>Suspend</item>
+        <item>Ban</item>
+        <item>Dismiss</item>
+        <item>Take down a place</item>
+        <item>Close</item>
+    </string-array>
     <string-array name="rep_durations">
         <item>1 day</item>
         <item>3 days</item>

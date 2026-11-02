@@ -32,6 +32,9 @@ public final class AuthRouter {
     public static volatile String suspendedUntil = "";
     public static volatile String suspendedReason = "";
 
+    /** v2.1.9: set by {@link #route} when the account is banned (shown on the banned screen). */
+    public static volatile String bannedReason = "";
+
     /** v2.0.126: forget the previous account's role (sign out, delete, no session), so the next account never opens with the old owner / admin tabs. */
     public static void reset() {
         role = com.bofo.finder.model.Role.STUDENT;
@@ -39,6 +42,7 @@ public final class AuthRouter {
         mfaPrompt = false;
         suspendedUntil = "";
         suspendedReason = "";
+        bannedReason = "";
     }
 
     /** v2.0.119: true when the shell should open the admin two-step code sheet once. */
@@ -64,6 +68,11 @@ public final class AuthRouter {
                 if (role != com.bofo.finder.model.Role.ADMIN) {
                     try {
                         org.json.JSONObject sus = SupabaseClient.get().rpc("my_suspension", new org.json.JSONObject());
+                        // v2.1.9: a banned account sees only the banned screen (sign out is the one thing it can do)
+                        if (sus.optBoolean("banned", false)) {
+                            bannedReason = sus.optString("reason", "");
+                            return R.id.action_global_banned;
+                        }
                         if (sus.optBoolean("suspended", false)) {
                             suspendedUntil = sus.optString("until", "");
                             suspendedReason = sus.optString("reason", "");

@@ -37,6 +37,18 @@
         android:name="com.bofo.finder.ui.SuspendedFragment"
         android:label="Suspended" />
 
+    <!-- v2.1.9: banned account (text, reason, Sign out only). -->
+    <action
+        android:id="@+id/action_global_banned"
+        app:destination="@id/bannedFragment"
+        app:popUpTo="@id/nav_graph"
+        app:popUpToInclusive="true" />
+
+    <fragment
+        android:id="@+id/bannedFragment"
+        android:name="com.bofo.finder.ui.BannedFragment"
+        android:label="Banned" />
+
     <fragment
         android:id="@+id/splashFragment"
         android:name="com.bofo.finder.ui.SplashFragment"
@@ -199,6 +211,12 @@
         android:id="@+id/aiUnansweredFragment"
         android:name="com.bofo.finder.ui.AiUnansweredFragment"
         android:label="Needs attention" />
+
+    <!-- v2.1.9 Banned users (admin only): list, search, Unban. -->
+    <fragment
+        android:id="@+id/bannedUsersFragment"
+        android:name="com.bofo.finder.ui.BannedUsersFragment"
+        android:label="Banned users" />
 
     <fragment
         android:id="@+id/debugFragment"

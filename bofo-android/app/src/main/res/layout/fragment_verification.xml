@@ -90,6 +90,29 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
+                <!-- v2.1.9: the number is sent only to the server (keyed hash); it is never stored as text. -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/idNumberLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="@string/verify_id_number">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/idNumber"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:importantForAutofill="no"
+                        android:inputType="textNoSuggestions|textCapCharacters"
+                        android:maxLength="30" />
+                </com.google.android.material.textfield.TextInputLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/verify_id_number_help"
+                    android:textAppearance="@style/Text.Bofo.Secondary" />
+
                 <TextView style="@style/Text.Form.Label" android:text="@string/verify_front" />
                 <LinearLayout
                     android:layout_width="match_parent"

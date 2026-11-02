@@ -159,6 +159,23 @@
                     android:textColor="@color/bofo_text"
                     android:textSize="15sp"
                     android:visibility="gone" />
+                <!-- v2.1.9 "Banned users": hidden; ProfileFragment shows it for an admin. -->
+                <TextView
+                    android:id="@+id/banned_users_open"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_shield"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="60dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:text="@string/ban_list_open"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp"
+                    android:visibility="gone" />
         </LinearLayout>
 
         <View

@@ -29,6 +29,7 @@ import com.bofo.finder.service.AuthService;
 import com.bofo.finder.service.ProfileService;
 import com.bofo.finder.service.VerificationService;
 import com.bofo.finder.util.Async;
+import com.bofo.finder.util.BanRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
 import com.bofo.finder.util.Images;
@@ -213,18 +214,22 @@ public class VerificationFragment extends Fragment {
                 : missing == VerificationRules.SELFIE ? getString(R.string.verify_missing_selfie)
                 : !b.consent.isChecked() ? getString(R.string.verify_need_consent) : null;
         if (problem != null) { error(problem); return; }
+        String idNumber = b.idNumber.getText() == null ? "" : b.idNumber.getText().toString();
+        if (!BanRules.validNumber(idNumber)) { b.idNumberLayout.setError(getString(R.string.verify_id_number_bad)); error(getString(R.string.verify_id_number_bad)); return; }
+        b.idNumberLayout.setError(null);
         b.errors.setVisibility(View.GONE);
         busy = true;
         b.submit.setEnabled(false);
         b.submit.setText(R.string.verify_submitting);
         String me = AuthService.get().userId(), type = VerificationRules.idType(draft.idTypeIndex);
         byte[] f = photos[0], k = photos[1], s = photos[2];
-        Async.run(() -> { new VerificationService().submit(me, type, f, k, s, VerificationRules.consentVersion()); return Boolean.TRUE; }, ok -> {
+        Async.run(() -> { new VerificationService().submit(me, type, idNumber, f, k, s, VerificationRules.consentVersion()); return Boolean.TRUE; }, ok -> {
             busy = false;
             if (b == null) return;
             b.submit.setEnabled(true);
             b.submit.setText(R.string.verify_submit);
             java.util.Arrays.fill(photos, null);                                   // the ID photos do not stay in memory
+            b.idNumber.setText("");                                                // neither does the number
             state = State.PENDING;
             showState(State.PENDING, "");
             ListArea.toast(this, getString(R.string.verify_sent));
@@ -233,6 +238,12 @@ public class VerificationFragment extends Fragment {
             if (b == null) return;
             b.submit.setEnabled(true);
             b.submit.setText(R.string.verify_submit);
+            if (e instanceof VerificationService.BannedException) {                // v2.1.9: exactly this text, no hint about any account
+                java.util.Arrays.fill(photos, null);
+                b.idNumber.setText("");
+                error(BanRules.BANNED_TEXT);
+                return;
+            }
             error(Connectivity.isNetworkError(e.getCause() != null ? e.getCause() : e) ? getString(R.string.list_offline)
                     : ErrorText.full(getString(R.string.verify_failed, e.getMessage() == null ? "" : e.getMessage()), e));
         });

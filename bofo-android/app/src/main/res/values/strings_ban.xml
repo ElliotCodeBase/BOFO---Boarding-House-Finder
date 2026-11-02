@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.1.9 safety series step 3: ban by ID, Banned users, Unban. -->
+<resources>
+    <!-- banned account screen -->
+    <string name="ban_title">You are banned.</string>
+    <string name="ban_reason">Reason: %1$s</string>
+
+    <!-- owner verification: ID number -->
+    <string name="verify_id_number">ID number</string>
+    <string name="verify_id_number_help">Type the number exactly as printed on your ID. BOFO does not keep the number itself, only a scrambled code used to block banned IDs.</string>
+    <string name="verify_id_number_bad">Type the ID number as printed on your ID (4 to 30 letters or digits).</string>
+
+    <!-- admin: approve a verification -->
+    <string name="review_approve_msg2">Check that the name, the face and the ID match. Then type the ID number exactly as it is printed on the ID photo.</string>
+    <string name="review_id_number_hint">ID number from the photo</string>
+    <string name="review_id_mismatch">The number does not match the one the owner typed. Check the photo, or reject the request.</string>
+    <string name="review_id_banned">This ID belongs to a banned person. Do not approve. Reject the request.</string>
+
+    <!-- admin: report decisions -->
+    <string name="rep_actions_btn">Actions</string>
+    <string name="rep_actions_title">What do you want to do?</string>
+    <string name="rep_ban">Ban</string>
+    <string name="rep_ban_title">Ban this account</string>
+    <string name="rep_ban_confirm">%1$s will be banned forever and can no longer use BOFO. Their ID cannot be used for a new account.\n\nTheir places will be taken down.\nReason shown to them: %2$s</string>
+    <string name="rep_banned_done">Account banned and ID blocked.</string>
+    <string name="rep_banned_no_id">No ID number on file: only the account was banned.</string>
+
+    <!-- admin: Banned users -->
+    <string name="ban_list_open">Banned users (admin)</string>
+    <string name="ban_list_title">Banned users</string>
+    <string name="ban_list_sub">Banned accounts, newest first. Unban lets the person sign in again and use the same ID for a new verification.</string>
+    <string name="ban_list_search">Search name, e-mail or reason</string>
+    <string name="ban_list_summary">Showing %1$d of %2$d</string>
+    <string name="ban_list_meta">Banned %1$s by %2$s</string>
+    <string name="ban_list_empty">Nobody is banned.</string>
+    <string name="ban_list_no_match">No banned account matches your search.</string>
+    <string name="ban_list_error">Could not load the banned users.</string>
+    <string name="ban_list_admins_only">Only admins can see this list.</string>
+    <string name="ban_id_blocked">ID blocked</string>
+    <string name="ban_unban">Unban</string>
+    <string name="ban_unban_title">Unban this account</string>
+    <string name="ban_unban_confirm">%1$s will be able to sign in again, and their ID can be verified again. Places that were taken down stay down.</string>
+    <string name="ban_unbanned">Account unbanned.</string>
+    <string name="ban_unban_error">Could not unban this account.</string>
+</resources>
