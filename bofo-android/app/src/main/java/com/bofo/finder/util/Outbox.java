@@ -1,6 +1,8 @@
 package com.bofo.finder.util;
 
+import com.bofo.finder.model.GroupMessage;
 import com.bofo.finder.model.Message;
+import com.bofo.finder.service.BhGroupService;
 import com.bofo.finder.service.ChatService;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -17,6 +19,7 @@ import java.util.function.Supplier;
  * Messages written while offline. Every chat message goes in here FIRST (saved on the device, so it survives closing the app),
  * then {@link #flushAsync()} sends the queue oldest-first. No internet = the message stays queued and is sent by itself when the
  * connection returns (Main flushes on reconnect, an open chat flushes on every poll tick). Files are user_*, wiped on sign-out.
+ * v2.2.0: the same queue also carries Boarding group messages (entries with a "bh" key instead of "conv"); they have their own listeners.
  */
 public final class Outbox {
     private Outbox() {}
@@ -24,6 +27,10 @@ public final class Outbox {
     /** Called from a background thread: wrap UI work in {@link Async#post}. */
     public interface Listener { void sent(String id, Message m); void failed(String id, Throwable why); void waiting(String id); }
     public static final List<Listener> LISTENERS = new CopyOnWriteArrayList<>();
+
+    /** Boarding group messages (called from a background thread). */
+    public interface GroupListener { void sent(String id, GroupMessage m); void failed(String id, Throwable why); }
+    public static final List<GroupListener> GROUP_LISTENERS = new CopyOnWriteArrayList<>();
 
     /** The signed-in user id (null = signed out). AuthService sets this in Stage 3. */
     public static volatile Supplier<String> userId = () -> null;
@@ -36,6 +43,21 @@ public final class Outbox {
         JSONObject e = new JSONObject().put("id", UUID.randomUUID().toString()).put("conv", conv).put("body", body).put("at", System.currentTimeMillis());
         a.put(e); DiskCache.write(FILE, a.toString());
         return e;
+    }
+
+    /** v2.2.0: queue a Boarding group message (same file, same flush). */
+    public static synchronized JSONObject addGroup(String bh, String body) throws JSONException {
+        JSONArray a = load();
+        JSONObject e = new JSONObject().put("id", UUID.randomUUID().toString()).put("bh", bh).put("body", body).put("at", System.currentTimeMillis());
+        a.put(e); DiskCache.write(FILE, a.toString());
+        return e;
+    }
+
+    /** Queued Boarding messages of one house, oldest first. */
+    public static synchronized List<JSONObject> pendingGroup(String bh) throws JSONException {
+        List<JSONObject> l = new ArrayList<>(); JSONArray a = load();
+        for (int i = 0; i < a.length(); i++) if (bh.equals(a.getJSONObject(i).optString("bh"))) l.add(a.getJSONObject(i));
+        return l;
     }
 
     /** Queued messages of one chat, oldest first. */
@@ -73,20 +95,28 @@ public final class Outbox {
         String me = userId.get();
         if (me == null) return;
         ChatService chat = new ChatService();
+        BhGroupService groups = new BhGroupService();
         List<JSONObject> queue = all();
         for (int i = 0; i < queue.size(); i++) {
             JSONObject e = queue.get(i); String id = e.getString("id");
+            final boolean group = e.has("bh");
             try {
-                Message m = chat.send(e.getString("conv"), me, e.getString("body"));
-                remove(id);
-                LISTENERS.forEach(l -> l.sent(id, m));
+                if (group) {
+                    GroupMessage g = groups.send(e.getString("bh"), me, e.getString("body"));
+                    remove(id);
+                    GROUP_LISTENERS.forEach(l -> l.sent(id, g));
+                } else {
+                    Message m = chat.send(e.getString("conv"), me, e.getString("body"));
+                    remove(id);
+                    LISTENERS.forEach(l -> l.sent(id, m));
+                }
             } catch (Exception ex) {
                 if (Connectivity.isNetworkError(ex)) {                   // still offline: keep everything queued, in order
                     for (int j = i; j < queue.size(); j++) { String w = queue.get(j).getString("id"); LISTENERS.forEach(l -> l.waiting(w)); }
                     return;
                 }
                 remove(id);                                              // the server said no (blocked, too long...): retrying can never work
-                LISTENERS.forEach(l -> l.failed(id, ex));
+                if (group) GROUP_LISTENERS.forEach(l -> l.failed(id, ex)); else LISTENERS.forEach(l -> l.failed(id, ex));
             }
         }
     }

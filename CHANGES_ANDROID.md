@@ -1,6 +1,9 @@
 # v2.2.0 - Boarding series, step 1 of 5: database + models + services (no screen yet)
 - New migration `024_boarding_groups.sql` (NOT applied live yet): one group chat per boarding house, join with the owner's invite code, announcements (pinned, max 3), "Got it" acknowledgments, mute / remove, and database rules so muted, banned or suspended users cannot post.
 - New code: `model/GroupMessage`, `BhMember`, `BhGroup`, `service/BhGroupService`. Nothing in the app calls them yet, so the app looks and works exactly as in v2.1.10.
+- **Step 2 of 5 (student Boarding screen):** new **Boarding** tab in the centre of the student tab bar. No house yet: "Join your boarding house" with the owner's invite code. Joined: the group chat of that house (sender name, **Owner** / **Student** badge and time on every message; offline messages wait in the Outbox and are sent later; refreshes every 3 s while open). "Leave group" in the chat's menu.
+- **Saved moved to Profile:** Profile > **Saved places** (students). The Saved screen is unchanged apart from a back button.
+- Needs migration 024 applied in Supabase before the Boarding tab can load (until then it shows a clear error and Try again).
 
 # v2.1.10 - Place page: owner profile card, Report moved into it
 - New **owner card** in the place info (under the address / Show on map): the owner's photo (or the first letter of their name when there is none), name, and a Verified / Not verified line. It shows only when the owner has a name or photo (or when you can report them).

@@ -37,6 +37,7 @@ public class ProfileFragment extends Fragment {
             args.putBoolean(ProfileSetupFragment.ARG_EDIT, true);
             NavHostFragment.findNavController(this).navigate(R.id.profileSetupFragment, args);
         });
+        binding.openSaved.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.savedFragment));      // v2.2.0
         binding.openSettings.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.settingsFragment));
         return binding.getRoot();
     }
@@ -63,6 +64,7 @@ public class ProfileFragment extends Fragment {
             if (binding == null || my != token) return;
             if (p == null) { retry(attempt); return; }
             loaded = true;
+            binding.openSaved.setVisibility(p.role() == com.bofo.finder.model.Role.STUDENT ? View.VISIBLE : View.GONE);      // v2.2.0 Saved places: students only
             binding.accountName.setText(p.fullName());
             binding.accountRole.setText(p.role() == com.bofo.finder.model.Role.OWNER ? R.string.account_role_owner
                     : p.role() == com.bofo.finder.model.Role.ADMIN ? R.string.account_role_admin : R.string.account_role_student);
