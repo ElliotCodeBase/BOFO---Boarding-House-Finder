@@ -1,3 +1,7 @@
+# v2.1.6 - New app icon (flat orange mascot) + Ask BOFO compare table layout fix
+- App icon: the cheering orange-theme mascot on solid orange (replaces the purple mascot on lavender). Adaptive icon, key shapes inside the 66dp safe zone. New monochrome layer for Android 13+ themed icons.
+- Compare table: weighted columns (can no longer clip), short row names, equal-height green cells with a check mark on every best cell, ties all marked, "Walk time" row hidden when a place is over an hour away (also in the bofo-chat function).
+
 # v2.1.5 - Fix: Ask BOFO compare table fits the card for up to 3 places
 - Compare table: up to 3 places now share the card width (smaller text, wrapping cells, no check mark on long values); 4 or more still scroll with the swipe line. Replaces the 2.1.4 peek-a-column idea.
 
