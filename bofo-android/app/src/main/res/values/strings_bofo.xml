@@ -33,4 +33,11 @@
     <string name="bofo_start_cheapest">Cheapest with wifi</string>
     <string name="bofo_start_rated">Best rated</string>
     <string name="bofo_start_all">List all BH</string>
+    <!-- v2.1.3 AI smarter, step 3 -->
+    <string name="bofo_new_chat">New chat</string>
+    <string name="bofo_rate_ask">Was this helpful?</string>
+    <string name="bofo_rate_up">Helpful</string>
+    <string name="bofo_rate_down">Not helpful</string>
+    <string name="bofo_rate_thanks">Thanks for the feedback.</string>
+    <string name="bofo_restored">Your last chat is back. Tap the arrow at the top to start a new one.</string>
 </resources>

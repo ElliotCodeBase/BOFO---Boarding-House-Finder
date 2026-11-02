@@ -253,8 +253,8 @@
 
     <!-- Stage 8a: BOFO assistant -->
     <string name="bofo_title">Ask BOFO</string>
-    <string name="bofo_hello">Hi! I am BOFO. Ask me for the nearest or cheapest boarding house, to compare places or show them on the map.</string>
-    <string name="bofo_hint">Ask BOFO...</string>
+    <string name="bofo_hello">Hi! I am BOFO. Ask me in English, Tagalog or Bisaya: the nearest or cheapest boarding house, compare places, or show them on the map. I remember your budget and wifi in this chat.</string>
+    <string name="bofo_hint">Ask BOFO in English, Tagalog or Bisaya...</string>
     <string name="cd_mascot_ask">BOFO mascot, tap to ask</string>
 
     <!-- Stage 8b: owner -->

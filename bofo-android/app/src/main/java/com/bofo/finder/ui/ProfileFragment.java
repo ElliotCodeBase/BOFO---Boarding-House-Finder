@@ -67,6 +67,7 @@ public class ProfileFragment extends Fragment {
             binding.accountRole.setText(p.role() == com.bofo.finder.model.Role.OWNER ? R.string.account_role_owner
                     : p.role() == com.bofo.finder.model.Role.ADMIN ? R.string.account_role_admin : R.string.account_role_student);
             AiChatLogFragment.attachEntry(this, binding.aiChatsOpen, p.role());      // v2.0.91 AI Chats monitor (admin only): REMOVE this line with the feature
+            AiUnansweredFragment.attachEntry(this, binding.aiUnansweredOpen, p.role());      // v2.1.3 Needs attention (admin only)
             String photo = p.photoUrl() == null ? "" : p.photoUrl().trim();
             if (photo.isEmpty()) photo = AuthService.get().metaPhoto().trim();            // v2.0.124: Google photo when no photo was saved
             if (!photo.isEmpty())

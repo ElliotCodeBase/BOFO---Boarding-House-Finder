@@ -183,6 +183,12 @@
         android:name="com.bofo.finder.ui.AiChatLogFragment"
         android:label="AI Chats" />
 
+    <!-- v2.1.3 "Needs attention" (admin only): what BOFO could not answer well. -->
+    <fragment
+        android:id="@+id/aiUnansweredFragment"
+        android:name="com.bofo.finder.ui.AiUnansweredFragment"
+        android:label="Needs attention" />
+
     <fragment
         android:id="@+id/debugFragment"
         android:name="com.bofo.finder.ui.DebugFragment"
