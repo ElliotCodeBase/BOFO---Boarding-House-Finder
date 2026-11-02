@@ -1,16 +1,7 @@
-BOFO v2.2.0 - Boarding polish: announcement card + pinned bar (changes only). Needs step 5 applied first. Unzip over the repo folder and overwrite.
-new      bofo-android/app/src/main/res/drawable/bg_ann_card.xml
-new      supabase/migrations/025_unverified_owners_can_list.sql
-changed  BOFO-v2.2.0-CHANGELOG.md
-changed  CHANGES_ANDROID.md
-changed  HANDOFF_ANDROID.md
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/BoardingChatFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/util/BoardingRules.java
-changed  bofo-android/app/src/main/res/drawable/bg_pinned_banner.xml
-changed  bofo-android/app/src/main/res/layout/fragment_boarding_chat.xml
-changed  bofo-android/app/src/main/res/layout/item_group_msg.xml
-changed  bofo-android/app/src/main/res/values/strings_boarding.xml
-changed  bofo-android/app/src/test/java/com/bofo/finder/util/BoardingRulesTest.java
-changed  CHANGED_FILES.txt
-DELETE   (nothing)
-Version stays 2.2.0.
+changed bofo-android/app/build.gradle
+changed bofo-android/app/src/main/java/com/bofo/finder/service/BhService.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/ReportsFragment.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/ProfileFragment.java
+changed bofo-android/app/src/main/res/values/strings.xml
+new supabase/migrations/027_reports_answered.sql (already applied live)
+new BOFO-v2.2.2-CHANGELOG.md
