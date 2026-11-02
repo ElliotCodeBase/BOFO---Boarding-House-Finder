@@ -1,6 +1,9 @@
+new supabase/migrations/021_bh_owner_name.sql
+new BOFO-SAFETY-STATUS.md
 changed bofo-android/app/build.gradle
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/BofoChatOverlay.java
-changed bofo-android/app/src/main/res/layout/item_bofo_compare.xml
-changed bofo-android/app/src/main/res/values/strings_bofo.xml
+changed bofo-android/app/src/main/java/com/bofo/finder/service/BhService.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/BhDetailFragment.java
+changed bofo-android/app/src/main/res/layout/fragment_bh_detail.xml
+changed bofo-android/app/src/main/res/values/strings.xml
 changed CHANGES_ANDROID.md
 changed HANDOFF_ANDROID.md

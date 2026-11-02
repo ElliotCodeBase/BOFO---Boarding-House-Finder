@@ -1,3 +1,7 @@
+# v2.1.7 - Safety series step 1 of 3: owner's name on the boarding house page
+- The place page shows "Owner: <name>" under the address (hidden when the owner has no name). Reads new view `bh_owner_v` (migration 021: id, name, photo only; public.users stays private).
+- Files: `supabase/migrations/021_bh_owner_name.sql` (new), `BhService`, `BhDetailFragment`, `fragment_bh_detail.xml`, `strings.xml`, `app/build.gradle` (2.1.7 / 20107). Not built or run by Claude.
+
 # v2.1.6 - New app icon (flat orange mascot) + Ask BOFO compare table layout fix
 - App icon: the cheering orange-theme mascot on solid orange (replaces the purple mascot on lavender). Adaptive icon, key shapes inside the 66dp safe zone. New monochrome layer for Android 13+ themed icons.
 - Compare table: weighted columns (can no longer clip), short row names, equal-height green cells with a check mark on every best cell, ties all marked, "Walk time" row hidden when a place is over an hour away (also in the bofo-chat function).

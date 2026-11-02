@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.1.7 safety series step 1 of 3
+- **PR title:** `v2.1.7 - Safety series step 1 of 3: owner's name on the boarding house page`
+- **Supabase (NOT applied live):** run `021_bh_owner_name.sql` in the SQL editor. Until then the app works and simply hides the owner line.
+- Next: step 2 (Report button + admin review + suspend) = v2.1.8; step 3 (ban by ID hash, Banned list, unban) = v2.1.9. Series plan: BOFO-SAFETY-STATUS.md.
+- Risks: not built or run by Claude (no Android SDK); `ic_set_user` reused as the owner icon.
+---
 # Handoff (Android) - v2.1.5 compare table fits the card
 - **PR title:** `v2.1.5 - Fix: Ask BOFO compare table fits the card for up to 3 places`
 - Files: BofoChatOverlay (addCompare/cell sizes), build.gradle (2.1.5 / 20105). Not built or run by Claude. v2.1.4 (peek column) is superseded, merge it first or apply this zip over main anyway: this zip contains the full 2.1.4 files too.

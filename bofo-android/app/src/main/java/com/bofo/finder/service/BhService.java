@@ -161,6 +161,8 @@ public final class BhService {
         var contact = CompletableFuture.supplyAsync(() -> call(() -> api.select("bh_contacts", "boarding_house_id=eq." + id + "&select=*")), pool);
         var amen = CompletableFuture.supplyAsync(() -> call(() -> api.select("bh_amenities", "boarding_house_id=eq." + id + "&select=amenities(id,name,icon,is_popular)")), pool)
                 .exceptionally(ex -> new JSONArray());          // amenities are optional: a place must still open if that table is missing or fails
+        var owner = CompletableFuture.supplyAsync(() -> call(() -> api.select("bh_owner_v", "boarding_house_id=eq." + id + "&select=owner_name")), pool)
+                .exceptionally(ex -> null);                     // v2.1.7: optional, the place must still open if 021_bh_owner_name.sql has not been run
         var rules = CompletableFuture.supplyAsync(() -> call(() -> api.select("boarding_houses", "id=eq." + id + "&select=rules")), pool)
                 .exceptionally(ex -> null);                     // rules are optional: a place must still open if 011_rules.sql has not been run
         try {
@@ -168,6 +170,8 @@ public final class BhService {
             JSONArray rr = rules.get();
             if (rr != null && rr.length() > 0 && rr.optJSONObject(0) != null && rr.getJSONObject(0).optJSONArray("rules") != null)
                 bh.put("rules", rr.getJSONObject(0).getJSONArray("rules"));   // key only present when the column exists
+            JSONArray ow = owner.get();
+            if (ow != null && ow.length() > 0 && ow.optJSONObject(0) != null) bh.put("owner_name", ow.getJSONObject(0).optString("owner_name", ""));
             bh.put("photos", photos.get()).put("rooms", rooms.get()).put("contact", contact.get()).put("amenity_list", amen.get());
             Async.bg(() -> { try { api.rpc("bump_view", new JSONObject().put("bh", id)); } catch (Exception ignored) {} });   // fire-and-forget
             return bh;

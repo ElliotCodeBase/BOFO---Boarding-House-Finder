@@ -128,6 +128,9 @@ public class BhDetailFragment extends Fragment {
         b.rating.setText(ListRules.ratingText(bh.avgRating(), bh.reviewCount()));
         b.address.setText(bh.address());
         b.address.setVisibility(bh.address().isEmpty() ? View.GONE : View.VISIBLE);
+        String ownerName = d.optString("owner_name", "").trim();      // v2.1.7: owner's name (blank = hide the line)
+        b.ownerName.setText(getString(R.string.detail_owner_name, ownerName));
+        b.ownerName.setVisibility(ownerName.isEmpty() ? View.GONE : View.VISIBLE);
         b.showMap.setOnClickListener(v -> MapFragment.open(this, bh.id(), bh.lat(), bh.lng()));
         bindChat(bh);
 
