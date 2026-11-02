@@ -18,6 +18,7 @@ import com.bofo.finder.R;
 import com.bofo.finder.databinding.FragmentAdminListBinding;
 import com.bofo.finder.service.SupabaseClient;
 import com.bofo.finder.util.AdminRules;
+import com.bofo.finder.util.BanRules;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BoostRules;
 import com.bofo.finder.util.Connectivity;
@@ -140,13 +141,40 @@ public class ReportsFragment extends Fragment {
         final String target = x.optString("reported_user_id");
         MaterialAlertDialogBuilder d = new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_kind_report).setMessage(msg.toString());
         if ("pending".equals(x.optString("status"))) {
-            d.setPositiveButton(R.string.rep_suspend, (dd, w) -> pickDuration(x))
-             .setNeutralButton(R.string.rep_dismiss, (dd, w) -> dismiss(x))
-             .setNegativeButton(R.string.rep_takedown, (dd, w) -> pickPlace(target));
+            // v2.1.9: four choices no longer fit three dialog buttons: one "Actions" button opens a list (Suspend, Ban, Dismiss, Take down, Close)
+            d.setPositiveButton(R.string.rep_actions_btn, (dd, w) -> actions(x, target)).setNegativeButton(R.string.common_close, null);
         } else {
             d.setPositiveButton(R.string.rep_takedown, (dd, w) -> pickPlace(target)).setNegativeButton(R.string.common_close, null);
         }
         d.show();
+    }
+
+    /** v2.1.9: the decision list of a waiting report. */
+    private void actions(JSONObject x, String target) {
+        new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_actions_title)
+                .setItems(R.array.rep_actions, (dd, which) -> {
+                    switch (which) {
+                        case 0: pickDuration(x); break;
+                        case 1: askBanReason(x); break;
+                        case 2: dismiss(x); break;
+                        case 3: pickPlace(target); break;
+                        default: break;                                   // Close
+                    }
+                }).show();
+    }
+
+    /* ---------- ban: reason -> plain confirmation -> admin_review_report 'ban' ---------- */
+    private void askBanReason(JSONObject x) {
+        if (!"pending".equals(x.optString("status"))) return;
+        ReasonDialog.ask(this, R.string.rep_ban_title, R.string.rep_suspend_next, true, reason -> confirmBan(x, BanRules.reason(reason)));
+    }
+
+    private void confirmBan(JSONObject x, String reason) {
+        if (reason == null || reason.isEmpty()) return;
+        new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_ban_title)
+                .setMessage(getString(R.string.rep_ban_confirm, reported(x), reason))
+                .setNegativeButton(R.string.common_cancel, null)
+                .setPositiveButton(R.string.rep_ban, (d, w) -> review(x, "ban", null, reason, null)).show();
     }
 
     /* ---------- dismiss ---------- */
@@ -208,7 +236,13 @@ public class ReportsFragment extends Fragment {
         }, r -> {
             busy = false;
             if (b == null) return;
-            ListArea.toast(this, getString("suspend".equals(act) ? R.string.rep_suspended_done : R.string.rep_dismissed_done));
+            if ("ban".equals(act)) {
+                // v2.1.9: tell the admin plainly when there was no ID number on file (only the account was banned)
+                boolean idBanned = r != null && r.optBoolean("id_banned", false);
+                ListArea.toast(this, getString(idBanned ? R.string.rep_banned_done : R.string.rep_banned_no_id));
+            } else {
+                ListArea.toast(this, getString("suspend".equals(act) ? R.string.rep_suspended_done : R.string.rep_dismissed_done));
+            }
             reload();
         }, e -> {
             busy = false;

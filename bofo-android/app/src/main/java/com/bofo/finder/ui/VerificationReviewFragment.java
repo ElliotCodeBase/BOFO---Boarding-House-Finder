@@ -16,6 +16,7 @@ import com.bofo.finder.R;
 import com.bofo.finder.databinding.FragmentVerificationReviewBinding;
 import com.bofo.finder.service.VerificationService;
 import com.bofo.finder.util.Async;
+import com.bofo.finder.util.BanRules;
 import com.bofo.finder.util.BoostRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
@@ -83,10 +84,52 @@ public class VerificationReviewFragment extends Fragment {
         b.imgMessage.setVisibility(View.VISIBLE);
     }
 
+    /** v2.1.9: the admin must retype the ID number from the photo; the server compares it with what the owner typed (admin_approve_verification). */
     private void approve() {
-        new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.review_approve_title).setMessage(R.string.review_approve_msg)
-                .setNegativeButton(R.string.common_cancel, null)
-                .setPositiveButton(R.string.review_approve, (d, w) -> decide(true, "")).show();
+        android.widget.EditText in = new android.widget.EditText(requireContext());
+        in.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS | android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        in.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
+        in.setHint(R.string.review_id_number_hint);
+        in.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(BanRules.ID_MAX)});
+        android.widget.FrameLayout box = new android.widget.FrameLayout(requireContext());
+        int m = Math.round(20 * getResources().getDisplayMetrics().density);
+        box.setPadding(m, m / 2, m, 0);
+        box.addView(in);
+        androidx.appcompat.app.AlertDialog d = new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.review_approve_title)
+                .setMessage(R.string.review_approve_msg2).setView(box)
+                .setNegativeButton(R.string.common_cancel, null).setPositiveButton(R.string.review_approve, null).create();
+        d.setOnShowListener(x -> d.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String n = in.getText().toString();
+            if (!BanRules.validNumber(n)) { in.setError(getString(R.string.verify_id_number_bad)); return; }
+            d.dismiss();
+            approveWith(n);
+        }));
+        d.show();
+    }
+
+    private void approveWith(String idNumber) {
+        if (busy || vid == null) return;
+        busy = true;
+        b.approve.setEnabled(false); b.reject.setEnabled(false);
+        Async.run(() -> { new VerificationService().approve(vid, idNumber); return Boolean.TRUE; }, ok -> {
+            busy = false;
+            ListArea.toast(this, getString(R.string.review_done_approved));
+            if (isAdded() && b != null) NavHostFragment.findNavController(this).navigateUp();
+        }, e -> {
+            busy = false;
+            if (b == null) return;
+            b.approve.setEnabled(true); b.reject.setEnabled(true);
+            String msg = e instanceof com.bofo.finder.service.SupabaseClient.ApiException api ? approveError(api) : null;
+            ListArea.toast(this, msg != null ? msg : Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.review_error), e));
+        });
+    }
+
+    /** The two answers the admin must be told plainly (the ID number is never put in a message). */
+    private String approveError(com.bofo.finder.service.SupabaseClient.ApiException api) {
+        String body = api.body == null ? "" : api.body;
+        if (body.contains("does not match")) return getString(R.string.review_id_mismatch);
+        if (body.contains("this ID is banned")) return getString(R.string.review_id_banned);
+        return null;
     }
 
     private void decide(boolean approve, String reason) {
