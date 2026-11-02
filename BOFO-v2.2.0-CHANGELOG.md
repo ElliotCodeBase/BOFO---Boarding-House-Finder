@@ -24,3 +24,11 @@ Not built or run by Claude. Java checked with `javac` against stubs only; the SQ
 - Changed: `BoardingChatFragment`, `ReportDialog`, `BoardingRules` (+ tests), `item_group_msg.xml`, `fragment_boarding_chat.xml`, `strings_boarding.xml`. New: `ic_announce`, `bg_announcement`, `bg_pinned_banner`.
 - Not built or run by Claude (no Android SDK). The rules tests (15) pass on a plain JVM; the two Java screens were only syntax-checked with `javac`; layouts / strings / ids cross-checked by script.
 - Apply step 2 (its PR) first: step 3 changes files that step 2 created.
+
+## Step 4 of 5: owner Boarding groups + Announce form
+- **Profile > Boarding groups** (owners): list of the owner's houses with members, pinned count, last message and unread badge; tap opens the group chat.
+- Owner tools in the chat: Pin / Unpin / Edit / Delete on his announcements, Delete on any message (with confirm), menu > New announcement.
+- **Announce form**: title, message, tick houses (one or many, Select all). Posted announcements are pinned in each chosen house.
+- New: `OwnerBoardingFragment`, `AnnounceFragment`, 2 layouts, `ic_set_boarding`. Changed: `BoardingChatFragment`, `BoardingRules` (+ tests), `ProfileFragment`, `fragment_profile.xml`, `nav_graph.xml`, `strings_boarding.xml`.
+- Not built or run by Claude (no Android SDK). 18 rules tests pass on a plain JVM; screens syntax-checked with `javac`; resources / view ids cross-checked by script. Needs migration 024 live. No Supabase change in this step.
+- Apply steps 2 and 3 first.

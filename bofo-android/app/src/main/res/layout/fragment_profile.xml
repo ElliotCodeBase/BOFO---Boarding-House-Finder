@@ -127,6 +127,23 @@
                     android:textColor="@color/bofo_text"
                     android:textSize="15sp"
                     android:visibility="gone" />
+                <!-- v2.2.0 step 4: owners open their boarding groups (one chat per listed house) from here. -->
+                <TextView
+                    android:id="@+id/open_boarding_groups"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawablePadding="14dp"
+                    android:drawableStart="@drawable/ic_set_boarding"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:minHeight="60dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:text="@string/profile_boarding_groups"
+                    android:textColor="@color/bofo_text"
+                    android:textSize="15sp"
+                    android:visibility="gone" />
                 <TextView
                     android:id="@+id/open_settings"
                     android:layout_width="match_parent"

@@ -113,6 +113,22 @@
         android:name="com.bofo.finder.ui.SavedFragment"
         android:label="Saved" />
 
+    <!-- v2.2.0 step 4: owner side of Boarding (opened from Profile > Boarding groups). The chat reads its arguments from BoardingChatFragment.args(). -->
+    <fragment
+        android:id="@+id/ownerBoardingFragment"
+        android:name="com.bofo.finder.ui.OwnerBoardingFragment"
+        android:label="Boarding groups" />
+
+    <fragment
+        android:id="@+id/boardingChatFragment"
+        android:name="com.bofo.finder.ui.BoardingChatFragment"
+        android:label="Boarding chat" />
+
+    <fragment
+        android:id="@+id/announceFragment"
+        android:name="com.bofo.finder.ui.AnnounceFragment"
+        android:label="New announcement" />
+
     <fragment
         android:id="@+id/chatFragment"
         android:name="com.bofo.finder.ui.ChatFragment"
