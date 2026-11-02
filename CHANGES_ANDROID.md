@@ -1,3 +1,9 @@
+# v2.1.8 - Safety series step 2 of 3: Report button, admin review, timed suspension
+- Place page: **Report this place** (reason list + optional details). Not shown for your own place or to admins. One waiting report per person + place.
+- Admin > Reports: now lists reports (new table `reports`), tap the title to filter Pending / Reviewed / Dismissed / Actioned / All. Open a report: **Suspend** (1 / 3 / 7 / 30 days or a custom number of days, a reason, a confirmation), **Dismiss** (optional note) or **Take down a place**. Chat blocks are no longer listed here.
+- Suspended accounts: at every start / sign-in the app asks the server; a suspended user sees only the "Account suspended" screen (reason, end date, Check again, Sign out). The suspension ends by itself. The database also refuses messages, reviews, listing changes and reports from a suspended user. Admins cannot be suspended.
+- Files: `supabase/migrations/022_reports_suspend.sql` (new), `SuspendRules`, `ReportService`, `ReportDialog`, `SuspendedFragment` (new), `ReportsFragment` (rewritten), `AuthRouter`, `BhDetailFragment`, `fragment_suspended.xml` (new), `fragment_bh_detail.xml`, `nav_graph.xml`, `strings.xml`, `SuspendRulesTest` (new), `app/build.gradle` (2.1.8 / 20108). Not built or run by Claude; `SuspendRules` logic checked on a plain JVM.
+
 # v2.1.7 - Safety series step 1 of 3: owner's name on the boarding house page
 - The place page shows "Owner: <name>" under the address (hidden when the owner has no name). Reads new view `bh_owner_v` (migration 021: id, name, photo only; public.users stays private).
 - Files: `supabase/migrations/021_bh_owner_name.sql` (new), `BhService`, `BhDetailFragment`, `fragment_bh_detail.xml`, `strings.xml`, `app/build.gradle` (2.1.7 / 20107). Not built or run by Claude.

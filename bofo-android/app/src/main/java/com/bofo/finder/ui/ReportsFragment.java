@@ -1,10 +1,13 @@
 package com.bofo.finder.ui;
 
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -19,44 +22,50 @@ import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BoostRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
+import com.bofo.finder.util.SuspendRules;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Admin > Reports (8h): the latest 100 rows of blocks_reports (reports and blocks, newest first; admins can read all of them).
- * Tap a row: who reported whom and why, and Take down a place of the reported user (admin_takedown(bh, reason), reason required).
- * There is no "resolved" state in the database, so nothing is marked as handled here.
+ * Admin > Reports (v2.1.8): reports sent by users (table reports, read through the admin-only view reports_admin_v), newest first.
+ * The title is the status filter (tap it). Tap a row: who reported whom, the place, the reason and details; a waiting report can be
+ * dismissed or answered with a suspension of a chosen length (admin_review_report). Take down a place stays available.
+ * Chat blocks (blocks_reports) are private to the two users and are no longer listed here.
  */
 public class ReportsFragment extends Fragment {
 
+    /** Filter values in the order of the array rep_filters; "" = every status. */
+    private static final String[] FILTERS = {"pending", "reviewed", "dismissed", "actioned", ""};
+
     private FragmentAdminListBinding b;
     private final List<JSONObject> items = new ArrayList<>();
-    private final Map<String, String> names = new HashMap<>();
     private ArrayAdapter<String> rows;
     private int token;
+    private int filter = 0;          // index into FILTERS: starts on "pending"
+    private boolean busy;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
         b = FragmentAdminListBinding.inflate(inflater, container, false);
-        b.title.setText(R.string.tab_reports);
+        b.title.setOnClickListener(v -> pickFilter());
+        showTitle();
         rows = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_2, android.R.id.text1, new ArrayList<String>()) {
             @NonNull @Override public View getView(int pos, @Nullable View v, @NonNull ViewGroup p) {
                 View r = super.getView(pos, v, p);
                 if (pos < 0 || pos >= items.size()) return r;
                 JSONObject x = items.get(pos);
-                String kind = getString(AdminRules.isReport(x.optBoolean("is_block")) ? R.string.rep_kind_report : R.string.rep_kind_block);
-                ((TextView) r.findViewById(android.R.id.text1)).setText(kind + ": " + name(x.optString("reported_user_id")));
-                String why = x.optString("reason", "");
+                ((TextView) r.findViewById(android.R.id.text1)).setText(ReportDialog.reasonLabel(requireContext(), x.optString("reason")) + ": " + reported(x));
+                String bh = x.optString("bh_name", "");
                 ((TextView) r.findViewById(android.R.id.text2)).setText(BoostRules.day(x.optString("created_at", ""), ZoneId.systemDefault())
-                        + (why.isEmpty() || "null".equals(why) ? "" : "  -  " + why));
+                        + "  -  " + statusLabel(x.optString("status"))
+                        + (bh.isEmpty() || "null".equals(bh) ? "" : "  -  " + bh));
                 return r;
             }
         };
@@ -70,36 +79,38 @@ public class ReportsFragment extends Fragment {
     @Override
     public void onResume() { super.onResume(); reload(); }
 
-    private String name(String id) { return AdminRules.who(names.get(id)); }
+    private void showTitle() {
+        String[] labels = getResources().getStringArray(R.array.rep_filters);
+        b.title.setText(getString(R.string.rep_title, labels[Math.min(filter, labels.length - 1)]));
+    }
+
+    private void pickFilter() {
+        new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_filter_title)
+                .setItems(R.array.rep_filters, (d, which) -> { filter = which; showTitle(); reload(); }).show();
+    }
+
+    private String statusLabel(String key) {
+        int i = SuspendRules.statusIndex(key);
+        String[] labels = getResources().getStringArray(R.array.rep_status_labels);
+        return i >= 0 && i < labels.length ? labels[i] : key;
+    }
+
+    private static String reported(JSONObject x) { return AdminRules.who(nullToEmpty(x.optString("reported_name", ""))); }
+    private static String reporter(JSONObject x) { return AdminRules.who(nullToEmpty(x.optString("reporter_name", ""))); }
+    private static String nullToEmpty(String s) { return "null".equals(s) ? "" : s; }
 
     private void reload() {
         if (b == null) return;
         final int my = ++token;
+        final String status = FILTERS[filter];
         b.swipe.setRefreshing(true);
-        Async.run(() -> {
-            JSONArray a = SupabaseClient.get().select("blocks_reports", "order=created_at.desc&limit=100&select=id,reporter_id,reported_user_id,reason,is_block,created_at");
-            List<JSONObject> l = new ArrayList<>();
-            List<String> ids = new ArrayList<>();
-            for (int i = 0; i < a.length(); i++) {
-                JSONObject o = a.getJSONObject(i);
-                l.add(o); ids.add(o.optString("reporter_id")); ids.add(o.optString("reported_user_id"));
-            }
-            Map<String, String> m = new HashMap<>();
-            String in = AdminRules.inList(ids);
-            if (!in.isEmpty()) {
-                try {
-                    JSONArray u = SupabaseClient.get().select("users", "id=in.(" + in + ")&select=id,full_name");
-                    for (int i = 0; i < u.length(); i++) m.put(u.getJSONObject(i).getString("id"), u.getJSONObject(i).optString("full_name", ""));
-                } catch (Exception ignored) { /* shown as Unknown user */ }
-            }
-            return new Object[]{l, m};
-        }, (Object[] r) -> {
+        Async.run(() -> SupabaseClient.get().select("reports_admin_v", (status.isEmpty() ? "" : "status=eq." + status + "&")
+                + "order=created_at.desc&limit=100&select=id,reporter_id,reported_user_id,bh_id,reason,details,status,created_at,reviewed_at,admin_notes,reporter_name,reported_name,bh_name,reported_suspended_until"),
+                (JSONArray a) -> {
             if (my != token || b == null) return;
             b.swipe.setRefreshing(false);
-            @SuppressWarnings("unchecked") List<JSONObject> l = (List<JSONObject>) r[0];
-            @SuppressWarnings("unchecked") Map<String, String> m = (Map<String, String>) r[1];
-            items.clear(); items.addAll(l);
-            names.clear(); names.putAll(m);
+            items.clear();
+            for (int i = 0; i < a.length(); i++) { JSONObject o = a.optJSONObject(i); if (o != null) items.add(o); }
             rows.clear();
             for (int i = 0; i < items.size(); i++) rows.add("");
             rows.notifyDataSetChanged();
@@ -113,17 +124,101 @@ public class ReportsFragment extends Fragment {
     }
 
     private void details(JSONObject x) {
-        String why = x.optString("reason", "");
-        String msg = getString(R.string.rep_detail, name(x.optString("reporter_id")), name(x.optString("reported_user_id")),
-                why.isEmpty() || "null".equals(why) ? getString(R.string.rep_no_reason) : why,
-                BoostRules.day(x.optString("created_at", ""), ZoneId.systemDefault()));
-        String target = x.optString("reported_user_id");
-        new MaterialAlertDialogBuilder(requireContext()).setTitle(getString(AdminRules.isReport(x.optBoolean("is_block")) ? R.string.rep_kind_report : R.string.rep_kind_block))
-                .setMessage(msg)
-                .setNegativeButton(R.string.common_close, null)
-                .setPositiveButton(R.string.rep_takedown, (d, w) -> pickPlace(target)).show();
+        ZoneId z = ZoneId.systemDefault();
+        String bh = nullToEmpty(x.optString("bh_name", ""));
+        String why = nullToEmpty(x.optString("details", ""));
+        StringBuilder msg = new StringBuilder(getString(R.string.rep_detail2, reporter(x), reported(x),
+                bh.isEmpty() ? getString(R.string.rep_no_place) : bh,
+                ReportDialog.reasonLabel(requireContext(), x.optString("reason")),
+                why.isEmpty() ? getString(R.string.rep_no_reason) : why,
+                SuspendRules.when(x.optString("created_at", ""), z), statusLabel(x.optString("status"))));
+        String notes = nullToEmpty(x.optString("admin_notes", ""));
+        if (!notes.isEmpty()) msg.append(getString(R.string.rep_line_notes, notes));
+        String until = x.optString("reported_suspended_until", "");
+        if (SuspendRules.active(until, Instant.now())) msg.append(getString(R.string.rep_line_suspended, SuspendRules.when(until, z)));
+
+        final String target = x.optString("reported_user_id");
+        MaterialAlertDialogBuilder d = new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_kind_report).setMessage(msg.toString());
+        if ("pending".equals(x.optString("status"))) {
+            d.setPositiveButton(R.string.rep_suspend, (dd, w) -> pickDuration(x))
+             .setNeutralButton(R.string.rep_dismiss, (dd, w) -> dismiss(x))
+             .setNegativeButton(R.string.rep_takedown, (dd, w) -> pickPlace(target));
+        } else {
+            d.setPositiveButton(R.string.rep_takedown, (dd, w) -> pickPlace(target)).setNegativeButton(R.string.common_close, null);
+        }
+        d.show();
     }
 
+    /* ---------- dismiss ---------- */
+    private void dismiss(JSONObject x) {
+        ReasonDialog.ask(this, R.string.rep_dismiss_title, R.string.rep_dismiss, false, notes -> review(x, "dismiss", null, null, notes));
+    }
+
+    /* ---------- suspend: how long -> why -> confirm ---------- */
+    private void pickDuration(JSONObject x) {
+        new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_suspend_for)
+                .setItems(R.array.rep_durations, (d, which) -> {
+                    if (which < SuspendRules.PRESET_DAYS.length) askReason(x, SuspendRules.PRESET_DAYS[which]);
+                    else askCustomDays(x);
+                }).show();
+    }
+
+    private void askCustomDays(JSONObject x) {
+        EditText in = new EditText(requireContext());
+        in.setInputType(InputType.TYPE_CLASS_NUMBER);
+        in.setHint(getString(R.string.rep_custom_hint, SuspendRules.MAX_DAYS));
+        FrameLayout box = new FrameLayout(requireContext());
+        int m = Math.round(20 * getResources().getDisplayMetrics().density);
+        box.setPadding(m, m / 2, m, 0);
+        box.addView(in);
+        androidx.appcompat.app.AlertDialog d = new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_custom_title).setView(box)
+                .setNegativeButton(R.string.common_cancel, null).setPositiveButton(R.string.rep_suspend_next, null).create();
+        d.setOnShowListener(s -> d.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            Integer days = SuspendRules.parseDays(in.getText().toString());
+            if (days == null) { in.setError(getString(R.string.rep_custom_bad, SuspendRules.MAX_DAYS)); return; }
+            d.dismiss();
+            askReason(x, days);
+        }));
+        d.show();
+    }
+
+    private void askReason(JSONObject x, int days) {
+        ReasonDialog.ask(this, R.string.rep_suspend_title, R.string.rep_suspend_next, true, reason -> confirmSuspend(x, days, reason));
+    }
+
+    private void confirmSuspend(JSONObject x, int days, String reason) {
+        if (reason == null || reason.isEmpty()) return;
+        new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_suspend_title)
+                .setMessage(getString(R.string.rep_suspend_confirm, reported(x), days, SuspendRules.endsAt(days, Instant.now(), ZoneId.systemDefault()), reason))
+                .setNegativeButton(R.string.common_cancel, null)
+                .setPositiveButton(R.string.rep_suspend, (d, w) -> review(x, "suspend", SuspendRules.hours(days), reason, null)).show();
+    }
+
+    /** One call to admin_review_report; the server checks the admin, the length and that the report is still waiting. */
+    private void review(JSONObject x, String act, Integer hrs, String reason, String notes) {
+        if (busy) return;
+        busy = true;
+        final String rid = x.optString("id");
+        Async.run(() -> {
+            JSONObject a = new JSONObject().put("rid", rid).put("act", act);
+            if (hrs != null) a.put("hrs", hrs);
+            if (reason != null && !reason.isEmpty()) a.put("reason", reason);
+            if (notes != null && !notes.isEmpty()) a.put("notes", notes);
+            return SupabaseClient.get().rpc("admin_review_report", a);
+        }, r -> {
+            busy = false;
+            if (b == null) return;
+            ListArea.toast(this, getString("suspend".equals(act) ? R.string.rep_suspended_done : R.string.rep_dismissed_done));
+            reload();
+        }, e -> {
+            busy = false;
+            if (b == null) return;
+            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_review_error), e));
+            reload();
+        });
+    }
+
+    /* ---------- take down a place (unchanged since 8h) ---------- */
     /** The reported user's places that can still be taken down. */
     private void pickPlace(String userId) {
         if (AdminRules.inList(java.util.Collections.singletonList(userId)).isEmpty()) return;

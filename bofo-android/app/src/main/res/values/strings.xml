@@ -448,7 +448,7 @@
     <string name="review_error">Could not save the decision. It may already have been decided.</string>
     <string name="rep_kind_report">Report</string>
     <string name="rep_kind_block">Block</string>
-    <string name="rep_empty">No reports or blocks yet.</string>
+    <string name="rep_empty">No reports here.</string>
     <string name="rep_error">Could not load the reports.</string>
     <string name="rep_detail">From: %1$s\nAbout: %2$s\nReason: %3$s\nDate: %4$s</string>
     <string name="rep_no_reason">(none given)</string>
@@ -509,4 +509,67 @@
     <string name="form_room_beds_l">Beds</string>
     <string name="form_room_occ_l">Occupied now</string>
     <string name="form_review_text">%1$s\n%2$s\n\nPHP %3$s %4$s a month\n%5$d room(s), %6$d beds\n%7$d amenities, %8$d photo(s)</string>
+    <!-- v2.1.8: reports + suspension -->
+    <string name="report_button">Report this place</string>
+    <string name="report_title">Report this place</string>
+    <string name="report_hint">Why are you reporting it? An admin will review your report.</string>
+    <string name="report_details_hint">Details (optional)</string>
+    <string name="report_send">Send report</string>
+    <string name="report_sent">Thank you. Your report was sent to the admins.</string>
+    <string name="report_duplicate">You already reported this place. It is waiting for review.</string>
+    <string name="report_error">Could not send the report.</string>
+    <string-array name="report_reasons">
+        <item>Scam or fraud</item>
+        <item>Fake or misleading listing</item>
+        <item>Harassment or abuse</item>
+        <item>Inappropriate content</item>
+        <item>Wrong information</item>
+        <item>Something else</item>
+    </string-array>
+    <string-array name="rep_filters">
+        <item>Pending</item>
+        <item>Reviewed</item>
+        <item>Dismissed</item>
+        <item>Actioned</item>
+        <item>All</item>
+    </string-array>
+    <string-array name="rep_status_labels">
+        <item>Pending</item>
+        <item>Reviewed</item>
+        <item>Dismissed</item>
+        <item>Actioned</item>
+    </string-array>
+    <string-array name="rep_durations">
+        <item>1 day</item>
+        <item>3 days</item>
+        <item>7 days</item>
+        <item>30 days</item>
+        <item>Custom number of days…</item>
+    </string-array>
+    <string name="rep_title">Reports · %1$s ▾</string>
+    <string name="rep_filter_title">Show reports</string>
+    <string name="rep_detail2">From: %1$s\nAbout: %2$s\nPlace: %3$s\nReason: %4$s\nDetails: %5$s\nDate: %6$s\nStatus: %7$s</string>
+    <string name="rep_no_place">(none)</string>
+    <string name="rep_line_notes">\nAdmin notes: %1$s</string>
+    <string name="rep_line_suspended">\nSuspended until: %1$s</string>
+    <string name="rep_suspend">Suspend</string>
+    <string name="rep_suspend_for">Suspend for how long?</string>
+    <string name="rep_suspend_title">Suspend this account</string>
+    <string name="rep_suspend_next">Next</string>
+    <string name="rep_suspend_confirm">Suspend %1$s for %2$d day(s)?\n\nThey cannot use BOFO until %3$s.\nReason shown to them: %4$s</string>
+    <string name="rep_custom_title">Number of days</string>
+    <string name="rep_custom_hint">1 to %1$d days</string>
+    <string name="rep_custom_bad">Type a whole number from 1 to %1$d.</string>
+    <string name="rep_dismiss">Dismiss</string>
+    <string name="rep_dismiss_title">Dismiss this report</string>
+    <string name="rep_suspended_done">Account suspended.</string>
+    <string name="rep_dismissed_done">Report dismissed.</string>
+    <string name="rep_review_error">Could not save the decision.</string>
+    <string name="susp_title">Account suspended</string>
+    <string name="susp_body">An admin suspended this account after a report. You can use BOFO again when the suspension ends.</string>
+    <string name="susp_until">Suspended until %1$s</string>
+    <string name="susp_until_unknown">Suspended for a while</string>
+    <string name="susp_reason">Reason: %1$s</string>
+    <string name="susp_again">Check again</string>
+    <string name="susp_check_error">Could not check the account.</string>
 </resources>

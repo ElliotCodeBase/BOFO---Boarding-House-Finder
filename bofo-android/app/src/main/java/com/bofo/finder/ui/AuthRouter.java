@@ -28,11 +28,17 @@ public final class AuthRouter {
     /** v2.0.120: the role the server gave this account. {@link #role} is what the screens show; an admin can view the app as student or owner (Settings), this never changes. */
     public static volatile com.bofo.finder.model.Role realRole = com.bofo.finder.model.Role.STUDENT;
 
+    /** v2.1.8: set by {@link #route} when the account is suspended (shown on the suspended screen). */
+    public static volatile String suspendedUntil = "";
+    public static volatile String suspendedReason = "";
+
     /** v2.0.126: forget the previous account's role (sign out, delete, no session), so the next account never opens with the old owner / admin tabs. */
     public static void reset() {
         role = com.bofo.finder.model.Role.STUDENT;
         realRole = com.bofo.finder.model.Role.STUDENT;
         mfaPrompt = false;
+        suspendedUntil = "";
+        suspendedReason = "";
     }
 
     /** v2.0.119: true when the shell should open the admin two-step code sheet once. */
@@ -53,6 +59,20 @@ public final class AuthRouter {
                 if (p == null) return R.id.action_global_role;
                 role = p.role();
                 realRole = role;
+                // v2.1.8: a suspended account sees only the suspended screen until the end time passes. Fails open: if the check itself
+                // fails (offline, migration 022 not applied) the user is routed as before; the database still blocks writes.
+                if (role != com.bofo.finder.model.Role.ADMIN) {
+                    try {
+                        org.json.JSONObject sus = SupabaseClient.get().rpc("my_suspension", new org.json.JSONObject());
+                        if (sus.optBoolean("suspended", false)) {
+                            suspendedUntil = sus.optString("until", "");
+                            suspendedReason = sus.optString("reason", "");
+                            return R.id.action_global_suspended;
+                        }
+                    } catch (Exception ex) {
+                        if (ex instanceof SupabaseClient.ApiException api && api.status == 401) throw api;
+                    }
+                }
                 // v2.0.119: an admin with an authenticator who has not typed the code in this sign-in gets the code sheet when the shell opens
                 if (role == com.bofo.finder.model.Role.ADMIN) {
                     try { mfaPrompt = !a.mfaVerifiedFactor().isEmpty() && !"aal2".equals(a.aal()); } catch (Exception ignored) { mfaPrompt = false; }

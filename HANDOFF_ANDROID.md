@@ -1,6 +1,12 @@
+# Handoff (Android) - v2.1.8 safety series step 2 of 3
+- **PR title:** `v2.1.8 - Safety series step 2 of 3: Report button, admin review, timed suspension`
+- **Supabase: 022 NOT applied live yet** (waiting for the user's OK). It adds table `reports`, `users.suspended_until / suspension_reason`, `is_suspended()`, `my_suspension()`, `admin_review_report(rid, act, hrs, reason, notes)` (act = dismiss / reviewed / suspend; ban comes in step 3), view `reports_admin_v`, a new `protect_users()` that also locks the two suspension columns, and RESTRICTIVE insert/update policies on messages, reviews, boarding_houses, blocks_reports, reports. Until it is applied the app still works (the suspension check fails open) but Admin > Reports shows an error and reports cannot be sent.
+- Next: step 3 = v2.1.9: ban by hashed verification ID (blocked at registration AND at ID verification), Banned Users list, Unban, audit log. Existing: `owner_verifications` is the only ID table (owners); students have no ID step yet, so ask the user which ID the ban should scan before building. Plan: BOFO-SAFETY-STATUS.md.
+- Risks: not built or run by Claude (no Android SDK). A suspended user's open session is only caught at the next app start / Check again; writes are blocked by the database immediately. Admin has no "lift suspension early" button yet (SQL: `update users set suspended_until = null where id = ...`).
+---
 # Handoff (Android) - v2.1.7 safety series step 1 of 3
 - **PR title:** `v2.1.7 - Safety series step 1 of 3: owner's name on the boarding house page`
-- **Supabase (NOT applied live):** run `021_bh_owner_name.sql` in the SQL editor. Until then the app works and simply hides the owner line.
+- **Supabase: 021 IS APPLIED LIVE** (project BOFO, 2026-11-02, with the user's OK): only the view `bh_owner_v` (SELECT for authenticated, nothing else). No tables or data changed.
 - Next: step 2 (Report button + admin review + suspend) = v2.1.8; step 3 (ban by ID hash, Banned list, unban) = v2.1.9. Series plan: BOFO-SAFETY-STATUS.md.
 - Risks: not built or run by Claude (no Android SDK); `ic_set_user` reused as the owner icon.
 ---
