@@ -85,4 +85,13 @@
     <!-- first frame before the app runs: fixed per theme (the system draws it, so it cannot follow the switch; see Theme.Bofo.Launch) -->
     <color name="launch_bg_classic">#17142A</color>
     <color name="launch_bg_orange">#FFFFFF</color>
+    <!-- v2.2.5 design system tokens (Classic purple). Same names in values-night (Orange). -->
+    <color name="bofo_on_primary">#FFFFFF</color>
+    <color name="bofo_surface">#FFFFFF</color>
+    <color name="bofo_surface_dim">#F4F3FA</color>
+    <color name="bofo_avatar_1">#EFEDFB</color>
+    <color name="bofo_avatar_2">#E1F4EA</color>
+    <color name="bofo_avatar_3">#FBF1DD</color>
+    <color name="bofo_avatar_4">#E8EEFB</color>
+    <color name="bofo_avatar_ink">#3A22B8</color>
 </resources>

@@ -3,8 +3,8 @@
 <resources>
     <style name="Widget.Bofo.Button.Primary" parent="Widget.Material3.Button">
         <item name="backgroundTint">@color/bofo_primary</item>
-        <item name="android:textColor">@color/bofo_white</item>
-        <item name="cornerRadius">14dp</item>
+        <item name="android:textColor">@color/bofo_on_primary</item>
+        <item name="cornerRadius">@dimen/radius_field</item>
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:textSize">15sp</item>
         <item name="android:minHeight">48dp</item>

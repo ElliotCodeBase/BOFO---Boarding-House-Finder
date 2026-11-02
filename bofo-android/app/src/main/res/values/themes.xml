@@ -4,7 +4,7 @@
          Both themes (classic purple / orange) are LIGHT: res/values-night/colors.xml is just the switch (AppCompatDelegate MODE_NIGHT_YES = orange). -->
     <style name="Base.Theme.Bofo" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">@color/bofo_primary</item>
-        <item name="colorOnPrimary">@color/bofo_white</item>
+        <item name="colorOnPrimary">@color/bofo_on_primary</item>
         <item name="colorPrimaryContainer">@color/bofo_primary_tint</item>
         <item name="colorOnPrimaryContainer">@color/bofo_primary_dark</item>
         <item name="colorSecondary">@color/bofo_amber</item>

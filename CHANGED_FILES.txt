@@ -1,6 +1,17 @@
+BOFO v2.2.5 - UI redesign step 1 of 6
 changed bofo-android/app/build.gradle
-changed java/com/bofo/finder/ui/BoardingChatFragment.java
-changed res/layout/fragment_boarding_chat.xml, item_group_msg.xml
-changed res/drawable/bg_ann_card, bg_bubble_mine, bg_bubble_theirs, bg_role_owner, bg_role_student
-new res/drawable/bg_chat_header.xml, bg_chat_composer.xml
-new BOFO-v2.2.4-CHANGELOG.md
+changed bofo-android/app/src/main/res/values/colors.xml
+changed bofo-android/app/src/main/res/values-night/colors.xml
+changed bofo-android/app/src/main/res/values/themes.xml
+changed bofo-android/app/src/main/res/values/styles.xml
+changed bofo-android/app/src/main/res/drawable/bg_chat_input.xml
+changed bofo-android/app/src/main/res/drawable/bg_bofo_card.xml
+changed bofo-android/app/src/main/res/drawable/bg_dash_card.xml
+changed bofo-android/app/src/main/res/drawable/bg_dropdown.xml
+changed bofo-android/app/src/main/res/drawable/bg_chip_on.xml
+changed bofo-android/app/src/main/res/drawable/bg_chip_off.xml
+changed CHANGES_ANDROID.md
+changed HANDOFF_ANDROID.md
+new     bofo-android/app/src/main/res/values/dimens.xml
+new     bofo-android/app/src/main/res/values/styles_system.xml
+new     bofo-android/app/src/main/res/layout/view_page_header.xml
