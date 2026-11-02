@@ -1,7 +1,5 @@
 changed bofo-android/app/build.gradle
-changed bofo-android/app/src/main/java/com/bofo/finder/service/BhService.java
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/ReportsFragment.java
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/ProfileFragment.java
-changed bofo-android/app/src/main/res/values/strings.xml
-new supabase/migrations/027_reports_answered.sql (already applied live)
-new BOFO-v2.2.2-CHANGELOG.md
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/BoardingFragment.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/BoardingChatFragment.java
+new BOFO-v2.2.3-CHANGELOG.md

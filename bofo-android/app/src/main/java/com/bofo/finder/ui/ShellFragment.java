@@ -51,6 +51,8 @@ public class ShellFragment extends Fragment {
     private FragmentShellBinding binding;
     /** Last tab shown by this instance (0 = none yet). Lets Back from a pushed screen (detail, edit profile) return to the same tab. */
     private int selectedTab = 0;
+    private boolean chatFull;                 // v2.2.3: the student's group chat is open: no tab bar, no Ask BOFO button
+    private int bottomInset;                  // system bar height, used while the tab bar is hidden
     private OnBackPressedCallback closeBofo;      // Back closes the Ask BOFO card first
     private boolean owner, admin;
     private LocationHelper loc;                   // reads the phone position for Ask BOFO
@@ -97,7 +99,9 @@ public class ShellFragment extends Fragment {
         final float dp = getResources().getDisplayMetrics().density;
         ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            bottomInset = bars.bottom;
             if (binding != null) {
+                applyChatFull();
                 LinearLayout.LayoutParams nav = (LinearLayout.LayoutParams) binding.dock.getLayoutParams();
                 nav.bottomMargin = Math.round(12 * dp) + bars.bottom;
                 binding.dock.setLayoutParams(nav);
@@ -130,6 +134,7 @@ public class ShellFragment extends Fragment {
             }
         });
 
+        applyChatFull();
         if (selectedTab != 0) {
             // Back from a pushed screen, or after rotation: the child fragment is still there, only the bar has to show its tab again.
             binding.dock.select(selectedTab, false);
@@ -138,6 +143,26 @@ public class ShellFragment extends Fragment {
             binding.dock.select(first, false);
             showTab(first);
         }
+    }
+
+    /** v2.2.3: BoardingFragment calls this: true while the group chat is on screen (tab bar and Ask BOFO button hidden), false otherwise. */
+    void setChatFull(boolean on) { chatFull = on; applyChatFull(); }
+
+    private void applyChatFull() {
+        if (binding == null) return;
+        binding.dock.setVisibility(chatFull ? View.GONE : View.VISIBLE);
+        binding.bofoFab.setVisibility(chatFull || admin ? View.GONE : View.VISIBLE);
+        binding.tabContainer.setPadding(0, 0, 0, chatFull ? bottomInset : 0);       // the bar used to keep the content above the system buttons
+    }
+
+    /** v2.2.3: the Back arrow of the group chat: leaves it and opens the Home tab with the bar again. */
+    void leaveBoarding() {
+        chatFull = false;
+        applyChatFull();
+        if (binding == null) return;
+        binding.dock.select(R.id.tab_home, true);
+        showTab(R.id.tab_home);
+        refreshBadge();
     }
 
     @Override

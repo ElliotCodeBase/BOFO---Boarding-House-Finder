@@ -136,7 +136,11 @@ public class BoardingChatFragment extends Fragment {
         b.subtitle.setText(members > 0 ? getResources().getQuantityString(R.plurals.boarding_members, members, members) : "");
         if (args.getBoolean(ARG_BACK, false)) {
             b.back.setVisibility(View.VISIBLE);
-            b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
+            b.back.setOnClickListener(v -> {
+                Fragment host = getParentFragment();
+                if (host instanceof BoardingFragment) ((BoardingFragment) host).leave();       // v2.2.3: student tab: back to Home
+                else NavHostFragment.findNavController(this).navigateUp();
+            });
         }
         boolean canLeave = args.getBoolean(ARG_LEAVE, false), isOwner = GroupMessage.OWNER.equals(myRole);
         {                                                            // 3-dot menu for everyone: Pinned announcements, owner tools, Leave group (students)
