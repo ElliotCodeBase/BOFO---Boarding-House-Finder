@@ -37,7 +37,7 @@ import java.util.List;
 
 /**
  * Shell for all three user types: tab container + the dock bar (same look and tabs as the JavaFX app).
- * Student: Home, Explore, Saved, Chats, Profile.
+ * Student: Home, Explore, Boarding (centre), Chats, Profile. (Saved moved to Profile > Saved places in v2.2.0.)
  * Owner: Dashboard, Listings, Create (raised button, opens the new-listing form), Chats, Profile.
  * Admin: Queue, Payments, Reports, Profile.
  */
@@ -158,7 +158,7 @@ public class ShellFragment extends Fragment {
         } else {
             t.add(tab(R.id.tab_home, R.drawable.ic_dock_home, getString(R.string.tab_home), false, false));
             t.add(tab(R.id.tab_explore, R.drawable.ic_dock_explore, getString(R.string.tab_explore), false, false));
-            t.add(tab(R.id.tab_saved, R.drawable.ic_dock_saved, getString(R.string.tab_saved), false, false));
+            t.add(tab(R.id.tab_boarding, R.drawable.ic_dock_boarding, getString(R.string.tab_boarding), false, false));      // v2.2.0: centre slot (Saved moved to Profile)
             t.add(tab(R.id.tab_chats, R.drawable.ic_dock_chats, getString(R.string.tab_chats), false, true));
             t.add(tab(R.id.tab_profile, R.drawable.ic_dock_profile, getString(R.string.tab_profile), false, false));
         }
@@ -308,8 +308,8 @@ public class ShellFragment extends Fragment {
             f = new ListingsFragment();
         } else if (id == R.id.tab_explore) {
             f = new ExploreFragment();
-        } else if (id == R.id.tab_saved) {
-            f = new SavedFragment();
+        } else if (id == R.id.tab_boarding) {
+            f = new BoardingFragment();
         } else if (id == R.id.tab_chats) {
             f = new ChatsFragment();
         } else {

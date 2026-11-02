@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.2.0 Boarding (group chat per boarding house). Step 2: student screen. -->
+<resources>
+    <string name="tab_boarding">Boarding</string>
+    <string name="boarding_title">Boarding</string>
+    <string name="boarding_join_title">Join your boarding house</string>
+    <string name="boarding_join_sub">Ask your owner for the invite code. Only people who live here can read this chat.</string>
+    <string name="boarding_code_hint">Invite code</string>
+    <string name="boarding_join">Join</string>
+    <string name="boarding_joining">Joining…</string>
+    <string name="boarding_code_short">Enter the 8-character code from your owner.</string>
+    <string name="boarding_err_bad_code">That code does not match any boarding house. Check it with your owner.</string>
+    <string name="boarding_err_removed">You were removed from this group. Ask your owner.</string>
+    <string name="boarding_err_other_house">You are already in another boarding house. Leave it first.</string>
+    <string name="boarding_err_students_only">Only student accounts can join a boarding house chat.</string>
+    <string name="boarding_err_suspended">Your account cannot join groups right now.</string>
+    <string name="boarding_err_generic">Could not join. Try again.</string>
+    <string name="boarding_load_error">Could not load your boarding house.</string>
+    <string name="boarding_blocked">You cannot post in this group right now. The owner may have muted you.</string>
+    <string name="boarding_hint">Message your housemates</string>
+    <string name="boarding_empty_title">No messages yet</string>
+    <string name="boarding_empty_sub">Say hi to your housemates.</string>
+    <string name="boarding_you">You</string>
+    <string name="boarding_role_owner">Owner</string>
+    <string name="boarding_role_student">Student</string>
+    <string name="boarding_announcement">Announcement</string>
+    <string name="boarding_leave">Leave group</string>
+    <string name="boarding_leave_title">Leave this group?</string>
+    <string name="boarding_leave_msg">You will stop seeing this chat. You can join again with the code.</string>
+    <string name="boarding_leave_failed">Could not leave the group. Try again.</string>
+    <string name="boarding_delete_mine">Delete my message</string>
+    <string name="boarding_delete_failed">Could not delete the message.</string>
+    <string name="cd_more">More options</string>
+    <plurals name="boarding_members">
+        <item quantity="one">%1$d member</item>
+        <item quantity="other">%1$d members</item>
+    </plurals>
+    <!-- Saved moved from the tab bar to Profile (v2.2.0) -->
+    <string name="profile_saved">Saved places</string>
+</resources>

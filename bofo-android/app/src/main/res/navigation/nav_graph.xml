@@ -107,6 +107,12 @@
             app:argType="float" />
     </fragment>
 
+    <!-- v2.2.0: Saved places, opened from Profile (was a tab). -->
+    <fragment
+        android:id="@+id/savedFragment"
+        android:name="com.bofo.finder.ui.SavedFragment"
+        android:label="Saved" />
+
     <fragment
         android:id="@+id/chatFragment"
         android:name="com.bofo.finder.ui.ChatFragment"

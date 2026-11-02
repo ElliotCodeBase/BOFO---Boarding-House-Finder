@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.bofo.finder.R;
 import com.bofo.finder.databinding.FragmentSavedBinding;
@@ -21,7 +22,7 @@ import com.bofo.finder.util.Favorites;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Saved: the places the student hearted. Works offline from the last copy (BhService.favorites). */
+/** Saved: the places the student hearted. Since v2.2.0 it is opened from Profile > Saved places (no longer a tab). Works offline from the last copy (BhService.favorites). */
 public class SavedFragment extends Fragment {
 
     private FragmentSavedBinding b;
@@ -39,6 +40,7 @@ public class SavedFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle state) {
         super.onViewCreated(view, state);
+        b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());      // v2.2.0: opened from Profile
         adapter = new BhAdapter(new BhAdapter.Listener() {
             @Override public void open(BoardingHouse x) { BhDetailFragment.open(SavedFragment.this, x.id()); }
             @Override public void heart(BoardingHouse x) {

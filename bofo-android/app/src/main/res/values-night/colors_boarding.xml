@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bofo_role_owner_bg">#3A2F10</color>
+    <color name="bofo_role_owner_text">#FFD27A</color>
+</resources>

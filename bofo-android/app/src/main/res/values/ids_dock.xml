@@ -2,4 +2,5 @@
 <resources>
     <item name="tab_dashboard" type="id" />
     <item name="tab_create" type="id" />
+    <item name="tab_boarding" type="id" />
 </resources>
