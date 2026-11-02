@@ -28,6 +28,13 @@ public final class AuthRouter {
     /** v2.0.120: the role the server gave this account. {@link #role} is what the screens show; an admin can view the app as student or owner (Settings), this never changes. */
     public static volatile com.bofo.finder.model.Role realRole = com.bofo.finder.model.Role.STUDENT;
 
+    /** v2.0.126: forget the previous account's role (sign out, delete, no session), so the next account never opens with the old owner / admin tabs. */
+    public static void reset() {
+        role = com.bofo.finder.model.Role.STUDENT;
+        realRole = com.bofo.finder.model.Role.STUDENT;
+        mfaPrompt = false;
+    }
+
     /** v2.0.119: true when the shell should open the admin two-step code sheet once. */
     private static volatile boolean mfaPrompt;
     static boolean takeMfaPrompt() { boolean p = mfaPrompt; mfaPrompt = false; return p; }
@@ -40,7 +47,7 @@ public final class AuthRouter {
     public static void route(NavController nav, Consumer<Throwable> onFail) {
         Async.run(() -> {
             AuthService a = AuthService.get();
-            if (!a.restore()) return R.id.action_global_login;
+            if (!a.restore()) { reset(); return R.id.action_global_login; }
             try {
                 Profile p = new ProfileService().fetchMe();
                 if (p == null) return R.id.action_global_role;
@@ -53,7 +60,7 @@ public final class AuthRouter {
                 if (!ProfileService.isComplete(p)) return R.id.action_global_setup;
                 return R.id.action_global_shell;
             } catch (SupabaseClient.ApiException e) {
-                if (e.status == 401) { a.signOut(); return R.id.action_global_login; }
+                if (e.status == 401) { a.signOut(); reset(); return R.id.action_global_login; }
                 throw e;
             }
         }, id -> go(nav, id), onFail);

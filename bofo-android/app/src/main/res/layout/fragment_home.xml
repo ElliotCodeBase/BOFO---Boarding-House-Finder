@@ -312,7 +312,10 @@
         android:id="@+id/section_sub"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:paddingStart="16dp"
+        android:paddingEnd="76dp"
         android:paddingBottom="6dp"
         android:textColor="@color/bofo_text_2"
         android:textSize="13sp" />

@@ -137,6 +137,7 @@ public class SettingsFragment extends Fragment {
         final NavController nav = nav();
         Async.run(() -> { AuthService.get().signOut(); return Boolean.TRUE; }, ok -> {
             AppPrefs.clear(app);
+            AuthRouter.reset();                       // v2.0.126: the next account must not inherit this role
             AuthRouter.go(nav, R.id.action_global_login);
         }, e -> message(ErrorText.full("Could not sign out", e)));
     }
@@ -146,6 +147,7 @@ public class SettingsFragment extends Fragment {
         final NavController nav = nav();
         Async.run(() -> { AuthService.get().deleteAccount(); return Boolean.TRUE; }, ok -> {
             AppPrefs.clear(app);
+            AuthRouter.reset();                       // v2.0.126: the next account must not inherit this role
             AuthRouter.go(nav, R.id.action_global_login);
         }, e -> message(ErrorText.full("Could not delete the account", e)));
     }

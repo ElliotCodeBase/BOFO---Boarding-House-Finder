@@ -22,6 +22,8 @@ public final class DirectionsRules {
     public static final double NEAREST_CAMPUS_MAX_KM = 15;
     /** Longest wait (seconds) for the real plan; then an offline estimate is shown. */
     public static final int PLAN_SECONDS = 12;
+    /** v2.0.131: the first look at a trip waits this long, then shows a rough plan and fetches the exact roads by itself. */
+    public static final int FIRST_PLAN_SECONDS = 5;
 
     public enum Missing { NONE, NEED_CAMPUS, NEED_CAMPUS_AND_LOCATION, NEED_LOCATION }
 

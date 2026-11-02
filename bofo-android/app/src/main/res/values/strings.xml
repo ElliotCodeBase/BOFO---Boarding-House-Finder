@@ -212,6 +212,7 @@
     <string name="dir_current_location">Current location</string>
     <string name="dir_campus_word">campus</string>
     <string name="dir_finding">Finding the best way…</string>
+    <string name="dir_refining">Getting the exact roads…</string>
     <string name="dir_need_campus">Choose a campus on the Home screen to see this route.</string>
     <string name="dir_need_location">BOFO does not know where you are yet. Turn on location to see the way from you.</string>
     <string name="dir_location_off">Location is off in BOFO Settings. Turn on “Use my location” there to see the way from you.</string>

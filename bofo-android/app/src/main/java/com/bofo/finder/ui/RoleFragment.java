@@ -86,8 +86,11 @@ public class RoleFragment extends Fragment {
             if (p == null) ps.create(chosen, AuthService.get().metaName(), AuthService.get().metaPhoto());
             else if (p.role() != chosen && p.role() != Role.ADMIN) ps.switchRole(chosen);
             ps.recordAgreements(chosen);
-            return Boolean.TRUE;
-        }, ok -> {
+            Profile now = ps.fetchMe();                // v2.0.126: the role the server really has
+            return now != null ? now.role() : chosen;
+        }, saved -> {
+            AuthRouter.role = saved;                   // v2.0.126: the shell builds its tabs from this (it kept the last account's role before)
+            AuthRouter.realRole = saved;
             if (b == null) return;
             NavHostFragment.findNavController(this).navigate(R.id.action_global_setup);
         }, e -> {

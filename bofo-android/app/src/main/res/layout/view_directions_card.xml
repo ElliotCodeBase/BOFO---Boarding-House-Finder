@@ -157,6 +157,17 @@
         android:orientation="vertical"
         android:visibility="gone">
 
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/dir_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:indeterminate="true"
+            app:indicatorColor="@color/bofo_primary"
+            app:trackColor="@color/bofo_stroke_soft"
+            app:trackCornerRadius="2dp"
+            app:trackThickness="3dp" />
+
         <View
             android:layout_width="match_parent"
             android:layout_height="58dp"
@@ -229,6 +240,19 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:visibility="gone">
+
+        <!-- v2.0.131: shown while the exact roads are still being fetched in the background -->
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/dir_refresh"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:indicatorColor="@color/bofo_primary"
+            app:trackColor="@color/bofo_stroke_soft"
+            app:trackCornerRadius="2dp"
+            app:trackThickness="3dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
