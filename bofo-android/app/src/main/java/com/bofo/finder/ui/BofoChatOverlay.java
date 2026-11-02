@@ -394,19 +394,23 @@ public class BofoChatOverlay extends FrameLayout {
         return v.getRoot();
     }
 
-    /** Side-by-side table: tinted header with the place names (tap = open the place), one column per place that share the width,
-     *  alternate row shading, the best cell of a row in green with a check mark, and a line saying which place wins most rows. */
+    /** Side-by-side table: tinted header with the place names (tap = open the place), a fixed label column, up to 3 places that
+     *  SHARE the real width of the card (weights, so it can never clip), 4 places scroll sideways. Alternate row shading, the best
+     *  cell(s) of a row in green with a check mark (ties are all marked), and a line saying which place wins most rows. */
     private void addCompare(LayoutInflater in, BofoAnswer a) {
         ItemBofoCompareBinding v = ItemBofoCompareBinding.inflate(in, b.chatBox, false);
         List<String> ids = a.compare().ids().isEmpty() ? a.resultIds() : a.compare().ids();
         int n = Math.max(1, ids.size());
-        // v2.1.5: up to 3 places always fit the card (smaller text, wrapping cells); only 4 or more places scroll sideways
         boolean tight = n >= 3;
         cellSp = tight ? 11f : 12f;
-        int labelPx = Math.round((tight ? 56 : 72) * dp);
-        int cardPx = b.card.getWidth() > 0 ? b.card.getWidth() : Math.round(320 * dp);
-        int avail = cardPx - Math.round(28 * dp) - Math.round(24 * dp);                    // card padding + the table's own side margins
-        int colPx = n <= 3 ? Math.max(Math.round(64 * dp), (avail - labelPx) / n) : Math.max(Math.round(88 * dp), (avail - labelPx) / 3);
+        int labelPx = Math.round(68 * dp);
+        int colPx = n <= 3 ? 0 : Math.round(92 * dp);          // 0 = weighted column (shares the width); 4 places = fixed width, scrolls
+
+        List<BofoAnswer.Row> rows = new ArrayList<>();
+        for (BofoAnswer.Row row : a.compare().rows()) {
+            if ("Walk time".equals(row.label()) && tooFarToWalk(row)) continue;     // "716 min" is a 12 hour walk: the Distance row already says it
+            rows.add(row);
+        }
 
         LinearLayout head = new LinearLayout(getContext());
         head.setOrientation(LinearLayout.HORIZONTAL);
@@ -416,7 +420,7 @@ public class BofoChatOverlay extends FrameLayout {
             BofoAnswer.Result r = a.result(id);
             TextView h = cell(r == null ? "" : r.name(), colPx, true, false, true);
             h.setTextColor(getContext().getColor(R.color.bofo_primary_dark));
-            h.setMaxLines(2); h.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            h.setMaxLines(3); h.setEllipsize(android.text.TextUtils.TruncateAt.END);
             if (r != null) {
                 h.setBackgroundResource(android.R.drawable.list_selector_background);
                 h.setClickable(true);
@@ -428,21 +432,23 @@ public class BofoChatOverlay extends FrameLayout {
 
         int[] wins = new int[n];
         int scored = 0, shade = 0;
-        for (BofoAnswer.Row row : a.compare().rows()) {
+        for (BofoAnswer.Row row : rows) {
             LinearLayout line = new LinearLayout(getContext());
             line.setOrientation(LinearLayout.HORIZONTAL);
-            line.setMinimumHeight(Math.round(38 * dp));
-            line.setGravity(Gravity.CENTER_VERTICAL);
+            line.setMinimumHeight(Math.round(44 * dp));
             if (shade++ % 2 == 1) line.setBackgroundResource(R.drawable.bg_bofo_row_alt);
-            TextView label = cell(row.label(), labelPx, true, false, false);
+            TextView label = cell(shortLabel(row.label()), labelPx, true, false, false);
             label.setTextColor(getContext().getColor(R.color.bofo_text_2)); label.setTextSize(tight ? 10 : 11);
             line.addView(label);
+            boolean[] bestCell = bestCells(row, n);
+            boolean any = false;
             for (int i = 0; i < ids.size(); i++) {
-                boolean best = i == row.best();
                 String val = i < row.values().size() ? row.values().get(i) : "";
-                line.addView(cell(best && val.length() <= 12 ? "\u2713 " + val : val, colPx, false, best, true));
+                boolean best = bestCell[i];
+                line.addView(cell(best ? "\u2713 " + val : val, colPx, false, best, true));
+                if (best) { wins[i]++; any = true; }
             }
-            if (row.best() >= 0 && row.best() < n) { wins[row.best()]++; scored++; }
+            if (any) scored++;
             v.table.addView(line);
         }
 
@@ -476,13 +482,48 @@ public class BofoChatOverlay extends FrameLayout {
 
     private float cellSp = 12f;
 
+    /** Short row names so the label column never wraps to two lines. */
+    private static String shortLabel(String l) {
+        if (l == null) return "";
+        switch (l) {
+            case "Free electricity": return "Free power";
+            case "Free wifi": return "Free Wi-Fi";
+            case "Available beds": return "Beds left";
+            case "Verified owner": return "Verified";
+            case "Extra amenities": return "Extras";
+            case "Walk time": return "Walk";
+            default: return l;
+        }
+    }
+
+    /** True when any walk time in the row is over an hour (the place is far away). */
+    private static boolean tooFarToWalk(BofoAnswer.Row row) {
+        for (String val : row.values()) {
+            try { if (Integer.parseInt(val.replaceAll("[^0-9].*$", "")) > 60) return true; } catch (NumberFormatException ignored) { }
+        }
+        return false;
+    }
+
+    /** The best cell AND every cell that shows the same text (a 5.0 vs 5.0 tie marks both, not only the first). */
+    private static boolean[] bestCells(BofoAnswer.Row row, int n) {
+        boolean[] out = new boolean[n];
+        int best = row.best();
+        if (best < 0 || best >= n || best >= row.values().size()) return out;
+        String ref = row.values().get(best);
+        for (int i = 0; i < n && i < row.values().size(); i++) out[i] = i == best || (ref != null && ref.equals(row.values().get(i)));
+        return out;
+    }
+
+    /** widthPx 0 = a weighted column (takes an equal share of the row). The cell fills the full row height so the green stays one even block. */
     private TextView cell(String text, int widthPx, boolean bold, boolean best, boolean center) {
         TextView t = new TextView(getContext());
-        t.setLayoutParams(new LinearLayout.LayoutParams(widthPx, ViewGroup.LayoutParams.WRAP_CONTENT));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(widthPx, ViewGroup.LayoutParams.MATCH_PARENT, widthPx == 0 ? 1f : 0f);
+        if (best) { int m = Math.round(3 * dp); lp.setMargins(m, m, m, m); }
+        t.setLayoutParams(lp);
         t.setText(text);
         t.setTextSize(cellSp);
         t.setGravity(center ? Gravity.CENTER : Gravity.CENTER_VERTICAL | Gravity.START);
-        int pad = Math.round((cellSp < 12 ? 3 : 6) * dp);
+        int pad = Math.round((cellSp < 12 ? 4 : 6) * dp);
         t.setPadding(pad, Math.round(7 * dp), pad, Math.round(7 * dp));
         t.setTextColor(getContext().getColor(best ? R.color.bofo_success : R.color.bofo_text));
         t.setTypeface(null, bold || best ? Typeface.BOLD : Typeface.NORMAL);

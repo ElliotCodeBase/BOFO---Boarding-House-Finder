@@ -306,7 +306,7 @@ function buildCompare(rs: Result[], cards: Card[]) {
   rows.push({ label: "Price", values: rs.map((r) => peso(r.price)), best: best(rs.map((r) => r.price), true) });
   if (rs.every((r) => r.distance_km !== null)) {
     rows.push({ label: "Distance", values: rs.map((r) => fmtKm(r.distance_km!)), best: best(rs.map((r) => r.distance_km), true) });
-    rows.push({ label: "Walk time", values: rs.map((r) => r.walk_min! + " min"), best: best(rs.map((r) => r.walk_min), true) });
+    if (rs.every((r) => r.distance_km! <= 3)) rows.push({ label: "Walk time", values: rs.map((r) => r.walk_min! + " min"), best: best(rs.map((r) => r.walk_min), true) });
   }
   rows.push({ label: "Rating", values: rs.map((r) => (r.review_count ? `${r.rating.toFixed(1)} (${r.review_count})` : "No reviews")), best: best(rs.map((r) => (r.review_count ? r.rating : null)), false) });
   rows.push({ label: "Free water", values: rs.map((r) => (r.free_water ? "Yes" : "No")), best: yn(rs.map((r) => r.free_water)) });
