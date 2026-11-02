@@ -1,9 +1,0 @@
-new      supabase/migrations/019_min_app_version_all.sql
-changed  supabase/functions/bofo-chat/index.ts
-changed  supabase/functions/delete-account/index.ts
-changed  supabase/functions/create-boost-checkout/index.ts
-changed  bofo-android/app/build.gradle
-changed  CHANGES_ANDROID.md
-changed  HANDOFF_ANDROID.md
-changed  docs/SECURITY.md
-new      BOFO-v2.0.122-CHANGELOG.md

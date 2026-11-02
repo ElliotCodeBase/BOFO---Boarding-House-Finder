@@ -102,4 +102,26 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
+
+    <!-- v2.1.0: Directions card: small white pill (distance / fare / estimate) and the outlined side-by-side buttons -->
+    <style name="DirChip">
+        <item name="android:background">@drawable/bg_dir_chip</item>
+        <item name="android:paddingHorizontal">9dp</item>
+        <item name="android:paddingVertical">3dp</item>
+        <item name="android:textColor">@color/bofo_text</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:singleLine">true</item>
+    </style>
+    <style name="Widget.Bofo.Button.DirOutline" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textColor">@color/bofo_text</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:minHeight">44dp</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:paddingHorizontal">8dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="strokeColor">@color/bofo_border</item>
+        <item name="cornerRadius">14dp</item>
+    </style>
 </resources>

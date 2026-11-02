@@ -8,13 +8,19 @@
 
 Patch (x.y.Z) for fixes, minor (x.Y.0) for new features. The v1.2.0 merge once left About showing v1.1.1: this rule exists so that never happens again.
 
-## Android line (bofo-android/, starts at v2.0.0)
+## Android line (bofo-android/)
 
-The native Android port has its own version line: **stage N ships as v2.0.N**. The JavaFX app keeps its own v1.x line. For every Android stage / pull request:
+The native Android app has its own version line, **MAJOR.MINOR.PATCH** (semantic versioning). The JavaFX app keeps its own v1.x line. v2.0.0 to v2.0.131 were numbered one per stage; from **v2.1.0** on the normal rules apply:
 
-1. Bump `versionName` and `versionCode` in `bofo-android/app/build.gradle`.
+- **PATCH** (2.1.x): bug fixes and small tweaks, nothing new for the user.
+- **MINOR** (2.x.0): a new feature or a visible change (patch resets to 0).
+- **MAJOR** (x.0.0): a breaking change (minor and patch reset to 0).
+
+For every Android pull request:
+
+1. Bump `versionName` and `versionCode` in `bofo-android/app/build.gradle`. `versionCode = MAJOR*10000 + MINOR*100 + PATCH` (2.1.0 = 20100, 2.1.1 = 20101, 2.2.0 = 20200). It must always go up.
 2. Profile > About reads `BuildConfig.VERSION_NAME` (never hard-code it). Search the repo for the old Android version string and replace it everywhere (history entries excepted).
-3. Put the version in the PR title (`v2.0.N - short summary`) and add an entry at the top of `CHANGES.md` and `HANDOFF_ANDROID.md`.
+3. Put the version in the PR title (`v2.1.0 - short summary`) and add an entry at the top of `CHANGES_ANDROID.md` and `HANDOFF_ANDROID.md`, plus a `BOFO-vX.Y.Z-CHANGELOG.md` file.
 
 ---
 

@@ -2,6 +2,7 @@ package com.bofo.finder.ui;
 
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.AttributeSet;
@@ -60,6 +61,8 @@ public class DirectionsCardView extends MaterialCardView {
     private double[] planFrom;                 // where the current plan starts (to notice that you moved)
     private boolean planning, failed, userPicked, moreOpen, observing, stopped;
     private int locationProblem;               // string resource, 0 = none
+    private int refineTries;                   // v2.0.131: how many times the exact roads were asked again by themselves
+    private ObjectAnimator pulse;              // v2.0.131: the loading boxes breathe while the plan is being worked out
     private final List<ItemDirOptionBinding> rows = new ArrayList<>();
 
     public DirectionsCardView(@NonNull Context c) { this(c, null); }
@@ -81,7 +84,7 @@ public class DirectionsCardView extends MaterialCardView {
     private final DefaultLifecycleObserver life = new DefaultLifecycleObserver() {
         @Override public void onStart(@NonNull LifecycleOwner o) { if (stopped) { stopped = false; startWatching(); } }
         @Override public void onStop(@NonNull LifecycleOwner o) { stopped = true; if (location != null) location.stop(); }
-        @Override public void onDestroy(@NonNull LifecycleOwner o) { token++; observing = false; o.getLifecycle().removeObserver(this); }
+        @Override public void onDestroy(@NonNull LifecycleOwner o) { stopPulse(); token++; observing = false; o.getLifecycle().removeObserver(this); }
     };
 
     private final LocationHelper.Callback watchCallback = new LocationHelper.Callback() {
@@ -97,7 +100,7 @@ public class DirectionsCardView extends MaterialCardView {
     public void bind(@NonNull Fragment fragment, @NonNull LocationHelper helper, @NonNull BoardingHouse place) {
         host = fragment; location = helper; bh = place;
         token++;
-        plan = null; planFrom = null; planning = false; failed = false; userPicked = false; moreOpen = false; me = null; locationProblem = 0;
+        plan = null; planFrom = null; planning = false; failed = false; refineTries = 0; userPicked = false; moreOpen = false; me = null; locationProblem = 0;
         campus = BrowseState.campus();                                   // the chosen campus first, else the nearest one to this place (below)
 
         LifecycleOwner owner = fragment.getViewLifecycleOwner();
@@ -190,7 +193,7 @@ public class DirectionsCardView extends MaterialCardView {
         final int my = ++token;
         b.tabs.check(t == DirectionsRules.TAB_ME_BH ? R.id.tab_me_bh : t == DirectionsRules.TAB_BH_CAMPUS ? R.id.tab_bh_campus : R.id.tab_me_campus);
         final double[] from = fromPoint(t), to = toPoint(t);
-        plan = null; planFrom = null; planning = false; failed = false;
+        plan = null; planFrom = null; planning = false; failed = false; refineTries = 0;
         b.map.clearRoute();                                             // never leave the previous tab's line on the map
         b.fromName.setText(fromName(t));
         b.toName.setText(toName(t));
@@ -208,20 +211,30 @@ public class DirectionsCardView extends MaterialCardView {
 
     /** Works out the plan. A failure (weak signal, slow server) is retried by itself up to 5 times, a little later each time, while the card keeps its loading state; only then the Retry button shows. */
     private void runPlan(int t, int my, double[] from, double[] to, int tries) {
-        Async.run(() -> TripPlanner.planWithin(from, to, DirectionsRules.PLAN_SECONDS), p -> {
+        final int wait = plan == null && tries == 0 ? DirectionsRules.FIRST_PLAN_SECONDS : DirectionsRules.PLAN_SECONDS;     // v2.0.131: the first look gives up sooner (a rough plan + the bar), the exact roads follow by themselves
+        Async.run(() -> TripPlanner.planWithin(from, to, wait), p -> {
             if (my != token) return;
             planning = false; plan = p; chosen = p.best();
             render(t);
-            boolean guess = false;                                      // any option still drawn as a straight guess: ask the road servers again by itself
+            boolean guess = false;                                      // any option still drawn as a straight guess: ask the road servers again by itself (no tap needed)
             for (Trip.Option o : p.options()) if (o.approximate()) guess = true;
-            if (guess && isAttachedToWindow()) postDelayed(() -> { if (my == token && !planning && isAttachedToWindow()) { planning = true; runPlan(t, my, from, to, 0); } }, 15_000L);
+            final boolean keepTrying = guess && refineTries < 8;           // about two minutes of trying, then the rough plan stays and the bar stops
+            b.dirRefresh.setVisibility(keepTrying ? View.VISIBLE : View.GONE);
+            if (keepTrying && isAttachedToWindow()) {
+                final long[] delays = {2_000L, 4_000L, 8_000L, 15_000L};
+                long d = delays[Math.min(refineTries, delays.length - 1)];
+                refineTries++;
+                postDelayed(() -> { if (my == token && !planning && isAttachedToWindow()) { planning = true; runPlan(t, my, from, to, 0); } }, d);
+            }
         }, e -> {
             if (my != token) return;
             if (tries < 5) {
                 postDelayed(() -> { if (my == token && planning) runPlan(t, my, from, to, tries + 1); }, 2000L * (tries + 1));
                 return;
             }
-            planning = false; failed = true;
+            planning = false;
+            if (plan != null) { b.dirRefresh.setVisibility(View.GONE); return; }      // v2.0.131: the rough plan stays on screen; no error over a plan the person can already use
+            failed = true;
             showError();
         });
     }
@@ -229,7 +242,15 @@ public class DirectionsCardView extends MaterialCardView {
     // ---------------------------------------------------------------- what the card shows
 
     private void showLoading() {
+        b.dirRefresh.setVisibility(View.GONE);
         b.dirLoading.setVisibility(View.VISIBLE);
+        if (pulse == null) {
+            pulse = ObjectAnimator.ofFloat(b.dirLoading, View.ALPHA, 1f, 0.45f);
+            pulse.setDuration(900);
+            pulse.setRepeatMode(ObjectAnimator.REVERSE);
+            pulse.setRepeatCount(ObjectAnimator.INFINITE);
+        }
+        if (!pulse.isStarted()) pulse.start();
         b.messageBox.setVisibility(View.GONE);
         b.planBox.setVisibility(View.GONE);
     }
@@ -254,7 +275,11 @@ public class DirectionsCardView extends MaterialCardView {
 
     private void showError() { showMessage(getContext().getString(R.string.dir_error), false, false, true); }
 
+    private void stopPulse() { if (pulse != null) { pulse.cancel(); b.dirLoading.setAlpha(1f); } }
+
     private void showMessage(String text, boolean locate, boolean instead, boolean retry) {
+        stopPulse();
+        b.dirRefresh.setVisibility(View.GONE);
         b.dirLoading.setVisibility(View.GONE);
         b.planBox.setVisibility(View.GONE);
         b.messageBox.setVisibility(View.VISIBLE);
@@ -268,9 +293,16 @@ public class DirectionsCardView extends MaterialCardView {
     private void render(int t) {
         Context c = getContext();
         LayoutInflater inf = LayoutInflater.from(c);
+        stopPulse();
         b.dirLoading.setVisibility(View.GONE);
         b.messageBox.setVisibility(View.GONE);
+        final boolean firstShow = b.planBox.getVisibility() != View.VISIBLE;
         b.planBox.setVisibility(View.VISIBLE);
+        if (firstShow) {                                                // v2.1.0: the result eases in (short fade + rise); a later swap to the exact road does not replay it
+            b.planBox.setAlpha(0f);
+            b.planBox.setTranslationY(dp(8));
+            b.planBox.animate().alpha(1f).translationY(0f).setDuration(220).start();
+        }
         b.notes.removeAllViews();
         b.options.removeAllViews();
         b.moreBox.removeAllViews();
@@ -338,12 +370,26 @@ public class DirectionsCardView extends MaterialCardView {
         if (plan == null || idx < 0 || idx >= plan.options().size()) return;
         chosen = idx;
         Trip.Option o = plan.options().get(idx);
-        b.heroIcon.setText(o.mode().icon);
+        b.heroIcon.setImageResource(iconFor(o.mode()));
         b.heroHead.setText(DirectionsRules.heroHead(o));
-        b.heroMeta.setText(DirectionsRules.heroMeta(o));
+        b.chipDist.setText(DirectionsRules.heroDistance(o));
+        String fare = DirectionsRules.heroFare(o);
+        b.chipFare.setText(fare);
+        b.chipFare.setVisibility(fare.isEmpty() ? View.GONE : View.VISIBLE);
+        b.chipEst.setVisibility(o.approximate() ? View.VISIBLE : View.GONE);
+        b.heroPanel.setContentDescription(DirectionsRules.heroHead(o) + ", " + DirectionsRules.heroMeta(o));
         for (int i = 0; i < rows.size(); i++) rows.get(i).getRoot().setBackgroundResource(i == idx ? R.drawable.bg_dir_option_on : R.drawable.bg_dir_option);
         b.map.setRoute(o.path(), o.approximate());
         b.map.fitRoute();
+    }
+
+    /** v2.1.0: drawn icon for the way of travelling (the emoji is not used any more). */
+    private static int iconFor(Trip.Mode m) {
+        switch (m) {
+            case WALK: return R.drawable.ic_dir_walk;
+            case TRICYCLE: return R.drawable.ic_dir_ride;
+            default: return R.drawable.ic_dir_bus;                      // jeepney, bus / van
+        }
     }
 
     private void toggleMore() {

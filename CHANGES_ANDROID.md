@@ -1,3 +1,51 @@
+# v2.0.132 - AI smarter, step 1 of 3: BOFO backend brain (function + migration 020)
+- Planner: up to 3 requests in one message ("cheapest with wifi, then compare them and show on the map"), typo and Tagalog/Hiligaynon tolerant, long sentences go to the model.
+- Memory: 10 turns x 300 characters; optional `session` (budget, wifi/water/electricity) fills what the new message leaves open.
+- One short clarifying question instead of a guess (never twice in a row); "nearest" with no campus/location now returns quick replies.
+- Knowledge base (20 entries: deposit, safety, report, owner, verify...) for app help and rental advice; the model may use only those and the real results.
+- Answers are worded by the model by default (set secret `LLM_WORDING=0` to go back to instant templates); up to 3 models.
+- Safety: "ignore your rules / act as / reveal prompt" gets one friendly refusal.
+- Response adds optional `clarify`, `quick_replies`, `lang`, `log_id`. Old apps still work.
+- Migration `020_ai_feedback.sql` (already applied live): tables `ai_unanswered`, `ai_feedback`.
+- Files: `supabase/functions/bofo-chat/index.ts`, `supabase/migrations/020_ai_feedback.sql`, `app/build.gradle` (2.0.132 / 332), `BOFO-AI-SMARTER-STATUS.md`. Deploy: `supabase functions deploy bofo-chat`. Not run against Supabase by Claude.
+
+# v2.0.131 - Android: loading animation, directions refresh by themselves, Explore reloads after a place page
+- Loading animation: while directions are worked out, the card shows a moving progress bar and the grey boxes breathe. While the exact roads are still being fetched, a thin bar shows above the plan.
+- BH -> Campus (and every directions tab): no more tapping the tab twice. The first look waits 5 s (was 12 s), shows a rough plan, then asks the road servers again by itself (after 2, 4, 8, 15 s ... up to 8 tries) and swaps in the exact path. A failed retry no longer replaces a plan you can already see with an error.
+- Explore: after you open a boarding house and come back, the list loads again by itself (it stayed blank before). The "Search this area" box is kept.
+- Files: `res/layout/view_directions_card.xml`, `res/values/strings.xml`, `ui/DirectionsCardView.java`, `ui/ExploreFragment.java`, `util/DirectionsRules.java`, `util/TripPlanner.java`, `app/build.gradle` (2.0.131, versionCode 331). Not built or run by Claude.
+
+# v2.0.130 - Android: the dot under "Middle" is now the Middle price
+- Bug: the dot under "Middle 2,200" was a different house (3,800), because the line was spaced by price and 3,800 landed in the exact centre. Pressing that dot lit the 3.8k house on the map.
+- Fix: on the rent card the Middle price is placed at the exact centre, under its label; Lowest at the left end, Highest at the right end; the other houses sit in between in price order. So each label has its own dot right under it.
+- Files: `ui/RentCardView.java`, `app/build.gradle` (2.0.130, versionCode 330). Not built or run by Claude.
+
+# v2.0.129 - Android: pressing a rent price lights that price's house (real fix)
+- Bug: pressing "Middle 2,200" lit the 3.8k house on the map. Cause: on the rent card, touches checked the dots first (within 22 dp); the 3.8k dot sits right under the "Middle" text, so it stole the touch.
+- Fix: the price texts are checked first; dots only react when the finger is on the line (16 dp). In `ui/RentCardView.java`.
+- The pin-hiding code from v2.0.126 / v2.0.128 was a wrong guess and is removed: `ui/MapCardView.java` is back to its original.
+- Files: `ui/RentCardView.java`, `ui/MapCardView.java` (reverted), `app/build.gradle` (2.0.129, versionCode 329). Not built or run by Claude.
+
+# v2.0.128 - Android: pressed rent price now shows its own pin on the map
+- v2.0.126 only hid pins within about 4 m, which was not enough (pressed 2,200, map still showed 3.8k). Now any pin that overlaps the pressed house's pin on screen is hidden while the price is pressed; press again and all pins return.
+- Files: `ui/MapCardView.java`, `app/build.gradle` (2.0.128, versionCode 328). Not built or run by Claude.
+
+# v2.0.127 - Android: new account no longer opens with the previous account's role
+- Bug: sign out of an owner account, make a new student account, and the app opened the Owner tabs; Settings then offered "Switch to owner", so switching to student looked blocked.
+- Cause: the in-app role (`AuthRouter.role`) was only set at sign-in, never cleared on sign out, and never set after choosing a role on a new account.
+- Fix: `AuthRouter.reset()` runs on sign out, delete account, no session and dead session (401). The role screen now sets the role to what the server saved before the app opens.
+- Files: `ui/AuthRouter.java`, `ui/SettingsFragment.java`, `ui/RoleFragment.java`, `app/build.gradle` (2.0.127, versionCode 327). Not built or run by Claude.
+
+# v2.0.126 - Android: the price you press on the rent card is the pin you see on the map
+- Bug: pressing the red Middle price (2,200) lit the right spot on the map, but the pin shown there said 3.8k. Two houses sat almost on the same spot and the other house's pin was drawn over the pressed one.
+- Now, while a rent-card price is pressed, other pins within about 4 m of that house are hidden, so the pin under the red glow always shows the pressed price. Press again (off) and all pins come back.
+- Files: `ui/MapCardView.java` (pin list, redraw signature, setGlow), `app/build.gradle` (2.0.126, versionCode 326). Not built or run by Claude.
+
+# v2.0.125 - Android: Home subtitle no longer hides under the Ask BOFO button, rent dots stay readable
+- The line under "Nearby boarding houses" (e.g. "Within 4.0 km of Negros Oriental State University - Main Campus - 6 places") ran under the floating Ask BOFO mascot and looked cut off. It now keeps 76dp free on the right, shows at most 2 lines, and ends with "..." if still too long.
+- Rent card: each dot on the line now has a thin white ring, so houses with nearly the same price (the three dots bunched on the left) read as separate dots instead of one blob. Dot positions are unchanged (still the real price).
+- Files: `res/layout/fragment_home.xml`, `ui/RentCardView.java`, `app/build.gradle` (2.0.125, versionCode 325). Not built or run by Claude.
+
 # v2.0.124 - Android: profile photo shows on Home and Profile
 - Home greeting avatar and the Profile picture now fall back to your Google account photo when no photo was saved in your profile (before, only the saved photo was used, so you saw initials like "DS").
 - Home avatar: if the photo fails to load (slow network), it is retried on the next refresh instead of staying on initials.

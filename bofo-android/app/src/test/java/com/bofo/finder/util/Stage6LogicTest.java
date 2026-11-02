@@ -237,6 +237,10 @@ public class Stage6LogicTest {
         assertEquals("13 min by tricycle", DirectionsRules.heroHead(Trip.tricycle(p, 3400, false)));
         assertEquals("3.4 km  \u00B7  \u20B110\u201320", DirectionsRules.heroMeta(Trip.tricycle(p, 3400, false)));
         assertTrue(DirectionsRules.heroMeta(Trip.tricycle(p, 3400, true)).endsWith("estimate"));
+        // v2.1.0: the result panel shows these as separate pills
+        assertEquals("3.4 km", DirectionsRules.heroDistance(Trip.tricycle(p, 3400, false)));
+        assertEquals("\u20B110\u201320", DirectionsRules.heroFare(Trip.tricycle(p, 3400, false)));
+        assertEquals("", DirectionsRules.heroFare(Trip.walk(p, 800, false)));
         assertTrue(DirectionsRules.heroHead(Trip.jeepney("12A", p, 5200, 300, false)).endsWith("by jeepney"));
         assertTrue(DirectionsRules.heroHead(Trip.far(p, 105500, false)).endsWith("by bus or van"));
         assertEquals("https://www.openstreetmap.org/directions?engine=fossgis_osrm_foot&route=9.300000%2C123.300000%3B9.310000%2C123.310000",
