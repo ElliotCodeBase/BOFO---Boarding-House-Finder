@@ -1,3 +1,10 @@
+## VERSION RULE (READ FIRST, overrides any older v2.0.N text below)
+- The app version line is **2.1.N**. Never use 2.0.N.
+- Before every change, read versionName and versionCode in bofo-android/app/build.gradle and bump them by +1 (patch). Do not trust version numbers written in old docs or in the chat.
+- Every pull request: bump the version shown in Settings, put it in the PR title, and add it at the top of CHANGES_ANDROID.md and HANDOFF_ANDROID.md.
+- Deliver every update, change or fix as a zip containing ONLY the changed files (plus CHANGED_FILES.txt), never the whole project.
+- Windows command block at the end of each reply: git checkout main, git pull, apply the zip, commit, push, then gh pr merge.
+- Before tokens run out, write or update HANDOFF_ANDROID.md and BOFO-AI-SMARTER-STATUS.md.
 # BOFO Finder - rules for Claude (READ THIS FIRST, EVERY SESSION)
 
 Read this file before doing anything, then only the top entry of `HANDOFF.md`. Do not read the rest of the repo unless the task needs it.
