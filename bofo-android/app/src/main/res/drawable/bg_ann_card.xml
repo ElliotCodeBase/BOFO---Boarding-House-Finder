@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- v2.2.1: announcement card in the group chat: plain white card with a thin border (no colour wash, no icon) -->
+<!-- v2.2.4: announcement card in the group chat: white, soft accent border, rounder corners -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
     <solid android:color="@color/bofo_white" />
-    <stroke android:width="1dp" android:color="@color/bofo_border" />
-    <corners android:radius="12dp" />
+    <stroke android:width="1dp" android:color="@color/bofo_stroke_accent" />
+    <corners android:radius="16dp" />
 </shape>

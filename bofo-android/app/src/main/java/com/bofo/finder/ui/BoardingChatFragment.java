@@ -136,7 +136,11 @@ public class BoardingChatFragment extends Fragment {
         b.subtitle.setText(members > 0 ? getResources().getQuantityString(R.plurals.boarding_members, members, members) : "");
         if (args.getBoolean(ARG_BACK, false)) {
             b.back.setVisibility(View.VISIBLE);
-            b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
+            b.back.setOnClickListener(v -> {
+                Fragment host = getParentFragment();
+                if (host instanceof BoardingFragment) ((BoardingFragment) host).leave();       // v2.2.3: student tab: back to Home
+                else NavHostFragment.findNavController(this).navigateUp();
+            });
         }
         boolean canLeave = args.getBoolean(ARG_LEAVE, false), isOwner = GroupMessage.OWNER.equals(myRole);
         {                                                            // 3-dot menu for everyone: Pinned announcements, owner tools, Leave group (students)
@@ -670,7 +674,18 @@ public class BoardingChatFragment extends Fragment {
             h.v.day.setText(dl);
             h.v.day.setVisibility(!dl.isEmpty() && !dl.equals(before) ? View.VISIBLE : View.GONE);
 
-            // sender name + role badge (every message)
+            // v2.2.4: messages in a row from the same person share one name; my own messages carry no name; time only under the last one
+            Row prev = position > 0 ? getItem(position - 1) : null, next = position + 1 < getItemCount() ? getItem(position + 1) : null;
+            boolean newDay = h.v.day.getVisibility() == View.VISIBLE;
+            boolean sameAsPrev = prev != null && !newDay && !r.announcement && !prev.announcement && java.util.Objects.equals(prev.senderId, r.senderId);
+            boolean nextDay = next != null && !ChatRules.dayLabel(next.createdAt, now, ZoneId.systemDefault()).equals(dl);
+            boolean lastOfRun = next == null || nextDay || next.announcement || r.announcement || !java.util.Objects.equals(next.senderId, r.senderId);
+            float dpi = c.getResources().getDisplayMetrics().density;
+            View rootView = h.v.getRoot();
+            rootView.setPadding(rootView.getPaddingLeft(), Math.round((sameAsPrev ? 1 : 6) * dpi), rootView.getPaddingRight(), rootView.getPaddingBottom());
+            h.v.who.setVisibility(sameAsPrev || (r.mine && !r.announcement) ? View.GONE : View.VISIBLE);
+
+            // sender name + role badge
             String role = r.mine && r.role == null ? myRole : r.role;
             boolean owner = GroupMessage.OWNER.equals(role);
             h.v.name.setText(BoardingRules.displayName(r, c.getString(R.string.boarding_you)));
@@ -703,6 +718,7 @@ public class BoardingChatFragment extends Fragment {
                     : r.state == State.FAILED ? c.getString(R.string.chat_failed_tap)
                     : ChatRules.timeLabel(r.createdAt, now, ZoneId.systemDefault());
             h.v.meta.setText(time);
+            h.v.meta.setVisibility(lastOfRun || r.state != State.SENT ? View.VISIBLE : View.GONE);
             h.v.meta.setTextColor(c.getColor(r.state == State.FAILED ? R.color.bofo_error : R.color.bofo_muted));
             h.v.body.setOnClickListener(v -> listener.tap(r));
             h.v.body.setOnLongClickListener(v -> { listener.hold(r); return true; });

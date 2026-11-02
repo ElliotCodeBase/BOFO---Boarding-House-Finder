@@ -6,7 +6,7 @@
     <string name="mfa_row">Two-step verification</string>
     <string name="mfa_intro">Admins sign in with a 6-digit code from an authenticator app (Google Authenticator, Microsoft Authenticator, Aegis…) on top of their normal sign-in. Set it up now.</string>
     <string name="mfa_start">Show my setup key</string>
-    <string name="mfa_setup_body">1. Open your authenticator app and add an account with this key (or tap Open authenticator).\n2. Type the 6-digit code it shows.</string>
+    <string name="mfa_setup_body">1. SAVE THIS KEY first: copy it to a password manager or write it on paper. It is the only way to restore the code if the entry is deleted.\n2. Open your authenticator app and add an account with this key (or tap Open authenticator).\n3. Type the 6-digit code it shows.</string>
     <string name="mfa_key_label">Setup key</string>
     <string name="mfa_copy">Copy key</string>
     <string name="mfa_open_app">Open authenticator</string>
@@ -14,7 +14,7 @@
     <string name="mfa_copied">Key copied</string>
     <string name="mfa_code_hint">6-digit code</string>
     <string name="mfa_verify_on">Verify and turn on</string>
-    <string name="mfa_enter_body">Type the 6-digit code from your authenticator app to use the admin tools in this session.</string>
+    <string name="mfa_enter_body">Type the 6-digit code from your authenticator app to use the admin tools in this session.\n\nLost the code? Ask the project owner to run reset_admin_mfa in the Supabase SQL editor (docs/SECURITY.md, section 5, step 4d).</string>
     <string name="mfa_verify">Verify</string>
     <string name="mfa_on_body">Two-step verification is on for this account. Admin tools need a code each time you sign in.</string>
     <string name="mfa_done">Done</string>

@@ -13,6 +13,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.bofo.finder.R;
 import com.bofo.finder.databinding.FragmentAdminListBinding;
@@ -42,8 +43,12 @@ import java.util.List;
  */
 public class ReportsFragment extends Fragment {
 
-    /** Filter values in the order of the array rep_filters; "" = every status. */
-    private static final String[] FILTERS = {"pending", "reviewed", "dismissed", "actioned", ""};
+    /** v2.2.2: query part per entry of the array rep_filters (same order). 3 = Banned users: opens that screen instead of filtering. */
+    private static final String[] FILTERS = {"status=eq.pending&", "status=in.(reviewed,dismissed,actioned)&", "action=eq.suspend&", "",
+            "action=eq.dismiss&", "action=eq.takedown&", ""};
+    private static final int BANNED_USERS = 3;
+    /** Value of reports.action in the order of the array rep_outcomes. */
+    private static final String[] OUTCOMES = {"suspend", "ban", "dismiss", "takedown"};
 
     private FragmentAdminListBinding b;
     private final List<JSONObject> items = new ArrayList<>();
@@ -65,7 +70,7 @@ public class ReportsFragment extends Fragment {
                 ((TextView) r.findViewById(android.R.id.text1)).setText(ReportDialog.reasonLabel(requireContext(), x.optString("reason")) + ": " + reported(x));
                 String bh = x.optString("bh_name", "");
                 ((TextView) r.findViewById(android.R.id.text2)).setText(BoostRules.day(x.optString("created_at", ""), ZoneId.systemDefault())
-                        + "  -  " + statusLabel(x.optString("status"))
+                        + "  -  " + outcomeLabel(x)
                         + (bh.isEmpty() || "null".equals(bh) ? "" : "  -  " + bh));
                 return r;
             }
@@ -87,7 +92,18 @@ public class ReportsFragment extends Fragment {
 
     private void pickFilter() {
         new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_filter_title)
-                .setItems(R.array.rep_filters, (d, which) -> { filter = which; showTitle(); reload(); }).show();
+                .setItems(R.array.rep_filters, (d, which) -> {
+                    if (which == BANNED_USERS) { NavHostFragment.findNavController(this).navigate(R.id.bannedUsersFragment); return; }     // v2.2.2: moved here from Profile
+                    filter = which; showTitle(); reload();
+                }).show();
+    }
+
+    /** v2.2.2: how a report was answered (Suspended / Banned / Dismissed / Taken down); falls back to the status for old rows. */
+    private String outcomeLabel(JSONObject x) {
+        String act = nullToEmpty(x.optString("action", ""));
+        String[] labels = getResources().getStringArray(R.array.rep_outcomes);
+        for (int i = 0; i < OUTCOMES.length && i < labels.length; i++) if (OUTCOMES[i].equals(act)) return labels[i];
+        return statusLabel(x.optString("status"));
     }
 
     private String statusLabel(String key) {
@@ -103,10 +119,10 @@ public class ReportsFragment extends Fragment {
     private void reload() {
         if (b == null) return;
         final int my = ++token;
-        final String status = FILTERS[filter];
+        final String part = FILTERS[filter];
         b.swipe.setRefreshing(true);
-        Async.run(() -> SupabaseClient.get().select("reports_admin_v", (status.isEmpty() ? "" : "status=eq." + status + "&")
-                + "order=created_at.desc&limit=100&select=id,reporter_id,reported_user_id,bh_id,reason,details,status,created_at,reviewed_at,admin_notes,reporter_name,reported_name,bh_name,reported_suspended_until"),
+        Async.run(() -> SupabaseClient.get().select("reports_admin_v", part
+                + "order=created_at.desc&limit=100&select=id,reporter_id,reported_user_id,bh_id,reason,details,status,created_at,reviewed_at,admin_notes,reporter_name,reported_name,bh_name,reported_suspended_until,action"),
                 (JSONArray a) -> {
             if (my != token || b == null) return;
             b.swipe.setRefreshing(false);
@@ -132,7 +148,7 @@ public class ReportsFragment extends Fragment {
                 bh.isEmpty() ? getString(R.string.rep_no_place) : bh,
                 ReportDialog.reasonLabel(requireContext(), x.optString("reason")),
                 why.isEmpty() ? getString(R.string.rep_no_reason) : why,
-                SuspendRules.when(x.optString("created_at", ""), z), statusLabel(x.optString("status"))));
+                SuspendRules.when(x.optString("created_at", ""), z), outcomeLabel(x)));
         String notes = nullToEmpty(x.optString("admin_notes", ""));
         if (!notes.isEmpty()) msg.append(getString(R.string.rep_line_notes, notes));
         String until = x.optString("reported_suspended_until", "");
@@ -144,7 +160,7 @@ public class ReportsFragment extends Fragment {
             // v2.1.9: four choices no longer fit three dialog buttons: one "Actions" button opens a list (Suspend, Ban, Dismiss, Take down, Close)
             d.setPositiveButton(R.string.rep_actions_btn, (dd, w) -> actions(x, target)).setNegativeButton(R.string.common_close, null);
         } else {
-            d.setPositiveButton(R.string.rep_takedown, (dd, w) -> pickPlace(target)).setNegativeButton(R.string.common_close, null);
+            d.setPositiveButton(R.string.rep_takedown, (dd, w) -> pickPlace(target, null)).setNegativeButton(R.string.common_close, null);
         }
         d.show();
     }
@@ -157,7 +173,7 @@ public class ReportsFragment extends Fragment {
                         case 0: pickDuration(x); break;
                         case 1: askBanReason(x); break;
                         case 2: dismiss(x); break;
-                        case 3: pickPlace(target); break;
+                        case 3: pickPlace(target, x.optString("id")); break;
                         default: break;                                   // Close
                     }
                 }).show();
@@ -254,7 +270,8 @@ public class ReportsFragment extends Fragment {
 
     /* ---------- take down a place (unchanged since 8h) ---------- */
     /** The reported user's places that can still be taken down. */
-    private void pickPlace(String userId) {
+    /** reportId != null: the take down also answers that waiting report (admin_report_takedown); null: plain admin_takedown. */
+    private void pickPlace(String userId, String reportId) {
         if (AdminRules.inList(java.util.Collections.singletonList(userId)).isEmpty()) return;
         Async.run(() -> SupabaseClient.get().select("bh_cards", "owner_id=eq." + userId + "&select=id,name,status&order=created_at.desc"), (JSONArray a) -> {
             if (b == null) return;
@@ -267,15 +284,19 @@ public class ReportsFragment extends Fragment {
             }
             if (ids.isEmpty()) { ListArea.toast(this, getString(R.string.rep_no_places)); return; }
             new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_pick_place)
-                    .setItems(labels.toArray(new String[0]), (d, which) -> takeDown(ids.get(which), labels.get(which))).show();
+                    .setItems(labels.toArray(new String[0]), (d, which) -> takeDown(ids.get(which), labels.get(which), reportId)).show();
         }, e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_error), e)));
     }
 
-    private void takeDown(String bhId, String bhName) {
+    private void takeDown(String bhId, String bhName, String reportId) {
         ReasonDialog.ask(this, R.string.rep_takedown_title, R.string.rep_takedown_do, true, reason -> {
             if (!AdminRules.takedownOk(reason)) return;
-            Async.run(() -> SupabaseClient.get().rpc("admin_takedown", new JSONObject().put("bh", bhId).put("reason", reason)), r ->
-                    ListArea.toast(this, getString(R.string.rep_done, bhName)),
+            Async.run(() -> reportId == null
+                    ? SupabaseClient.get().rpc("admin_takedown", new JSONObject().put("bh", bhId).put("reason", reason))
+                    : SupabaseClient.get().rpc("admin_report_takedown", new JSONObject().put("rid", reportId).put("bh", bhId).put("reason", reason)), r -> {
+                        ListArea.toast(this, getString(R.string.rep_done, bhName));
+                        reload();                                   // the report moves to Answered: Taken down
+                    },
                     e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_takedown_error), e)));
         });
     }

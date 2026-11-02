@@ -526,12 +526,21 @@
         <item>Wrong information</item>
         <item>Something else</item>
     </string-array>
+    <!-- v2.2.2: index order is used by ReportsFragment (3 = Banned users opens the banned list) -->
     <string-array name="rep_filters">
-        <item>Pending</item>
-        <item>Reviewed</item>
+        <item>Waiting</item>
+        <item>Answered (all)</item>
+        <item>Answered: Suspended</item>
+        <item>Answered: Banned users</item>
+        <item>Answered: Dismissed</item>
+        <item>Answered: Taken down</item>
+        <item>All reports</item>
+    </string-array>
+    <string-array name="rep_outcomes">
+        <item>Suspended</item>
+        <item>Banned</item>
         <item>Dismissed</item>
-        <item>Actioned</item>
-        <item>All</item>
+        <item>Taken down</item>
     </string-array>
     <string-array name="rep_status_labels">
         <item>Pending</item>

@@ -89,7 +89,7 @@ public final class BhService {
     public static final int MAX_PINNED = 3;
 
     public List<BoardingHouse> list(Tab tab, Double refLat, Double refLng, Double radiusKm, Filter f) throws Exception {
-        StringBuilder q = new StringBuilder("select=" + cols() + "&available_beds=gt.0");
+        StringBuilder q = new StringBuilder("select=" + cols() + "&available_beds=gt.0&status=eq.active");   // v2.2.2: the view also returns taken-down / unlisted places to admins and owners, so lists ask for active ones only
         if (radiusKm != null && refLat != null && refLng != null) {   // bounding box lets Postgres use the lat/lng index; exact radius is checked below
             double dLat = radiusKm / 111.32, dLng = radiusKm / (111.32 * Math.cos(Math.toRadians(refLat)));
             q.append(String.format(Locale.ROOT, "&lat=gte.%.6f&lat=lte.%.6f&lng=gte.%.6f&lng=lte.%.6f", refLat - dLat, refLat + dLat, refLng - dLng, refLng + dLng));
@@ -198,7 +198,7 @@ public final class BhService {
     public List<BoardingHouse> favorites() throws Exception {
         JSONArray a = com.bofo.finder.util.Offline.array("favorites", () -> {       // the Saved tab works offline from the last copy
             Set<String> ids = favoriteIds();
-            return ids.isEmpty() ? new JSONArray() : cards("id=in.(" + String.join(",", ids) + ")&select=" + cols());
+            return ids.isEmpty() ? new JSONArray() : cards("id=in.(" + String.join(",", ids) + ")&status=eq.active&select=" + cols());
         });
         List<BoardingHouse> l = new ArrayList<>();
         for (int i = 0; i < a.length(); i++) l.add(BoardingHouse.from(a.getJSONObject(i)));
