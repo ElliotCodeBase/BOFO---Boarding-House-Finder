@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.2.5 shared page header. Use for every tab and form screen so the title, height and padding never differ:
+       <include layout="@layout/view_page_header" />   then set page_title text; show page_back / add a view into page_action when needed.
+     Transparent: it sits on the bofo_bg page. 56dp tall, 16dp gutter, back button and action slot are 48dp touch targets. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/header_height"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/space_1"
+    android:paddingEnd="@dimen/page_gutter">
+
+    <ImageButton
+        android:id="@+id/page_back"
+        style="@style/Widget.Bofo.HeaderButton"
+        android:contentDescription="@string/cd_back"
+        android:src="@drawable/ic_back"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/page_title"
+        style="@style/Widget.Bofo.PageTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/space_3"
+        android:layout_weight="1" />
+
+    <FrameLayout
+        android:id="@+id/page_action"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/touch_min"
+        android:minWidth="@dimen/touch_min" />
+</LinearLayout>

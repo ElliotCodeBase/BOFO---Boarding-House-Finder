@@ -1,3 +1,11 @@
+# v2.2.5 - UI redesign step 1 of 6: design foundation (no screen redone yet)
+- Orange theme: new `bofo_on_primary` = dark ink, so text on orange buttons passes contrast (white on #F28C57 was 2.3:1). Classic stays white. `colorOnPrimary` and `Widget.Bofo.Button.Primary` use it.
+- New tokens in both color files: `bofo_surface`, `bofo_surface_dim`, `bofo_avatar_1..4`, `bofo_avatar_ink`. New `values/dimens.xml`: spacing 4/8/12/16/24, corners field 12 / card 16 / chip 12, header 56dp, type sizes 24/17/15/13.
+- New `values/styles_system.xml`: `Text.Bofo.Page/Section/Body/Caption`, `Widget.Bofo.Button.Secondary/Quiet`, `Widget.Bofo.TextField`, header styles, `Text.Bofo.AvatarInitial`.
+- New shared header `layout/view_page_header.xml` (`page_back`, `page_title`, `page_action`); screens adopt it in steps 2-6.
+- Card / field / chip backgrounds (`bg_chat_input`, `bg_bofo_card`, `bg_dash_card`, `bg_dropdown`, `bg_chip_on`, `bg_chip_off`) now use the corner tokens (card 24/18/20 -> 16, field 22 -> 12, chip 10 -> 12).
+- Not compiled or run by Claude.
+
 # v2.2.0 - Boarding series, step 1 of 5: database + models + services (no screen yet)
 - New migration `024_boarding_groups.sql` (NOT applied live yet): one group chat per boarding house, join with the owner's invite code, announcements (pinned, max 3), "Got it" acknowledgments, mute / remove, and database rules so muted, banned or suspended users cannot post.
 - New code: `model/GroupMessage`, `BhMember`, `BhGroup`, `service/BhGroupService`. Nothing in the app calls them yet, so the app looks and works exactly as in v2.1.10.

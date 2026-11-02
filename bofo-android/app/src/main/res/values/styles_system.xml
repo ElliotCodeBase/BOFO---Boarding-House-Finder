@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.2.5 design system styles. Type: 4 sizes (page 24, section 17, body 15, caption 13), regular + medium only.
+     Buttons: Primary (orange/purple fill), Secondary (outlined), Tonal (soft fill), Text. Fields: Widget.Bofo.TextField. -->
+<resources>
+    <style name="Text.Bofo.Page" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:textColor">@color/bofo_text</item>
+        <item name="android:textSize">@dimen/text_page</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+    <style name="Text.Bofo.Section" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">@color/bofo_text</item>
+        <item name="android:textSize">@dimen/text_section</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+    <style name="Text.Bofo.Body" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:textColor">@color/bofo_text</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+    <style name="Text.Bofo.Caption" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textColor">@color/bofo_text_2</item>
+        <item name="android:textSize">@dimen/text_caption</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="Widget.Bofo.Button.Secondary" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textColor">@color/bofo_text</item>
+        <item name="strokeColor">@color/bofo_border</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cornerRadius">@dimen/radius_field</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:minHeight">@dimen/touch_min</item>
+    </style>
+    <style name="Widget.Bofo.Button.Quiet" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/bofo_primary_dark</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:minHeight">@dimen/touch_min</item>
+    </style>
+
+    <!-- text field: outlined box, 12dp corners, warm border, primary border when focused. Use with TextInputLayout. -->
+    <style name="Widget.Bofo.TextField" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/bofo_primary</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+        <item name="boxCornerRadiusTopStart">@dimen/radius_field</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/radius_field</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/radius_field</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/radius_field</item>
+        <item name="android:textColorHint">@color/bofo_muted</item>
+        <item name="hintTextColor">@color/bofo_primary_dark</item>
+    </style>
+
+    <!-- shared page header (layout/view_page_header.xml) -->
+    <style name="Widget.Bofo.PageTitle" parent="Text.Bofo.Page">
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+    <style name="Widget.Bofo.HeaderButton" parent="">
+        <item name="android:layout_width">@dimen/touch_min</item>
+        <item name="android:layout_height">@dimen/touch_min</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:scaleType">center</item>
+    </style>
+
+    <!-- initial-letter avatar: palette tint + dark ink letter (never off-palette) -->
+    <style name="Text.Bofo.AvatarInitial" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">@color/bofo_avatar_ink</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:gravity">center</item>
+    </style>
+</resources>

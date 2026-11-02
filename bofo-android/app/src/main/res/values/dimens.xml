@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.2.5 design system. Spacing scale 4 / 8 / 12 / 16 / 24. Corner scale: field 12, card 16, chip 12, pill 999. Use these, never a raw dp in new layouts. -->
+<resources>
+    <dimen name="space_1">4dp</dimen>
+    <dimen name="space_2">8dp</dimen>
+    <dimen name="space_3">12dp</dimen>
+    <dimen name="space_4">16dp</dimen>
+    <dimen name="space_6">24dp</dimen>
+    <dimen name="page_gutter">16dp</dimen>
+    <dimen name="radius_field">12dp</dimen>
+    <dimen name="radius_card">16dp</dimen>
+    <dimen name="radius_chip">12dp</dimen>
+    <dimen name="radius_pill">999dp</dimen>
+    <dimen name="header_height">56dp</dimen>
+    <dimen name="touch_min">48dp</dimen>
+    <!-- type scale: page title 24, section 17, body 15, caption 13 (+ small 12 for tags) -->
+    <dimen name="text_page">24sp</dimen>
+    <dimen name="text_section">17sp</dimen>
+    <dimen name="text_body">15sp</dimen>
+    <dimen name="text_caption">13sp</dimen>
+    <dimen name="text_tag">12sp</dimen>
+</resources>
