@@ -1,10 +1,12 @@
+BOFO v2.2.0 - Boarding step 1 (changes only)
+new      supabase/migrations/024_boarding_groups.sql   (NOT applied live: needs your OK)
+new      bofo-android/app/src/main/java/com/bofo/finder/model/GroupMessage.java
+new      bofo-android/app/src/main/java/com/bofo/finder/model/BhMember.java
+new      bofo-android/app/src/main/java/com/bofo/finder/model/BhGroup.java
+new      bofo-android/app/src/main/java/com/bofo/finder/service/BhGroupService.java
+changed  bofo-android/app/build.gradle                  (versionName 2.2.0, versionCode 20200)
 changed  CHANGES_ANDROID.md
 changed  HANDOFF_ANDROID.md
-changed  bofo-android/app/build.gradle
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/BhDetailFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/service/BhService.java
-changed  bofo-android/app/src/main/res/layout/fragment_bh_detail.xml
-new      bofo-android/app/src/main/res/drawable/bg_owner_card.xml
-new      bofo-android/app/src/main/res/drawable/bg_report_pill.xml
-new      bofo-android/app/src/main/res/drawable/ic_flag.xml
-new      bofo-android/app/src/main/res/values/strings_owner.xml
+new      BOFO-v2.2.0-CHANGELOG.md
+changed  CHANGED_FILES.txt
+DELETE   (nothing)
