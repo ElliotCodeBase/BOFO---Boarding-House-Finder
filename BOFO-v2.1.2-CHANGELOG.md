@@ -1,0 +1,9 @@
+# v2.1.2 - AI smarter step 2 of 3: Android data layer (nothing new visible yet)
+- `BofoAnswer`: optional `clarify`, `quickReplies`, `lang`, `logId` (null-safe; old 8-arg constructor and old JSON still work).
+- `BofoAiService`: sends `history` (10 turns x 300 chars) and `session` (app filters merged with what the student said; chat wins for price, flags OR-ed). New `rate(logId, -1|1)` -> insert into `ai_feedback` off the UI thread, silent on failure, ignored for null/non-uuid id or other ratings.
+- `BofoMemory` (new): parses budget / free wifi, water, electricity / language (en, tl, ceb, taglish) from the student's messages; `toSession()`, `mergeSession()`, `append()`, `loadHistory()`, `clear()`. Saved in `DiskCache` file `user_bofo_chat` (wiped by sign-out / delete account; `AuthService.clearLocal` also calls `clear()`).
+- `BofoIntentLocal`: typo repair (Fuzzy.score + swapped letters), prices ("under 2k", "hanggang 3000", "dili molapas 3000"), campus named in the message ("near norsu"), memory preferences ("Using what you told me: ..."), several requests (first answered, the second offered as a chip), clarify answer + chips instead of the generic line (null only for verify/delete/chat FAQ).
+- `BofoChatOverlay`: 2 tiny non-visible edits (keep 10 turns, save each turn with `BofoMemory.append`). Step 3 must restore bubbles from `BofoMemory.loadHistory()` and show `quickReplies` (clarify answers also fill `suggestions`, so do not show both).
+- Tests: BofoAnswerTest, BofoMemoryTest, BofoIntentLocalTest, BofoAiServiceTest.
+- Checked: javac against stubs + 25 logic tests pass (real code, stub org.json/JUnit/BrowseState); AuthService + overlay syntax only. NOT built or run on a phone, no Gradle.
+- Risks: remembered wifi/budget stay for the whole chat until "New chat" (Step 3); `hasAmenityNamed("Free Water"/"Free Electricity")` assumes those amenity names; Hiligaynon maps to `ceb`.

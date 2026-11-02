@@ -176,7 +176,7 @@ public class BofoChatOverlay extends FrameLayout {
         return (BrowseState.nearMe && BrowseState.userLat != null && BrowseState.userLng != null) || (BrowseState.deviceLat != null && BrowseState.deviceLng != null);
     }
 
-    private final List<BofoAiService.Turn> history = new ArrayList<>();     // last 6 turns, memory only
+    private final List<BofoAiService.Turn> history = new ArrayList<>();     // last 10 turns (also saved by BofoMemory)
     private BofoActionListener actionListener;
     private View typing, chipsRow;
 
@@ -517,7 +517,8 @@ public class BofoChatOverlay extends FrameLayout {
 
     private void remember(boolean mine, String text, List<String> ids) {
         history.add(new BofoAiService.Turn(mine, text, ids));
-        while (history.size() > 6) history.remove(0);
+        while (history.size() > BofoAiService.HISTORY_TURNS) history.remove(0);
+        com.bofo.finder.util.BofoMemory.append(mine, text, ids);          // v2.1.2: the last chat survives closing the mascot (restored by the UI in step 3)
     }
 
     private static List<String> lastIds(List<BofoAiService.Turn> past) {

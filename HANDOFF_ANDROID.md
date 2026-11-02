@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.1.2 AI smarter, step 2 of 3
+- **PR title:** `v2.1.2 - AI smarter step 2: Android data layer (BofoMemory, session + history, rate(), smarter offline planner)`
+- Files: BofoAnswer, BofoAiService, BofoMemory (new), BofoIntentLocal, AuthService, BofoChatOverlay (2 small lines), 4 tests, build.gradle (2.1.2 / 20102). Function and Supabase untouched.
+- Risks: remembered wifi/budget persist until New chat (step 3); not built or run by Claude.
+- Next: step 3 (UI) in BOFO-AI-SMARTER-PROMPT.md, version 2.1.3.
+---
 # Handoff (Android) - v2.1.1 AI smarter, step 1 of 3
 - **PR title:** `v2.1.1 - AI smarter step 1: planner, memory, clarify question, knowledge base (bofo-chat + migration 020)`
 - Migration 020 is applied live. Function NOT deployed: `supabase functions deploy bofo-chat`. Next: step 2 in `BOFO-AI-SMARTER-PROMPT.md` (v2.1.2). Status: `BOFO-AI-SMARTER-STATUS.md`.
