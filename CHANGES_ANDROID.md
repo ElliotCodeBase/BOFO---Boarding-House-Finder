@@ -1,3 +1,6 @@
+# v2.1.3 - AI smarter step 3: chat UI (clarify chips, thumbs, New chat, restored chat) + admin Needs attention
+- See BOFO-v2.1.3-CHANGELOG.md. Ask BOFO restores the last chat, shows clarify chips, thumbs up/down and New chat; admins get Profile > AI needs attention.
+
 # v2.1.2 - AI smarter step 2: Android data layer (BofoMemory, session + history, rate(), smarter offline planner)
 - See BOFO-v2.1.2-CHANGELOG.md. No visible change yet; step 3 adds the UI.
 

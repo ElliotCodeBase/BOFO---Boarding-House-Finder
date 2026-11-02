@@ -1,3 +1,10 @@
+# Handoff (Android) - v2.1.3 AI smarter, step 3 of 3 (series finished)
+- **PR title:** `v2.1.3 - AI smarter step 3: chat UI (clarify chips, thumbs, New chat, restored chat) + admin Needs attention`
+- Files: BofoChatOverlay, view_bofo_chat.xml, item_bofo_rate.xml, 3 drawables, strings.xml (hello/hint), strings_bofo.xml, AiUnansweredFragment/Service/Rules (new), 2 layouts, strings_ai_unanswered.xml, nav_graph, fragment_profile.xml, ProfileFragment, AiUnansweredRulesTest, build.gradle (2.1.3 / 20103). Function and Supabase untouched.
+- Needs on the server: `supabase functions deploy bofo-chat` (step 1 code, NOT deployed by Claude) and migration 020 (applied live). Without the deploy there is no `log_id`, so no thumbs and no clarify chips from the server; the offline planner still shows chips.
+- Risks: not built or run by Claude (no Android SDK); the 5 rules tests pass on a plain JVM only; thumb / New chat icons are new vector drawables.
+- Next: nothing queued. Real-phone check = acceptance list in BOFO-v2.1.3-CHANGELOG.md.
+---
 # Handoff (Android) - v2.1.2 AI smarter, step 2 of 3
 - **PR title:** `v2.1.2 - AI smarter step 2: Android data layer (BofoMemory, session + history, rate(), smarter offline planner)`
 - Files: BofoAnswer, BofoAiService, BofoMemory (new), BofoIntentLocal, AuthService, BofoChatOverlay (2 small lines), 4 tests, build.gradle (2.1.2 / 20102). Function and Supabase untouched.

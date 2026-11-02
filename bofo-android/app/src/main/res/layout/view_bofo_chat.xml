@@ -59,6 +59,14 @@
             </LinearLayout>
 
             <ImageButton
+                android:id="@+id/new_chat"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/bofo_new_chat"
+                android:src="@drawable/ic_bofo_new_chat" />
+
+            <ImageButton
                 android:id="@+id/close"
                 android:layout_width="40dp"
                 android:layout_height="40dp"

@@ -13,6 +13,7 @@ import android.graphics.Typeface;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -23,6 +24,7 @@ import com.bofo.finder.R;
 import com.bofo.finder.app.MainActivity;
 import com.bofo.finder.databinding.ItemBofoChipsBinding;
 import com.bofo.finder.databinding.ItemBofoCompareBinding;
+import com.bofo.finder.databinding.ItemBofoRateBinding;
 import com.bofo.finder.databinding.ItemBofoResultBinding;
 import com.bofo.finder.databinding.ItemMsgMineBinding;
 import com.bofo.finder.databinding.ItemMsgTheirsBinding;
@@ -35,6 +37,7 @@ import com.bofo.finder.service.SupabaseClient;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BrowseState;
 import com.bofo.finder.util.BofoIntentLocal;
+import com.bofo.finder.util.BofoMemory;
 import com.bofo.finder.util.ChatRules;
 import com.bofo.finder.util.Geo;
 import com.bofo.finder.util.ListRules;
@@ -73,6 +76,7 @@ public class BofoChatOverlay extends FrameLayout {
         b.scrim.setOnClickListener(v -> close());
         b.close.setOnClickListener(v -> close());
         b.send.setOnClickListener(v -> ask());
+        b.newChat.setOnClickListener(v -> newChat());                // v2.1.3
         b.input.setOnEditorActionListener((v, action, ev) -> {
             if (action == EditorInfo.IME_ACTION_SEND) { ask(); return true; }
             return false;
@@ -95,7 +99,7 @@ public class BofoChatOverlay extends FrameLayout {
         if (shown) return;
         shown = true;
         setVisibility(VISIBLE); MainActivity.keepAppStill = true; MainActivity.imeListener = () -> applyCardSize(getWidth(), getHeight()); androidx.core.view.ViewCompat.requestApplyInsets(this);
-        if (!greeted) { greeted = true; say(getContext().getString(R.string.bofo_hello), false); say(getContext().getString(R.string.ai_chats_notice), false); addStarters(); }   // v2.0.91: 2nd bubble = the AI Chats privacy notice, REMOVE it with the feature
+        if (!greeted) { greeted = true; startChat(); }                  // v2.1.3: the saved chat comes back, or the hello (the privacy notice bubble lives in greet())
         b.card.setPivotX(cx - b.card.getLeft());
         b.card.setPivotY(cy - b.card.getTop());
         b.card.setScaleX(.15f); b.card.setScaleY(.15f); b.card.setAlpha(0f);
@@ -180,6 +184,36 @@ public class BofoChatOverlay extends FrameLayout {
     private BofoActionListener actionListener;
     private View typing, chipsRow;
 
+    /** First open: the saved conversation (BofoMemory) is shown again with the same bubbles; when there is none, the hello. */
+    private void startChat() {
+        List<BofoAiService.Turn> saved = BofoMemory.loadHistory();
+        if (saved.isEmpty()) { greet(); return; }
+        for (BofoAiService.Turn t : saved) say(t.text(), t.mine());
+        for (int i = Math.max(0, saved.size() - BofoAiService.HISTORY_TURNS); i < saved.size(); i++) history.add(saved.get(i));   // BOFO keeps the thread
+        TextView note = new TextView(getContext());
+        note.setText(R.string.bofo_restored); note.setTextSize(11); note.setTextColor(getContext().getColor(R.color.bofo_muted));
+        note.setPadding(Math.round(14 * dp), Math.round(4 * dp), Math.round(14 * dp), Math.round(4 * dp));
+        b.chatBox.addView(note);
+        addStarters();
+    }
+
+    private void greet() {
+        say(getContext().getString(R.string.bofo_hello), false);
+        say(getContext().getString(R.string.ai_chats_notice), false);     // v2.0.91: 2nd bubble = the AI Chats privacy notice, REMOVE it with the feature
+        addStarters();
+    }
+
+    /** "New chat": forgets the thread, the remembered budget / wifi / language and the saved copy, then says hello again. */
+    private void newChat() {
+        token++;                                                  // a late answer must not land in the new chat
+        finish();
+        history.clear();
+        BofoMemory.clear();
+        chipsRow = null;
+        b.chatBox.removeAllViews();
+        greet();
+    }
+
     private void ask() {
         if (waiting) return;
         String q = ChatRules.outgoing(b.input.getText().toString(), 300);
@@ -257,6 +291,7 @@ public class BofoChatOverlay extends FrameLayout {
             t.setPadding(Math.round(14 * dp), Math.round(2 * dp), Math.round(14 * dp), 0);
             b.chatBox.addView(t);
         }
+        if (a.logId() != null && a.logId().matches("[0-9a-fA-F-]{36}")) addRate(in, a.logId());
         addChips(in, a);
         remember(false, text, a.resultIds());
         b.scroll.post(() -> b.scroll.fullScroll(View.FOCUS_DOWN));
@@ -469,7 +504,8 @@ public class BofoChatOverlay extends FrameLayout {
         }
         String cmp = getContext().getString(R.string.bofo_compare_them);
         if (a.results().size() >= 2 && a.compare() == null && seen.add(cmp)) chip(v.chips, getContext().getString(R.string.bofo_act_compare), () -> send(cmp));
-        for (String s : a.suggestions()) {
+        List<String> more = !a.quickReplies().isEmpty() ? a.quickReplies() : a.suggestions();      // v2.1.3: a clarify answer fills both lists, show one
+        for (String s : more) {
             if (s.isEmpty() || s.equalsIgnoreCase(cmp) || !seen.add(s)) continue;
             chip(v.chips, s, () -> send(s));
         }
@@ -477,6 +513,23 @@ public class BofoChatOverlay extends FrameLayout {
         chipsRow = v.getRoot();
         b.chatBox.addView(chipsRow);
         pop(chipsRow, 3);
+    }
+
+    /** Thumb up / down under an answer (only when the server sent a log id). One tap, saved silently by BofoAiService.rate(). */
+    private void addRate(LayoutInflater in, String logId) {
+        ItemBofoRateBinding r = ItemBofoRateBinding.inflate(in, b.chatBox, false);
+        View.OnClickListener l = x -> {
+            boolean up = x == r.up;
+            new BofoAiService().rate(logId, up ? 1 : -1);
+            r.up.setEnabled(false); r.down.setEnabled(false);
+            ImageButton chosen = up ? r.up : r.down, other = up ? r.down : r.up;
+            chosen.setImageTintList(android.content.res.ColorStateList.valueOf(getContext().getColor(up ? R.color.bofo_success : R.color.bofo_error)));
+            other.setAlpha(.3f);
+            r.label.setText(R.string.bofo_rate_thanks);
+        };
+        r.up.setOnClickListener(l); r.down.setOnClickListener(l);
+        b.chatBox.addView(r.getRoot());
+        pop(r.getRoot(), 2);
     }
 
     private void chip(ViewGroup row, String text, Runnable onTap) {
