@@ -400,11 +400,13 @@ public class BofoChatOverlay extends FrameLayout {
         ItemBofoCompareBinding v = ItemBofoCompareBinding.inflate(in, b.chatBox, false);
         List<String> ids = a.compare().ids().isEmpty() ? a.resultIds() : a.compare().ids();
         int n = Math.max(1, ids.size());
-        int labelPx = Math.round(72 * dp);
+        // v2.1.5: up to 3 places always fit the card (smaller text, wrapping cells); only 4 or more places scroll sideways
+        boolean tight = n >= 3;
+        cellSp = tight ? 11f : 12f;
+        int labelPx = Math.round((tight ? 56 : 72) * dp);
         int cardPx = b.card.getWidth() > 0 ? b.card.getWidth() : Math.round(320 * dp);
         int avail = cardPx - Math.round(28 * dp) - Math.round(24 * dp);                    // card padding + the table's own side margins
-        // v2.1.4: 1-2 places share the width; 3 or more show two and a half columns, so the cut-off third one tells you to swipe
-        int colPx = n <= 2 ? Math.max(Math.round(96 * dp), (avail - labelPx) / n) : Math.max(Math.round(104 * dp), Math.round((avail - labelPx) / 2.5f));
+        int colPx = n <= 3 ? Math.max(Math.round(64 * dp), (avail - labelPx) / n) : Math.max(Math.round(88 * dp), (avail - labelPx) / 3);
 
         LinearLayout head = new LinearLayout(getContext());
         head.setOrientation(LinearLayout.HORIZONTAL);
@@ -433,12 +435,12 @@ public class BofoChatOverlay extends FrameLayout {
             line.setGravity(Gravity.CENTER_VERTICAL);
             if (shade++ % 2 == 1) line.setBackgroundResource(R.drawable.bg_bofo_row_alt);
             TextView label = cell(row.label(), labelPx, true, false, false);
-            label.setTextColor(getContext().getColor(R.color.bofo_text_2)); label.setTextSize(11);
+            label.setTextColor(getContext().getColor(R.color.bofo_text_2)); label.setTextSize(tight ? 10 : 11);
             line.addView(label);
             for (int i = 0; i < ids.size(); i++) {
                 boolean best = i == row.best();
                 String val = i < row.values().size() ? row.values().get(i) : "";
-                line.addView(cell(best ? "\u2713 " + val : val, colPx, false, best, true));
+                line.addView(cell(best && val.length() <= 12 ? "\u2713 " + val : val, colPx, false, best, true));
             }
             if (row.best() >= 0 && row.best() < n) { wins[row.best()]++; scored++; }
             v.table.addView(line);
@@ -463,7 +465,7 @@ public class BofoChatOverlay extends FrameLayout {
         }
         b.chatBox.addView(v.getRoot());
         pop(v.getRoot(), 0);
-        if (n > 2) {                                                                          // v2.1.4: say that the table scrolls
+        if (n > 3) {                                                                          // say that the table scrolls
             TextView hint = new TextView(getContext());
             hint.setText(getContext().getString(R.string.bofo_swipe_more, n));
             hint.setTextSize(11); hint.setTextColor(getContext().getColor(R.color.bofo_muted));
@@ -472,13 +474,16 @@ public class BofoChatOverlay extends FrameLayout {
         }
     }
 
+    private float cellSp = 12f;
+
     private TextView cell(String text, int widthPx, boolean bold, boolean best, boolean center) {
         TextView t = new TextView(getContext());
         t.setLayoutParams(new LinearLayout.LayoutParams(widthPx, ViewGroup.LayoutParams.WRAP_CONTENT));
         t.setText(text);
-        t.setTextSize(12);
+        t.setTextSize(cellSp);
         t.setGravity(center ? Gravity.CENTER : Gravity.CENTER_VERTICAL | Gravity.START);
-        t.setPadding(Math.round(6 * dp), Math.round(7 * dp), Math.round(6 * dp), Math.round(7 * dp));
+        int pad = Math.round((cellSp < 12 ? 3 : 6) * dp);
+        t.setPadding(pad, Math.round(7 * dp), pad, Math.round(7 * dp));
         t.setTextColor(getContext().getColor(best ? R.color.bofo_success : R.color.bofo_text));
         t.setTypeface(null, bold || best ? Typeface.BOLD : Typeface.NORMAL);
         if (best) t.setBackgroundResource(R.drawable.bg_bofo_best_green);

@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.1.5 compare table fits the card
+- **PR title:** `v2.1.5 - Fix: Ask BOFO compare table fits the card for up to 3 places`
+- Files: BofoChatOverlay (addCompare/cell sizes), build.gradle (2.1.5 / 20105). Not built or run by Claude. v2.1.4 (peek column) is superseded, merge it first or apply this zip over main anyway: this zip contains the full 2.1.4 files too.
+---
 # Handoff (Android) - v2.1.4 compare table UI fix
 - **PR title:** `v2.1.4 - Fix: Ask BOFO compare table (3 places no longer look cut off)`
 - Files: BofoChatOverlay (addCompare widths + hint), item_bofo_compare.xml (fading edge), strings_bofo.xml, build.gradle (2.1.4 / 20104). Not built or run by Claude.

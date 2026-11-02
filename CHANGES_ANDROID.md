@@ -1,3 +1,6 @@
+# v2.1.5 - Fix: Ask BOFO compare table fits the card for up to 3 places
+- Compare table: up to 3 places now share the card width (smaller text, wrapping cells, no check mark on long values); 4 or more still scroll with the swipe line. Replaces the 2.1.4 peek-a-column idea.
+
 # v2.1.4 - Fix: Ask BOFO compare table (3 places no longer look cut off)
 - Compare table in the chat: with 3+ places two and a half columns show, with a soft edge and a "Swipe sideways" line. Narrower label column. No logic change.
 
