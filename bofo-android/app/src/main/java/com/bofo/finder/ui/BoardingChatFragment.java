@@ -139,14 +139,16 @@ public class BoardingChatFragment extends Fragment {
             b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
         }
         boolean canLeave = args.getBoolean(ARG_LEAVE, false), isOwner = GroupMessage.OWNER.equals(myRole);
-        if (canLeave || isOwner) {                                   // students: Leave group. Owner (step 4): New announcement
+        {                                                            // 3-dot menu for everyone: Pinned announcements, owner tools, Leave group (students)
             b.more.setVisibility(View.VISIBLE);
             b.more.setOnClickListener(v -> {
                 List<String> labels = new ArrayList<>();
                 List<Runnable> acts = new ArrayList<>();
+                if (!pinned.isEmpty()) { labels.add(getString(R.string.boarding_menu_pinned, pinned.size())); acts.add(this::showPinned); }
                 if (isOwner) { labels.add(getString(R.string.boarding_menu_announce)); acts.add(this::openAnnounce); }
                 if (isOwner) { labels.add(getString(R.string.boarding_menu_info)); acts.add(this::openInfo); }
                 if (canLeave) { labels.add(getString(R.string.boarding_leave)); acts.add(this::confirmLeave); }
+                if (labels.isEmpty()) return;
                 new MaterialAlertDialogBuilder(requireContext()).setItems(labels.toArray(new String[0]), (d, which) -> acts.get(which).run()).show();
             });
         }
@@ -180,8 +182,8 @@ public class BoardingChatFragment extends Fragment {
         b.retry.setOnClickListener(v -> load());
         b.pinnedBar.setOnClickListener(v -> showPinned());
         b.pinnedGotIt.setOnClickListener(v -> {
-            List<Row> order = BoardingRules.bannerOrder(pinned);
-            if (!order.isEmpty() && BoardingRules.canAck(order.get(0))) acknowledge(order.get(0));
+            List<Row> todo = BoardingRules.toAck(pinned);
+            if (!todo.isEmpty()) acknowledge(todo.get(0));
         });
         Connectivity.OFFLINE.observe(getViewLifecycleOwner(), off -> {
             if (b == null) return;
@@ -488,14 +490,17 @@ public class BoardingChatFragment extends Fragment {
         }, e -> { /* offline: the banner keeps what it had */ });
     }
 
+    /** Top bar: only pinned announcements that still wait for my "Got it". It disappears after pressing it; all pinned ones stay in the 3-dot menu. */
     private void renderBanner() {
         if (b == null) return;
-        if (pinned.isEmpty()) { b.pinnedBar.setVisibility(View.GONE); return; }
-        Row top = BoardingRules.bannerOrder(pinned).get(0);
+        List<Row> todo = BoardingRules.toAck(pinned);
+        if (todo.isEmpty()) { b.pinnedBar.setVisibility(View.GONE); return; }
+        Row top = todo.get(0);
         b.pinnedTitle.setText(BoardingRules.oneLine(top.title == null || top.title.isEmpty() ? getString(R.string.boarding_announcement) : top.title, 80));
         b.pinnedText.setText(BoardingRules.oneLine(top.body, 120));
-        b.pinnedCount.setText(getResources().getQuantityString(R.plurals.boarding_pinned_count, pinned.size(), pinned.size()));
-        b.pinnedGotIt.setVisibility(BoardingRules.canAck(top) ? View.VISIBLE : View.GONE);
+        b.pinnedCount.setText(todo.size() > 1 ? getString(R.string.boarding_pinned_more, todo.size() - 1) : "");
+        b.pinnedCount.setVisibility(todo.size() > 1 ? View.VISIBLE : View.GONE);
+        b.pinnedGotIt.setVisibility(View.VISIBLE);
         b.pinnedBar.setVisibility(View.VISIBLE);
     }
 
@@ -686,6 +691,7 @@ public class BoardingChatFragment extends Fragment {
                 h.v.gotIt.setVisibility(BoardingRules.canAck(r) ? View.VISIBLE : View.GONE);
                 h.v.gotIt.setOnClickListener(v -> listener.ack(r));
                 h.v.annDone.setVisibility(!r.mine && r.iAcked ? View.VISIBLE : View.GONE);
+                h.v.annFooter.setVisibility(h.v.annSeen.getVisibility() == View.VISIBLE || h.v.gotIt.getVisibility() == View.VISIBLE || h.v.annDone.getVisibility() == View.VISIBLE ? View.VISIBLE : View.GONE);
                 h.v.ann.setOnLongClickListener(v -> { listener.hold(r); return true; });
             } else {
                 h.v.body.setText(r.body);

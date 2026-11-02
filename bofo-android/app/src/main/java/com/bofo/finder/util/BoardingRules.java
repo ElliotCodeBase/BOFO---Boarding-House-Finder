@@ -144,6 +144,13 @@ public final class BoardingRules {
         return todo;
     }
 
+    /** Pinned announcements that still wait for my "Got it", in banner order. The top bar shows only these; it is empty (bar hidden) once all are answered. */
+    public static List<Row> toAck(List<Row> pinned) {
+        List<Row> out = new ArrayList<>();
+        for (Row r : bannerOrder(pinned)) if (canAck(r)) out.add(r);
+        return out;
+    }
+
     /** Copy of {@code rows} where message {@code id} is marked acknowledged (other rows are the same objects). */
     public static List<Row> markAcked(List<Row> rows, String id) {
         List<Row> out = new ArrayList<>(rows.size());
