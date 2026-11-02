@@ -3,18 +3,16 @@ package com.bofo.finder.ui;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.StyleSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -39,6 +37,7 @@ import com.bofo.finder.util.ChatRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
 import com.bofo.finder.util.Outbox;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.json.JSONObject;
@@ -52,6 +51,8 @@ import java.util.List;
  * Group chat of ONE boarding house (v2.2.0). Same approach as {@link ChatFragment}: 30 messages per page (older pages on scroll),
  * a Handler poll chain (3 s, slower when quiet, only while resumed) and every message goes through the Outbox first, so it is sent
  * later when offline. Every message shows the sender name, a role badge (Owner / Student) and the time.
+ * Step 3: announcements get their own card (title, text, "Got it" button; the owner sees "Seen by N"), the pinned ones sit in a banner
+ * under the header (unanswered first, with "Got it" in the banner) and a long press on somebody else's message offers "Report message".
  * Used by the student tab (BoardingFragment, step 2) and by the owner screen (step 4: showBack = true, myRole = owner).
  */
 public class BoardingChatFragment extends Fragment {
@@ -83,7 +84,8 @@ public class BoardingChatFragment extends Fragment {
     private final List<Row> failed = new ArrayList<>();       // refused by the server (kept on screen, tap to send again)
     private List<Row> queued = new ArrayList<>();             // waiting in the Outbox
     private boolean loaded, resumed, polling, loadingOlder, noMoreOlder;
-    private int quiet, token;
+    private int quiet, token, pinTick;
+    private List<Row> pinned = new ArrayList<>();            // pinned announcements (max 3), newest pin first
 
     private final Runnable pollTask = this::tick;
 
@@ -139,6 +141,7 @@ public class BoardingChatFragment extends Fragment {
         adapter = new Adapter(myRole, new Adapter.Listener() {
             @Override public void tap(Row r) { if (r.state == State.FAILED) resend(r); }
             @Override public void hold(Row r) { options(r); }
+            @Override public void ack(Row r) { acknowledge(r); }
         });
         lm = new LinearLayoutManager(requireContext());
         lm.setStackFromEnd(true);                                  // short chats sit at the bottom, like every chat app
@@ -162,6 +165,11 @@ public class BoardingChatFragment extends Fragment {
             }
         });
         b.retry.setOnClickListener(v -> load());
+        b.pinnedBar.setOnClickListener(v -> showPinned());
+        b.pinnedGotIt.setOnClickListener(v -> {
+            List<Row> order = BoardingRules.bannerOrder(pinned);
+            if (!order.isEmpty() && BoardingRules.canAck(order.get(0))) acknowledge(order.get(0));
+        });
         Connectivity.OFFLINE.observe(getViewLifecycleOwner(), off -> {
             if (b == null) return;
             b.offline.setVisibility(off != null && off ? View.VISIBLE : View.GONE);
@@ -186,6 +194,7 @@ public class BoardingChatFragment extends Fragment {
             syncQueued();
             render(true);
             markRead();
+            loadPinned();
             if (resumed) schedule(ChatRules.POLL_MIN_MS);
         }, e -> {
             if (my != token || b == null) return;
@@ -286,6 +295,7 @@ public class BoardingChatFragment extends Fragment {
             syncQueued();
             if (changed) render(mineNew || nearBottom());
             if (incoming) markRead();
+            if (changed || ++pinTick % 5 == 0) loadPinned();                     // pin / unpin by the owner shows up within about 15 s
             quiet = changed ? 0 : quiet + 1;
             if (resumed) schedule(ChatRules.nextDelayMs(quiet));
         }, e -> {
@@ -333,6 +343,10 @@ public class BoardingChatFragment extends Fragment {
             ClipboardManager cm = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
             if (cm != null) { cm.setPrimaryClip(ClipData.newPlainText("message", r.body)); ListArea.toast(this, getString(R.string.chat_copied)); }
         });
+        if (BoardingRules.canReport(r, me)) {
+            labels.add(getString(R.string.boarding_report_message));
+            acts.add(() -> ReportDialog.show(this, r.senderId, bhId, BoardingRules.reportQuote(r)));
+        }
         if (r.state == State.FAILED) {
             labels.add(getString(R.string.chats_delete));
             acts.add(() -> { failed.remove(r); render(false); });
@@ -352,6 +366,101 @@ public class BoardingChatFragment extends Fragment {
             server.removeIf(s -> s.id.equals(r.id));
             render(false);
         }, e -> ListArea.toast(this, getString(R.string.boarding_delete_failed)));
+    }
+
+    // ---- announcements: pinned banner, "Got it" ---------------------------------------------------------------
+
+    private void loadPinned() {
+        final int my = token;
+        Async.run(() -> svc.pinned(bhId), (List<GroupMessage> list) -> {
+            if (my != token || b == null) return;
+            List<Row> rows = new ArrayList<>();
+            for (GroupMessage m : list) rows.add(BoardingRules.fromMessage(m, me));
+            pinned = rows;
+            renderBanner();
+        }, e -> { /* offline: the banner keeps what it had */ });
+    }
+
+    private void renderBanner() {
+        if (b == null) return;
+        if (pinned.isEmpty()) { b.pinnedBar.setVisibility(View.GONE); return; }
+        Row top = BoardingRules.bannerOrder(pinned).get(0);
+        b.pinnedTitle.setText(BoardingRules.oneLine(top.title == null || top.title.isEmpty() ? getString(R.string.boarding_announcement) : top.title, 80));
+        b.pinnedText.setText(BoardingRules.oneLine(top.body, 120));
+        b.pinnedCount.setText(getResources().getQuantityString(R.plurals.boarding_pinned_count, pinned.size(), pinned.size()));
+        b.pinnedGotIt.setVisibility(BoardingRules.canAck(top) ? View.VISIBLE : View.GONE);
+        b.pinnedBar.setVisibility(View.VISIBLE);
+    }
+
+    /** "Got it": saved on the server, then every copy of the announcement on screen shows it as done. */
+    private void acknowledge(Row r) {
+        if (!BoardingRules.canAck(r)) return;
+        b.pinnedGotIt.setEnabled(false);
+        Async.run(() -> { svc.ack(r.id); return Boolean.TRUE; }, ok -> {
+            if (b == null) return;
+            b.pinnedGotIt.setEnabled(true);
+            markAcked(r.id);
+        }, e -> {
+            if (b == null) return;
+            b.pinnedGotIt.setEnabled(true);
+            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : getString(R.string.boarding_ack_failed));
+        });
+    }
+
+    private void markAcked(String id) {
+        List<Row> s = BoardingRules.markAcked(server, id);
+        server.clear();
+        server.addAll(s);
+        pinned = BoardingRules.markAcked(pinned, id);
+        renderBanner();
+        render(false);
+    }
+
+    /** Banner tap: all pinned announcements in one dialog, each with its own "Got it". */
+    private void showPinned() {
+        if (pinned.isEmpty()) return;
+        Context c = requireContext();
+        float dp = getResources().getDisplayMetrics().density;
+        LinearLayout box = new LinearLayout(c);
+        box.setOrientation(LinearLayout.VERTICAL);
+        int pad = Math.round(20 * dp);
+        box.setPadding(pad, Math.round(8 * dp), pad, Math.round(8 * dp));
+        final androidx.appcompat.app.AlertDialog[] dlg = new androidx.appcompat.app.AlertDialog[1];
+        for (Row r : BoardingRules.bannerOrder(pinned)) {
+            TextView title = new TextView(c);
+            title.setText(r.title == null || r.title.isEmpty() ? getString(R.string.boarding_announcement) : r.title);
+            title.setTextColor(c.getColor(R.color.bofo_ink));
+            title.setTextSize(16);
+            title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
+            title.setPadding(0, Math.round(10 * dp), 0, 0);
+            box.addView(title);
+            TextView body = new TextView(c);
+            body.setText(r.body);
+            body.setTextColor(c.getColor(R.color.bofo_text));
+            body.setTextSize(15);
+            body.setPadding(0, Math.round(4 * dp), 0, 0);
+            box.addView(body);
+            if (BoardingRules.canAck(r)) {
+                MaterialButton ok = new MaterialButton(c);
+                ok.setText(R.string.boarding_got_it);
+                ok.setAllCaps(false);
+                ok.setBackgroundTintList(android.content.res.ColorStateList.valueOf(c.getColor(R.color.bofo_primary_tint)));
+                ok.setTextColor(c.getColor(R.color.bofo_primary));
+                ok.setOnClickListener(v -> { if (dlg[0] != null) dlg[0].dismiss(); acknowledge(r); });
+                box.addView(ok);
+            } else if (!r.mine && r.iAcked) {
+                TextView done = new TextView(c);
+                done.setText(R.string.boarding_got_it_done);
+                done.setTextColor(c.getColor(R.color.bofo_success));
+                done.setTextSize(12);
+                done.setPadding(0, Math.round(6 * dp), 0, 0);
+                box.addView(done);
+            }
+        }
+        ScrollView sv = new ScrollView(c);
+        sv.addView(box);
+        dlg[0] = new MaterialAlertDialogBuilder(c).setTitle(R.string.boarding_pinned_title).setView(sv)
+                .setPositiveButton(R.string.common_close, null).show();
     }
 
     // ---- leave (students) ------------------------------------------------------------------------------------
@@ -416,7 +525,7 @@ public class BoardingChatFragment extends Fragment {
     // ---- adapter ---------------------------------------------------------------------------------------------
 
     static final class Adapter extends ListAdapter<Row, Adapter.Holder> {
-        interface Listener { void tap(Row r); void hold(Row r); }
+        interface Listener { void tap(Row r); void hold(Row r); void ack(Row r); }
         private final Listener listener;
         private final String myRole;
 
@@ -424,7 +533,8 @@ public class BoardingChatFragment extends Fragment {
             super(new DiffUtil.ItemCallback<Row>() {
                 @Override public boolean areItemsTheSame(@NonNull Row a, @NonNull Row c) { return a.id.equals(c.id); }
                 @Override public boolean areContentsTheSame(@NonNull Row a, @NonNull Row c) {
-                    return a.state == c.state && a.body.equals(c.body) && a.createdAt.equals(c.createdAt) && a.name.equals(c.name) && a.role.equals(c.role);
+                    return a.state == c.state && a.body.equals(c.body) && a.createdAt.equals(c.createdAt) && a.name.equals(c.name) && java.util.Objects.equals(a.role, c.role)
+                            && a.pinned == c.pinned && a.iAcked == c.iAcked && a.ackCount == c.ackCount;
                 }
             });
             this.myRole = myRole;
@@ -456,11 +566,20 @@ public class BoardingChatFragment extends Fragment {
             h.v.role.setBackgroundResource(owner ? R.drawable.bg_role_owner : R.drawable.bg_role_student);
             h.v.role.setTextColor(c.getColor(owner ? R.color.bofo_role_owner_text : R.color.bofo_primary));
 
-            // bubble
-            if (r.announcement && r.title != null) {                                  // step 3 gives announcements their own look; until then: bold title + text
-                SpannableStringBuilder sb = new SpannableStringBuilder(r.title).append('\n').append(r.body);
-                sb.setSpan(new StyleSpan(Typeface.BOLD), 0, r.title.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                h.v.body.setText(sb);
+            // announcement card (step 3) or plain bubble
+            h.v.ann.setVisibility(r.announcement ? View.VISIBLE : View.GONE);
+            h.v.body.setVisibility(r.announcement ? View.GONE : View.VISIBLE);
+            if (r.announcement) {
+                h.v.annTitle.setText(r.title == null || r.title.isEmpty() ? c.getString(R.string.boarding_announcement) : r.title);
+                h.v.annBody.setText(r.body);
+                h.v.annPinned.setVisibility(r.pinned ? View.VISIBLE : View.GONE);
+                boolean ownerView = GroupMessage.OWNER.equals(myRole);
+                h.v.annSeen.setVisibility(ownerView && r.mine && r.ackCount > 0 ? View.VISIBLE : View.GONE);
+                if (r.ackCount > 0) h.v.annSeen.setText(c.getResources().getQuantityString(R.plurals.boarding_seen_by, r.ackCount, r.ackCount));
+                h.v.gotIt.setVisibility(BoardingRules.canAck(r) ? View.VISIBLE : View.GONE);
+                h.v.gotIt.setOnClickListener(v -> listener.ack(r));
+                h.v.annDone.setVisibility(!r.mine && r.iAcked ? View.VISIBLE : View.GONE);
+                h.v.ann.setOnLongClickListener(v -> { listener.hold(r); return true; });
             } else {
                 h.v.body.setText(r.body);
             }

@@ -18,20 +18,28 @@ public final class BoardingRules {
     /** One line of the group chat (a server message, or one waiting in / refused by the Outbox). */
     public static final class Row {
         public final String id, senderId, name, role, body, title, createdAt;
-        public final boolean mine, announcement;
+        public final boolean mine, announcement, pinned, iAcked;
+        public final int ackCount;            // owner only: how many members pressed "Got it" (0 for everybody else)
         public final State state;
         public Row(String id, String senderId, String name, String role, String body, String title, String createdAt,
                    boolean mine, boolean announcement, State state) {
-            this.id = id; this.senderId = senderId; this.name = name == null ? "" : name; this.role = role; this.body = body;
-            this.title = title; this.createdAt = createdAt; this.mine = mine; this.announcement = announcement; this.state = state;
+            this(id, senderId, name, role, body, title, createdAt, mine, announcement, false, false, 0, state);
         }
-        public Row withState(State s) { return new Row(id, senderId, name, role, body, title, createdAt, mine, announcement, s); }
+        public Row(String id, String senderId, String name, String role, String body, String title, String createdAt,
+                   boolean mine, boolean announcement, boolean pinned, boolean iAcked, int ackCount, State state) {
+            this.id = id; this.senderId = senderId; this.name = name == null ? "" : name; this.role = role; this.body = body;
+            this.title = title; this.createdAt = createdAt; this.mine = mine; this.announcement = announcement;
+            this.pinned = pinned; this.iAcked = iAcked; this.ackCount = ackCount; this.state = state;
+        }
+        public Row withState(State s) { return new Row(id, senderId, name, role, body, title, createdAt, mine, announcement, pinned, iAcked, ackCount, s); }
+        public Row withAcked(boolean acked) { return new Row(id, senderId, name, role, body, title, createdAt, mine, announcement, pinned, acked, ackCount, state); }
         public boolean fromOwner() { return GroupMessage.OWNER.equals(role); }
     }
 
     public static Row fromMessage(GroupMessage m, String me) {
         boolean mine = me != null && me.equals(m.senderId());
-        return new Row(m.id(), m.senderId(), m.senderName(), m.senderRole(), m.body(), m.title(), m.createdAt(), mine, m.announcement(), State.SENT);
+        return new Row(m.id(), m.senderId(), m.senderName(), m.senderRole(), m.body(), m.title(), m.createdAt(), mine, m.announcement(),
+                m.pinned(), m.iAcked(), m.ackCount(), State.SENT);
     }
 
     /** A message typed by me that is still in the Outbox (or was refused). createdAt = the typing time in ms, as text. */
@@ -93,5 +101,55 @@ public final class BoardingRules {
     public static boolean sendBlocked(String text) {
         String t = text == null ? "" : text.toLowerCase(Locale.ROOT);
         return t.contains("row-level security") || t.contains("42501");
+    }
+
+    // ---- step 3: announcements ("Got it"), pinned banner, report a message ---------------------------------------
+
+    /** Prefix of the quote the admin sees in reports.details (the admin screens are in English). */
+    public static final String REPORT_QUOTE = "Reported message: ";
+    private static final int QUOTE_MAX = 160;
+
+    /** "Got it" button: a server announcement from someone else that I have not acknowledged yet. */
+    public static boolean canAck(Row r) {
+        return r != null && r.announcement && r.state == State.SENT && !r.mine && !r.iAcked;
+    }
+
+    /** Report: only a message from somebody else that the server has (not a waiting / failed one of mine). */
+    public static boolean canReport(Row r, String me) {
+        return r != null && r.state == State.SENT && !r.mine && r.senderId != null && !r.senderId.isEmpty() && me != null && !me.isEmpty() && !me.equals(r.senderId);
+    }
+
+    /** One line, spaces collapsed, cut with "..." after {@code max} characters. */
+    public static String oneLine(String s, int max) {
+        String t = s == null ? "" : s.replaceAll("\\s+", " ").trim();
+        return t.length() <= max ? t : t.substring(0, Math.max(0, max - 1)).trim() + "\u2026";
+    }
+
+    /** The quote put in front of the reporter's own words: 'Reported message: "title - text"' (announcement) or '"text"'. */
+    public static String reportQuote(Row r) {
+        if (r == null) return "";
+        String body = r.announcement && r.title != null && !r.title.trim().isEmpty() ? r.title.trim() + " - " + r.body : r.body;
+        String q = oneLine(body, QUOTE_MAX);
+        return q.isEmpty() ? "" : REPORT_QUOTE + "\"" + q + "\"";
+    }
+
+    /** Pinned announcements for the banner: unacknowledged ones first (those still need a "Got it"), then the newest pin; order kept inside each group. */
+    public static List<Row> bannerOrder(List<Row> pinned) {
+        List<Row> todo = new ArrayList<>(), done = new ArrayList<>();
+        for (Row r : pinned) (canAck(r) ? todo : done).add(r);
+        todo.addAll(done);
+        return todo;
+    }
+
+    /** Copy of {@code rows} where message {@code id} is marked acknowledged (other rows are the same objects). */
+    public static List<Row> markAcked(List<Row> rows, String id) {
+        List<Row> out = new ArrayList<>(rows.size());
+        for (Row r : rows) out.add(r.id.equals(id) ? r.withAcked(true) : r);
+        return out;
+    }
+
+    /** How many pinned announcements still wait for my "Got it". */
+    public static int unackedCount(List<Row> pinned) {
+        int n = 0; for (Row r : pinned) if (canAck(r)) n++; return n;
     }
 }

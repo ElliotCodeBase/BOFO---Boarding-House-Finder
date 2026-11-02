@@ -24,6 +24,24 @@
     <string name="boarding_role_owner">Owner</string>
     <string name="boarding_role_student">Student</string>
     <string name="boarding_announcement">Announcement</string>
+    <!-- step 3: announcements, pinned banner, report a message -->
+    <string name="boarding_pinned_label">Pinned</string>
+    <string name="boarding_pinned_title">Pinned announcements</string>
+    <plurals name="boarding_pinned_count">
+        <item quantity="one">%1$d pinned</item>
+        <item quantity="other">%1$d pinned</item>
+    </plurals>
+    <plurals name="boarding_seen_by">
+        <item quantity="one">Seen by %1$d member</item>
+        <item quantity="other">Seen by %1$d members</item>
+    </plurals>
+    <string name="boarding_got_it">Got it</string>
+    <string name="boarding_got_it_done">You got it \u2713</string>
+    <string name="boarding_ack_failed">Could not save your \"Got it\". Try again.</string>
+    <string name="boarding_report_message">Report message</string>
+    <string name="report_message_title">Report this message</string>
+    <string name="report_message_hint">Why are you reporting this message? The text is sent to the admins with your report.</string>
+    <string name="cd_pinned_bar">Pinned announcements. Tap to read.</string>
     <string name="boarding_leave">Leave group</string>
     <string name="boarding_leave_title">Leave this group?</string>
     <string name="boarding_leave_msg">You will stop seeing this chat. You can join again with the code.</string>
