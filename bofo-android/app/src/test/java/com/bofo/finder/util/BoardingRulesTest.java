@@ -2,6 +2,7 @@ package com.bofo.finder.util;
 
 import static org.junit.Assert.*;
 
+import com.bofo.finder.model.BhMember;
 import com.bofo.finder.model.GroupMessage;
 import com.bofo.finder.service.BhGroupService;
 
@@ -183,5 +184,49 @@ public class BoardingRulesTest {
         assertEquals("Ana: hi there", BoardingRules.preview("Ana", " hi\n there "));
         assertEquals("hello", BoardingRules.preview(" ", "hello"));
         assertEquals("", BoardingRules.preview("Ana", null));
+    }
+
+    // ---- step 5: members, invite code, notice ------------------------------------------------------------------------
+
+    private static BhMember mem(String id, String role, String status) { return new BhMember(id, "N" + id, role, status, false, "2026-11-0" + id); }
+
+    @Test public void inviteCodeIsShownInTwoBlocksAndShared() {
+        assertEquals("ABCD-2345", BoardingRules.formatCode("ABCD2345"));
+        assertEquals("ABCD-2345", BoardingRules.formatCode(" ABCD-2345 "));
+        assertEquals("", BoardingRules.formatCode(null));
+        assertEquals("XYZ", BoardingRules.formatCode("XYZ"));
+        String s = BoardingRules.shareText("Sunrise Boarding", "ABCD2345");
+        assertTrue(s.contains("Sunrise Boarding"));
+        assertTrue(s.contains("ABCD-2345"));
+        assertTrue(BoardingRules.shareText(" ", "ABCD2345").contains("my boarding house"));
+    }
+
+    @Test public void onlyActiveStudentsCanBeMutedOrRemoved() {
+        assertTrue(BoardingRules.canModerate(mem("1", "student", "active")));
+        assertFalse(BoardingRules.canModerate(mem("2", "owner", "active")));
+        assertFalse(BoardingRules.canModerate(mem("3", "student", "removed")));
+        assertFalse(BoardingRules.canModerate(null));
+    }
+
+    @Test public void memberListShowsOwnerThenActiveThenRemoved() {
+        List<BhMember> in = Arrays.asList(mem("1", "student", "removed"), mem("2", "student", "active"), mem("3", "owner", "active"), mem("4", "student", "active"));
+        List<BhMember> out = BoardingRules.memberOrder(in);
+        assertEquals("3", out.get(0).userId());
+        assertEquals("2", out.get(1).userId());
+        assertEquals("4", out.get(2).userId());
+        assertEquals("1", out.get(3).userId());
+        assertEquals(2, BoardingRules.activeStudents(in));
+    }
+
+    @Test public void noticeIsShownOncePerAnnouncementInOneAppRun() {
+        GroupMessage a = new GroupMessage("a", "bh", "o", "Owner", "owner", "Water is off", "t1", true, "Water cut", true, "p", null, false, 0);
+        GroupMessage b2 = new GroupMessage("b", "bh", "o", "Owner", "owner", "Rent day", "t2", true, null, true, "p", null, false, 0);
+        java.util.Set<String> shown = new java.util.HashSet<>();
+        List<GroupMessage> first = BoardingRules.newNotices(Arrays.asList(b2, a), shown);
+        assertEquals(2, first.size());
+        assertEquals("Rent day", BoardingRules.noticeTitle(first));                   // no title: the text is used
+        assertEquals(0, BoardingRules.newNotices(Arrays.asList(b2, a), shown).size());  // second look: nothing new
+        assertEquals("Water cut", BoardingRules.noticeTitle(Collections.singletonList(a)));
+        assertEquals("", BoardingRules.noticeTitle(new ArrayList<GroupMessage>()));
     }
 }

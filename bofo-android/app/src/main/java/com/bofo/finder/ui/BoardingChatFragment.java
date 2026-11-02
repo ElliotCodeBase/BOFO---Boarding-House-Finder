@@ -145,6 +145,7 @@ public class BoardingChatFragment extends Fragment {
                 List<String> labels = new ArrayList<>();
                 List<Runnable> acts = new ArrayList<>();
                 if (isOwner) { labels.add(getString(R.string.boarding_menu_announce)); acts.add(this::openAnnounce); }
+                if (isOwner) { labels.add(getString(R.string.boarding_menu_info)); acts.add(this::openInfo); }
                 if (canLeave) { labels.add(getString(R.string.boarding_leave)); acts.add(this::confirmLeave); }
                 new MaterialAlertDialogBuilder(requireContext()).setItems(labels.toArray(new String[0]), (d, which) -> acts.get(which).run()).show();
             });
@@ -402,6 +403,14 @@ public class BoardingChatFragment extends Fragment {
 
     // ---- owner: announce, pin, edit (step 4) -------------------------------------------------------------------
 
+    /** Step 5: invite code + members (mute / remove) of this house. */
+    private void openInfo() {
+        Bundle a = new Bundle();
+        a.putString(GroupInfoFragment.ARG_BH, bhId);
+        a.putString(GroupInfoFragment.ARG_TITLE, requireArguments().getString(ARG_TITLE, ""));
+        NavHostFragment.findNavController(this).navigate(R.id.groupInfoFragment, a);
+    }
+
     private void openAnnounce() {
         Bundle a = new Bundle();
         a.putString(AnnounceFragment.ARG_BH, bhId);
@@ -606,7 +615,7 @@ public class BoardingChatFragment extends Fragment {
         b.retry.setVisibility(View.GONE);
         b.helloMascot.setVisibility(View.VISIBLE);
         b.helloTitle.setVisibility(View.VISIBLE);
-        b.messageText.setText(R.string.boarding_empty_sub);
+        b.messageText.setText(GroupMessage.OWNER.equals(myRole) ? R.string.boarding_empty_sub_owner : R.string.boarding_empty_sub);
         b.messageBox.setVisibility(empty ? View.VISIBLE : View.GONE);
     }
 

@@ -74,7 +74,7 @@ public class DockBarView extends ViewGroup {
     private float[] progress = new float[0];
     private boolean[] bold = new boolean[0];
     private ValueAnimator[] anims = new ValueAnimator[0];
-    private TextView badge;
+    private final android.util.SparseArray<TextView> badges = new android.util.SparseArray<>();      // v2.2.0 step 5: Chats and Boarding both carry a count
     private int current = -1;                            // index of the active tab, -1 = none yet
     private float hl, hr;                                // left / right edge of the highlight
     private AnimatorSet hlAnim;
@@ -130,7 +130,7 @@ public class DockBarView extends ViewGroup {
         cells.clear(); tabs.clear(); tabs.addAll(list);
         int n = tabs.size();
         icons = new ImageView[n]; labels = new TextView[n]; progress = new float[n]; bold = new boolean[n]; anims = new ValueAnimator[n];
-        badge = null;
+        badges.clear();
         boolean hasAction = false;
         Context ctx = getContext();
         for (int i = 0; i < n; i++) {
@@ -200,7 +200,7 @@ public class DockBarView extends ViewGroup {
                 bl.topMargin = px(2);
                 bl.setMarginEnd(px(12));
                 cell.addView(b, bl);
-                badge = b;
+                badges.put(t.id, b);
             }
 
             cell.setOnClickListener(v -> onCellTap(idx));
@@ -214,7 +214,11 @@ public class DockBarView extends ViewGroup {
     }
 
     /** Unread count on the Chats tab (0 hides it). */
-    public void setBadge(int n) {
+    public void setBadge(int n) { setBadge(R.id.tab_chats, n); }
+
+    /** Count on any tab built with the badge flag (0 hides it); a tab without a badge is ignored. */
+    public void setBadge(int tabId, int n) {
+        TextView badge = badges.get(tabId);
         if (badge == null) return;
         if (n <= 0) { badge.setVisibility(GONE); return; }
         badge.setText(n > 9 ? "9+" : String.valueOf(n));

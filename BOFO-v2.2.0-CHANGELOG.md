@@ -32,3 +32,12 @@ Not built or run by Claude. Java checked with `javac` against stubs only; the SQ
 - New: `OwnerBoardingFragment`, `AnnounceFragment`, 2 layouts, `ic_set_boarding`. Changed: `BoardingChatFragment`, `BoardingRules` (+ tests), `ProfileFragment`, `fragment_profile.xml`, `nav_graph.xml`, `strings_boarding.xml`.
 - Not built or run by Claude (no Android SDK). 18 rules tests pass on a plain JVM; screens syntax-checked with `javac`; resources / view ids cross-checked by script. Needs migration 024 live. No Supabase change in this step.
 - Apply steps 2 and 3 first.
+
+## Step 5 of 5: invite code, members, announcement notice (series finished)
+- **Group info** (owner, chat menu > Group info and invite code): invite code with Copy / Share / New code (confirm first), and the member list with Mute / Unmute and Remove (confirm first). Loading, empty and error + Try again states.
+- **Students:** unread count on the Boarding tab, and a notice bar above the tab bar for owner announcements not yet answered with Got it (once per announcement per app run, Open goes to the Boarding tab).
+- The owner's empty chat now says to share the invite code.
+- New: `GroupInfoFragment`, `fragment_group_info.xml`, `item_group_member.xml`. Changed: `BoardingChatFragment`, `ShellFragment`, `DockBarView`, `BhGroupService`, `BoardingRules` (+ tests), `nav_graph.xml`, `strings_boarding.xml`.
+- Not built or run by Claude (no Android SDK). 22 rules tests pass on a plain JVM (org.json and BhGroupService stubbed); the 3 touched screens were checked with `javac` (only missing-Android-class errors remain); strings, view ids and binding fields cross-checked by script. Needs migration 024 live (apply 023 first). No Supabase change in this step.
+- Known limits: owner has no unread badge; no brute-force limit on code guesses; a removed student cannot be restored; the notice bar appears when the main screen resumes.
+- Apply steps 2-4 first.

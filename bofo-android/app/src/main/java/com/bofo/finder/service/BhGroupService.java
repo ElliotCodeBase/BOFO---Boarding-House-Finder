@@ -65,6 +65,12 @@ public final class BhGroupService {
         return messages(api.select(FEED, "bh_id=eq." + bhId + "&pinned=eq.true&select=*&order=pinned_at.desc&limit=" + MAX_PINNED));
     }
 
+    /** Announcements from the owner that I have not acknowledged yet, newest first (at most 5): drives the in-app notice (step 5). */
+    public List<GroupMessage> unackedAnnouncements(String myId) throws Exception {
+        if (myId == null || myId.isEmpty()) return new ArrayList<>();
+        return messages(api.select(FEED, "is_announcement=eq.true&i_acked=eq.false&sender_id=neq." + myId + "&select=*&order=created_at.desc&limit=5"));
+    }
+
     /** Plain chat message (students and the owner). Announcements go through {@link #postAnnouncement}. */
     public GroupMessage send(String bhId, String senderId, String body) throws Exception {
         String b = Validate.clean(body, MAX_LEN);
