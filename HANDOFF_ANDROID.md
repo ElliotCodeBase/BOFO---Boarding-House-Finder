@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.1.4 compare table UI fix
+- **PR title:** `v2.1.4 - Fix: Ask BOFO compare table (3 places no longer look cut off)`
+- Files: BofoChatOverlay (addCompare widths + hint), item_bofo_compare.xml (fading edge), strings_bofo.xml, build.gradle (2.1.4 / 20104). Not built or run by Claude.
+---
 # Handoff (Android) - v2.1.3 AI smarter, step 3 of 3 (series finished)
 - **PR title:** `v2.1.3 - AI smarter step 3: chat UI (clarify chips, thumbs, New chat, restored chat) + admin Needs attention`
 - Files: BofoChatOverlay, view_bofo_chat.xml, item_bofo_rate.xml, 3 drawables, strings.xml (hello/hint), strings_bofo.xml, AiUnansweredFragment/Service/Rules (new), 2 layouts, strings_ai_unanswered.xml, nav_graph, fragment_profile.xml, ProfileFragment, AiUnansweredRulesTest, build.gradle (2.1.3 / 20103). Function and Supabase untouched.

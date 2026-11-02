@@ -1,3 +1,6 @@
+# v2.1.4 - Fix: Ask BOFO compare table (3 places no longer look cut off)
+- Compare table in the chat: with 3+ places two and a half columns show, with a soft edge and a "Swipe sideways" line. Narrower label column. No logic change.
+
 # v2.1.3 - AI smarter step 3: chat UI (clarify chips, thumbs, New chat, restored chat) + admin Needs attention
 - See BOFO-v2.1.3-CHANGELOG.md. Ask BOFO restores the last chat, shows clarify chips, thumbs up/down and New chat; admins get Profile > AI needs attention.
 

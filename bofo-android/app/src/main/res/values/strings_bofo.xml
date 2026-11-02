@@ -40,4 +40,5 @@
     <string name="bofo_rate_down">Not helpful</string>
     <string name="bofo_rate_thanks">Thanks for the feedback.</string>
     <string name="bofo_restored">Your last chat is back. Tap the arrow at the top to start a new one.</string>
+    <string name="bofo_swipe_more">Swipe sideways to see all %1$d places</string>
 </resources>

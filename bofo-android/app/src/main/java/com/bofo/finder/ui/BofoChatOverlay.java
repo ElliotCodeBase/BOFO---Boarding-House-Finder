@@ -400,10 +400,11 @@ public class BofoChatOverlay extends FrameLayout {
         ItemBofoCompareBinding v = ItemBofoCompareBinding.inflate(in, b.chatBox, false);
         List<String> ids = a.compare().ids().isEmpty() ? a.resultIds() : a.compare().ids();
         int n = Math.max(1, ids.size());
-        int labelPx = Math.round(84 * dp);
+        int labelPx = Math.round(72 * dp);
         int cardPx = b.card.getWidth() > 0 ? b.card.getWidth() : Math.round(320 * dp);
         int avail = cardPx - Math.round(28 * dp) - Math.round(24 * dp);                    // card padding + the table's own side margins
-        int colPx = Math.max(Math.round(96 * dp), (avail - labelPx) / n);
+        // v2.1.4: 1-2 places share the width; 3 or more show two and a half columns, so the cut-off third one tells you to swipe
+        int colPx = n <= 2 ? Math.max(Math.round(96 * dp), (avail - labelPx) / n) : Math.max(Math.round(104 * dp), Math.round((avail - labelPx) / 2.5f));
 
         LinearLayout head = new LinearLayout(getContext());
         head.setOrientation(LinearLayout.HORIZONTAL);
@@ -462,6 +463,13 @@ public class BofoChatOverlay extends FrameLayout {
         }
         b.chatBox.addView(v.getRoot());
         pop(v.getRoot(), 0);
+        if (n > 2) {                                                                          // v2.1.4: say that the table scrolls
+            TextView hint = new TextView(getContext());
+            hint.setText(getContext().getString(R.string.bofo_swipe_more, n));
+            hint.setTextSize(11); hint.setTextColor(getContext().getColor(R.color.bofo_muted));
+            hint.setPadding(Math.round(14 * dp), Math.round(2 * dp), Math.round(14 * dp), Math.round(4 * dp));
+            b.chatBox.addView(hint);
+        }
     }
 
     private TextView cell(String text, int widthPx, boolean bold, boolean best, boolean center) {
