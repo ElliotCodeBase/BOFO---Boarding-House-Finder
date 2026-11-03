@@ -16,6 +16,7 @@ import androidx.navigation.NavController;
 import com.bofo.finder.R;
 import com.bofo.finder.databinding.ActivityMainBinding;
 import com.bofo.finder.ui.AuthRouter;
+import com.bofo.finder.ui.PushRouter;
 import com.bofo.finder.util.AuthLinks;
 import com.bofo.finder.util.ThemeMode;
 
@@ -47,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Cold start through the sign-in link: the splash finishes it once the screens exist.
-        if (savedInstanceState == null) stashLink(getIntent());
+        if (savedInstanceState == null) { stashLink(getIntent()); PushRouter.stash(getIntent()); }      // v2.3.0: cold start from a notification tap
     }
 
     /** v2.0.102: true while a search field has the keyboard: the keyboard then slides OVER the screen instead of pushing the whole app (and the bottom bar) up. Chat boxes keep the old lift. */
@@ -61,6 +62,11 @@ public class MainActivity extends AppCompatActivity {
         super.onNewIntent(intent);
         // singleTask: the sign-in return link bofo://auth-callback arrives here while the app is already open.
         setIntent(intent);
+        // v2.3.0: a notification tap while the app is open. Shell on screen: open the chat now; a pushed screen is on top: go back to the shell first (it opens the chat when it resumes).
+        if (PushRouter.stash(intent) && !PushRouter.deliverNow()) {
+            NavController nav0 = AuthRouter.navOf(this);
+            if (nav0 != null && !AuthRouter.isSplash(nav0)) nav0.popBackStack(R.id.shellFragment, false);
+        }
         if (stashLink(intent)) {
             NavController nav = AuthRouter.navOf(this);
             if (nav != null && !AuthRouter.isSplash(nav)) AuthRouter.consumeLink(this, nav, null);   // on the splash, the splash picks it up

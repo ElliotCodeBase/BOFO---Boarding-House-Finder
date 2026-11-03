@@ -1,3 +1,9 @@
+# v2.3.0 - Phone notifications: chats, boarding group chats, admin reports
+- The app notifies the phone even when closed. Students and owners: new chat messages and boarding group messages / announcements. **Admins only:** new user reports (reason only). Tap opens that chat / group / Reports tab.
+- New Settings > **Notifications** switch; Android 13+ asks the system permission once after sign-in. Sign-out removes the phone from the server.
+- Needs a one-time setup (Firebase `google-services.json`, 2 Supabase secrets, deploy `send-push`, run migration `029_push_notifications.sql` + one insert): see `docs/PUSH_SETUP.md`. Without it the app behaves as v2.2.6. Details: `BOFO-v2.3.0-CHANGELOG.md`.
+- Not built or run here (no Android SDK / Firebase). `PushRulesTest` (8) compiled and passes.
+
 # v2.2.6 - UI redesign, step 2 of 2: Chats list + Edit profile
 - **Chats:** one title style like the other tabs, hint as a quiet caption, rows use the shared card (`bg_card_row`), place name and time in readable tones (the orange 12 sp text was too faint), unread = bolder darker last message + badge with theme-safe text colour (`bofo_on_accent`: ink on orange, white on purple). Skeleton rows match the new rows.
 - **Edit profile:** photo buttons are the quiet outlined style under the avatar; fields grouped under "About you" and "School and place"; 12 dp field corners (`Widget.Bofo.Field`); Save is the one filled action (`Widget.Bofo.Button.Accent`, 52 dp, readable text on orange). All hints, validation and logic unchanged.

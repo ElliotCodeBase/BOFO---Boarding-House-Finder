@@ -40,6 +40,7 @@ public final class AuthRouter {
         role = com.bofo.finder.model.Role.STUDENT;
         realRole = com.bofo.finder.model.Role.STUDENT;
         mfaPrompt = false;
+        PushRouter.clear();                       // v2.3.0: a notification tap waiting for the previous account
         suspendedUntil = "";
         suspendedReason = "";
         bannedReason = "";

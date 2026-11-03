@@ -269,6 +269,7 @@ public class BoardingChatFragment extends Fragment {
     public void onResume() {
         super.onResume();
         resumed = true;
+        com.bofo.finder.util.PushState.openGroup = bhId;         // v2.3.0: no banner for the group chat that is on screen
         Outbox.GROUP_LISTENERS.add(outboxListener);
         if (loaded) {
             syncQueued();
@@ -283,6 +284,7 @@ public class BoardingChatFragment extends Fragment {
     public void onPause() {
         resumed = false;
         polling = false;
+        if (bhId != null && bhId.equals(com.bofo.finder.util.PushState.openGroup)) com.bofo.finder.util.PushState.openGroup = null;
         handler.removeCallbacks(pollTask);
         Outbox.GROUP_LISTENERS.remove(outboxListener);
         super.onPause();

@@ -2,6 +2,12 @@ plugins {
     id 'com.android.application'
 }
 
+// v2.3.0: Firebase Cloud Messaging (phone notifications). google-services.json is downloaded from the Firebase console, put in
+// bofo-android/app/ and is git-ignored. Without it the plugin is skipped and the app builds and runs, just without push.
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+}
+
 // Public config comes from the desktop app's config.properties (same Supabase project). Two git-ignored files may
 // override it: the desktop config.local.properties (its dev.<role>.email / .password test accounts are the ones the JavaFX
 // login buttons use) and bofo-android/local.properties. Never put a service_role key anywhere.
@@ -34,8 +40,8 @@ android {
         minSdk 26
         targetSdk 36
         // Version rule: stage N = v2.0.N, versionCode = 200 + N. Bump in EVERY stage / pull request.
-        versionCode 20206
-        versionName '2.2.6'
+        versionCode 20300
+        versionName '2.3.0'
 
         buildConfigField 'String', 'SUPABASE_URL', "\"${cfg('supabase.url')}\""
         buildConfigField 'String', 'SUPABASE_ANON_KEY', "\"${cfg('supabase.anonKey')}\""
@@ -120,6 +126,10 @@ dependencies {
 
     // Stage 8g: Boost checkout opens in a Custom Tab
     implementation 'androidx.browser:browser:1.8.0'
+
+    // v2.3.0: phone notifications (chats, boarding group chats, admin reports). Version is managed by the BoM.
+    implementation platform('com.google.firebase:firebase-bom:33.7.0')
+    implementation 'com.google.firebase:firebase-messaging'
 
     testImplementation 'junit:junit:4.13.2'
     // android.jar's org.json is a stub in unit tests: use the real library there

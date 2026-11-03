@@ -11,6 +11,7 @@ public final class AppPrefs {
     private static final String K_PATH_FADE = "path_see_through";
     private static final String K_VIEWED = "viewed_ids";
     private static final String K_ORANGE = "orange_theme";
+    private static final String K_PUSH = "push_enabled";
     private static final int VIEWED_MAX = 200;
 
     private static SharedPreferences sp(Context c) { return c.getApplicationContext().getSharedPreferences(FILE, Context.MODE_PRIVATE); }
@@ -24,6 +25,9 @@ public final class AppPrefs {
     /** v2.0.117: Settings > "Orange theme". true = orange look (AppCompatDelegate MODE_NIGHT_YES is only the switch), false = classic purple. Default on. See {@link ThemeMode}. */
     public static boolean orangeTheme(Context c) { return sp(c).getBoolean(K_ORANGE, true); }
     public static void setOrangeTheme(Context c, boolean on) { sp(c).edit().putBoolean(K_ORANGE, on).apply(); }
+    /** v2.3.0: Settings > "Notifications". Phone notifications for chats, group chats and (admins) reports. Default on; off removes this phone from the server. */
+    public static boolean pushEnabled(Context c) { return sp(c).getBoolean(K_PUSH, true); }
+    public static void setPushEnabled(Context c, boolean on) { sp(c).edit().putBoolean(K_PUSH, on).apply(); }
     /** v2.0.81: ids of the places the person opened (oldest first, at most 200). The Explore map dims those pins. */
     public static java.util.List<String> viewedIds(Context c) {
         java.util.List<String> out = new java.util.ArrayList<>();

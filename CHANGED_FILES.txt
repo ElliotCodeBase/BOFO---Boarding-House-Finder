@@ -1,1 +1,33 @@
-Fix for "Duplicate resources": my new styles clashed with names in your styles_system.xml, so they are renamed (Text.Bofo.Rd*, Widget.Bofo.Button.RdTool/RdAccent, Widget.Bofo.RdField). Overwrite these files, then Build > Clean Project.
+BOFO v2.3.0 - phone notifications (chats, boarding group chats, admin-only reports)
+Unzip into the repo root C:\Users\user\bofo-finder (overwrite). A zip cannot delete: nothing to delete this time.
+
+changed  bofo-android/build.gradle
+changed  bofo-android/app/build.gradle
+changed  bofo-android/app/src/main/AndroidManifest.xml
+changed  bofo-android/app/src/main/java/com/bofo/finder/app/BofoApp.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/app/MainActivity.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/service/AuthService.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/AuthRouter.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ChatFragment.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/BoardingChatFragment.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/SettingsFragment.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/util/AppPrefs.java
+changed  bofo-android/app/src/main/res/layout/fragment_settings.xml
+changed  CHANGES_ANDROID.md
+changed  HANDOFF_ANDROID.md
+new      bofo-android/app/src/main/java/com/bofo/finder/app/BofoMessagingService.java
+new      bofo-android/app/src/main/java/com/bofo/finder/service/PushService.java
+new      bofo-android/app/src/main/java/com/bofo/finder/ui/PushRouter.java
+new      bofo-android/app/src/main/java/com/bofo/finder/util/PushNotifier.java
+new      bofo-android/app/src/main/java/com/bofo/finder/util/PushRules.java
+new      bofo-android/app/src/main/java/com/bofo/finder/util/PushState.java
+new      bofo-android/app/src/main/res/drawable/ic_stat_bofo.xml
+new      bofo-android/app/src/main/res/drawable/ic_set_bell.xml
+new      bofo-android/app/src/main/res/values/strings_push.xml
+new      bofo-android/app/src/test/java/com/bofo/finder/util/PushRulesTest.java
+new      supabase/migrations/029_push_notifications.sql
+new      supabase/functions/send-push/index.ts
+new      docs/PUSH_SETUP.md
+new      BOFO-v2.3.0-CHANGELOG.md
+new      CHANGED_FILES.txt (this file replaces the old one)

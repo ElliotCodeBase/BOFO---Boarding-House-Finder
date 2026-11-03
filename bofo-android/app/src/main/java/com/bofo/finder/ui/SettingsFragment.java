@@ -18,6 +18,7 @@ import com.bofo.finder.model.Profile;
 import com.bofo.finder.model.Role;
 import com.bofo.finder.service.AuthService;
 import com.bofo.finder.service.ProfileService;
+import com.bofo.finder.service.PushService;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.AppPrefs;
 import com.bofo.finder.util.Cache;
@@ -46,6 +47,9 @@ public class SettingsFragment extends Fragment {
         b.adminMfa.setOnClickListener(v -> AdminMfaSheet.show(this, null));      // v2.0.119: admins only (row is hidden for everyone else)
         b.useLocation.setChecked(AppPrefs.useLocation(requireContext()));
         b.useLocation.setOnCheckedChangeListener((btn, on) -> AppPrefs.setUseLocation(requireContext(), on));
+        // v2.3.0: Notifications. Checked state first, listener second. On = ask the system permission if needed, then register this phone; off = remove it from the server.
+        b.pushEnabled.setChecked(AppPrefs.pushEnabled(requireContext()));
+        b.pushEnabled.setOnCheckedChangeListener((btn, on) -> setPush(on));
         b.pathFade.setChecked(AppPrefs.seeThroughPath(requireContext()));
         b.pathFade.setOnCheckedChangeListener((btn, on) -> AppPrefs.setSeeThroughPath(requireContext(), on));
         // v2.0.117: Orange theme. Checked state first, listener second (so building the screen never flips the theme). The activity recreates itself on this same screen.
@@ -130,6 +134,27 @@ public class SettingsFragment extends Fragment {
             android.widget.Toast.makeText(requireContext().getApplicationContext(), R.string.settings_switch_done, android.widget.Toast.LENGTH_SHORT).show();
             AuthRouter.go(nav(), R.id.action_global_shell);
         }, e -> message(ErrorText.full("Could not switch the account", e)));
+    }
+
+    private final androidx.activity.result.ActivityResultLauncher<String> notifPermission = registerForActivityResult(
+            new androidx.activity.result.contract.ActivityResultContracts.RequestPermission(), granted -> {
+                if (!isAdded()) return;
+                if (granted) PushService.syncAsync(requireContext(), AuthRouter.realRole.db());
+                else message(getString(R.string.push_blocked_hint));
+            });
+
+    private void setPush(boolean on) {
+        final android.content.Context app = requireContext().getApplicationContext();
+        AppPrefs.setPushEnabled(app, on);
+        if (!on) { PushService.disableAsync(app); return; }
+        if (!PushService.firebaseReady(app)) { message(getString(R.string.push_unavailable_hint)); return; }
+        if (android.os.Build.VERSION.SDK_INT >= 33 && androidx.core.content.ContextCompat.checkSelfPermission(app, android.Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            notifPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS);
+            return;
+        }
+        if (!androidx.core.app.NotificationManagerCompat.from(app).areNotificationsEnabled()) message(getString(R.string.push_blocked_hint));
+        PushService.syncAsync(app, AuthRouter.realRole.db());
     }
 
     private void signOut() {

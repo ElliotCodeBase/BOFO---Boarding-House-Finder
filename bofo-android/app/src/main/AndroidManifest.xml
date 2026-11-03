@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- v2.3.0: Android 13+ asks before the app may show notifications (chats, group chats, admin reports). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Deliberately NOT declared: CAMERA and storage / media permissions. Photos come from the system camera
          app (TakePicture) and the system photo picker (PickVisualMedia), which need no permission. Declaring
          CAMERA would make the camera intent crash until the user granted it. -->
@@ -46,6 +48,21 @@
                 <data android:scheme="bofo" android:host="auth-callback" />
             </intent-filter>
         </activity>
+
+        <!-- v2.3.0: receives the pushes (FCM) while the app is closed. Data-only messages: BofoMessagingService builds the notification. -->
+        <service
+            android:name=".app.BofoMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_bofo" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="bofo_chats" />
 
         <!-- Lets the camera app write the profile photo into the app cache (see res/xml/file_paths.xml). -->
         <provider
