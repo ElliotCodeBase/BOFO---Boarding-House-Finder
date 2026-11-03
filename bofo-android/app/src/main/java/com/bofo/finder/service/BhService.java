@@ -177,9 +177,15 @@ public final class BhService {
                 bh.put("owner_photo", o0.isNull("owner_photo") ? "" : o0.optString("owner_photo", ""));
             }
             bh.put("photos", photos.get()).put("rooms", rooms.get()).put("contact", contact.get()).put("amenity_list", amen.get());
-            Async.bg(() -> { try { api.rpc("bump_view", new JSONObject().put("bh", id)); } catch (Exception ignored) {} });   // fire-and-forget
-            return bh;
+            return bh;     // v2.2.7: loading the data no longer counts a view (the editor and reloads used to); see countView()
         } catch (java.util.concurrent.ExecutionException e) { throw e.getCause() instanceof Exception ex ? ex : e; }
+    }
+    /**
+     * v2.2.7: one view = a person opened the place page (BhDetailFragment calls this once per opening). Fire-and-forget; the database also
+     * ignores the owner, inactive places and repeats within the hour (bump_view, migration 028).
+     */
+    public void countView(String id) {
+        Async.bg(() -> { try { api.rpc("bump_view", new JSONObject().put("bh", id)); } catch (Exception ignored) { /* a missed view is harmless */ } });
     }
     private interface Call<T> { T run() throws Exception; }
     private static <T> T call(Call<T> c) { try { return c.run(); } catch (Exception e) { throw new RuntimeException(e.getMessage(), e); } }

@@ -45,6 +45,7 @@ public class BhDetailFragment extends Fragment {
 
     public static final String ARG_ID = "id";
     private static final int MAX_REVIEWS = 30;
+    private boolean viewCounted;                       // v2.2.7: a place page counts one view per opening, not per reload / review / retry
 
     /** Opens the detail screen on top of the shell (Back returns to the same tab). */
     public static void open(Fragment from, String id) {
@@ -111,6 +112,10 @@ public class BhDetailFragment extends Fragment {
     private void show(JSONObject d, JSONArray reviews) throws Exception {
         BoardingHouse bh = BoardingHouse.from(d);
         current = bh;
+        if (!viewCounted) {
+            viewCounted = true;
+            if (!java.util.Objects.equals(AuthService.get().userId(), bh.ownerId())) new BhService().countView(bh.id());     // the owner looking at their own place is not a view
+        }
         b.name.setText(bh.name());
         b.price.setText(getString(R.string.detail_per_month, Money.peso(bh.price()), "per_room".equals(d.optString("price_mode", "per_bed")) ? "room" : "bed"));
         b.infoChips.removeAllViews();
