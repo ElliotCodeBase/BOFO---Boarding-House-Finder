@@ -1,3 +1,6 @@
+# v2.3.1 - Build fix for phone notifications
+- Fixed `cannot find symbol method getPersonCompat()` in `PushNotifier.java` (use `getPerson()`). Version shown in Settings is now 2.3.1.
+
 # v2.3.0 - Phone notifications: chats, boarding group chats, admin reports
 - The app notifies the phone even when closed. Students and owners: new chat messages and boarding group messages / announcements. **Admins only:** new user reports (reason only). Tap opens that chat / group / Reports tab.
 - New Settings > **Notifications** switch; Android 13+ asks the system permission once after sign-in. Sign-out removes the phone from the server.

@@ -107,7 +107,7 @@ public final class PushNotifier {
             List<NotificationCompat.MessagingStyle.Message> prev = old.getMessages();
             for (int i = Math.max(0, prev.size() - (PushRules.MAX_LINES - 1)); i < prev.size(); i++) {
                 NotificationCompat.MessagingStyle.Message m = prev.get(i);
-                st.addMessage(new NotificationCompat.MessagingStyle.Message(m.getText(), m.getTimestamp(), m.getPersonCompat()));
+                st.addMessage(new NotificationCompat.MessagingStyle.Message(m.getText(), m.getTimestamp(), m.getPerson()));
             }
         }
         st.addMessage(text, now, new Person.Builder().setName(sender).build());
