@@ -1,16 +1,16 @@
-BOFO AI Announcement Writer - Step 3 (Android catalogue + rules, no UI). Version 2.3.3 -> 2.4.0 (versionCode 20303 -> 20400).
-changed  bofo-android/app/build.gradle                                   (versionName 2.4.0, versionCode 20400)
-changed  bofo-android/app/src/main/java/com/bofo/finder/util/AppPrefs.java (announce lang/tone/length/emoji)
-new      bofo-android/app/src/main/java/com/bofo/finder/model/AnnounceType.java
-new      bofo-android/app/src/main/java/com/bofo/finder/util/AnnounceRules.java
-new      bofo-android/app/src/main/res/values/strings_announce_ai.xml
-new      bofo-android/app/src/main/res/drawable/ic_sparkle.xml
-new      bofo-android/app/src/main/res/drawable/ic_ann_*.xml              (18 icons)
-new      bofo-android/app/src/test/java/com/bofo/finder/model/AnnounceTypeTest.java
-new      bofo-android/app/src/test/java/com/bofo/finder/util/AnnounceRulesTest.java
-changed  CHANGES_ANDROID.md            (v2.4.0 entry)
+BOFO AI Announcement Writer - Step 4 (Android service, no UI). Version 2.4.0 -> 2.4.1 (versionCode 20400 -> 20401).
+changed  bofo-android/app/build.gradle                                   (versionName 2.4.1, versionCode 20401)
+changed  bofo-android/app/src/main/res/values/strings_announce_ai.xml    (+ announce_err_signed_out, announce_err_server)
+new      bofo-android/app/src/main/java/com/bofo/finder/model/AnnounceDraft.java
+new      bofo-android/app/src/main/java/com/bofo/finder/model/AnnounceError.java
+new      bofo-android/app/src/main/java/com/bofo/finder/service/AnnounceErrors.java
+new      bofo-android/app/src/main/java/com/bofo/finder/service/AnnounceAiService.java
+new      bofo-android/app/src/test/java/com/bofo/finder/model/AnnounceDraftTest.java
+new      bofo-android/app/src/test/java/com/bofo/finder/service/AnnounceErrorsTest.java
+new      bofo-android/app/src/test/java/com/bofo/finder/service/AnnounceAiServiceTest.java
+changed  CHANGES_ANDROID.md            (v2.4.1 entry)
 changed  HANDOFF_ANDROID.md            (new top entry)
-changed  BOFO-AI-ANNOUNCE-STATUS.md    (Step 3 row, section G)
-changed  NEXT-STEP-PROMPT.md           (Step 4 prompt)
+changed  BOFO-AI-ANNOUNCE-STATUS.md    (Step 4 row, section H)
+changed  NEXT-STEP-PROMPT.md           (Step 5 prompt)
 changed  CHANGED_FILES.txt             (this file; replaces the old repo copy)
-Nothing under supabase/ is in this zip (Step 2 files are already in the repo).
+Nothing under supabase/ is in this zip.

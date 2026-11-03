@@ -1,3 +1,7 @@
+# v2.4.1 - AI Announcement Writer, step 4: the service (no screen yet)
+- Nothing new is visible in the app yet. This version adds the code that asks the server (`bofo-announce`) to write an announcement draft and sorts every possible outcome (draft, "AI is off", "too many drafts, wait N seconds", no internet, signed out, server problem...) into one typed result for the screen that comes next. It never posts anything.
+- If the details are not complete the app says so itself and sends nothing to the server. A draft the server made from a simple template (AI busy) counts as a normal draft and is marked so the screen can warn the owner.
+
 # v2.4.0 - AI Announcement Writer, step 3: catalogue and rules (no screen yet)
 - Nothing new is visible in the app yet. This version adds the building blocks for the owner's **Write for me** announcement helper: the 26 announcement types and their fields (mirrors the server list), the validation rules, the request body, the strings (English) and the icons. The screen comes in the next versions.
 - Remembered choices (language, tone, length, emojis) are stored in the app settings and cleared at sign-out like the other settings.
