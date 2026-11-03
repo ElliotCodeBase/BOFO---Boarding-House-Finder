@@ -20,7 +20,7 @@ import com.bofo.finder.R;
 public class CornerMaskView extends android.view.View {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path = new Path();
-    private final float radius;
+    private float radius;
 
     public CornerMaskView(@NonNull Context c) { this(c, null); }
 
@@ -30,6 +30,13 @@ public class CornerMaskView extends android.view.View {
         radius = 27 * c.getResources().getDisplayMetrics().density;      // the card is 28 dp with a 1 dp outline
         setClickable(false);
         setFocusable(false);
+    }
+
+    /** v2.2.5: lets a screen match the mask to its own card radius (default 27 dp = a 28 dp card with a 1 dp outline). */
+    public void setRadiusDp(float dp) {
+        radius = dp * getResources().getDisplayMetrics().density;
+        if (getWidth() > 0 && getHeight() > 0) onSizeChanged(getWidth(), getHeight(), 0, 0);
+        invalidate();
     }
 
     @Override
