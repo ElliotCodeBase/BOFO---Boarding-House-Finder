@@ -1,17 +1,2 @@
-BOFO v2.2.5 - UI redesign step 1 of 6
-changed bofo-android/app/build.gradle
-changed bofo-android/app/src/main/res/values/colors.xml
-changed bofo-android/app/src/main/res/values-night/colors.xml
-changed bofo-android/app/src/main/res/values/themes.xml
-changed bofo-android/app/src/main/res/values/styles.xml
-changed bofo-android/app/src/main/res/drawable/bg_chat_input.xml
-changed bofo-android/app/src/main/res/drawable/bg_bofo_card.xml
-changed bofo-android/app/src/main/res/drawable/bg_dash_card.xml
-changed bofo-android/app/src/main/res/drawable/bg_dropdown.xml
-changed bofo-android/app/src/main/res/drawable/bg_chip_on.xml
-changed bofo-android/app/src/main/res/drawable/bg_chip_off.xml
-changed CHANGES_ANDROID.md
-changed HANDOFF_ANDROID.md
-new     bofo-android/app/src/main/res/values/dimens.xml
-new     bofo-android/app/src/main/res/values/styles_system.xml
-new     bofo-android/app/src/main/res/layout/view_page_header.xml
+changed: build.gradle, CHANGES_ANDROID.md, HANDOFF_ANDROID.md, ChatsFragment.java, item_conversation, item_chat_skeleton, fragment_chats, fragment_profile_setup, styles_redesign, strings_redesign, colors (both)
+Note: needs step 1 (v2.2.5) merged first.

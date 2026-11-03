@@ -167,6 +167,9 @@ public class ChatsFragment extends Fragment {
             t.setText(badge);
             t.setVisibility(badge.isEmpty() ? View.GONE : View.VISIBLE);
             h.v.name.setTextColor(h.v.getRoot().getResources().getColor(c.unread() > 0 ? R.color.bofo_ink : R.color.bofo_text, null));
+            boolean unread = c.unread() > 0;                      // v2.2.6: unread = darker, bolder last message
+            h.v.last.setTextColor(h.v.getRoot().getResources().getColor(unread ? R.color.bofo_text : R.color.bofo_text_2, null));
+            h.v.last.setTypeface(null, unread ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
             h.v.getRoot().setOnClickListener(v -> listener.open(c));
             h.v.getRoot().setOnLongClickListener(v -> { listener.ask(c); return true; });
         }

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.2.5 UI redesign, step 1. One small type scale for the owner / list screens, so no screen hand-picks sizes.
+     Screen title = Text.Bofo.Title (existing). Everything else on these screens maps to a role below. -->
+<resources>
+    <style name="Text.Bofo.Section" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">@color/bofo_text</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+    <style name="Text.Bofo.RowTitle" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">@color/bofo_text</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+    <style name="Text.Bofo.Caption" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">@color/bofo_text_2</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+    <style name="Text.Bofo.StatLabel" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textColor">@color/bofo_text_2</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+    <style name="Text.Bofo.StatValue" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:textColor">@color/bofo_text</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+    <style name="Text.Bofo.Chip" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!-- Quiet outlined tool button (My places: Dashboard / Boost / Payments). Border carries the shape, no fill. -->
+    <style name="Widget.Bofo.Button.Tool" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="backgroundTint">@color/bofo_white</item>
+        <item name="android:textColor">@color/bofo_text</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="strokeColor">@color/bofo_border</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="android:minHeight">48dp</item>
+    </style>
+
+    <!-- v2.2.6: the one filled primary action (Save, Send). Text colour follows the theme so it stays readable. -->
+    <style name="Widget.Bofo.Button.Accent" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/bofo_primary</item>
+        <item name="android:textColor">@color/bofo_on_accent</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="android:minHeight">52dp</item>
+    </style>
+
+    <!-- Outlined text fields with the 12 dp radius used by chips and tool buttons -->
+    <style name="Widget.Bofo.Field" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+    </style>
+    <style name="Widget.Bofo.Field.Dropdown" parent="Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+    </style>
+</resources>

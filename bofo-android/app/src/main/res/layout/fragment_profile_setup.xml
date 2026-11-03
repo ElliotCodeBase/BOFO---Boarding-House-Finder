@@ -22,19 +22,19 @@
             android:layout_width="96dp"
             android:layout_height="96dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:contentDescription="@string/cd_avatar"
             android:src="@drawable/mascot_happy" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:orientation="horizontal">
 
             <Button
                 android:id="@+id/photo_take"
-                style="@style/Widget.Bofo.Button.Tint"
+                style="@style/Widget.Bofo.Button.Tool"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="4dp"
@@ -43,7 +43,7 @@
 
             <Button
                 android:id="@+id/photo_choose"
-                style="@style/Widget.Bofo.Button.Tint"
+                style="@style/Widget.Bofo.Button.Tool"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
@@ -51,11 +51,19 @@
                 android:text="@string/setup_photo_choose" />
         </LinearLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="@string/setup_group_about"
+            android:textAppearance="@style/Text.Bofo.Section" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/full_name_layout"
+            style="@style/Widget.Bofo.Field"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:hint="@string/setup_full_name">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -69,6 +77,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/username_layout"
+            style="@style/Widget.Bofo.Field"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
@@ -84,6 +93,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/phone_layout"
+            style="@style/Widget.Bofo.Field"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
@@ -100,6 +110,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/age_layout"
+            style="@style/Widget.Bofo.Field"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
@@ -114,7 +125,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            style="@style/Widget.Bofo.Field.Dropdown"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
@@ -127,8 +138,15 @@
                 android:inputType="none" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="@string/setup_group_school"
+            android:textAppearance="@style/Text.Bofo.Section" />
+
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            style="@style/Widget.Bofo.Field.Dropdown"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
@@ -142,7 +160,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            style="@style/Widget.Bofo.Field.Dropdown"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
@@ -175,10 +193,10 @@
 
         <Button
             android:id="@+id/save"
-            style="@style/Widget.Bofo.Button.Primary"
+            style="@style/Widget.Bofo.Button.Accent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="28dp"
             android:text="@string/setup_save" />
     </LinearLayout>
 </ScrollView>

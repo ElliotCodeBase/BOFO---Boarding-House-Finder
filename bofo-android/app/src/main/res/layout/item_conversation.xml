@@ -3,8 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
-    android:layout_marginBottom="8dp"
-    android:background="@drawable/bg_chat_row"
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/bg_card_row"
     android:gravity="center_vertical"
     android:minHeight="72dp"
     android:orientation="horizontal"
@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:textColor="@color/bofo_primary"
+            android:textColor="@color/bofo_primary_deep"
             android:textSize="18sp"
             android:textStyle="bold" />
     </FrameLayout>
@@ -38,9 +38,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@color/bofo_text"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textAppearance="@style/Text.Bofo.RowTitle" />
 
         <TextView
             android:id="@+id/place"
@@ -48,16 +46,17 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@color/bofo_primary"
-            android:textSize="12sp" />
+            android:textAppearance="@style/Text.Bofo.StatLabel"
+            android:textColor="@color/bofo_primary_deep" />
 
         <TextView
             android:id="@+id/last"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@color/bofo_text_2"
+            android:textAppearance="@style/Text.Bofo.Caption"
             android:textSize="14sp" />
     </LinearLayout>
 
@@ -72,19 +71,18 @@
             android:id="@+id/time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/bofo_muted"
-            android:textSize="12sp" />
+            android:textAppearance="@style/Text.Bofo.StatLabel" />
 
         <TextView
             android:id="@+id/badge"
             android:layout_width="wrap_content"
             android:layout_height="20dp"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="6dp"
             android:background="@drawable/bg_unread_badge"
             android:gravity="center"
             android:minWidth="20dp"
             android:paddingHorizontal="6dp"
-            android:textColor="@color/bofo_white"
+            android:textColor="@color/bofo_on_accent"
             android:textSize="11sp"
             android:textStyle="bold"
             android:visibility="gone" />
