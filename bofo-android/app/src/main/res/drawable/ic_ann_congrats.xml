@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.4.0 AI Announcement Writer: congrats (line icon, tint it in the layout) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M2,9 L12,4 l10,5 l-10,5 z M6,11.5 v4.5 c0,1.6 3,3 6,3 s6,-1.4 6,-3 v-4.5 M22,9 v6" />
+</vector>

@@ -1,3 +1,7 @@
+# v2.4.0 - AI Announcement Writer, step 3: catalogue and rules (no screen yet)
+- Nothing new is visible in the app yet. This version adds the building blocks for the owner's **Write for me** announcement helper: the 26 announcement types and their fields (mirrors the server list), the validation rules, the request body, the strings (English) and the icons. The screen comes in the next versions.
+- Remembered choices (language, tone, length, emojis) are stored in the app settings and cleared at sign-out like the other settings.
+
 # v2.3.3 - Admin switch for the BOFO AI
 - Admins: Settings > **BOFO AI for users**. Turning it off hides the BOFO assistant button and chat for students and owners (it applies the next time their app opens or resumes). Needs migration 030 (already applied to your Supabase).
 

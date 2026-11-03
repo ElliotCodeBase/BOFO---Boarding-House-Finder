@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.4.0 AI Announcement Writer: pest_control (line icon, tint it in the layout) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M9,7 a3,3 0 0,1 6,0 M8,10 h8 v4 a4,4 0 0,1 -8,0 z M12,10 v8 M8,12 l-3,-1 M16,12 l3,-1 M8,16 l-3,1 M16,16 l3,1" />
+</vector>
