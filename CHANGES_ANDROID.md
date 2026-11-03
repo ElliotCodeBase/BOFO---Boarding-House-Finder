@@ -1,3 +1,6 @@
+# v2.3.2 - Settings: Notifications without subtext, Orange theme admin only
+- Notifications row shows only its title. The Orange theme switch is shown to admins only; other accounts keep whatever theme they have now.
+
 # v2.3.1 - Build fix for phone notifications
 - Fixed `cannot find symbol method getPersonCompat()` in `PushNotifier.java` (use `getPerson()`). Version shown in Settings is now 2.3.1.
 

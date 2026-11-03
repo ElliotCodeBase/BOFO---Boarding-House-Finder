@@ -1,3 +1,6 @@
+# Handoff (Android) - v2.3.2 Settings tweaks
+- Notifications row: removed the subtext line. Orange theme row is now visible to admins only (`orange_theme_row`, hidden in `SettingsFragment.applyRole`; the saved theme is untouched for everyone else). `settings_notifications_desc` string is now unused.
+
 # Handoff (Android) - v2.3.1 build fix
 - Fixed compile error in `util/PushNotifier.java:110`: `Message.getPersonCompat()` does not exist, replaced by `getPerson()`. No behaviour change. Everything else is as in v2.3.0 below.
 

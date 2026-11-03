@@ -208,13 +208,6 @@
                             android:textColor="@color/bofo_text"
                             android:textSize="15sp" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="@string/settings_notifications_desc"
-                            android:textAppearance="@style/Text.Bofo.Secondary"
-                            android:textSize="12sp" />
                     </LinearLayout>
 
                     <com.google.android.material.materialswitch.MaterialSwitch
@@ -271,6 +264,7 @@
                         android:contentDescription="@string/settings_path_fade" />
                 </LinearLayout>
                 <LinearLayout
+                    android:id="@+id/orange_theme_row"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"

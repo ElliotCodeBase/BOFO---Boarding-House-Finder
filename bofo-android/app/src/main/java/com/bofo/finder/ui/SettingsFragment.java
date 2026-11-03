@@ -89,6 +89,7 @@ public class SettingsFragment extends Fragment {
         b.ownerAgreement.setVisibility(role == Role.OWNER ? View.VISIBLE : View.GONE);
         b.adminMfa.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
         b.adminViewAs.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
+        b.orangeThemeRow.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);   // v2.3.2: theme switch is admin only
     }
 
     /** v2.0.120: an admin looks at the app as admin, owner or student. Only the screens change: the account stays admin on the server, nothing is written. */

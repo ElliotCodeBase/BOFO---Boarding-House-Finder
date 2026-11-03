@@ -59,3 +59,7 @@ config.local.properties
 config.local.properties
 key.md
 key.md
+
+# Firebase service-account key (secret, never commit)
+bofo-finder-*-firebase-adminsdk-*.json
+*-firebase-adminsdk-*.json

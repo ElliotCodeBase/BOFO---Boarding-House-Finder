@@ -1,7 +1,8 @@
-BOFO v2.3.1 - build fix (PushNotifier getPersonCompat -> getPerson)
+BOFO v2.3.2 - Settings: Notifications without subtext, Orange theme admin only
 Unzip into the repo root C:\Users\user\bofo-finder (overwrite). Nothing to delete.
 
-changed  bofo-android/app/src/main/java/com/bofo/finder/util/PushNotifier.java
+changed  bofo-android/app/src/main/res/layout/fragment_settings.xml
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/SettingsFragment.java
 changed  bofo-android/app/build.gradle
 changed  HANDOFF_ANDROID.md
 changed  CHANGES_ANDROID.md
