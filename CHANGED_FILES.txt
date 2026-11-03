@@ -1,2 +1,1 @@
-changed: build.gradle, CHANGES_ANDROID.md, HANDOFF_ANDROID.md, ChatsFragment.java, item_conversation, item_chat_skeleton, fragment_chats, fragment_profile_setup, styles_redesign, strings_redesign, colors (both)
-Note: needs step 1 (v2.2.5) merged first.
+Fix for "Duplicate resources": my new styles clashed with names in your styles_system.xml, so they are renamed (Text.Bofo.Rd*, Widget.Bofo.Button.RdTool/RdAccent, Widget.Bofo.RdField). Overwrite these files, then Build > Clean Project.

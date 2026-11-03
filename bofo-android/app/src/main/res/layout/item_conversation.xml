@@ -38,7 +38,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textAppearance="@style/Text.Bofo.RowTitle" />
+            android:textAppearance="@style/Text.Bofo.RdRowTitle" />
 
         <TextView
             android:id="@+id/place"
@@ -46,7 +46,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textAppearance="@style/Text.Bofo.StatLabel"
+            android:textAppearance="@style/Text.Bofo.RdStatLabel"
             android:textColor="@color/bofo_primary_deep" />
 
         <TextView
@@ -56,7 +56,7 @@
             android:layout_marginTop="2dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textAppearance="@style/Text.Bofo.Caption"
+            android:textAppearance="@style/Text.Bofo.RdCaption"
             android:textSize="14sp" />
     </LinearLayout>
 
@@ -71,7 +71,7 @@
             android:id="@+id/time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="@style/Text.Bofo.StatLabel" />
+            android:textAppearance="@style/Text.Bofo.RdStatLabel" />
 
         <TextView
             android:id="@+id/badge"
