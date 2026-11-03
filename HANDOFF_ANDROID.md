@@ -1,3 +1,6 @@
+# Handoff (Android) - v2.3.1 build fix
+- Fixed compile error in `util/PushNotifier.java:110`: `Message.getPersonCompat()` does not exist, replaced by `getPerson()`. No behaviour change. Everything else is as in v2.3.0 below.
+
 # Handoff (Android) - v2.3.0 phone notifications (push)
 - **Done:** FCM push for student/owner chats (`messages`), boarding group chats (`bh_group_messages`, incl. announcements) and admin-only reports (`reports`). Flow: trigger (029) > edge function `supabase/functions/send-push` > FCM > `app/BofoMessagingService` > `util/PushNotifier`. Tap routing: `ui/PushRouter` + `ShellFragment.openFromPush`. Token lifecycle: `service/PushService` (register at shell open, unregister at sign-out via `AuthService.signOut`, `forgetLocal` in `clearLocal`). Settings > Notifications switch (`AppPrefs.pushEnabled`).
 - **Admin-only reports:** server picks `users.role='admin'` at send time; phone drops report pushes unless `PushService.role()` is "admin" (`PushRules.allowedFor`); sign-out deletes the token.
