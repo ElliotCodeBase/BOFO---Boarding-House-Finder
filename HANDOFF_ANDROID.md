@@ -1,3 +1,9 @@
+# Handoff (Android) - AI Announcement Writer: Step 2 of 7 done (backend only, still v2.3.3)
+- **State:** Edge Function `bofo-announce` written (not deployed) + migration `031_ai_usage_kind.sql` (not applied). No Android file changed, no version bump. Details and decisions: `BOFO-AI-ANNOUNCE-STATUS.md` section F.
+- **Tested:** 21 node tests (`node --experimental-strip-types --test supabase/functions/bofo-announce/announce.test.ts`): catalogue, validation, injection, cleaning, clipping, 26 types x 4 languages, generate fallback, LLM fallback (fake fetch), limits. **Not tested:** Deno runtime / `index.ts` (syntax-checked only), live OpenRouter, live DB, auth.
+- **For Step 3 (Java mirror):** same 26 ids and field keys, same enums (`lang en|fil|ceb|taglish`, `tone friendly|formal|firm|short`, `length short|normal|detailed`, `adjust again|shorter|friendlier|formal`), field max 200, closing name max 60. Error mapping for Step 4: 403 `not_owner`/`ai_disabled`, 429 `rate_limited`+`retry_after`, 400 `{error,message,field}`.
+- **Next action:** run Step 3 with `NEXT-STEP-PROMPT.md`. Deploy + migration 031 + smoke test need the user's explicit OK.
+
 # Handoff (Android) - AI Announcement Writer: Step 1 of 7 done (audit + plan only, still v2.3.3)
 - **State:** no project code changed, no version bump. Plan, verified repo facts, 26-entry catalogue contract and migration decision are in `BOFO-AI-ANNOUNCE-STATUS.md`. Master prompt: `BOFO-AI-ANNOUNCE-PROMPT-7-STEPS.md`.
 - **Key findings:** new function `bofo-announce` (do not touch `bofo-chat`); owner check = query `boarding_houses.owner_id` (not `is_bh_owner`, it needs a house id); migration **031** will add `ai_usage.kind` (needed for the 40/day limit); no fil/ceb UI localisation (UI stays English); style names are `Widget.Bofo.Button.RdAccent` / `Widget.Bofo.RdField` (not `Accent`/`Field`); `CLAUDE_ANDROID.md` says 2.1.N but the repo is 2.3.3 (followed the repo).

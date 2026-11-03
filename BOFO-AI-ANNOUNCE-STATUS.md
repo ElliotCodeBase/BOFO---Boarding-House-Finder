@@ -3,7 +3,7 @@
 | Step | Status | Version | Summary | Tests run | Notes / blockers for next AI |
 |---|---|---|---|---|---|
 | 1 Audit + plan | **complete** | 2.3.3 (no bump) | Repo inspected, contract + plan written. No project code changed. | none (inspection only) | See sections A-E below. |
-| 2 Backend function | not started | - | `bofo-announce` + shared catalogue + templates + tests + migration 031 (written, NOT applied) | - | - |
+| 2 Backend function | **complete (code only, NOT deployed)** | 2.3.3 (no bump, backend only) | `supabase/functions/bofo-announce/` (index, catalogue, templates, clean, prompt, llm, generate, limits, tests) + `031_ai_usage_kind.sql` (written, NOT applied) | 21 node tests pass (`node --experimental-strip-types --test`); `index.ts` syntax-checked only; Deno not installed, nothing deployed, no live call | See section F. Step 3 = `NEXT-STEP-PROMPT.md`. |
 | 3 Android catalogue/rules | not started | - | - | - | - |
 | 4 Android service | not started | - | - | - | - |
 | 5 Sheet: type + details | not started | - | - | - | - |
@@ -60,7 +60,7 @@ Catalogue - **26 entries cover the 25 list items** (item 24 is split into `thank
 | 18 | `gate_lock_change` | `new_gate_time`, `key_code_instructions`, `effective_date` (at least one of the first two) | I | formal |
 | 19 | `meeting` | `date*`, `place*`, `agenda*` | N | friendly |
 | 20 | `holiday` | `occasion*` (Christmas/New Year/Fiesta/Holy Week/Sinulog/other), `owner_away_note` | N | friendly |
-| 21 | `price_update` | `effective_date*`, `new_amount*`, `reason` (wording suggests >=30 days notice; no legal claims) | I | formal |
+| 21 | `price_update` | `effective_date*`, `new_amount*`, `reason` (advance-notice wording, NO number of days, no legal claims: the code rejects numbers the owner did not type) | I | formal |
 | 22 | `lost_found` | `item*`, `found_where*`, `how_to_claim*` | N | friendly |
 | 23 | `rule_violation` | `rule*`, `detail` (group message, never name an individual; strip names pattern is not possible: instruct + keep wording generic) | I | firm |
 | 24a | `thanks` | `reason*` | N | friendly |
@@ -90,3 +90,19 @@ Template fallback strategy: `TEMPLATES[type][lang]` = function(fields, tone, len
 - Admin who owns no house cannot use the function (matches "only an owner of at least one house") - confirm in Step 2 whether admins are exempt from the owner check (prompt says admins are exempt only from the AI-off check; keep owner check for everyone).
 - AppPrefs.clear() wipes last language/tone on sign-out (minor).
 - Nothing was built, run or deployed in Step 1.
+
+## F. Step 2 result (backend, written 2026-11-04) - NOT deployed, migration NOT applied
+- **Master prompt file was not available in Step 2** (not uploaded, not in the repo); Section 4 rules were taken from the Step 2 prompt item 6. Re-check against the master prompt in Step 3.
+- **Files:** `supabase/functions/bofo-announce/{index,catalogue,templates,clean,prompt,llm,generate,limits}.ts`, `announce.test.ts`; `supabase/migrations/031_ai_usage_kind.sql`. Everything except `index.ts` is pure TS (no Deno APIs). `bofo-chat` untouched.
+- **Field keys: unchanged** from section B (26 types, same keys/required flags). Added: per-field English `hint`, per-type `emoji`, `guard` (type rule for the model). `gate_lock_change` has `oneOf` (new_gate_time | key_code_instructions). `welcome_tenant` and `wifi_update` have no required field.
+- **Request:** `{type, lang, tone, length, emoji, closing:{on,name}, fields, adjust?}`. Defaults: lang `en`, tone = type default, length `normal`, emoji false, closing off. **Unknown top-level keys -> 400 `unknown_param`.** Field values must be strings, trimmed, whitespace collapsed (newlines become spaces), control/bidi characters removed, max 200; empty = not filled. `closing.on=true` with an empty name = no sign-off (no 400).
+- **400 body:** `{error, message, field?}`; codes: `invalid_body, unknown_param, unknown_type, unknown_field, bad_value, field_too_long, missing_field, bad_lang, bad_tone, bad_length, bad_emoji, bad_closing, bad_adjust`. (The status contract said `missing_field` + `field`: kept.)
+- **Other errors:** 401 `{error:"unauthorized"}`, 403 `not_owner` / `ai_disabled`, 405 non-POST, 429 `{error:"rate_limited", retry_after}` (+ `Retry-After` header), 500 `server_error` (DB failure: owner check fails closed), 502 `generation_failed` (only if even the template throws).
+- **Order:** JWT -> owner (>=1 house, applies to admins too) -> ai_enabled (admins exempt, missing row/read error = on) -> validate -> rate limit -> LLM -> clean -> template fallback. Invalid requests do not consume a rate-limit slot.
+- **Rate limit:** counts `ai_usage` rows with `kind='announce'`: 10/min and 40/day per user (one query, newest 40 timestamps; `retry_after` = seconds until the oldest relevant row leaves its window). Count-then-insert is not atomic (same as bofo-chat). **Before 031 is applied** (column missing, error 42703/PGRST204): minute limit still enforced by counting ALL of the user's rows in the last 60 s (chat + announce), the **daily limit is NOT enforced** (fail open), the insert falls back to a row without `kind`, one line is logged. **Side effect after 031:** bofo-chat's 10/min check counts any kind, so announce drafts share that minute budget.
+- **Output safety (code, not model):** JSON parse + ONE local repair (no second model call); markdown/links/emails/domains/phone-like numbers/password-like tokens removed unless typed in this request; emoji removed when emoji=false; **any number not present in the owner's values -> output rejected -> next model, then template (`degraded:true`)** (so the model cannot invent dates/amounts; re-formatted times like "20:00" for "8 PM" also degrade); reasoning-leak check; sign-off (`Thank you,\n<name>`, per language) is added by the code, never by the model; title <=100, message <=900 (<=250 for short), hard caps 120/1000; clipping at sentence end or word boundary.
+- **`adjust`:** also applied server-side as a backstop (`shorter` -> shorter length, `friendlier` -> friendly, `formal` -> formal; `again` -> higher temperature). The app should still re-send changed tone/length.
+- **Templates:** 26 x 4 languages (`en|fil|ceb|taglish`), data-driven sentences, omitted when an optional field is empty; missing required -> `notes: "Add the ..."`. Filipino/Cebuano/Taglish wording was written without a native-speaker review: **ask a native speaker to read them before release.**
+- **Privacy:** no logging of content (logs: model id + HTTP status, error codes only); no `ai_chat_log`; counter row = user_id/kind/time.
+- **Version:** backend only, **no Android bump** (stays 2.3.3 / 20303). Step 3 bumps to 2.4.0 / 20400.
+- **Needs the user's OK (not done):** (1) apply `031_ai_usage_kind.sql` (Supabase SQL editor or MCP); (2) `supabase functions deploy bofo-announce`; (3) a live smoke test with a real owner JWT.
