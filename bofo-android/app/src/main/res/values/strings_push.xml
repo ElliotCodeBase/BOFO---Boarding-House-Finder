@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- v2.3.0: phone notifications -->
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_desc">Messages, group chats and, for admins, new reports. Shown even when the app is closed.</string>
+    <string name="push_blocked_hint">Notifications are off for BOFO in your phone settings. Turn them on there to get alerts.</string>
+    <string name="push_unavailable_hint">Notifications are not set up in this build yet.</string>
+    <string name="push_you">You</string>
+    <string name="push_channel_chats">Messages</string>
+    <string name="push_channel_chats_desc">New messages from students and owners</string>
+    <string name="push_channel_boarding">Boarding group chats</string>
+    <string name="push_channel_boarding_desc">New messages in your boarding house group</string>
+    <string name="push_channel_announce">Announcements</string>
+    <string name="push_channel_announce_desc">Pinned announcements from your boarding house owner</string>
+    <string name="push_channel_reports">Reports (admin)</string>
+    <string name="push_channel_reports_desc">New user reports waiting for review. Admin accounts only.</string>
+</resources>

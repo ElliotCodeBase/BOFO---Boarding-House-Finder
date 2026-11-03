@@ -21,7 +21,8 @@ public class BofoApp extends Application {
         AppConfig.init(this);
         DiskCache.setBase(getFilesDir());
         LocalTransit.init(this);         // hand-made jeepney lines bundled in assets/local-transit.json
-        AuthService.init(this);          // restores the saved session and wires the token into SupabaseClient / Outbox
+        AuthService.init(this);
+        com.bofo.finder.util.PushNotifier.createCommonChannels(this);   // v2.3.0: chats / group chats / announcements switches in Android settings          // restores the saved session and wires the token into SupabaseClient / Outbox
         // Stage 7: chat messages written offline are sent by themselves when the connection returns (any screen, even with no chat open).
         Connectivity.OFFLINE.observeForever(off -> { if (off != null && !off) Outbox.flushAsync(); });
     }

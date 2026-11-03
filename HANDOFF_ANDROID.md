@@ -1,3 +1,10 @@
+# Handoff (Android) - v2.3.0 phone notifications (push)
+- **Done:** FCM push for student/owner chats (`messages`), boarding group chats (`bh_group_messages`, incl. announcements) and admin-only reports (`reports`). Flow: trigger (029) > edge function `supabase/functions/send-push` > FCM > `app/BofoMessagingService` > `util/PushNotifier`. Tap routing: `ui/PushRouter` + `ShellFragment.openFromPush`. Token lifecycle: `service/PushService` (register at shell open, unregister at sign-out via `AuthService.signOut`, `forgetLocal` in `clearLocal`). Settings > Notifications switch (`AppPrefs.pushEnabled`).
+- **Admin-only reports:** server picks `users.role='admin'` at send time; phone drops report pushes unless `PushService.role()` is "admin" (`PushRules.allowedFor`); sign-out deletes the token.
+- **NOT applied / NOT set up:** Firebase project + `bofo-android/app/google-services.json` (git-ignored), secrets `FCM_SERVICE_ACCOUNT` + `PUSH_WEBHOOK_SECRET`, function deploy, migration 029 and the `push_settings` insert. Steps + test table: `docs/PUSH_SETUP.md`. Until done, no push (app unchanged).
+- **Not built or run** (no Android SDK). Build, then test the table in `docs/PUSH_SETUP.md` on two real phones. Likely first-build issues: Firebase BoM version (`33.7.0`, bump if Gradle complains), google-services plugin `4.4.2`.
+- **Ideas next:** per-category switches in the app, unread-count badge on the app icon, reply from the notification, `bh_group_messages` mentions.
+
 # Handoff (Android) - v2.2.6 UI redesign: step 2 of 2 done (Chats list, Edit profile)
 - Redesign list is finished except the **Profile** screen (`fragment_profile.xml`, see `REDESIGN_STEP2.md` section 3). Changed in step 2: `item_conversation`, `item_chat_skeleton`, `fragment_chats`, `fragment_profile_setup` (XML), `ChatsFragment` (unread last-message emphasis), styles/colors/strings. Save stays in the scroll flow (not pinned to the bottom).
 - Test: Chats with unread / read / empty / loading, long names; Edit profile in both modes (set up vs edit), validation errors, dropdowns, orange and classic themes, font scale 1.3, 360 dp width.

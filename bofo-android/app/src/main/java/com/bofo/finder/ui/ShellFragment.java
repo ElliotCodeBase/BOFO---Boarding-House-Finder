@@ -1,5 +1,8 @@
 package com.bofo.finder.ui;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +12,10 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
+import androidx.navigation.NavController;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -23,6 +30,7 @@ import com.bofo.finder.model.GroupMessage;
 import com.bofo.finder.service.AuthService;
 import com.bofo.finder.service.BhGroupService;
 import com.bofo.finder.service.ChatService;
+import com.bofo.finder.service.PushService;
 import com.bofo.finder.util.BoardingRules;
 import com.google.android.material.snackbar.Snackbar;
 import com.bofo.finder.util.Async;
@@ -57,6 +65,9 @@ public class ShellFragment extends Fragment {
     private boolean owner, admin;
     private LocationHelper loc;                   // reads the phone position for Ask BOFO
     private boolean askedLocation;
+    /** v2.3.0: Android 13+ asks before notifications may show. The answer (yes or no) ends in a sync: it registers this phone only when allowed. */
+    private final ActivityResultLauncher<String> notifPermission = registerForActivityResult(new ActivityResultContracts.RequestPermission(),
+            granted -> { if (isAdded()) PushService.syncAsync(requireContext(), AuthRouter.realRole.db()); });
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -143,6 +154,45 @@ public class ShellFragment extends Fragment {
             binding.dock.select(first, false);
             showTab(first);
         }
+        setupPush();
+    }
+
+    /** v2.3.0: phone notifications. Asks the system permission once (Android 13+), then makes sure the server knows this phone (and its account type). */
+    private void setupPush() {
+        final android.content.Context app = requireContext().getApplicationContext();
+        if (!AppPrefs.pushEnabled(app)) return;
+        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(app, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            if (!PushService.askedPermission(app) && PushService.firebaseReady(app)) {
+                PushService.markAskedPermission(app);
+                binding.getRoot().post(() -> { if (isAdded()) notifPermission.launch(Manifest.permission.POST_NOTIFICATIONS); });
+            }
+            return;
+        }
+        PushService.syncAsync(app, AuthRouter.realRole.db());
+    }
+
+    /**
+     * v2.3.0: a notification was tapped. dm = that chat (Chats tab, then the chat on top), group = the boarding group chat (student: Boarding tab,
+     * owner: the owner's group chat screen), report = the Reports tab (admin only). Anything that does not fit this account is ignored.
+     */
+    void openFromPush(String kind, String id, String title, String place) {
+        if (binding == null || id == null || id.isEmpty()) return;
+        if (chatFull) { chatFull = false; applyChatFull(); }
+        NavController nav = NavHostFragment.findNavController(this);
+        if ("dm".equals(kind) && !admin) {
+            binding.dock.select(R.id.tab_chats, true);
+            showTab(R.id.tab_chats);
+            ChatFragment.open(this, id, title, place);
+        } else if ("group".equals(kind) && owner) {
+            nav.navigate(R.id.boardingChatFragment, BoardingChatFragment.args(id, title, 0, GroupMessage.OWNER, true, false));
+        } else if ("group".equals(kind) && !admin) {
+            binding.dock.select(R.id.tab_boarding, true);
+            showTab(R.id.tab_boarding);
+        } else if ("report".equals(kind) && admin && AuthRouter.realRole == com.bofo.finder.model.Role.ADMIN) {
+            binding.dock.select(R.id.tab_reports, true);
+            showTab(R.id.tab_reports);
+        }
+        refreshBadge();
     }
 
     /** v2.2.3: BoardingFragment calls this: true while the group chat is on screen (tab bar and Ask BOFO button hidden), false otherwise. */
@@ -168,6 +218,7 @@ public class ShellFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        PushRouter.shellResumed(this);
         refreshBadge();
         showNotice();
     }
@@ -383,6 +434,12 @@ public class ShellFragment extends Fragment {
                 .setCustomAnimations(R.anim.tab_fade_in, R.anim.tab_fade_out)      // v2.0.97: soft cross-fade instead of a hard swap
                 .replace(R.id.tab_container, f)
                 .commit();
+    }
+
+    @Override
+    public void onPause() {
+        PushRouter.shellPaused(this);
+        super.onPause();
     }
 
     @Override

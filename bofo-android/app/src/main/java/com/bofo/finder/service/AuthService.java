@@ -45,6 +45,7 @@ public final class AuthService {
     private static final String K_VERIFIER = "pkce_verifier";
     private static final String K_PROVIDER = "provider";
 
+    private final Context appCtx;               // v2.3.0: push cleanup at sign-out
     private final SessionStore store;
     private final SharedPreferences prefs;
 
@@ -52,6 +53,7 @@ public final class AuthService {
     private volatile long expiresAt;          // epoch seconds
 
     private AuthService(Context ctx) {
+        appCtx = ctx;
         store = new SessionStore(ctx);
         prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         SupabaseClient.get().setTokenProvider(this::token);
@@ -223,6 +225,7 @@ public final class AuthService {
 
     /* ---------- sign out / delete ---------- */
     public void signOut() {
+        PushService.unregisterBlocking(appCtx);       // v2.3.0: while the session still works, so this phone stops getting this account's notifications
         if (access != null) SupabaseClient.get().authLogout();
         clearLocal();
     }
@@ -236,6 +239,7 @@ public final class AuthService {
     private synchronized void clearLocal() {
         access = null; refresh = null; userId = null; email = null; metaName = null; metaPhoto = null; expiresAt = 0;
         store.clear();
+        PushService.forgetLocal(appCtx);              // v2.3.0: also covers a dead session (401) and a deleted account
         prefs.edit().clear().apply();
         Cache.clear();
         DiskCache.deletePrefix("user_");          // saved offline copies belong to the previous user

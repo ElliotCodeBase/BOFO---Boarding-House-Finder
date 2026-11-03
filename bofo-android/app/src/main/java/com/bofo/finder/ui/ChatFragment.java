@@ -216,6 +216,7 @@ public class ChatFragment extends Fragment {
     public void onResume() {
         super.onResume();
         resumed = true;
+        com.bofo.finder.util.PushState.openDm = convId;          // v2.3.0: no banner for the chat that is on screen
         Outbox.LISTENERS.add(outboxListener);
         if (loaded) {
             syncQueued();
@@ -230,6 +231,7 @@ public class ChatFragment extends Fragment {
     public void onPause() {
         resumed = false;
         polling = false;
+        if (convId != null && convId.equals(com.bofo.finder.util.PushState.openDm)) com.bofo.finder.util.PushState.openDm = null;
         handler.removeCallbacks(pollTask);
         Outbox.LISTENERS.remove(outboxListener);
         super.onPause();
