@@ -4,7 +4,7 @@
 |---|---|---|---|---|---|
 | 1 Audit + plan | **complete** | 2.3.3 (no bump) | Repo inspected, contract + plan written. No project code changed. | none (inspection only) | See sections A-E below. |
 | 2 Backend function | **complete (code only, NOT deployed)** | 2.3.3 (no bump, backend only) | `supabase/functions/bofo-announce/` (index, catalogue, templates, clean, prompt, llm, generate, limits, tests) + `031_ai_usage_kind.sql` (written, NOT applied) | 21 node tests pass (`node --experimental-strip-types --test`); `index.ts` syntax-checked only; Deno not installed, nothing deployed, no live call | See section F. Step 3 = `NEXT-STEP-PROMPT.md`. |
-| 3 Android catalogue/rules | not started | - | - | - | - |
+| 3 Android catalogue/rules | **complete** | 2.4.0 / 20400 | `AnnounceType`, `AnnounceRules`, `AppPrefs` announce prefs, `strings_announce_ai.xml`, 19 icons, 2 test classes | 14 JVM tests (stand-in runner, see section G); not Gradle, not on a device | See section G. Step 4 = `NEXT-STEP-PROMPT.md`. |
 | 4 Android service | not started | - | - | - | - |
 | 5 Sheet: type + details | not started | - | - | - | - |
 | 6 Generate/review/use | not started | - | - | - | - |
@@ -106,3 +106,13 @@ Template fallback strategy: `TEMPLATES[type][lang]` = function(fields, tone, len
 - **Privacy:** no logging of content (logs: model id + HTTP status, error codes only); no `ai_chat_log`; counter row = user_id/kind/time.
 - **Version:** backend only, **no Android bump** (stays 2.3.3 / 20303). Step 3 bumps to 2.4.0 / 20400.
 - **Needs the user's OK (not done):** (1) apply `031_ai_usage_kind.sql` (Supabase SQL editor or MCP); (2) `supabase functions deploy bofo-announce`; (3) a live smoke test with a real owner JWT.
+
+## G. Step 3 result (Android catalogue + rules, written 2026-11-04)
+- **Version:** 2.4.0 / 20400 (`bofo-android/app/build.gradle`). The old string 2.3.3 appeared nowhere else outside history.
+- **Field keys: unchanged** from catalogue.ts / section F. Java mirrors them (generated from catalogue.ts, then guarded by a drift test).
+- **Files:** `model/AnnounceType.java`, `util/AnnounceRules.java`, `util/AppPrefs.java` (4 getter/setter pairs), `res/values/strings_announce_ai.xml`, `res/drawable/ic_sparkle.xml` + `ic_ann_*.xml` (18), tests `model/AnnounceTypeTest.java`, `util/AnnounceRulesTest.java`.
+- **Icons:** reused `ic_am_water` (water_cut), `ic_am_bolt` (power_cut), `ic_am_rule` (house_rules), `ic_am_bed` (vacancy), `ic_am_wifi` (wifi_update), `ic_am_lock` (gate_lock_change), `ic_am_spark` (cleaning_schedule), `ic_am_users` (meeting). `ic_flag`/`ic_search`/`ic_announce` are colour-filled, so general, rule_violation and room_inspection got new line icons. Icon paths are hand-drawn and unreviewed visually.
+- **AppPrefs decision:** announce prefs are wiped by `clear()` at sign-out (no change to `clear()`): they are only a convenience and a different account on the same phone should not inherit them. Tone stores "" = use the type default.
+- **Rules:** `validateFields` order = too long, unknown key, missing required, oneOf (same as the backend). `buildRequest` throws `IllegalArgumentException` on invalid details (callers validate first), declares `JSONException` (checked on Android), turns closing off when the name is empty, truncates the closing name at 60, drops empty optional fields.
+- **Not done on purpose:** no `Resources.getIdentifier` helper (Step 5 owns UI), no service, no layouts, nothing under `supabase/`.
+- **Needs the user's OK (still not done):** apply `031_ai_usage_kind.sql`, `supabase functions deploy bofo-announce`, live smoke test. Step 4 can be written and unit-tested without them; Step 6 on a device needs them.

@@ -3,6 +3,8 @@ package com.bofo.finder.util;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.bofo.finder.model.AnnounceType;
+
 /** Small on-device settings (not secrets). Wiped on sign-out by {@link #clear}. */
 public final class AppPrefs {
     private AppPrefs() {}
@@ -12,6 +14,10 @@ public final class AppPrefs {
     private static final String K_VIEWED = "viewed_ids";
     private static final String K_ORANGE = "orange_theme";
     private static final String K_PUSH = "push_enabled";
+    private static final String K_ANN_LANG = "announce_lang";
+    private static final String K_ANN_TONE = "announce_tone";
+    private static final String K_ANN_LENGTH = "announce_length";
+    private static final String K_ANN_EMOJI = "announce_emoji";
     private static final int VIEWED_MAX = 200;
 
     private static SharedPreferences sp(Context c) { return c.getApplicationContext().getSharedPreferences(FILE, Context.MODE_PRIVATE); }
@@ -28,6 +34,18 @@ public final class AppPrefs {
     /** v2.3.0: Settings > "Notifications". Phone notifications for chats, group chats and (admins) reports. Default on; off removes this phone from the server. */
     public static boolean pushEnabled(Context c) { return sp(c).getBoolean(K_PUSH, true); }
     public static void setPushEnabled(Context c, boolean on) { sp(c).edit().putBoolean(K_PUSH, on).apply(); }
+    /**
+     * v2.4.0 AI Announcement Writer: the owner's last choices as wire strings (see model/AnnounceType). Language defaults to "en", length to "normal", emoji off;
+     * tone defaults to "" = use the type's own default tone. clear() wipes them on sign-out like the other settings (only a convenience, nothing private).
+     */
+    public static String announceLang(Context c) { return AnnounceType.Lang.fromWire(sp(c).getString(K_ANN_LANG, "en"), AnnounceType.Lang.EN).wire; }
+    public static void setAnnounceLang(Context c, String wire) { sp(c).edit().putString(K_ANN_LANG, AnnounceType.Lang.fromWire(wire, AnnounceType.Lang.EN).wire).apply(); }
+    public static String announceTone(Context c) { AnnounceType.Tone t = AnnounceType.Tone.fromWire(sp(c).getString(K_ANN_TONE, ""), null); return t == null ? "" : t.wire; }
+    public static void setAnnounceTone(Context c, String wire) { AnnounceType.Tone t = AnnounceType.Tone.fromWire(wire, null); sp(c).edit().putString(K_ANN_TONE, t == null ? "" : t.wire).apply(); }
+    public static String announceLength(Context c) { return AnnounceType.Length.fromWire(sp(c).getString(K_ANN_LENGTH, "normal"), AnnounceType.Length.NORMAL).wire; }
+    public static void setAnnounceLength(Context c, String wire) { sp(c).edit().putString(K_ANN_LENGTH, AnnounceType.Length.fromWire(wire, AnnounceType.Length.NORMAL).wire).apply(); }
+    public static boolean announceEmoji(Context c) { return sp(c).getBoolean(K_ANN_EMOJI, false); }
+    public static void setAnnounceEmoji(Context c, boolean on) { sp(c).edit().putBoolean(K_ANN_EMOJI, on).apply(); }
     /** v2.0.81: ids of the places the person opened (oldest first, at most 200). The Explore map dims those pins. */
     public static java.util.List<String> viewedIds(Context c) {
         java.util.List<String> out = new java.util.ArrayList<>();

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.4.0 AI Announcement Writer: "Write for me" sparkle (filled, tint it in the layout) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M10,3 L12.2,9 L18,11 L12.2,13 L10,19 L7.8,13 L2,11 L7.8,9 z M19,2.5 L19.9,5.1 L22.5,6 L19.9,6.9 L19,9.5 L18.1,6.9 L15.5,6 L18.1,5.1 z M19,14.5 L19.7,16.3 L21.5,17 L19.7,17.7 L19,19.5 L18.3,17.7 L16.5,17 L18.3,16.3 z" />
+</vector>
