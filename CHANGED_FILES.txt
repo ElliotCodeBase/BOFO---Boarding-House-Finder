@@ -1,7 +1,13 @@
-BOFO v2.3.1 - build fix (PushNotifier getPersonCompat -> getPerson)
+BOFO v2.3.3 - admin switch for the BOFO AI
 Unzip into the repo root C:\Users\user\bofo-finder (overwrite). Nothing to delete.
 
-changed  bofo-android/app/src/main/java/com/bofo/finder/util/PushNotifier.java
+new      supabase/migrations/030_ai_switch.sql   (ALREADY applied to your live Supabase)
+new      bofo-android/app/src/main/java/com/bofo/finder/util/AiFlag.java
+new      bofo-android/app/src/main/res/values/strings_ai_switch.xml
+new      bofo-android/app/src/main/res/drawable/ic_set_ai.xml
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/SettingsFragment.java
+changed  bofo-android/app/src/main/res/layout/fragment_settings.xml
 changed  bofo-android/app/build.gradle
 changed  HANDOFF_ANDROID.md
 changed  CHANGES_ANDROID.md

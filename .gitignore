@@ -59,3 +59,5 @@ config.local.properties
 config.local.properties
 key.md
 key.md
+
+bofo-finder-*firebase-adminsdk*.json

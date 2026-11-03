@@ -50,6 +50,15 @@ public class SettingsFragment extends Fragment {
         // v2.3.0: Notifications. Checked state first, listener second. On = ask the system permission if needed, then register this phone; off = remove it from the server.
         b.pushEnabled.setChecked(AppPrefs.pushEnabled(requireContext()));
         b.pushEnabled.setOnCheckedChangeListener((btn, on) -> setPush(on));
+        // v2.3.2: admin only: switch the BOFO AI on/off for everyone (saved on the server, app_flags 'ai_enabled')
+        b.aiEnabled.setChecked(com.bofo.finder.util.AiFlag.on());
+        b.aiEnabled.setOnCheckedChangeListener((btn, on) -> setAi(on));
+        com.bofo.finder.util.AiFlag.refresh(v -> {
+            if (b == null) return;
+            b.aiEnabled.setOnCheckedChangeListener(null);
+            b.aiEnabled.setChecked(v);
+            b.aiEnabled.setOnCheckedChangeListener((btn, on) -> setAi(on));
+        });
         b.pathFade.setChecked(AppPrefs.seeThroughPath(requireContext()));
         b.pathFade.setOnCheckedChangeListener((btn, on) -> AppPrefs.setSeeThroughPath(requireContext(), on));
         // v2.0.117: Orange theme. Checked state first, listener second (so building the screen never flips the theme). The activity recreates itself on this same screen.
@@ -89,6 +98,8 @@ public class SettingsFragment extends Fragment {
         b.ownerAgreement.setVisibility(role == Role.OWNER ? View.VISIBLE : View.GONE);
         b.adminMfa.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
         b.adminViewAs.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
+        b.adminAiRow.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
+        b.orangeThemeRow.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);   // v2.3.2: theme switch is admin only
     }
 
     /** v2.0.120: an admin looks at the app as admin, owner or student. Only the screens change: the account stays admin on the server, nothing is written. */
@@ -142,6 +153,18 @@ public class SettingsFragment extends Fragment {
                 if (granted) PushService.syncAsync(requireContext(), AuthRouter.realRole.db());
                 else message(getString(R.string.push_blocked_hint));
             });
+
+    private void setAi(boolean on) {
+        Async.run(() -> { com.bofo.finder.service.SupabaseClient.get().rpc("set_ai_enabled", new org.json.JSONObject().put("on_", on)); return on; },
+                v -> { com.bofo.finder.util.AiFlag.set(v); message(getString(v ? R.string.ai_switch_now_on : R.string.ai_switch_now_off)); },
+                e -> {
+                    if (b == null) return;
+                    b.aiEnabled.setOnCheckedChangeListener(null);
+                    b.aiEnabled.setChecked(!on);
+                    b.aiEnabled.setOnCheckedChangeListener((btn, o) -> setAi(o));
+                    message(ErrorText.full("Could not change the AI switch", e));
+                });
+    }
 
     private void setPush(boolean on) {
         final android.content.Context app = requireContext().getApplicationContext();

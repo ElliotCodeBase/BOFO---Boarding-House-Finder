@@ -201,7 +201,7 @@ public class ShellFragment extends Fragment {
     private void applyChatFull() {
         if (binding == null) return;
         binding.dock.setVisibility(chatFull ? View.GONE : View.VISIBLE);
-        binding.bofoFab.setVisibility(chatFull || admin ? View.GONE : View.VISIBLE);
+        binding.bofoFab.setVisibility(chatFull || admin || !com.bofo.finder.util.AiFlag.on() ? View.GONE : View.VISIBLE);       // v2.3.2: admin AI switch
         binding.tabContainer.setPadding(0, 0, 0, chatFull ? bottomInset : 0);       // the bar used to keep the content above the system buttons
     }
 
@@ -220,6 +220,11 @@ public class ShellFragment extends Fragment {
         super.onResume();
         PushRouter.shellResumed(this);
         refreshBadge();
+        com.bofo.finder.util.AiFlag.refresh(v -> {          // v2.3.2: the admin may have switched the AI off: hide the button (and close an open chat)
+            if (binding == null) return;
+            applyChatFull();
+            if (!v && binding.bofoChat.isOpen()) binding.bofoChat.close();
+        });
         showNotice();
     }
 
@@ -301,6 +306,7 @@ public class ShellFragment extends Fragment {
     /** v2.0.82: Explore map \"Compare\" tray: the chat card opens from the Ask BOFO button with a compare table of these houses. */
     void showCompare(List<BoardingHouse> hs) {
         if (binding == null || hs == null || hs.size() < 2) return;
+        if (!com.bofo.finder.util.AiFlag.on()) return;                       // v2.3.2: AI switched off by an admin
         FloatingBofoView f = binding.bofoFab;
         float cx = f.getLeft() + f.getTranslationX() + f.getWidth() / 2f;
         float cy = f.getTop() + f.getTranslationY() + f.getHeight() / 2f;
@@ -310,7 +316,7 @@ public class ShellFragment extends Fragment {
 
     /** Tap on the floating button: it fades out and the chat card pops from where it was. */
     private void openBofo() {
-        if (binding == null || binding.bofoChat.isOpen()) return;
+        if (binding == null || binding.bofoChat.isOpen() || !com.bofo.finder.util.AiFlag.on()) return;
         FloatingBofoView f = binding.bofoFab;
         float cx = f.getLeft() + f.getTranslationX() + f.getWidth() / 2f;
         float cy = f.getTop() + f.getTranslationY() + f.getHeight() / 2f;

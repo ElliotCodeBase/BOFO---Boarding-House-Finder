@@ -1,3 +1,11 @@
+# Handoff (Android) - v2.3.3 admin switch for the BOFO AI
+- Settings (admin only) > **BOFO AI for users** switch. Off = the floating BOFO button and chat are hidden for every account (also an open chat closes on the next resume). Flag: `app_flags` row `ai_enabled` (default true), changed only by RPC `set_ai_enabled(boolean)` (admins; migration 030, applied live 2026-11-03). Client: `util/AiFlag` (unknown/offline = on), `ShellFragment` (button, `openBofo`, `showCompare`, refresh in `onResume`), `SettingsFragment.setAi`.
+- **Limit:** the hide/disable is in the app. The Edge Function `bofo-chat` was NOT changed, so an old app version or a hand-made request could still call it. Server enforcement = check `app_flags.ai_enabled` at the top of `bofo-chat` (non-admins get 403).
+- Not built or run (no Android SDK).
+
+# Handoff (Android) - v2.3.2 Settings tweaks
+- Notifications row: removed the subtext line. Orange theme row is now visible to admins only (`orange_theme_row`, hidden in `SettingsFragment.applyRole`; the saved theme is untouched for everyone else). `settings_notifications_desc` string is now unused.
+
 # Handoff (Android) - v2.3.1 build fix
 - Fixed compile error in `util/PushNotifier.java:110`: `Message.getPersonCompat()` does not exist, replaced by `getPerson()`. No behaviour change. Everything else is as in v2.3.0 below.
 
