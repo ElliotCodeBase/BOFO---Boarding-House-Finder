@@ -1,3 +1,8 @@
+# Handoff (Android) - AI Announcement Writer: Step 1 of 7 done (audit + plan only, still v2.3.3)
+- **State:** no project code changed, no version bump. Plan, verified repo facts, 26-entry catalogue contract and migration decision are in `BOFO-AI-ANNOUNCE-STATUS.md`. Master prompt: `BOFO-AI-ANNOUNCE-PROMPT-7-STEPS.md`.
+- **Key findings:** new function `bofo-announce` (do not touch `bofo-chat`); owner check = query `boarding_houses.owner_id` (not `is_bh_owner`, it needs a house id); migration **031** will add `ai_usage.kind` (needed for the 40/day limit); no fil/ceb UI localisation (UI stays English); style names are `Widget.Bofo.Button.RdAccent` / `Widget.Bofo.RdField` (not `Accent`/`Field`); `CLAUDE_ANDROID.md` says 2.1.N but the repo is 2.3.3 (followed the repo).
+- **Next action:** run Step 2 (backend only) with `NEXT-STEP-PROMPT.md`. Nothing deployed or applied; deploy + migration 031 need the user's OK.
+
 # Handoff (Android) - v2.3.3 admin switch for the BOFO AI
 - Settings (admin only) > **BOFO AI for users** switch. Off = the floating BOFO button and chat are hidden for every account (also an open chat closes on the next resume). Flag: `app_flags` row `ai_enabled` (default true), changed only by RPC `set_ai_enabled(boolean)` (admins; migration 030, applied live 2026-11-03). Client: `util/AiFlag` (unknown/offline = on), `ShellFragment` (button, `openBofo`, `showCompare`, refresh in `onResume`), `SettingsFragment.setAi`.
 - **Limit:** the hide/disable is in the app. The Edge Function `bofo-chat` was NOT changed, so an old app version or a hand-made request could still call it. Server enforcement = check `app_flags.ai_enabled` at the top of `bofo-chat` (non-admins get 403).

@@ -1,0 +1,92 @@
+# BOFO AI Announcement Writer - status
+
+| Step | Status | Version | Summary | Tests run | Notes / blockers for next AI |
+|---|---|---|---|---|---|
+| 1 Audit + plan | **complete** | 2.3.3 (no bump) | Repo inspected, contract + plan written. No project code changed. | none (inspection only) | See sections A-E below. |
+| 2 Backend function | not started | - | `bofo-announce` + shared catalogue + templates + tests + migration 031 (written, NOT applied) | - | - |
+| 3 Android catalogue/rules | not started | - | - | - | - |
+| 4 Android service | not started | - | - | - | - |
+| 5 Sheet: type + details | not started | - | - | - | - |
+| 6 Generate/review/use | not started | - | - | - | - |
+| 7 QA + docs + final | not started | - | - | - | - |
+
+Master prompt: `BOFO-AI-ANNOUNCE-PROMPT-7-STEPS.md` (kept by the user, give it to every AI).
+
+## A. Verified repository facts (read from the repo, 2026-11-03)
+- Package `com.bofo.finder`. Android source: `bofo-android/app/src/main/java/com/bofo/finder/{ui,service,model,util}`; JVM tests: `bofo-android/app/src/test/java/com/bofo/finder/{model,service,util}` (JUnit 4.13.2 + `org.json:json:20240303`; no instrumented tests). Strings are split in many `res/values/strings_*.xml`; only `values`, `values-night`, `values-v29`, `values-v31` exist -> **no Filipino/Cebuano UI localisation: keep UI labels English** (generated text language is chosen by the owner).
+- Version now: `versionName '2.3.3'`, `versionCode 20303` (`bofo-android/app/build.gradle` lines 43-44). Top of `HANDOFF_ANDROID.md` / `CHANGES_ANDROID.md` = v2.3.3.
+- **Discrepancy 1 (rules):** `CLAUDE_ANDROID.md` says "app version line is 2.1.N" and "stage N = v2.0.N, versionCode = 200+N", but the repo is at 2.3.3 / 20303 (versionCode = 2.M.P -> 20MPP style: 2.3.3 = 20303, so 2.4.0 = 20400). Followed the repo. Rule still applies: read build.gradle first, bump +1, put version in PR title, top of `CHANGES_ANDROID.md` + `HANDOFF_ANDROID.md`, replace old version string everywhere (history excepted). Minor (x.Y.0) for new features, patch for fixes.
+- Sandbox has no Android SDK: do not build. Existing practice = plain-JVM unit tests / `javac` against stubs; say clearly what was and was not run. Node 22 is present, **Deno is not installed** (check `which deno`; if missing, run TS tests with `node --experimental-strip-types --test` and keep the TS free of Deno-only APIs in the testable modules, or install deno via npm).
+- Announce screen: `ui/AnnounceFragment.java` (161 lines) + `res/layout/fragment_announce.xml`. Views: `title_input` (maxLength 120), `body_input` (maxLength 1000), `counter` (body only, "n / 1000"), houses checkboxes, `post`, `error`. Posting: `BhGroupService.postAnnouncement(List<String> bhIds, title, body)` -> RPC `post_announcement` (migration 024: title 1-120, message 1-1000, 1-20 houses, each owner-checked, pinned, max 3 pinned/house). Validation in `BoardingRules.checkAnnouncement`. Entry: chat 3-dot menu (`BoardingChatFragment.openAnnounce`) and `OwnerBoardingFragment`.
+- Edge function call pattern: `SupabaseClient.get().function(name, JSONObject)` -> `POST /functions/v1/<name>` with the user JWT; non-2xx throws `SupabaseClient.ApiException(status, body)` (so Step 4 can branch on 403/429). Example service: `service/BofoAiService.java` (`api.function("bofo-chat", body)`). Async: `util/Async.run(work, ok, fail)` (6-thread pool, result on main thread; guard with a token + `b == null` like AnnounceFragment).
+- `util/AiFlag`: `on()` (default true), `set`, `refresh(Consumer<Boolean>)` reads `app_flags` key `ai_enabled`. Already used in `ShellFragment` (hide FAB, refresh in `onResume`) and `SettingsFragment`. Migration 030 (applied live per handoff).
+- `util/AppPrefs`: static methods taking `Context`, SharedPreferences file `bofo_settings`; `clear()` wipes everything except the theme (so last language/tone would reset at sign-out: acceptable, or keep them like the theme - decide in Step 3).
+- Bottom sheets: existing pattern = `BottomSheetDialogFragment` subclasses (`ReviewSheet`, `FilterSheet`, `CampusPickerSheet`, `LegalSheet`, `AdminMfaSheet`). Reuse it.
+- Styles actually present: `Widget.Bofo.Button.RdAccent` (primary filled, redesign), `Widget.Bofo.Button.RdTool` (outlined), `Widget.Bofo.RdField`, `Widget.Bofo.RdField.Dropdown`, `Widget.Bofo.Button.Primary/Cta/Tint/Secondary/Quiet`, `Widget.Bofo.TextField`, `Widget.Bofo.Card`. **Discrepancy 2:** the v2.2.6 handoff calls them `Widget.Bofo.Button.Accent` / `Widget.Bofo.Field`; those names do not exist, use the `Rd*` names (re-grep before use). Drawables `bg_card_row`, `bg_ann_card`, `bg_announcement`; colour `bofo_on_accent` exists in `values` (#FFFFFF) and `values-night` (#1C1815) and `colors_redesign.xml`. No sparkle icon exists (`ic_bofo_*` are close/new_chat/thumb): add `ic_sparkle` (+ 26 line icons, or reuse existing `ic_*` where suitable; 93 `ic_*` drawables exist).
+- `bofo-chat` (`supabase/functions/bofo-chat/index.ts`, 785 lines, **do not modify**): `createClient` from `https://esm.sh/@supabase/supabase-js@2.45.4`; `cors`/`json` helpers (lines 9-10); `callLLM(system,user,maxTokens,timeoutMs)` (line 137: OpenRouter, secrets `OPENROUTER_API_KEY`, `LLM_MODELS` comma list, tries first 3 models, strips `<think>` blocks, returns null on failure); `extractJson` (line 162); auth via user-JWT client `auth.getUser()` (401); rate limit = count rows in `ai_usage` for user in last 60 s, >=10 -> 429, then insert a row (service-role client). It does **not** check `ai_enabled` (known limit in the v2.3.3 handoff). Copy these helpers into `bofo-announce` (functions are deployed independently; there is no shared folder yet - `supabase/functions/_shared/` is the Supabase convention and can be created).
+- `ai_usage` (migration 001): `id bigserial, user_id uuid not null, created_at timestamptz default now()`, index `(user_id, created_at desc)`, RLS on with no policies (service role only). **No kind column.**
+- Owner check: `is_bh_owner(bh uuid)` (024) takes ONE house id and uses `auth.uid()`; it cannot answer "owns any house". In the function use the service-role client: `boarding_houses` where `owner_id = <uid>` limit 1 (table has `owner_id`, index exists). Same result, no new SQL.
+- Admin check: `users.role = 'admin'` (SQL `is_admin()` in 017 additionally requires MFA aal2 when that switch is on). In the function read `users.role` with the service-role client; admins are exempt from the ai_enabled 403 (and, per prompt, an admin who is not an owner is still not allowed to use the feature unless we decide otherwise - see D3).
+- `app_flags`: `key text pk, value boolean`; `ai_enabled` row exists. Read with the service-role client.
+
+## B. Contract (for Steps 2-3; Step 2 creates the canonical TS version, Step 3 mirrors it in Java)
+Common request: `{ type, lang, tone, length, emoji, closing, fields:{...}, adjust? }`
+- `lang`: `en` | `fil` | `ceb` | `taglish` (default `en`; Taglish added as a 4th code).
+- `tone`: `friendly` | `formal` | `firm` | `short` (default per type). `length`: `short` (<=250 chars message) | `normal` | `detailed`. `emoji`: bool (default false). `closing`: `{ on: bool, name: string<=60 }` (name comes from the owner's profile, sent by the app).
+- `adjust` (for Try again / Shorter / More friendly / More formal / Change language): optional enum `again|shorter|friendlier|formal`; **no new endpoint**, the app re-sends the same facts with changed `tone`/`length`/`lang`, `adjust` only varies wording (Step 2 decides; keep optional).
+- Field values: strings, max 200 chars each, unknown keys -> 400. Total fields per type 1-4. A field is `req` (required) or optional; missing required -> 400 `{error:"missing_field", field}` (the app validates first).
+Response 200: `{ title<=100, message<=900, notes?, degraded:boolean }`. Errors: 401 no JWT, 403 `{error:"ai_disabled"}` or `{error:"not_owner"}`, 400 validation, 429 rate limit (`{error:"rate_limited", retry_after}`), 502 only if even the template path fails (should not happen).
+
+Catalogue - **26 entries cover the 25 list items** (item 24 is split into `thanks` and `congrats`, as the prompt allows). Urgency: N = normal, I = important, U = urgent (red-orange badge). Default tone in brackets. Fields: `key*` = required.
+| # | ID | Fields | Urg | Tone |
+|---|---|---|---|---|
+| 1 | `rent_due` | `due_date*`, `amount*`, `how_to_pay*`, `late_fee` | I | firm* (polite/firm/final choices via tone: friendly=polite, firm, formal=final reminder; **never threats**) |
+| 2 | `water_cut` | `date*`, `time_range*`, `reason` | I | short |
+| 3 | `power_cut` | `date*`, `time_range*`, `source` (utility/repair) | I | short |
+| 4 | `house_rules` | `rule*`, `effective_date` | N | friendly |
+| 5 | `visitors_curfew` | `rule_time*`, `what_changes*` | N | formal |
+| 6 | `cleaning_schedule` | `date*`, `area*`, `responsible` | N | friendly |
+| 7 | `welcome_tenant` | `first_name`, `room`, `move_in_info`, `rules_summary` | N | friendly |
+| 8 | `vacancy` | `room_type*`, `price*`, `slots*`, `how_to_reserve*` (only owner values, never invent) | N | friendly |
+| 9 | `payment_thanks` | `month*`, `note` (never other tenants' names/payment details) | N | friendly |
+| 10 | `general` | `idea*` (one sentence) | N | owner-chosen (friendly) |
+| 11 | `emergency` | `kind*` (fire/flood/typhoon/earthquake/lockdown), `what_to_do`, `contact` (owner-typed only) | U | short; fixed safe wording "stay safe, follow barangay / BFP / PDRRMO advice"; no medical/rescue advice |
+| 12 | `typhoon` | `signal*`, `house_action`, `notes` | U | short |
+| 13 | `move_out` | `date*`, `deposit_rule*`, `room_check_date` | I | formal |
+| 14 | `deposit_advance` | `amount*`, `due_date*`, `receipt_note` | I | formal |
+| 15 | `wifi_update` | `password`, `outage`, `schedule`, `fair_use` | N | friendly (password is owner-typed; never stored/logged) |
+| 16 | `pest_control` | `date*`, `rooms*`, `tenant_action` | I | friendly |
+| 17 | `room_inspection` | `date*`, `time_window*`, `reason` | I | formal |
+| 18 | `gate_lock_change` | `new_gate_time`, `key_code_instructions`, `effective_date` (at least one of the first two) | I | formal |
+| 19 | `meeting` | `date*`, `place*`, `agenda*` | N | friendly |
+| 20 | `holiday` | `occasion*` (Christmas/New Year/Fiesta/Holy Week/Sinulog/other), `owner_away_note` | N | friendly |
+| 21 | `price_update` | `effective_date*`, `new_amount*`, `reason` (wording suggests >=30 days notice; no legal claims) | I | formal |
+| 22 | `lost_found` | `item*`, `found_where*`, `how_to_claim*` | N | friendly |
+| 23 | `rule_violation` | `rule*`, `detail` (group message, never name an individual; strip names pattern is not possible: instruct + keep wording generic) | I | firm |
+| 24a | `thanks` | `reason*` | N | friendly |
+| 24b | `congrats` | `occasion*` (birthday/graduation/other), `who_group` (generic, e.g. "our graduates") | N | friendly |
+| 25 | `survey` | `question*`, `how_to_reply*` | N | friendly |
+Open point: every field of a type is validated server-side against the same table; Step 2 owns the final field keys + hint strings (keep the table above unless a real conflict appears, and update this file).
+
+Template fallback strategy: `TEMPLATES[type][lang]` = function(fields, tone, length) -> {title, message} built from owner-entered values only; empty optional field -> sentence omitted; empty required field -> generic wording + `notes: "Add the <field>"`. `taglish` template = fil template with English nouns (acceptable). Applied when LLM key/models missing, all models fail, or output fails validation -> `degraded:true`. Code (not model) does: JSON parse (bounded repair: extract first `{...}`, one retry), markdown strip, remove URLs / phone-like strings / passwords not present in the owner's fields, clip to 100/900 (250 for `short`) at a word boundary, never beyond app limits 120/1000.
+
+## C. Migration decision
+- **Migration needed: yes, small - `031_ai_usage_kind.sql` (Step 2 writes it, NOT applied).** Reason: the required 40/day per-owner limit cannot be counted in `ai_usage` without a discriminator, and `bofo-chat` (untouchable) inserts rows with no kind. Change: `alter table public.ai_usage add column if not exists kind text not null default 'chat'; create index if not exists ai_usage_user_kind_created on public.ai_usage (user_id, kind, created_at desc);`. `bofo-chat` keeps working unchanged (default 'chat'). The announce function inserts `kind='announce'` and counts `kind='announce'` for the 40/day limit and (any kind, like bofo-chat) or `announce` only for the 10/min limit (decide in Step 2; document the side effect that bofo-chat's own 10/min count also sees announce rows).
+- No new table. No `ai_chat_log` row. Counter rows hold only user_id, kind, time (no content).
+- Until 031 is applied the function must still work: if the `kind` column is missing, fall back to counting without it (or fail closed with 503? choose fail-open for the minute limit, log once). Decide in Step 2 and document.
+
+## D. Plan for Steps 2-7 (expected files)
+1. **Step 2 (backend):** `supabase/functions/bofo-announce/index.ts`, `supabase/functions/bofo-announce/catalogue.ts` (types, fields, limits, tones, urgency), `.../templates.ts`, `.../clean.ts` (validate/clean/clip), `.../*.test.ts`, `supabase/migrations/031_ai_usage_kind.sql`. Do not touch Android files or `bofo-chat`. Imports between files inside one function folder are bundled by `supabase functions deploy`. Version: no Android bump (backend only) - record the decision. Deploy command (NOT executed): `supabase functions deploy bofo-announce` (secrets already set for bofo-chat are shared).
+2. **Step 3 (Android model):** `model/AnnounceType.java`, `util/AnnounceRules.java`, `res/values/strings_announce_ai.xml`, `AppPrefs` (last language/tone), icons (`ic_sparkle` + type icons), `app/src/test/.../util/AnnounceRulesTest.java` (+catalogue completeness = 26 entries, IDs equal to the backend list). Bump **2.4.0 / 20400** (new feature).
+3. **Step 4 (Android service):** `service/AnnounceAiService.java`, `model/AnnounceDraft.java`, error enum mapping `ApiException.status` (403 body `ai_disabled`/`not_owner`, 429, 400, >=500, network via `Connectivity.isNetworkError`), tests. 2.4.1.
+4. **Step 5 (UI part 1):** `ui/AnnounceAiSheet.java` (BottomSheetDialogFragment), `res/layout/sheet_announce_ai*.xml`, `item_announce_type.xml`, adapters, `drawable` badge; stages A and B; callback for Write for me. 2.4.2.
+5. **Step 6 (UI part 2):** stage C in the sheet, wire `AnnounceAiService`, edit `AnnounceFragment` + `fragment_announce.xml` (button above `title_input`, hidden when `!AiFlag.on()`, `AiFlag.refresh` in `onResume`), Use this fills fields only (`postAnnouncement` must stay untouched). 2.4.3.
+6. **Step 7 (QA/docs):** `docs/ANNOUNCE_AI.md` (owner guide + test matrix), `FINAL-HANDOFF.md`, review fixes; patch bump only if code changes.
+
+## E. Risks / blockers / decisions for the user
+- No blockers for Step 2.
+- **Needs the user's explicit OK later (not asked yet):** deploy `bofo-announce`, apply migration 031.
+- `bofo-chat` still ignores `ai_enabled` (not part of this feature; do not fix inside it).
+- Admin who owns no house cannot use the function (matches "only an owner of at least one house") - confirm in Step 2 whether admins are exempt from the owner check (prompt says admins are exempt only from the AI-off check; keep owner check for everyone).
+- AppPrefs.clear() wipes last language/tone on sign-out (minor).
+- Nothing was built, run or deployed in Step 1.

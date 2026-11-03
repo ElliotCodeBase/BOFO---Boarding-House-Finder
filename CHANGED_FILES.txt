@@ -1,13 +1,5 @@
-BOFO v2.3.3 - admin switch for the BOFO AI
-Unzip into the repo root C:\Users\user\bofo-finder (overwrite). Nothing to delete.
-
-new      supabase/migrations/030_ai_switch.sql   (ALREADY applied to your live Supabase)
-new      bofo-android/app/src/main/java/com/bofo/finder/util/AiFlag.java
-new      bofo-android/app/src/main/res/values/strings_ai_switch.xml
-new      bofo-android/app/src/main/res/drawable/ic_set_ai.xml
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/SettingsFragment.java
-changed  bofo-android/app/src/main/res/layout/fragment_settings.xml
-changed  bofo-android/app/build.gradle
-changed  HANDOFF_ANDROID.md
-changed  CHANGES_ANDROID.md
+BOFO AI Announcement Writer - Step 1 (audit + plan). No app code changed, no version bump (stays v2.3.3).
+new      BOFO-AI-ANNOUNCE-STATUS.md
+new      NEXT-STEP-PROMPT.md
+changed  HANDOFF_ANDROID.md   (new top entry)
+changed  CHANGED_FILES.txt    (this file; replaces the old repo copy)
