@@ -85,6 +85,7 @@ public class DashboardFragment extends Fragment {
         b = FragmentDashboardBinding.inflate(inflater, container, false);
         b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
         if (getParentFragment() instanceof ShellFragment) b.back.setVisibility(View.GONE);      // as an owner tab there is nothing to go back to
+        else ((LinearLayout.LayoutParams) b.title.getLayoutParams()).setMarginStart(0);          // arrow present: it carries the left edge
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
         b.swipe.setOnRefreshListener(this::reload);
         reload();
@@ -162,37 +163,43 @@ public class DashboardFragment extends Fragment {
         for (Place p : l) { rows.add(p.row); if (p.boosted) boosted++; }
         DashboardRules.Totals t = DashboardRules.totals(rows);
 
-        // hero: places + boosted, and the big total of views
-        LinearLayout hero = new LinearLayout(requireContext());
-        hero.setOrientation(LinearLayout.VERTICAL);
-        hero.setBackgroundResource(R.drawable.bg_dash_hero);
-        hero.setPadding(dp(20), dp(18), dp(20), dp(18));
-        TextView heroTop = text(getResources().getQuantityString(R.plurals.dash_places, t.places(), t.places())
-                + (boosted > 0 ? "  \u00B7  " + getString(R.string.dash_boosted, boosted) : ""), 13, true);
-        heroTop.setTextColor(0xCCFFFFFF);
-        TextView heroNum = text(String.valueOf(t.views()), 40, true);
-        heroNum.setTextColor(Color.WHITE);
-        TextView heroLbl = text(getString(R.string.dash_views_total), 13, false);
-        heroLbl.setTextColor(0xCCFFFFFF);
-        hero.addView(heroTop); hero.addView(heroNum); hero.addView(heroLbl);
-        b.content.addView(hero, matchWrap(0, 0));
+        // v2.2.5: one "Overview" block instead of a dark hero plus five identical cards. One surface, hairlines between the cells,
+        // empty values go quiet so the numbers that exist stand out.
+        TextView over = styled(getString(R.string.dash_overview), R.style.Text_Bofo_RdSection);
+        b.content.addView(over);
+        TextView sub = styled(getResources().getQuantityString(R.plurals.dash_places, t.places(), t.places())
+                + (boosted > 0 ? "  \u00B7  " + getString(R.string.dash_boosted, boosted) : ""), R.style.Text_Bofo_RdCaption);
+        sub.setPadding(0, dp(2), 0, 0);
+        b.content.addView(sub);
 
-        b.content.addView(statRow(stat(t.saves(), R.string.dash_saved), stat(t.chats(), R.string.dash_chats), stat(t.beds(), R.string.dash_beds)));
-        b.content.addView(statRow(stat(DashboardRules.rating(t.rating()), R.string.dash_rating), stat(t.reviews(), R.string.dash_reviews)));
+        LinearLayout grid = new LinearLayout(requireContext());
+        grid.setOrientation(LinearLayout.VERTICAL);
+        grid.setBackgroundResource(R.drawable.bg_dash_card);
+        grid.setLayoutParams(matchWrap(dp(12), 0));
+        grid.addView(gridRow(cell(String.valueOf(t.views()), R.string.dash_views, t.views() == 0),
+                cell(String.valueOf(t.saves()), R.string.dash_saved, t.saves() == 0),
+                cell(String.valueOf(t.chats()), R.string.dash_chats, t.chats() == 0)));
+        grid.addView(hairline(false));
+        String rating = DashboardRules.rating(t.rating());
+        grid.addView(gridRow(cell(String.valueOf(t.beds()), R.string.dash_beds, t.beds() == 0),
+                cell(rating, R.string.dash_rating, t.reviews() == 0),
+                cell(String.valueOf(t.reviews()), R.string.dash_reviews, t.reviews() == 0)));
+        b.content.addView(grid);
 
         addMap(l);
 
-        TextView per = text(getString(R.string.dash_per_place), 18, true);
-        per.setPadding(dp(2), dp(24), 0, dp(10));
+        TextView per = styled(getString(R.string.dash_per_place), R.style.Text_Bofo_RdSection);
+        per.setPadding(0, dp(28), 0, dp(12));
         b.content.addView(per);
         for (Place p : l) b.content.addView(placeCard(p));
     }
 
-    /** One white card per place: photo, name, price, boost star, and chips for views / saved / chats / free beds / rating. */
+    /** One tappable card per place: photo, name, price, one metrics line, then status chips (free beds, rating, boost). */
     private View placeCard(Place p) {
         LinearLayout card = new LinearLayout(requireContext());
         card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setBackgroundResource(R.drawable.bg_dash_card);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setBackgroundResource(R.drawable.bg_card_row);
         card.setPadding(dp(12), dp(12), dp(12), dp(12));
         card.setClickable(true);
         final String hid = p.bh.id();
@@ -200,11 +207,12 @@ public class DashboardFragment extends Fragment {
         card.setLayoutParams(matchWrap(0, dp(10)));
 
         com.google.android.material.imageview.ShapeableImageView img = new com.google.android.material.imageview.ShapeableImageView(requireContext());
-        img.setShapeAppearanceModel(img.getShapeAppearanceModel().toBuilder().setAllCornerSizes(dp(14)).build());
+        img.setShapeAppearanceModel(img.getShapeAppearanceModel().toBuilder().setAllCornerSizes(dp(12)).build());
         img.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+        img.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         com.bumptech.glide.Glide.with(img).load(p.bh.photoUrl() == null || p.bh.photoUrl().isEmpty() ? (String) null : p.bh.photoUrl())
                 .centerCrop().placeholder(R.color.bofo_skeleton).into(img);
-        card.addView(img, new LinearLayout.LayoutParams(dp(84), dp(84)));
+        card.addView(img, new LinearLayout.LayoutParams(dp(72), dp(72)));
 
         LinearLayout col = new LinearLayout(requireContext());
         col.setOrientation(LinearLayout.VERTICAL);
@@ -212,39 +220,42 @@ public class DashboardFragment extends Fragment {
         cl.setMarginStart(dp(12));
         card.addView(col, cl);
 
-        LinearLayout top = new LinearLayout(requireContext());
-        top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView name = text(p.bh.name(), 15, true);
+        TextView name = styled(p.bh.name(), R.style.Text_Bofo_RdRowTitle);
         name.setMaxLines(1);
         name.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        top.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        if (p.boosted) top.addView(chip("\u2605 " + getString(R.string.dash_boost_tag), R.drawable.bg_dash_chip_amber));
-        col.addView(top);
+        col.addView(name);
 
-        TextView price = text(com.bofo.finder.util.Money.perMonth(p.bh.price()), 13, false);
-        price.setTextColor(color(R.color.bofo_primary));
+        TextView price = styled(com.bofo.finder.util.Money.perMonth(p.bh.price()), R.style.Text_Bofo_RdCaption);
+        price.setTextColor(color(R.color.bofo_text));
+        price.setPadding(0, dp(2), 0, 0);
         col.addView(price);
 
         DashboardRules.Row r = p.row;
+        TextView line = styled(getString(R.string.dash_card_line, r.views(), r.saves(), r.chats()), R.style.Text_Bofo_RdCaption);
+        line.setPadding(0, dp(4), 0, 0);
+        col.addView(line);
+
         LinearLayout chips = new LinearLayout(requireContext());
         chips.setOrientation(LinearLayout.HORIZONTAL);
         chips.setPadding(0, dp(8), 0, 0);
-        chips.addView(chip(getString(R.string.dash_chip_views, r.views()), R.drawable.bg_dash_chip));
-        chips.addView(chip(getString(R.string.dash_chip_saved, r.saves()), R.drawable.bg_dash_chip));
-        chips.addView(chip(getString(R.string.dash_chip_chats, r.chats()), R.drawable.bg_dash_chip));
+        chips.addView(chip(getString(R.string.dash_chip_beds, r.beds()), r.beds() > 0 ? R.drawable.bg_dash_chip_green : R.drawable.bg_chip_tile,
+                r.beds() > 0 ? R.color.bofo_success_deep : R.color.bofo_text_2));
+        if (r.reviews() > 0) chips.addView(chip("\u2605 " + DashboardRules.rating(r.rating()) + " (" + r.reviews() + ")", R.drawable.bg_dash_chip_amber, R.color.bofo_card_ink));
+        if (p.boosted) chips.addView(chip("\u2605 " + getString(R.string.dash_boost_tag), R.drawable.bg_dash_chip_amber, R.color.bofo_card_ink));
         col.addView(chips);
 
-        LinearLayout chips2 = new LinearLayout(requireContext());
-        chips2.setOrientation(LinearLayout.HORIZONTAL);
-        chips2.setPadding(0, dp(6), 0, 0);
-        chips2.addView(chip(getString(R.string.dash_chip_beds, r.beds()), r.beds() > 0 ? R.drawable.bg_dash_chip_green : R.drawable.bg_dash_chip));
-        if (r.reviews() > 0) chips2.addView(chip("\u2605 " + DashboardRules.rating(r.rating()) + " (" + r.reviews() + ")", R.drawable.bg_dash_chip_amber));
-        col.addView(chips2);
+        android.widget.ImageView go = new android.widget.ImageView(requireContext());
+        go.setImageResource(R.drawable.ic_chevron_right);
+        go.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(dp(20), dp(20));
+        gl.setMarginStart(dp(4));
+        card.addView(go, gl);
         return card;
     }
 
-    private TextView chip(String s, int bg) {
-        TextView c = text(s, 11, true);
+    private TextView chip(String s, int bg, int textColor) {
+        TextView c = styled(s, R.style.Text_Bofo_RdChip);
+        c.setTextColor(color(textColor));
         c.setBackgroundResource(bg);
         c.setPadding(dp(8), dp(3), dp(8), dp(3));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -253,40 +264,55 @@ public class DashboardFragment extends Fragment {
         return c;
     }
 
+    private TextView styled(String s, int style) {
+        TextView t = new TextView(requireContext());
+        t.setTextAppearance(style);
+        t.setText(s);
+        return t;
+    }
+
     private LinearLayout.LayoutParams matchWrap(int top, int bottom) {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = top; lp.bottomMargin = bottom;
         return lp;
     }
 
-    /** Verification status banner (same words as My places). Hidden when verified or unknown. */
+    /** Verification status notice (same words as My places). Hidden when verified or unknown. The whole row opens Verification. */
     private void addBanner(VerificationRules.State v) {
         if (v == null || v == VerificationRules.State.VERIFIED) return;
-        TextView t = text(getString(v == VerificationRules.State.PENDING ? R.string.verify_banner_pending
-                : v == VerificationRules.State.REJECTED ? R.string.verify_banner_rejected : R.string.verify_banner_unverified), 14, true);
-        t.setBackgroundResource(R.drawable.bg_dash_chip_amber);
-        t.setPadding(dp(16), dp(14), dp(16), dp(14));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.bottomMargin = dp(12);
-        t.setLayoutParams(lp);
-        t.setClickable(true);
-        t.setOnClickListener(x -> NavHostFragment.findNavController(this).navigate(R.id.verificationFragment));
-        b.content.addView(t);
+        LinearLayout row = new LinearLayout(requireContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setBackgroundResource(R.drawable.bg_notice);
+        row.setPadding(dp(14), dp(12), dp(10), dp(12));
+        row.setClickable(true);
+        row.setOnClickListener(x -> NavHostFragment.findNavController(this).navigate(R.id.verificationFragment));
+        row.setLayoutParams(matchWrap(0, dp(16)));
+        TextView t = styled(getString(v == VerificationRules.State.PENDING ? R.string.verify_banner_pending
+                : v == VerificationRules.State.REJECTED ? R.string.verify_banner_rejected : R.string.verify_banner_unverified), R.style.Text_Bofo_RdCaption);
+        t.setTextColor(color(R.color.bofo_text));
+        t.setTextSize(14);
+        row.addView(t, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        android.widget.ImageView go = new android.widget.ImageView(requireContext());
+        go.setImageResource(R.drawable.ic_chevron_right);
+        go.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        row.addView(go, new LinearLayout.LayoutParams(dp(24), dp(24)));
+        b.content.addView(row);
     }
 
     /** "Your places on the map": tap a pin to see the route from the nearest campus (as on the JavaFX owner Dashboard). */
     private void addMap(List<Place> l) {
         mapPlaces = new ArrayList<>();
         for (Place p : l) mapPlaces.add(p.bh);
-        TextView title = text(getString(R.string.dash_map_title), 18, true);
-        title.setPadding(dp(2), dp(24), 0, dp(10));
+        TextView title = styled(getString(R.string.dash_map_title), R.style.Text_Bofo_RdSection);
+        title.setPadding(0, dp(28), 0, dp(12));
         b.content.addView(title);
         MaterialCardView frame = new MaterialCardView(requireContext());
-        frame.setRadius(dp(28));
+        frame.setRadius(dp(16));
         frame.setCardElevation(0);
         frame.setStrokeWidth(dp(1));
-        frame.setStrokeColor(0x1F000000);
-        frame.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(320)));
+        frame.setStrokeColor(color(R.color.bofo_border));
+        frame.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(280)));
         map = new MapCardView(requireContext());
         map.setParentScrollBlocked(true);
         map.showExpand(false);
@@ -296,7 +322,9 @@ public class DashboardFragment extends Fragment {
             @Override public void placeSelected(String id) { showRoute(id); }
         });
         frame.addView(map, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        frame.addView(new CornerMaskView(requireContext()), new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        CornerMaskView mask = new CornerMaskView(requireContext());
+        mask.setRadiusDp(15);                      // card is 16 dp with a 1 dp outline
+        frame.addView(mask, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         b.content.addView(frame);
         map.setPlaces(mapPlaces);
         map.setColleges(colleges);
@@ -363,34 +391,38 @@ public class DashboardFragment extends Fragment {
         map.setRouteLabel(Geo.fmt(km) + " \u00B7 " + Geo.fmtTime(min));
     }
 
-    private LinearLayout statRow(View... cells) {
+    /** A row of equal cells with a hairline between them. */
+    private LinearLayout gridRow(View... cells) {
         LinearLayout row = new LinearLayout(requireContext());
         row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setLayoutParams(matchWrap(dp(10), 0));
         for (int i = 0; i < cells.length; i++) {
-            LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) cells[i].getLayoutParams();
-            if (i < cells.length - 1) lp.setMarginEnd(dp(10));
+            if (i > 0) row.addView(hairline(true));
             row.addView(cells[i]);
         }
         return row;
     }
 
-    private View stat(int value, int label) { return stat(String.valueOf(value), label); }
+    private View hairline(boolean vertical) {
+        View v = new View(requireContext());
+        v.setBackgroundColor(color(R.color.bofo_stroke_soft));
+        v.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        v.setLayoutParams(vertical ? new LinearLayout.LayoutParams(dp(1), ViewGroup.LayoutParams.MATCH_PARENT)
+                : new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+        return v;
+    }
 
-    private View stat(String value, int label) {
+    /** Label on top, value below, left aligned. An empty value (0 or no rating) is drawn in the muted colour. */
+    private View cell(String value, int label, boolean empty) {
         LinearLayout cell = new LinearLayout(requireContext());
         cell.setOrientation(LinearLayout.VERTICAL);
-        cell.setGravity(Gravity.CENTER);
-        cell.setBackgroundResource(R.drawable.bg_dash_card);
-        cell.setPadding(dp(8), dp(14), dp(8), dp(14));
+        cell.setPadding(dp(16), dp(14), dp(12), dp(14));
         cell.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        TextView v = text(value, 24, true);
-        v.setGravity(Gravity.CENTER);
-        TextView l = text(getString(label), 12, false);
-        l.setGravity(Gravity.CENTER);
-        l.setTextColor(color(R.color.bofo_text_2));
-        cell.addView(v);
+        TextView l = styled(getString(label), R.style.Text_Bofo_RdStatLabel);
+        TextView v = styled(value, R.style.Text_Bofo_RdStatValue);
+        if (empty) v.setTextColor(color(R.color.bofo_muted));
+        v.setPadding(0, dp(2), 0, 0);
         cell.addView(l);
+        cell.addView(v);
         return cell;
     }
 

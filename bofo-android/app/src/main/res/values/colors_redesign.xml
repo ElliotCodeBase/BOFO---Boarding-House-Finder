@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only colours that colors.xml does not already define. -->
+<resources>
+    <color name="bofo_on_primary">#FFFFFF</color>
+    <color name="bofo_avatar_ink">@color/bofo_primary_deep</color>
+</resources>

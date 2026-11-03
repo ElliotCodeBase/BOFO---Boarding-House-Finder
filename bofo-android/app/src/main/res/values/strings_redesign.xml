@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.2.5 UI redesign (step 1): Dashboard + My places -->
+<resources>
+    <string name="dash_overview">Overview</string>
+    <string name="dash_card_line">%1$d views \u00B7 %2$d saved \u00B7 %3$d chats</string>
+    <string name="listings_tool_dashboard">Dashboard</string>
+    <string name="listings_tool_boost">Boost</string>
+    <string name="listings_tool_pay">Payments</string>
+    <!-- step 2: Edit profile -->
+    <string name="setup_group_about">About you</string>
+    <string name="setup_group_school">School and place</string>
+</resources>

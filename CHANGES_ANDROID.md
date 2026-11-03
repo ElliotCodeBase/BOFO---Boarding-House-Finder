@@ -1,10 +1,15 @@
-# v2.2.5 - UI redesign step 1 of 6: design foundation (no screen redone yet)
-- Orange theme: new `bofo_on_primary` = dark ink, so text on orange buttons passes contrast (white on #F28C57 was 2.3:1). Classic stays white. `colorOnPrimary` and `Widget.Bofo.Button.Primary` use it.
-- New tokens in both color files: `bofo_surface`, `bofo_surface_dim`, `bofo_avatar_1..4`, `bofo_avatar_ink`. New `values/dimens.xml`: spacing 4/8/12/16/24, corners field 12 / card 16 / chip 12, header 56dp, type sizes 24/17/15/13.
-- New `values/styles_system.xml`: `Text.Bofo.Page/Section/Body/Caption`, `Widget.Bofo.Button.Secondary/Quiet`, `Widget.Bofo.TextField`, header styles, `Text.Bofo.AvatarInitial`.
-- New shared header `layout/view_page_header.xml` (`page_back`, `page_title`, `page_action`); screens adopt it in steps 2-6.
-- Card / field / chip backgrounds (`bg_chat_input`, `bg_bofo_card`, `bg_dash_card`, `bg_dropdown`, `bg_chip_on`, `bg_chip_off`) now use the corner tokens (card 24/18/20 -> 16, field 22 -> 12, chip 10 -> 12).
-- Not compiled or run by Claude.
+# v2.2.6 - UI redesign, step 2 of 2: Chats list + Edit profile
+- **Chats:** one title style like the other tabs, hint as a quiet caption, rows use the shared card (`bg_card_row`), place name and time in readable tones (the orange 12 sp text was too faint), unread = bolder darker last message + badge with theme-safe text colour (`bofo_on_accent`: ink on orange, white on purple). Skeleton rows match the new rows.
+- **Edit profile:** photo buttons are the quiet outlined style under the avatar; fields grouped under "About you" and "School and place"; 12 dp field corners (`Widget.Bofo.Field`); Save is the one filled action (`Widget.Bofo.Button.Accent`, 52 dp, readable text on orange). All hints, validation and logic unchanged.
+- New: color `bofo_on_accent` (both colour files), styles `Widget.Bofo.Button.Accent`, `Widget.Bofo.Field`, `Widget.Bofo.Field.Dropdown`, strings `setup_group_about`, `setup_group_school`.
+- **Not done:** Profile screen (`fragment_profile.xml`) is the only screen left from the redesign list. Not built or run here (no Android SDK).
+
+# v2.2.5 - UI redesign, step 1 of 2: shared look + Dashboard + My places
+- New small type scale and tokens (`styles_redesign.xml`, `strings_redesign.xml`, two text-safe chip colours in both colour files, new drawables `bg_card_row`, `bg_notice`, `bg_chip_tile`, `bg_chip_error`). Radii: cards 16 dp, chips 12 dp. Colours still come only from the two colour files (classic purple + orange both follow).
+- **Dashboard (owner):** no dark hero or five identical cards. One "Overview" surface (places / boosted line, 3x2 grid with hairlines, zero values muted). Same plain title as the other tabs. Verification is a slim tappable notice. Place cards: photo, name, price, one metrics line, chips (free beds, rating, boosted), chevron. Map card 16 dp.
+- **My places:** title + Add a place on one row; Dashboard / Boost / Payments in one quiet row; verification notice; rows now have photo, name, price and a status chip (Active / Unlisted / Taken down).
+- `CornerMaskView.setRadiusDp()` added (default unchanged, so the listing form map looks the same).
+- Not built or run here (no Android SDK). **Step 2 of 2 (Chats list + Edit profile)** is described in `REDESIGN_STEP2.md`.
 
 # v2.2.0 - Boarding series, step 1 of 5: database + models + services (no screen yet)
 - New migration `024_boarding_groups.sql` (NOT applied live yet): one group chat per boarding house, join with the owner's invite code, announcements (pinned, max 3), "Got it" acknowledgments, mute / remove, and database rules so muted, banned or suspended users cannot post.

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.2.5: inline notice (verification). Tint only, no border. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="@color/bofo_ripple">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/bofo_warn_tint" />
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+</ripple>

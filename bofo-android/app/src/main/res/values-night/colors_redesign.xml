@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Orange theme: ink text on the orange fill. Only colours that values-night/colors.xml does not already define. -->
+<resources>
+    <color name="bofo_on_primary">#1C1815</color>
+    <color name="bofo_avatar_ink">@color/bofo_primary_deep</color>
+</resources>
