@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Orange theme (values-night): ink text on the orange fill, white on orange is only 2.4:1. -->
+<!-- Orange theme: ink text on the orange fill. Only colours that values-night/colors.xml does not already define. -->
 <resources>
-    <color name="bofo_success_deep">#136B45</color>
-    <color name="bofo_error_deep">#A12D2D</color>
-    <color name="bofo_on_accent">#1C1815</color>
-    <!-- Re-declared because the project references them but colors.xml no longer had them (my earlier zip overwrote it).
-         If you find your original values, put them here instead. -->
     <color name="bofo_on_primary">#1C1815</color>
     <color name="bofo_avatar_ink">@color/bofo_primary_deep</color>
 </resources>
