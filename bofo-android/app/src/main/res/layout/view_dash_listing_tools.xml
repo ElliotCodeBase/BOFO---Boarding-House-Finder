@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.4.9: the Listings tab moved into the owner Dashboard: title + Add a place, then the Boost and Payments tools. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/tab_listings"
+            android:textAppearance="@style/Text.Bofo.RdSection" />
+
+        <Button
+            android:id="@+id/dash_add"
+            style="@style/Widget.Bofo.Button.Cta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/listings_add" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/dash_boost"
+            style="@style/Widget.Bofo.Button.RdTool"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:text="@string/listings_tool_boost" />
+
+        <Button
+            android:id="@+id/dash_pay"
+            style="@style/Widget.Bofo.Button.RdTool"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_weight="1"
+            android:text="@string/listings_tool_pay" />
+    </LinearLayout>
+</LinearLayout>

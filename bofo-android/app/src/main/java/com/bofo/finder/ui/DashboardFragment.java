@@ -35,6 +35,7 @@ import com.bofo.finder.model.Profile;
 import com.bofo.finder.service.ProfileService;
 import com.bofo.finder.service.VerificationService;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -62,6 +63,7 @@ public class DashboardFragment extends Fragment {
     private List<BoardingHouse> mapPlaces = new ArrayList<>();
     private double[] me;                           // last phone fix
     private int routeToken;
+    private final Map<String, String> status = new HashMap<>();      // v2.4.9: place id -> active / unlisted / taken_down
     private final android.os.Handler ui = new android.os.Handler(android.os.Looper.getMainLooper());
 
     private static final class Place {
@@ -72,6 +74,7 @@ public class DashboardFragment extends Fragment {
         List<Place> places = new ArrayList<>();
         VerificationRules.State verif;             // null = could not be read (banner stays hidden)
         List<College> colleges = new ArrayList<>();
+        Map<String, String> status = new HashMap<>();   // v2.4.9: active / unlisted / taken_down per place
     }
 
     @Override
@@ -109,6 +112,10 @@ public class DashboardFragment extends Fragment {
             if (mine.isEmpty()) return data;
             StringBuilder ids = new StringBuilder();
             for (BoardingHouse x : mine) ids.append(ids.length() == 0 ? "" : ",").append(x.id());
+            try {                                      // v2.4.9: status of each place (the listing tools need it); a failure leaves every place "active"
+                JSONArray st = SupabaseClient.get().select("boarding_houses", "owner_id=eq." + me + "&select=id,status");
+                for (int i = 0; i < st.length(); i++) data.status.put(st.getJSONObject(i).getString("id"), st.getJSONObject(i).optString("status", "active"));
+            } catch (Exception ignored) { /* all active */ }
             JSONArray act = SupabaseClient.get().select("bh_activity", "boarding_house_id=in.(" + ids + ")&select=*");
             Map<String, JSONObject> byId = new HashMap<>();
             for (int i = 0; i < act.length(); i++) byId.put(act.getJSONObject(i).getString("boarding_house_id"), act.getJSONObject(i));
@@ -132,6 +139,7 @@ public class DashboardFragment extends Fragment {
             if (my != token || b == null) return;
             b.swipe.setRefreshing(false);
             colleges = d.colleges;
+            status.clear(); status.putAll(d.status);
             render(d);
         }, e -> {
             if (my != token || b == null) return;
@@ -151,6 +159,7 @@ public class DashboardFragment extends Fragment {
         List<Place> l = d.places;
         b.content.removeAllViews();
         addBanner(d.verif);
+        addListingTools();
         if (l.isEmpty()) {
             b.message.setText(R.string.dash_empty);
             b.message.setVisibility(View.VISIBLE);
@@ -203,7 +212,7 @@ public class DashboardFragment extends Fragment {
         card.setPadding(dp(12), dp(12), dp(12), dp(12));
         card.setClickable(true);
         final String hid = p.bh.id();
-        card.setOnClickListener(v -> BhDetailFragment.open(this, hid));
+        card.setOnClickListener(v -> options(p));
         card.setLayoutParams(matchWrap(0, dp(10)));
 
         com.google.android.material.imageview.ShapeableImageView img = new com.google.android.material.imageview.ShapeableImageView(requireContext());
@@ -241,6 +250,8 @@ public class DashboardFragment extends Fragment {
         chips.addView(chip(getString(R.string.dash_chip_beds, r.beds()), r.beds() > 0 ? R.drawable.bg_dash_chip_green : R.drawable.bg_chip_tile,
                 r.beds() > 0 ? R.color.bofo_success_deep : R.color.bofo_text_2));
         if (r.reviews() > 0) chips.addView(chip("\u2605 " + DashboardRules.rating(r.rating()) + " (" + r.reviews() + ")", R.drawable.bg_dash_chip_amber, R.color.bofo_card_ink));
+        String st = status.get(hid);
+        if ("unlisted".equals(st) || "taken_down".equals(st)) chips.addView(chip(getString("unlisted".equals(st) ? R.string.listing_unlisted : R.string.listing_taken_down), R.drawable.bg_chip_tile, R.color.bofo_text_2));
         if (p.boosted) chips.addView(chip("\u2605 " + getString(R.string.dash_boost_tag), R.drawable.bg_dash_chip_amber, R.color.bofo_card_ink));
         col.addView(chips);
 
@@ -251,6 +262,48 @@ public class DashboardFragment extends Fragment {
         gl.setMarginStart(dp(4));
         card.addView(go, gl);
         return card;
+    }
+
+    /** v2.4.9: the Listings tab moved here. "Add a place" plus the Boost and Payments tools sit above the overview; tap a place card for its actions. */
+    private void addListingTools() {
+        View v = getLayoutInflater().inflate(R.layout.view_dash_listing_tools, b.content, false);
+        v.findViewById(R.id.dash_add).setOnClickListener(x -> NavHostFragment.findNavController(this).navigate(R.id.listingFormFragment));
+        v.findViewById(R.id.dash_boost).setOnClickListener(x -> NavHostFragment.findNavController(this).navigate(R.id.boostFragment));
+        v.findViewById(R.id.dash_pay).setOnClickListener(x -> NavHostFragment.findNavController(this).navigate(R.id.paymentsFragment));
+        b.content.addView(v);
+    }
+
+    /** Tap on a place: view, edit, boost, unlist / list again, delete (moved from the old Listings screen). A taken-down place is an admin decision. */
+    private void options(Place p) {
+        BoardingHouse x = p.bh;
+        String st = status.get(x.id());
+        boolean unlisted = "unlisted".equals(st), down = "taken_down".equals(st);
+        List<String> labels = new ArrayList<>();
+        List<Runnable> acts = new ArrayList<>();
+        labels.add(getString(R.string.listing_view));
+        acts.add(() -> BhDetailFragment.open(this, x.id()));
+        if (!down) {
+            labels.add(getString(R.string.listing_edit));
+            acts.add(() -> { Bundle a = new Bundle(); a.putString("editId", x.id()); NavHostFragment.findNavController(this).navigate(R.id.listingFormFragment, a); });
+        }
+        if (!down && !unlisted) {                                 // students cannot see an unlisted place, so only active places can be boosted
+            labels.add(getString(R.string.listing_boost));
+            acts.add(() -> { Bundle a = new Bundle(); a.putString("bhId", x.id()); NavHostFragment.findNavController(this).navigate(R.id.boostFragment, a); });
+        }
+        if (!down) {
+            labels.add(getString(unlisted ? R.string.listing_relist : R.string.listing_unlist));
+            acts.add(() -> Async.run(() -> { new BhService().setStatus(x.id(), unlisted ? "active" : "unlisted"); return Boolean.TRUE; }, ok -> reload(),
+                    e -> ListArea.toast(this, ErrorText.full(getString(R.string.listings_error), e))));
+        }
+        labels.add(getString(R.string.chats_delete));
+        acts.add(() -> new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.listing_delete_title).setMessage(R.string.listing_delete_msg)
+                .setNegativeButton(R.string.common_cancel, null)
+                .setPositiveButton(R.string.chats_delete, (d, w) -> Async.run(() -> { new BhService().deleteListing(x.id()); return Boolean.TRUE; },
+                        ok -> reload(), e -> ListArea.toast(this, ErrorText.full(getString(R.string.listings_error), e))))
+                .show());
+        new MaterialAlertDialogBuilder(requireContext()).setTitle(x.name())
+                .setItems(labels.toArray(new String[0]), (d, which) -> acts.get(which).run()).show();
     }
 
     private TextView chip(String s, int bg, int textColor) {

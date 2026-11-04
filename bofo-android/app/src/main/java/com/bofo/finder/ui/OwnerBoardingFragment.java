@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * v2.4.8: this is the owner's "Groups" tab in the bottom bar (it used to open from Profile). The header icon opens the direct chats.
+ * v2.4.8: this is the owner's "Groups" tab in the bottom bar (it used to open from Profile). Direct chats are the Messages tab (v2.4.9).
  * v2.2.0 step 4: the owner's Boarding groups, one row per listed house (name, members, pinned, last message, unread). A tap opens the group
  * chat ({@link BoardingChatFragment} with myRole = owner), Announce opens the form for one or several houses. Reloaded every time the screen
  * comes back, so unread counts are fresh after reading a chat.
@@ -51,7 +51,6 @@ public class OwnerBoardingFragment extends Fragment {
         super.onViewCreated(view, state);
         b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
         b.back.setVisibility(getParentFragment() instanceof ShellFragment ? View.GONE : View.VISIBLE);      // v2.4.8: now a bottom-bar tab, so no Back arrow
-        b.messages.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.ownerChatsFragment));
         b.announce.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.announceFragment));
         b.retry.setOnClickListener(v -> load());
         b.list.setLayoutManager(new LinearLayoutManager(requireContext()));

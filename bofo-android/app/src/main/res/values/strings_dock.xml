@@ -2,5 +2,6 @@
 <resources>
     <string name="dock_dashboard">Dashboard</string>
     <string name="dock_listings">Listings</string>
+    <string name="dock_messages">Messages</string>
     <string name="dock_create">Create</string>
 </resources>

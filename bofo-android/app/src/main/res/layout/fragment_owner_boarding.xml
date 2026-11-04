@@ -32,17 +32,6 @@
             android:text="@string/owner_boarding_title"
             android:textAppearance="@style/Text.Bofo.Title" />
 
-        <!-- v2.4.8: direct chats with students (owners no longer have a Chats tab) -->
-        <ImageButton
-            android:id="@+id/messages"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginEnd="4dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/owner_messages_cd"
-            android:src="@drawable/ic_dock_chats"
-            android:tint="@color/bofo_text" />
-
         <Button
             android:id="@+id/announce"
             style="@style/Widget.Bofo.Button.Primary"
