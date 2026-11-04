@@ -18,10 +18,13 @@ import com.bofo.finder.databinding.FragmentAnnounceBinding;
 import com.bofo.finder.model.BhGroup;
 import com.bofo.finder.model.GroupMessage;
 import com.bofo.finder.service.BhGroupService;
+import com.bofo.finder.util.AiFlag;
+import com.bofo.finder.util.AnnounceDraftState;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BoardingRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +32,9 @@ import java.util.List;
 /**
  * v2.2.0 step 4: Announce form. A title, a message and the houses to send it to (one or several of the owner's houses; the chat's menu
  * opens it with that house already ticked). Posting pins the announcement in every chosen house (the database keeps at most 3 pinned).
+ * <p>v2.4.3: <b>Write for me</b> (hidden when the admin switched the AI off) opens {@link AnnounceAiSheet}; its <b>Use this</b> copies a draft into
+ * the title and message fields (asking first when they already have text). It never posts: the owner reads the text and presses Post, and
+ * {@code BoardingRules.checkAnnouncement} still runs then.</p>
  */
 public class AnnounceFragment extends Fragment {
 
@@ -42,6 +48,12 @@ public class AnnounceFragment extends Fragment {
     private boolean posting;
     private int token;
 
+    @Override
+    public void onCreate(@Nullable Bundle state) {
+        super.onCreate(state);
+        AnnounceAiSheet.listen(this, this::onDraftChosen);               // survives rotation; called while this screen is started
+    }
+
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
         b = FragmentAnnounceBinding.inflate(inflater, container, false);
@@ -53,6 +65,8 @@ public class AnnounceFragment extends Fragment {
         super.onViewCreated(view, state);
         b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
         b.post.setOnClickListener(v -> post());
+        b.writeForMe.setOnClickListener(v -> AnnounceAiSheet.show(this));
+        b.writeForMe.setVisibility(AiFlag.on() ? View.VISIBLE : View.GONE);
         b.selectAll.setOnClickListener(v -> {
             boolean all = allTicked();
             for (CheckBox c : boxes) c.setChecked(!all);
@@ -65,6 +79,38 @@ public class AnnounceFragment extends Fragment {
         });
         b.counter.setText("0 / " + BhGroupService.MAX_LEN);
         loadHouses();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        AiFlag.refresh(on -> { if (b != null) b.writeForMe.setVisibility(on ? View.VISIBLE : View.GONE); });   // same as ShellFragment
+    }
+
+    /** Use this: put the draft in the form (clipped to 120 / 1000). Existing text is replaced only after the owner agrees. Never posts. */
+    private void onDraftChosen(String title, String message) {
+        if (b == null) return;
+        final AnnounceDraftState.Use u = AnnounceDraftState.prepareUse(title, message);
+        if (u == null) return;
+        if (AnnounceDraftState.needsReplaceConfirm(b.titleInput.getText().toString(), b.bodyInput.getText().toString())) {
+            new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.announce_replace_title)
+                    .setMessage(R.string.announce_replace_body)
+                    .setPositiveButton(R.string.announce_replace_yes, (d, w) -> applyDraft(u))
+                    .setNegativeButton(R.string.announce_replace_no, null)
+                    .show();
+        } else {
+            applyDraft(u);
+        }
+    }
+
+    private void applyDraft(AnnounceDraftState.Use u) {
+        if (b == null) return;
+        b.titleInput.setText(u.title);
+        b.bodyInput.setText(u.message);                                  // the TextWatcher refreshes the counter
+        b.titleInput.setSelection(b.titleInput.getText().length());
+        showError("");
+        ListArea.toast(this, getString(R.string.announce_draft_added));
     }
 
     private void loadHouses() {

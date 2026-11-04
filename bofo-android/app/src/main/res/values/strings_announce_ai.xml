@@ -213,6 +213,23 @@
     <string name="announce_degraded_note">BOFO AI is busy, so this draft was made from a simple template. Please check it.</string>
     <string name="announce_notes_label">Tip</string>
 
+    <!-- v2.4.2 (step 5): the sheet, stages A (type list) and B (details form) -->
+    <string name="announce_sheet_title">Write for me</string>
+    <string name="announce_pick_type_title">What do you want to announce?</string>
+    <string name="announce_search_hint">Search announcement types</string>
+    <string name="announce_no_types">No matching type. Try another word, or pick General announcement.</string>
+    <string name="announce_details_intro">Fill in the details. BOFO AI will only use what you type here.</string>
+    <string name="announce_required_label">%1$s *</string>
+    <string name="announce_options_title">Options</string>
+    <string name="announce_label_language">Language</string>
+    <string name="announce_label_tone">Tone</string>
+    <string name="announce_label_length">Length</string>
+    <string name="announce_closing_name_hint">Name for the sign-off</string>
+    <string name="announce_back_cd">Back to the list of types</string>
+    <string name="announce_close_cd">Close</string>
+    <string name="announce_type_row_cd">%1$s. %2$s</string>
+    <string name="announce_type_row_urgency_cd">%1$s, %2$s. %3$s</string>
+
     <!-- validation (field problems) -->
     <string name="announce_err_missing">Please fill in: %1$s</string>
     <string name="announce_err_one_of">Please fill in at least one of: %1$s</string>
@@ -227,4 +244,28 @@
     <string name="announce_err_invalid">Something in the details is not valid. Please check them and try again.</string>
     <string name="announce_err_offline">No internet. Please check your connection and try again.</string>
     <string name="announce_err_generic">Could not write the announcement. You can still write it yourself.</string>
+
+    <!-- v2.4.3 step 6: stage C (generate / review / use) and the host's "Write for me" button. UI labels stay English. -->
+    <string name="announce_result_title">Your draft</string>
+    <string name="announce_writing">Writing your announcement...</string>
+    <string name="announce_cancel">Cancel</string>
+    <string name="announce_edit_details">Edit details</string>
+    <string name="announce_change_language">Change language</string>
+    <string name="announce_draft_title_label">Title</string>
+    <string name="announce_draft_message_label">Message</string>
+    <string name="announce_draft_counter">%1$d / %2$d</string>
+    <string name="announce_notes_line">%1$s: %2$s</string>
+    <string name="announce_err_rate_ready">You can ask for a new draft now.</string>
+    <string name="announce_err_write_yourself">You can still write your announcement yourself.</string>
+    <string name="announce_back_details_cd">Back to the details</string>
+    <string name="announce_use_empty">The title and the message cannot be empty.</string>
+    <string name="announce_regen_title">Replace your changes?</string>
+    <string name="announce_regen_body">You changed this draft. Writing it again will replace your changes.</string>
+    <string name="announce_regen_yes">Write again</string>
+    <string name="announce_regen_no">Keep my changes</string>
+    <string name="announce_replace_title">Replace what you wrote?</string>
+    <string name="announce_replace_body">The title or the message already has text. Replace it with this draft?</string>
+    <string name="announce_replace_yes">Replace</string>
+    <string name="announce_replace_no">Keep mine</string>
+    <string name="announce_draft_added">Draft added. Read it and edit it, then press Post.</string>
 </resources>
