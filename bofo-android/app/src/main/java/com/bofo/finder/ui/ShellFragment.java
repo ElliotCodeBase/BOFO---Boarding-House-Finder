@@ -51,7 +51,7 @@ import java.util.List;
 /**
  * Shell for all three user types: tab container + the dock bar (same look and tabs as the JavaFX app).
  * Student: Home, Explore, Boarding (centre), Chats, Profile. (Saved moved to Profile > Saved places in v2.2.0.)
- * Owner: Dashboard, Listings, Create (raised button, opens the new-listing form), Chats, Profile.
+ * Owner: Dashboard, Listings, Create (raised button, opens the new-listing form), Groups (v2.4.8: the owner's Boarding groups; direct chats open from its header), Profile.
  * Admin: Queue, Payments, Reports, Profile.
  */
 public class ShellFragment extends Fragment {
@@ -180,8 +180,10 @@ public class ShellFragment extends Fragment {
         if (chatFull) { chatFull = false; applyChatFull(); }
         NavController nav = NavHostFragment.findNavController(this);
         if ("dm".equals(kind) && !admin) {
-            binding.dock.select(R.id.tab_chats, true);
-            showTab(R.id.tab_chats);
+            if (!owner) {                                  // v2.4.8: owners have no Chats tab, the chat opens on top of the current tab
+                binding.dock.select(R.id.tab_chats, true);
+                showTab(R.id.tab_chats);
+            }
             ChatFragment.open(this, id, title, place);
         } else if ("group".equals(kind) && owner) {
             nav.navigate(R.id.boardingChatFragment, BoardingChatFragment.args(id, title, 0, GroupMessage.OWNER, true, false));
@@ -268,7 +270,7 @@ public class ShellFragment extends Fragment {
             t.add(tab(R.id.tab_dashboard, R.drawable.ic_dock_dashboard, getString(R.string.dock_dashboard), false, false));
             t.add(tab(R.id.tab_listings, R.drawable.ic_dock_listings, getString(R.string.dock_listings), false, false));
             t.add(tab(R.id.tab_create, R.drawable.ic_dock_plus, getString(R.string.dock_create), true, false));
-            t.add(tab(R.id.tab_chats, R.drawable.ic_dock_chats, getString(R.string.tab_chats), false, true));
+            t.add(tab(R.id.tab_boarding, R.drawable.ic_dock_boarding, getString(R.string.dock_groups), false, true));      // v2.4.8: replaces Chats for owners
             t.add(tab(R.id.tab_profile, R.drawable.ic_dock_profile, getString(R.string.tab_profile), false, false));
         } else {
             t.add(tab(R.id.tab_home, R.drawable.ic_dock_home, getString(R.string.tab_home), false, false));
@@ -287,10 +289,19 @@ public class ShellFragment extends Fragment {
     /** Unread count on the Chats icon (students and owners). A failed check just leaves the badge as it was. */
     private void refreshBadge() {
         if (binding == null || admin) return;
+        if (owner) {                                        // v2.4.8: the owner's Groups tab shows group unread + direct-chat unread together
+            Async.run(() -> {
+                int n = new ChatService().totalUnread();
+                try { n += new BhGroupService().totalUnread(); } catch (Exception ignored) { }       // migration 024 may not be live: only the chats count
+                return n;
+            }, (Integer n) -> {
+                if (binding != null) binding.dock.setBadge(R.id.tab_boarding, n == null ? 0 : n);
+            }, e -> { });
+            return;
+        }
         Async.run(() -> new ChatService().totalUnread(), (Integer n) -> {
             if (binding != null) binding.dock.setBadge(n == null ? 0 : n);
         }, e -> { });
-        if (owner) return;                                  // v2.2.0 step 5: students also get an unread count on Boarding (the owner has no such tab)
         Async.run(() -> new BhGroupService().totalUnread(), (Integer n) -> {
             if (binding != null) binding.dock.setBadge(R.id.tab_boarding, n == null ? 0 : n);
         }, e -> { });                                       // migration 024 may not be live: the badge just stays off
@@ -429,7 +440,7 @@ public class ShellFragment extends Fragment {
         } else if (id == R.id.tab_explore) {
             f = new ExploreFragment();
         } else if (id == R.id.tab_boarding) {
-            f = new BoardingFragment();
+            f = owner ? new OwnerBoardingFragment() : new BoardingFragment();      // v2.4.8: the owner's tab lists his groups
         } else if (id == R.id.tab_chats) {
             f = new ChatsFragment();
         } else {

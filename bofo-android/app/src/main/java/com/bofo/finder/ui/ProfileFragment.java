@@ -38,7 +38,6 @@ public class ProfileFragment extends Fragment {
             NavHostFragment.findNavController(this).navigate(R.id.profileSetupFragment, args);
         });
         binding.openSaved.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.savedFragment));      // v2.2.0
-        binding.openBoardingGroups.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.ownerBoardingFragment));      // v2.2.0 step 4
         binding.openSettings.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.settingsFragment));
         return binding.getRoot();
     }
@@ -65,7 +64,6 @@ public class ProfileFragment extends Fragment {
             if (binding == null || my != token) return;
             if (p == null) { retry(attempt); return; }
             loaded = true;
-            binding.openBoardingGroups.setVisibility(p.role() == com.bofo.finder.model.Role.OWNER ? View.VISIBLE : View.GONE);      // v2.2.0 step 4: owners only
             binding.openSaved.setVisibility(p.role() == com.bofo.finder.model.Role.STUDENT ? View.VISIBLE : View.GONE);      // v2.2.0 Saved places: students only
             binding.accountName.setText(p.fullName());
             binding.accountRole.setText(p.role() == com.bofo.finder.model.Role.OWNER ? R.string.account_role_owner

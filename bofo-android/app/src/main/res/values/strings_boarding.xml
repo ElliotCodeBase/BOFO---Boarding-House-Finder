@@ -2,6 +2,8 @@
 <!-- v2.2.0 Boarding (group chat per boarding house). Step 2: student screen. -->
 <resources>
     <string name="tab_boarding">Boarding</string>
+    <string name="dock_groups">Groups</string>      <!-- v2.4.8 owner dock tab (was Chats) -->
+    <string name="owner_messages_cd">Direct messages</string>
     <string name="boarding_title">Boarding</string>
     <string name="boarding_join_title">Join your boarding house</string>
     <string name="boarding_join_sub">Ask your owner for the invite code. Only people who live here can read this chat.</string>

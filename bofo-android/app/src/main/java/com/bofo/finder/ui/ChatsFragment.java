@@ -51,6 +51,9 @@ public class ChatsFragment extends Fragment {
             @Override public void open(Conversation c) { ChatFragment.open(ChatsFragment.this, c.id(), ChatRules.title(c.otherName(), c.bhName()), c.bhName()); }
             @Override public void ask(Conversation c) { confirmDelete(c); }
         });
+        boolean pushed = !(getParentFragment() instanceof ShellFragment);      // v2.4.8: owners open this list from the Groups tab
+        b.back.setVisibility(pushed ? View.VISIBLE : View.GONE);
+        b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
         b.list.setLayoutManager(new LinearLayoutManager(requireContext()));
         b.list.setAdapter(adapter);
         b.swipe.setColorSchemeResources(R.color.bofo_primary);

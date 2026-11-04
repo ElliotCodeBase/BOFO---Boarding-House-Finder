@@ -119,6 +119,12 @@
         android:name="com.bofo.finder.ui.OwnerBoardingFragment"
         android:label="Boarding groups" />
 
+    <!-- v2.4.8: owners have no Chats tab any more; the Groups tab header opens the same list as a pushed screen (with a Back arrow) -->
+    <fragment
+        android:id="@+id/ownerChatsFragment"
+        android:name="com.bofo.finder.ui.ChatsFragment"
+        android:label="Chats" />
+
     <fragment
         android:id="@+id/boardingChatFragment"
         android:name="com.bofo.finder.ui.BoardingChatFragment"

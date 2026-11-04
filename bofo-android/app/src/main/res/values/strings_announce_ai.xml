@@ -267,18 +267,8 @@
     <string name="announce_replace_yes">Replace</string>
     <string name="announce_replace_no">Keep mine</string>
     <string name="announce_draft_added">Draft added. Read it and edit it, then press Post.</string>
-    <!-- v2.4.7 floating Announce button (house group chat, owner only) and the type dropdown -->
-    <string name="announce_fab">Announce</string>
-    <string name="announce_fab_cd">Create announcement</string>
-    <string name="announce_fab_close_cd">Close announcement choices</string>
-    <string name="announce_fab_ai">Write with AI</string>
-    <string name="announce_fab_ai_sub">Pick a type, BOFO AI writes the draft</string>
-    <string name="announce_fab_ai_cd">Write with AI. Pick a type, BOFO AI writes the draft</string>
-    <string name="announce_fab_manual">Write it myself</string>
-    <string name="announce_fab_manual_sub">Type your own title and message</string>
-    <string name="announce_fab_manual_cd">Write it myself. Type your own title and message</string>
-    <string name="announce_fab_expanded_cd">Announcement choices are open</string>
-    <string name="announce_fab_collapsed_cd">Announcement choices are closed</string>
+    <!-- v2.4.8: plain Announce button in the message bar (owner only); the old floating button and speed-dial are gone -->
+    <string name="announce_btn_cd">Post an announcement</string>
     <string name="announce_type_label">Announcement type</string>
     <string name="announce_type_hint">Choose announcement type</string>
     <string name="announce_type_start">Choose what you want to announce to start</string>

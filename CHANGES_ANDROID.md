@@ -1,3 +1,14 @@
+# v2.4.8 - Calmer Announce button, notice-style announcement card, Boarding groups in the bottom bar (owner)
+- **Announce button.** The big floating orange button and its two stacked choices are gone. In your house group chat there is now a small round megaphone button right beside the message box (owners only). Tap it to open the Announce form. If BOFO AI is on, **Write for me** is inside that form, so AI is an option and no longer the first thing you see.
+- **Announcement card.** In the chat an announcement is now a plain white notice: a small grey "Announcement" label, **Pinned** as plain text, the title, the message, then "Seen by N" for you or a text **Got it** for members. No purple border, no icon, no pills.
+- **Boarding groups moved.** For owners the bottom bar is now Dashboard, Listings, Create, **Groups**, Profile. Groups replaces Chats and shows the unread count of your groups plus your direct chats. Your direct chats with students open from the messages icon at the top of the Groups screen. Profile no longer has a Boarding groups row. Students are unchanged.
+- How to get there: owner > **Groups** tab > open a house > megaphone button next to the message box.
+- If something goes wrong:
+  - Megaphone missing: you are not the owner of this house, or the chat has not finished loading.
+  - Can't find your chats with students: Groups tab > messages icon (top right).
+  - A notification for a student message opens the chat on top of the current tab; Back returns to it.
+- Version 2.4.8 (versionCode 20408). No server change. Not compiled or run on a device in the sandbox that made this change: build and test it (`gradlew testDebugUnitTest`, `gradlew assembleDebug`) before releasing.
+
 # v2.4.7 - Floating Announce button in the group chat + searchable announcement type
 - **Floating Announce button (owner only).** In your house group chat there is now an **Announce** button at the bottom right, just above the message box. Tap it: two choices slide up, **Write with AI** (BOFO AI writes the draft) and **Write it myself** (type your own title and message). Tap the dimmed chat, the X or Back to close it. It shrinks to an icon while you scroll down and hides while you type. If an admin switched BOFO AI off, the button opens the manual Announce screen directly.
 - The 3-dot menu of the group chat no longer has "Write announcement with AI" and "New announcement" (they are the new button now). Pinned announcements, Group info and invite code, and Leave group stay.

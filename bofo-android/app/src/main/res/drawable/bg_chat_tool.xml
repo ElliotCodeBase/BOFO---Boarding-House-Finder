@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.4.8: round tool button in the message bar (Announce): white with the same hairline as the input -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="@color/bofo_ripple">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/bofo_white" />
+            <stroke android:width="1dp" android:color="@color/bofo_border" />
+        </shape>
+    </item>
+</ripple>
