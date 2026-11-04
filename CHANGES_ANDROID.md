@@ -1,3 +1,7 @@
+# v2.4.5 - Shortcut: "Write announcement with AI" in the owner's group chat menu
+- Owner opens a house group chat > the 3-dot menu now starts with **Write announcement with AI**. It opens the Announce form with the AI sheet already open (before: 3-dot > New announcement > Write for me). Shown only when BOFO AI is on.
+- Live project: `ai_enabled` set to true (it was false, which hid every AI button).
+
 # v2.4.4 - Fix: "Write for me" not showing / not working for the owner
 - The **Write for me** button is now also shown to admins when BOFO AI is switched off (the server and the sheet already let admins through; only the button was hidden).
 - Server side (done on the live project, no app change): migration `031_ai_usage_kind` applied and the edge function `bofo-announce` deployed. Before this the button could not work for anyone.

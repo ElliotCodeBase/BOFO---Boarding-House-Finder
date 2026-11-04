@@ -268,4 +268,5 @@
     <string name="announce_replace_yes">Replace</string>
     <string name="announce_replace_no">Keep mine</string>
     <string name="announce_draft_added">Draft added. Read it and edit it, then press Post.</string>
+    <string name="boarding_menu_announce_ai">Write announcement with AI</string>
 </resources>

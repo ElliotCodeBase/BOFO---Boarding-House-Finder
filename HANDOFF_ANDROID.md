@@ -1,3 +1,6 @@
+# Handoff (Android) - v2.4.5: AI shortcut in the owner chat menu
+- `BoardingChatFragment` menu item `boarding_menu_announce_ai` -> `openAnnounce(true)` -> `AnnounceFragment.ARG_OPEN_AI` opens `AnnounceAiSheet` once (only when `state == null`). Version 2.4.5 / 20405. Live `app_flags.ai_enabled` was set to true on 2026-11-04. Not compiled here; not tested on a device.
+
 # Handoff (Android) - v2.4.4 fix: Write for me did not show for the owner
 - **Cause 1:** `app_flags.ai_enabled` was `false` on the live project, so `AnnounceFragment` hid the button (`AiFlag`). Owners will not see it until an admin turns **BOFO AI for users** back ON. Left unchanged on purpose (it is an admin choice).
 - **Cause 2:** the edge function `bofo-announce` was never deployed and migration 031 never applied. Both are now done on project `zfxldzcoirqolflkkhrh` (function v1 ACTIVE, verify_jwt on; `ai_usage.kind` exists).
