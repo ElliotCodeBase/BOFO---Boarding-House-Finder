@@ -64,6 +64,6 @@ Do each on a real phone or emulator and tick it.
 
 ## 5. Step 7 run log (what actually ran)
 - `node --experimental-strip-types --test supabase/functions/bofo-announce/announce.test.ts` -> 21 tests, 21 pass, 0 fail (Node v22.23.4).
-- JVM tests: **not run in Step 7.** This sandbox has no `junit-4.13.2.jar`, hamcrest, `org.json` jar or `/opt/gradle-8.14.3`, and the repo copy it was given is missing `AnnounceFormState.java` (see FINAL-HANDOFF, blocker), so the sheet, `AnnounceFormStateTest` and `AnnounceDraftStateTest` could not even be compiled together. Step 6 ran 51 of them with a stand-in JUnit; Steps 4-5 ran 44 + 12 with real JUnit.
+- JVM tests, stand-in JUnit + org.json (sandbox has no real jars / Gradle): `AnnounceFormStateTest` 12 of 12 and `AnnounceDraftStateTest` 18 of 18 pass with the restored Step 5 files. NOT re-run: `AnnounceRulesTest`, `AnnounceTypeTest`, `AnnounceDraftTest`, `AnnounceErrorsTest`, `AnnounceAiServiceTest` (need real org.json); earlier steps ran them (Step 4: 44, Step 5: 56 with real JUnit).
 - Static checks run: grep for logging / storage / hard-coded UI text; string, id, drawable, layout and class references of the 3 UI/state classes against `res` and the source tree; Java ids == `catalogue.ts` ids (26/26); accessibility attributes of the two layouts.
 - Not run: Gradle, Android lint, the app, the live function, Deno.

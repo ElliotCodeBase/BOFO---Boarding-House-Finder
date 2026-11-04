@@ -2,24 +2,11 @@
 
 Versions 2.3.3 -> 2.4.3 (versionCode 20303 -> 20403). Step 7 changed **documents only**, so there is **no version bump** (the app stays 2.4.3 / 20403).
 
-## 0. BLOCKER - fix this first
-The repo copy I received (`BOFO---Boarding-House-Finder-main_-_2026-11-04T082020_033.zip`) has the Step 6 changes but **not the Step 5 zip's new files**. These 5 are missing, and `AnnounceAiSheet.java` (Step 6) cannot compile without them:
-- `bofo-android/app/src/main/java/com/bofo/finder/util/AnnounceFormState.java`
-- `bofo-android/app/src/main/res/layout/item_announce_type.xml`
-- `bofo-android/app/src/main/res/drawable/bg_ann_badge_urgent.xml`
-- `bofo-android/app/src/main/res/drawable/bg_ann_badge_important.xml`
-- `bofo-android/app/src/test/java/com/bofo/finder/util/AnnounceFormStateTest.java`
-(5 files; `AnnounceAiSheet.java` also refers to `R.id.ann_row_*`, which live in `item_announce_type.xml`.)
-Everything else of Steps 2-6 is present (backend, migration 031, `AnnounceType`, `AnnounceRules`, service, `AnnounceDraftState`, 19 icons, strings).
-**Fix:** apply `BOFO-android-v2.4.2-changes.zip` (the Step 5 zip) to the repo, then re-check:
-```powershell
-cd C:\Users\user\bofo-finder
-Expand-Archive "$HOME\Downloads\BOFO-android-v2.4.2-changes.zip" "C:\Users\user\bofo-finder" -Force
-# every line must print True:
-"bofo-android\app\src\main\java\com\bofo\finder\util\AnnounceFormState.java","bofo-android\app\src\main\res\layout\item_announce_type.xml","bofo-android\app\src\main\res\drawable\bg_ann_badge_urgent.xml","bofo-android\app\src\main\res\drawable\bg_ann_badge_important.xml","bofo-android\app\src\test\java\com\bofo\finder\util\AnnounceFormStateTest.java" | % { "$_ : " + (Test-Path $_) }
-```
-IMPORTANT: apply the 2.4.2 zip **before** the 2.4.3 zip, or re-apply the 2.4.3 zip after it, because `strings_announce_ai.xml`, `sheet_announce_ai.xml` and `AnnounceAiSheet.java` exist in both and the 2.4.3 versions must win. If the 2.4.2 zip is lost, tell the next AI: it must rebuild `AnnounceFormState` from `HANDOFF_ANDROID.md` (Step 5 entry) and the calls in `AnnounceAiSheet.java`; it would have to be re-tested.
-If you simply forgot to `git add` those files, `git status` will show them as untracked.
+## 0. The missing Step 5 files (blocker, now fixed in this zip)
+The repo had the Step 6 changes but not 5 files of the Step 5 zip, so Android Studio failed with 31 "cannot find symbol" errors (`AnnounceFormState`, `item_announce_type`, `bg_ann_badge_*`, `ann_row_*`). This zip puts back exactly those 5 files, copied unchanged from your `BOFO-android-v2.4.2-changes.zip`:
+- `util/AnnounceFormState.java`, `layout/item_announce_type.xml`, `drawable/bg_ann_badge_urgent.xml`, `drawable/bg_ann_badge_important.xml`, `test/.../util/AnnounceFormStateTest.java`
+**Do NOT unzip the full 2.4.2 zip over the repo:** it would overwrite the newer 2.4.3 versions of `build.gradle`, `AnnounceAiSheet.java`, `sheet_announce_ai.xml` and `strings_announce_ai.xml` with older ones. Only this fix zip is safe. No version bump (nothing new, the files belong to 2.4.2 / 2.4.3).
+Checked in the sandbox with the files merged: every `R.*` name and class used by the sheet, fragment and draft state now exists (only `design_bottom_sheet`, a Material library id, is outside the project), and `AnnounceFormStateTest` (12) + `AnnounceDraftStateTest` (18) pass together (stand-in JUnit, see section 4). Gradle still has not compiled it: your next build is the real check.
 
 ## 1. What was built (7 steps)
 | Step | Version | What |
@@ -48,13 +35,13 @@ Tested (ran):
 - Step 7: backend Node tests **21 of 21 pass** (catalogue, validation, injection, cleaning, clipping, 26 types x 4 languages x 4 tones templates, generate/LLM fallback, limits).
 - Steps 4-6 (earlier sessions): Step 4 = 44 JVM tests and Step 5 = 56 JVM tests, both with real JUnit 4.13.2; Step 6 re-ran 51 model/util tests with a stand-in JUnit and mutation-checked them. The two service test classes (23 tests) were last run in Step 5.
 Not tested:
-- **Step 7 did not re-run any JVM test** (no JUnit/org.json jars and no Gradle in the sandbox, and `AnnounceFormState` was missing from the repo copy, see section 0).
+- Gradle / the real Android compile: not run. JVM tests were re-run only partly, with a stand-in JUnit and org.json: `AnnounceFormStateTest` 12 and `AnnounceDraftStateTest` 18 pass. `AnnounceRulesTest`, `AnnounceTypeTest` (drift test), `AnnounceDraftTest` and the 2 service tests were NOT re-run (they need the real org.json); run them in Android Studio.
 - Nothing was compiled against the real Android SDK (the sheet, the fragment, `FragmentAnnounceBinding.writeForMe`, Material `MaterialSwitch`/`Chip`/`ComponentDialog`), no layout was seen on a device, no Gradle build, no lint, no instrumented tests (none exist).
 - The function was never deployed, never called live, migration 031 never applied, Deno never run, no real model answer reviewed.
 
 ## 5. Review result (Step 7)
 No logic bug found, so no code was changed. Checked by reading/grep: the AI never posts; no retry loop; no `Log.` / `System.out` / `printStackTrace` / prefs writes of content in any announce class; server `console.*` prints codes and model ids only; owner, `ai_enabled`, limit order in `index.ts`; prompt-injection handling (values quoted, delimiters stripped, sign-off by code); Java ids == backend ids (26/26); no hard-coded UI text in the two announce layouts; ViewBinding name `write_for_me` -> `writeForMe` matches. Findings left as they are (no app-code change to avoid a bump without a compile):
-1. **Missing Step 5 files** (section 0). Blocker.
+1. **Missing Step 5 files** (section 0): fixed by this zip.
 2. `announce_sheet_title` in `strings_announce_ai.xml` is unused (harmless; delete when you next touch the file).
 3. `AnnounceAiSheet.java` lines ~537-538 put the title and message into the fragment-result Bundle for `Use this`. That Bundle lives in memory and is consumed at once, but Android can keep pending fragment results in saved instance state until consumed. Low risk (same process, not written to disk by the app); noted because the rule says never store the draft.
 4. The Write for me button hides for admins too when the AI is off (the sheet itself still exempts admins like the server). Intentional, mild inconsistency.
@@ -70,7 +57,7 @@ No logic bug found, so no code was changed. Checked by reading/grep: the AI neve
 - `bofo-chat` still ignores the `ai_enabled` switch (not part of this feature).
 
 ## 7. What YOU must still do (in this order)
-a) **Apply the missing Step 5 zip** (section 0) and confirm the 5 paths print True.
+a) **Apply this fix zip** (section 0), then rebuild.
 b) **Apply migration 031** (Supabase SQL editor, project `zfxldzcoirqolflkkhrh`; safe to run twice): paste the file `supabase/migrations/031_ai_usage_kind.sql`, or `supabase db push` if you use migrations. Verify: `select column_name from information_schema.columns where table_name='ai_usage' and column_name='kind';` returns one row.
 c) **Deploy the function:** `supabase functions deploy bofo-announce --project-ref zfxldzcoirqolflkkhrh`. The LLM path needs the same secrets as `bofo-chat`: `OPENROUTER_API_KEY` and `LLM_MODELS` (check with `supabase secrets list`). Without them the function still works and returns template drafts (`degraded:true`).
 d) **Build in Android Studio** (open `C:\Users\user\bofo-finder\bofo-android`): Build > Make Project and fix any compile error; likely places: `AnnounceAiSheet` (Material/AndroidX symbols), `FragmentAnnounceBinding`. Run the unit tests: `./gradlew testDebugUnitTest --tests "com.bofo.finder.*Announce*"` (or right-click the `test` folder > Run).
