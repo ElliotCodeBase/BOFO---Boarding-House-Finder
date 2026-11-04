@@ -149,6 +149,7 @@ public class BoardingChatFragment extends Fragment {
                 List<String> labels = new ArrayList<>();
                 List<Runnable> acts = new ArrayList<>();
                 if (!pinned.isEmpty()) { labels.add(getString(R.string.boarding_menu_pinned, pinned.size())); acts.add(this::showPinned); }
+                if (isOwner && com.bofo.finder.util.AiFlag.on()) { labels.add(getString(R.string.boarding_menu_announce_ai)); acts.add(() -> openAnnounce(true)); }
                 if (isOwner) { labels.add(getString(R.string.boarding_menu_announce)); acts.add(this::openAnnounce); }
                 if (isOwner) { labels.add(getString(R.string.boarding_menu_info)); acts.add(this::openInfo); }
                 if (canLeave) { labels.add(getString(R.string.boarding_leave)); acts.add(this::confirmLeave); }
@@ -419,9 +420,13 @@ public class BoardingChatFragment extends Fragment {
         NavHostFragment.findNavController(this).navigate(R.id.groupInfoFragment, a);
     }
 
-    private void openAnnounce() {
+    private void openAnnounce() { openAnnounce(false); }
+
+    /** openAi = true: the Announce form opens with the "Write for me" sheet already showing (v2.4.5 shortcut). */
+    private void openAnnounce(boolean openAi) {
         Bundle a = new Bundle();
         a.putString(AnnounceFragment.ARG_BH, bhId);
+        if (openAi) a.putBoolean(AnnounceFragment.ARG_OPEN_AI, true);
         NavHostFragment.findNavController(this).navigate(R.id.announceFragment, a);
     }
 

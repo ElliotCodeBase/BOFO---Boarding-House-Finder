@@ -42,6 +42,8 @@ public class AnnounceFragment extends Fragment {
 
     /** Argument: id of the house to tick first (optional). */
     public static final String ARG_BH = "bhId";
+    /** v2.4.5: true = open the Write for me sheet at once (used by the chat menu shortcut). */
+    public static final String ARG_OPEN_AI = "openAi";
 
     private FragmentAnnounceBinding b;
     private final BhGroupService svc = new BhGroupService();
@@ -81,6 +83,9 @@ public class AnnounceFragment extends Fragment {
         });
         b.counter.setText("0 / " + BhGroupService.MAX_LEN);
         loadHouses();
+        if (state == null && getArguments() != null && getArguments().getBoolean(ARG_OPEN_AI, false) && showWriteForMe(AiFlag.on())) {
+            view.post(() -> { if (b != null && isAdded()) AnnounceAiSheet.show(this); });   // once, not again after a rotation
+        }
     }
 
     @Override
