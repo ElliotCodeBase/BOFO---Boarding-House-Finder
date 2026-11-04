@@ -1,3 +1,4 @@
+// v2.4.7: optional secret ANNOUNCE_MODELS overrides LLM_MODELS for announcements only (use a paid model here without touching bofo-chat).
 // bofo-announce / llm.ts - OpenRouter call, same pattern as bofo-chat's callLLM (key + LLM_MODELS, first 3 models, timeouts, think blocks stripped).
 // Pure TypeScript: the environment and fetch are passed in. NEVER logs prompts, field values or model output (only model id + HTTP status).
 import { stripThinking } from "./clean.ts";
@@ -6,7 +7,7 @@ export type LlmFn = (system: string, user: string, opts: { maxTokens: number; te
 export interface LlmEnv { key: string; models: string[] }
 
 export function readLlmEnv(get: (k: string) => string | undefined): LlmEnv {
-  return { key: (get("OPENROUTER_API_KEY") ?? "").trim(), models: (get("LLM_MODELS") ?? "").split(",").map((m) => m.trim()).filter(Boolean) };
+  return { key: (get("OPENROUTER_API_KEY") ?? "").trim(), models: ((get("ANNOUNCE_MODELS") ?? "").trim() || (get("LLM_MODELS") ?? "")).split(",").map((m) => m.trim()).filter(Boolean) };
 }
 
 /** null when the secrets are missing (the caller then uses the template).
@@ -16,7 +17,7 @@ export function makeLlm(env: LlmEnv, fetchFn: typeof fetch = fetch, timeoutMs = 
   if (!env.key || !env.models.length) { console.error("bofo-announce: OPENROUTER_API_KEY or LLM_MODELS is not set -> template answers only"); return null; }
   return async (system, user, opts) => {
     const started = Date.now();
-    let pending = env.models.slice(0, 6);
+    let pending = env.models.slice(0, 8);
     for (let pass = 0; pass < 2 && pending.length; pass++) {
       if (pass === 1) await new Promise((res) => setTimeout(res, retryPauseMs));
       const again: string[] = [];
