@@ -1,3 +1,8 @@
+# v2.4.6 - Fix: AI drafts always came from the template ("BOFO AI is busy")
+- Cause (from the live function logs): the free OpenRouter models in `LLM_MODELS` answered HTTP 429 (rate limited) or timed out, and the function only tried 3 models once.
+- `bofo-announce` now tries up to 6 models and retries the ones that said 429 once after 2 s (8 s per model, 32 s total, under the app's 40 s limit). Deployed to the live project as function version 2.
+- Still needed for reliable AI: more / better model ids in the `LLM_MODELS` secret (shared with BOFO chat), e.g. a cheap paid model.
+
 # v2.4.5 - Shortcut: "Write announcement with AI" in the owner's group chat menu
 - Owner opens a house group chat > the 3-dot menu now starts with **Write announcement with AI**. It opens the Announce form with the AI sheet already open (before: 3-dot > New announcement > Write for me). Shown only when BOFO AI is on.
 - Live project: `ai_enabled` set to true (it was false, which hid every AI button).
