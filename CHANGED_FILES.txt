@@ -1,15 +1,10 @@
-BOFO AI Announcement Writer - Step 6 (generate / review / use). Version 2.4.2 -> 2.4.3 (versionCode 20402 -> 20403).
-changed  bofo-android/app/build.gradle                                                (versionName 2.4.3, versionCode 20403)
-changed  bofo-android/app/src/main/res/values/strings_announce_ai.xml                 (+22 strings for stage C and the host)
-changed  bofo-android/app/src/main/res/layout/sheet_announce_ai.xml                   (stage C: loading / error / draft)
-changed  bofo-android/app/src/main/res/layout/fragment_announce.xml                   (Write for me button above the title)
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/AnnounceAiSheet.java       (stage C, calls the service, Use this)
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/AnnounceFragment.java      (button, listener, replace confirm)
-new      bofo-android/app/src/main/java/com/bofo/finder/util/AnnounceDraftState.java
-new      bofo-android/app/src/test/java/com/bofo/finder/util/AnnounceDraftStateTest.java
-changed  CHANGES_ANDROID.md            (v2.4.3 entry)
-changed  HANDOFF_ANDROID.md            (new top entry)
-changed  BOFO-AI-ANNOUNCE-STATUS.md    (Step 6 row, section J)
-changed  NEXT-STEP-PROMPT.md           (Step 7 prompt)
-changed  CHANGED_FILES.txt             (this file; replaces the old repo copy)
-Nothing under supabase/ is in this zip. (The Step 5 zip BOFO-android-v2.4.2-changes.zip must already be applied.)
+BOFO AI Announcement Writer - Step 7 (QA + docs + final). Version stays 2.4.3 (versionCode 20403): documents only, NO bump.
+new      docs/ANNOUNCE_AI.md                    (owner guide)
+new      docs/ANNOUNCE_AI_TEST_MATRIX.md        (26 types x 4 languages, errors, manual device checklist, run log)
+new      FINAL-HANDOFF.md                       (what was built, file map, tested / not tested, known limits, the user's to-do list)
+changed  BOFO-AI-ANNOUNCE-STATUS.md             (Step 7 row, section K)
+changed  HANDOFF_ANDROID.md                     (new top entry)
+changed  NEXT-STEP-PROMPT.md                    (replaced: feature complete note)
+changed  CHANGED_FILES.txt                      (this file)
+No app code, resource or supabase/ file is in this zip. CHANGES_ANDROID.md is not changed (no version bump).
+WARNING: the repo copy Step 7 received is missing the Step 5 files (AnnounceFormState.java, item_announce_type.xml, bg_ann_badge_urgent.xml, bg_ann_badge_important.xml, AnnounceFormStateTest.java). Apply BOFO-android-v2.4.2-changes.zip, then re-apply BOFO-android-v2.4.3-changes.zip. See FINAL-HANDOFF.md section 0.
