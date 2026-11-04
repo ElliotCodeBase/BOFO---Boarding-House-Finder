@@ -219,6 +219,8 @@
     <string name="announce_err_too_long">%1$s is too long (200 characters at most)</string>
 
     <!-- errors from the service (step 4 maps HTTP status to these) -->
+    <string name="announce_err_signed_out">Your session has ended. Please sign in again.</string>
+    <string name="announce_err_server">BOFO AI could not be reached right now. Please try again in a moment.</string>
     <string name="announce_err_not_owner">Only owners with a boarding house can use this.</string>
     <string name="announce_err_ai_disabled">BOFO AI is turned off right now. You can still write your announcement yourself.</string>
     <string name="announce_err_rate_limited">You have asked for many drafts. Please try again in %1$d seconds.</string>
