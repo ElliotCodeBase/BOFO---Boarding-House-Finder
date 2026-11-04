@@ -1,10 +1,9 @@
-BOFO AI Announcement Writer - Step 7 (QA + docs + final). Version stays 2.4.3 (versionCode 20403): documents only, NO bump.
-new      docs/ANNOUNCE_AI.md                    (owner guide)
-new      docs/ANNOUNCE_AI_TEST_MATRIX.md        (26 types x 4 languages, errors, manual device checklist, run log)
-new      FINAL-HANDOFF.md                       (what was built, file map, tested / not tested, known limits, the user's to-do list)
-changed  BOFO-AI-ANNOUNCE-STATUS.md             (Step 7 row, section K)
-changed  HANDOFF_ANDROID.md                     (new top entry)
-changed  NEXT-STEP-PROMPT.md                    (replaced: feature complete note)
-changed  CHANGED_FILES.txt                      (this file)
-No app code, resource or supabase/ file is in this zip. CHANGES_ANDROID.md is not changed (no version bump).
-WARNING: the repo copy Step 7 received is missing the Step 5 files (AnnounceFormState.java, item_announce_type.xml, bg_ann_badge_urgent.xml, bg_ann_badge_important.xml, AnnounceFormStateTest.java). Apply BOFO-android-v2.4.2-changes.zip, then re-apply BOFO-android-v2.4.3-changes.zip. See FINAL-HANDOFF.md section 0.
+BOFO AI Announcement Writer - Step 7 fix. Restores the 5 Step 5 files that were missing from the repo (Gradle: 31 "cannot find symbol" errors). Version stays 2.4.3 (versionCode 20403), NO bump: the files are unchanged copies from BOFO-android-v2.4.2-changes.zip.
+restored bofo-android/app/src/main/java/com/bofo/finder/util/AnnounceFormState.java
+restored bofo-android/app/src/main/res/layout/item_announce_type.xml
+restored bofo-android/app/src/main/res/drawable/bg_ann_badge_urgent.xml
+restored bofo-android/app/src/main/res/drawable/bg_ann_badge_important.xml
+restored bofo-android/app/src/test/java/com/bofo/finder/util/AnnounceFormStateTest.java
+new      docs/ANNOUNCE_AI.md, docs/ANNOUNCE_AI_TEST_MATRIX.md, FINAL-HANDOFF.md
+changed  BOFO-AI-ANNOUNCE-STATUS.md, HANDOFF_ANDROID.md, NEXT-STEP-PROMPT.md, CHANGED_FILES.txt
+Do NOT unzip the full BOFO-android-v2.4.2-changes.zip over the repo: it would overwrite newer 2.4.3 files. Nothing under supabase/ is in this zip.

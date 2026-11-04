@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.4.2 AI Announcement Writer: badge of an urgent type (red-orange tint, follows the theme colours) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/bofo_error_tint" />
+    <corners android:radius="10dp" />
+</shape>
