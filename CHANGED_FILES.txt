@@ -1,16 +1,15 @@
-BOFO AI Announcement Writer - Step 4 (Android service, no UI). Version 2.4.0 -> 2.4.1 (versionCode 20400 -> 20401).
-changed  bofo-android/app/build.gradle                                   (versionName 2.4.1, versionCode 20401)
-changed  bofo-android/app/src/main/res/values/strings_announce_ai.xml    (+ announce_err_signed_out, announce_err_server)
-new      bofo-android/app/src/main/java/com/bofo/finder/model/AnnounceDraft.java
-new      bofo-android/app/src/main/java/com/bofo/finder/model/AnnounceError.java
-new      bofo-android/app/src/main/java/com/bofo/finder/service/AnnounceErrors.java
-new      bofo-android/app/src/main/java/com/bofo/finder/service/AnnounceAiService.java
-new      bofo-android/app/src/test/java/com/bofo/finder/model/AnnounceDraftTest.java
-new      bofo-android/app/src/test/java/com/bofo/finder/service/AnnounceErrorsTest.java
-new      bofo-android/app/src/test/java/com/bofo/finder/service/AnnounceAiServiceTest.java
-changed  CHANGES_ANDROID.md            (v2.4.1 entry)
+BOFO AI Announcement Writer - Step 6 (generate / review / use). Version 2.4.2 -> 2.4.3 (versionCode 20402 -> 20403).
+changed  bofo-android/app/build.gradle                                                (versionName 2.4.3, versionCode 20403)
+changed  bofo-android/app/src/main/res/values/strings_announce_ai.xml                 (+22 strings for stage C and the host)
+changed  bofo-android/app/src/main/res/layout/sheet_announce_ai.xml                   (stage C: loading / error / draft)
+changed  bofo-android/app/src/main/res/layout/fragment_announce.xml                   (Write for me button above the title)
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/AnnounceAiSheet.java       (stage C, calls the service, Use this)
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/AnnounceFragment.java      (button, listener, replace confirm)
+new      bofo-android/app/src/main/java/com/bofo/finder/util/AnnounceDraftState.java
+new      bofo-android/app/src/test/java/com/bofo/finder/util/AnnounceDraftStateTest.java
+changed  CHANGES_ANDROID.md            (v2.4.3 entry)
 changed  HANDOFF_ANDROID.md            (new top entry)
-changed  BOFO-AI-ANNOUNCE-STATUS.md    (Step 4 row, section H)
-changed  NEXT-STEP-PROMPT.md           (Step 5 prompt)
+changed  BOFO-AI-ANNOUNCE-STATUS.md    (Step 6 row, section J)
+changed  NEXT-STEP-PROMPT.md           (Step 7 prompt)
 changed  CHANGED_FILES.txt             (this file; replaces the old repo copy)
-Nothing under supabase/ is in this zip.
+Nothing under supabase/ is in this zip. (The Step 5 zip BOFO-android-v2.4.2-changes.zip must already be applied.)

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- v2.2.0 step 4: Announce form (title, message, which houses) -->
+<!-- v2.2.0 step 4: Announce form (title, message, which houses). v2.4.3: "Write for me" button above the title (hidden when the AI is off). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bofo_bg"
@@ -42,6 +43,16 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/write_for_me"
+                style="@style/Widget.Bofo.Button.RdTool"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:minHeight="48dp"
+                android:text="@string/announce_write_for_me"
+                app:icon="@drawable/ic_sparkle" />
 
             <EditText
                 android:id="@+id/title_input"

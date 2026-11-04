@@ -1,3 +1,15 @@
+# v2.4.3 - AI Announcement Writer, step 6: write, review, use
+- Owners now see a **Write for me** button above the title on the Announce screen (hidden when an admin switched BOFO AI off). It opens the sheet: pick the type, fill the details, press **Write for me**; the app shows "Writing..." (you can cancel) and then the draft.
+- The draft is editable (title up to 120, message up to 1000 with a counter) and always says to read it before posting. Buttons: Try again, Shorter, More friendly, More formal, change language, Edit details. Each one asks BOFO AI once, with the same details. If you edited the draft by hand, the app asks before it replaces your changes.
+- **Use this** copies the title and message into the announcement form (it asks first if the form already has text). It never posts: you still press Post.
+- Errors are explained (no internet, too many drafts: wait N seconds, AI off, signed out, server problem). If the details are not valid the sheet goes back to the form and marks the field.
+- Needs the server part to be deployed (`031_ai_usage_kind.sql` + `supabase functions deploy bofo-announce`) before it works on a phone.
+
+# v2.4.2 - AI Announcement Writer, step 5: the Write for me sheet (not reachable yet)
+- New bottom sheet for owners: first pick what the announcement is about (26 types with an icon, a short description and an Urgent / Important badge, plus a search box), then fill in the details for that type, choose language, tone, length, emojis and your sign-off name, and press **Write for me**. The details are checked first and any problem is shown on the field.
+- The sheet is not opened from the announcement screen yet and does not write the text yet: that comes in the next step. Nothing is posted and nothing is sent to the server.
+- The app remembers your last language, tone, length and emoji choice (not what you typed).
+
 # v2.4.1 - AI Announcement Writer, step 4: the service (no screen yet)
 - Nothing new is visible in the app yet. This version adds the code that asks the server (`bofo-announce`) to write an announcement draft and sorts every possible outcome (draft, "AI is off", "too many drafts, wait N seconds", no internet, signed out, server problem...) into one typed result for the screen that comes next. It never posts anything.
 - If the details are not complete the app says so itself and sends nothing to the server. A draft the server made from a simple template (AI busy) counts as a normal draft and is marked so the screen can warn the owner.
