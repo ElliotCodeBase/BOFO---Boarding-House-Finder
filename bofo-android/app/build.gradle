@@ -8,12 +8,12 @@ if (file('google-services.json').exists()) {
     apply plugin: 'com.google.gms.google-services'
 }
 
-// Public config comes from the desktop app's config.properties (same Supabase project). Two git-ignored files may
-// override it: the desktop config.local.properties (its dev.<role>.email / .password test accounts are the ones the JavaFX
-// login buttons use) and bofo-android/local.properties. Never put a service_role key anywhere.
+// Public config comes from bofo-android/config.properties (committed: Supabase URL, anon key, Google web client ID).
+// Two git-ignored files may override it: bofo-android/config.local.properties (dev.<role>.email / .password test
+// accounts) and bofo-android/local.properties. Never put a service_role key anywhere.
 def cfgProps = new Properties()
-[rootProject.file('../src/main/resources/com/bofo/finder/config.properties'),
- rootProject.file('../src/main/resources/com/bofo/finder/config.local.properties'),
+[rootProject.file('config.properties'),
+ rootProject.file('config.local.properties'),
  rootProject.file('local.properties')].each { f ->
     if (f.exists()) f.withInputStream { cfgProps.load(it) }
 }
