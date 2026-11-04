@@ -2,7 +2,6 @@ package com.bofo.finder.ui;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,11 +14,8 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.DiffUtil;
@@ -33,7 +29,6 @@ import com.bofo.finder.databinding.ItemGroupMsgBinding;
 import com.bofo.finder.model.GroupMessage;
 import com.bofo.finder.service.AuthService;
 import com.bofo.finder.service.BhGroupService;
-import com.bofo.finder.util.AnnounceFabRules;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BoardingRules;
 import com.bofo.finder.util.BoardingRules.Row;
@@ -95,8 +90,7 @@ public class BoardingChatFragment extends Fragment {
     private final List<Row> failed = new ArrayList<>();       // refused by the server (kept on screen, tap to send again)
     private List<Row> queued = new ArrayList<>();             // waiting in the Outbox
     private boolean loaded, resumed, polling, loadingOlder, noMoreOlder;
-    private boolean isOwner, dialOpen, keyboardOpen, loadFailed, offlineNow, fabExtended = true;     // v2.4.7 floating Announce button
-    private OnBackPressedCallback closeDial;
+    private boolean isOwner, loadFailed, offlineNow;
     private int quiet, token, pinTick;
     private List<Row> pinned = new ArrayList<>();            // pinned announcements (max 3), newest pin first
 
@@ -177,7 +171,6 @@ public class BoardingChatFragment extends Fragment {
         b.list.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
                 if (dy < 0 && lm.findFirstVisibleItemPosition() <= 1) loadOlder();
-                if (isOwner) setFabExtended(AnnounceFabRules.extended(fabExtended, dy, !rv.canScrollVertically(-1)));
             }
         });
         b.send.setOnClickListener(v -> send());
@@ -201,91 +194,19 @@ public class BoardingChatFragment extends Fragment {
             if (b == null) return;
             b.offline.setVisibility(off != null && off ? View.VISIBLE : View.GONE);
             offlineNow = off != null && off;
-            updateFab();
             if (off != null && !off) Outbox.flushAsync();           // connection is back: send what is waiting
         });
-        setupAnnounceFab();
+        setupAnnounceButton();
         load();
     }
 
-    // ---- floating Announce button (v2.4.7, owner only) ---------------------------------------------------------
+    // ---- Announce button in the message bar (v2.4.8, owner only) -------------------------------------------------
 
-    private void setupAnnounceFab() {
-        if (!isOwner) return;                                      // students never get the views to show
-        closeDial = new OnBackPressedCallback(false) {            // Back closes the speed-dial before it leaves the screen
-            @Override public void handleOnBackPressed() { setDial(false, true); }
-        };
-        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), closeDial);
-        b.announceFab.setOnClickListener(v -> {
-            if (AnnounceFabRules.onTap(com.bofo.finder.util.AiFlag.on()) == AnnounceFabRules.Tap.OPEN_FORM) openAnnounce();
-            else setDial(!dialOpen, true);
-        });
-        b.announceScrim.setOnClickListener(v -> setDial(false, true));
-        b.announcePillAi.setOnClickListener(v -> { setDial(false, false); openAnnounce(true); });
-        b.announcePillManual.setOnClickListener(v -> { setDial(false, false); openAnnounce(); });
-        ViewCompat.setStateDescription(b.announceFab, getString(R.string.announce_fab_collapsed_cd));
-        b.input.setOnFocusChangeListener((v, focus) -> updateFab());
-        ViewCompat.setOnApplyWindowInsetsListener(b.getRoot(), (v, insets) -> {
-            boolean ime = insets.isVisible(WindowInsetsCompat.Type.ime());
-            if (ime != keyboardOpen) { keyboardOpen = ime; updateFab(); }
-            return ViewCompat.onApplyWindowInsets(v, insets);      // keep the normal inset handling
-        });
-    }
-
-    /** Shows or hides the button by {@link AnnounceFabRules#visible} and keeps the list clear of it. */
-    private void updateFab() {
-        if (b == null || !isOwner) return;
-        boolean show = AnnounceFabRules.visible(true, keyboardOpen, b.input.hasFocus(), loaded, loadFailed, offlineNow);
-        if (!AnnounceFabRules.keepDialOpen(dialOpen, show)) setDial(false, false);       // never leave a scrim behind a hidden button
-        boolean was = b.announceFab.getVisibility() == View.VISIBLE;
-        if (show && !was) b.announceFab.show();
-        else if (!show && was) b.announceFab.hide();
-        float dp = getResources().getDisplayMetrics().density;
-        int pad = Math.round((14 + (show ? 64 : 0)) * dp);          // 56 dp button + gap: the last message is never under it
-        if (b.list.getPaddingBottom() != pad) {
-            boolean atEnd = !b.list.canScrollVertically(1);
-            b.list.setPadding(b.list.getPaddingLeft(), b.list.getPaddingTop(), b.list.getPaddingRight(), pad);
-            if (atEnd && adapter != null && adapter.getItemCount() > 0) b.list.post(() -> { if (b != null) b.list.scrollToPosition(adapter.getItemCount() - 1); });
-        }
-    }
-
-    private void setFabExtended(boolean extend) {
-        if (b == null || dialOpen || extend == fabExtended) return;
-        fabExtended = extend;
-        if (extend) b.announceFab.extend(); else b.announceFab.shrink();
-    }
-
-    /** Opens or closes the speed-dial: icon turns into an X, a scrim dims the chat, the two pills slide up (150-200 ms, none with "remove animations"). */
-    private void setDial(boolean open, boolean animate) {
-        if (b == null || !isOwner || dialOpen == open) return;
-        dialOpen = open;
-        if (closeDial != null) closeDial.setEnabled(open);
-        final View scrim = b.announceScrim, dial = b.announceDial;
-        final boolean anim = animate && ValueAnimator.areAnimatorsEnabled();
-        final float lift = 24 * getResources().getDisplayMetrics().density;
-        scrim.animate().cancel();
-        dial.animate().cancel();
-        if (open) {
-            b.announcePillAi.setVisibility(com.bofo.finder.util.AiFlag.on() ? View.VISIBLE : View.GONE);
-            b.announceFab.shrink();
-            b.announceFab.setIconResource(R.drawable.ic_bofo_close);
-            scrim.setVisibility(View.VISIBLE);
-            dial.setVisibility(View.VISIBLE);
-            if (anim) {
-                scrim.setAlpha(0f); dial.setAlpha(0f); dial.setTranslationY(lift);
-                scrim.animate().alpha(.7f).setDuration(180).start();
-                dial.animate().alpha(1f).translationY(0f).setDuration(180).start();
-            } else { scrim.setAlpha(.7f); dial.setAlpha(1f); dial.setTranslationY(0f); }
-        } else {
-            b.announceFab.setIconResource(R.drawable.ic_announce);
-            if (fabExtended) b.announceFab.extend();
-            if (anim) {
-                scrim.animate().alpha(0f).setDuration(150).withEndAction(() -> { if (!dialOpen) scrim.setVisibility(View.GONE); }).start();
-                dial.animate().alpha(0f).translationY(lift).setDuration(150).withEndAction(() -> { if (!dialOpen) dial.setVisibility(View.GONE); }).start();
-            } else { scrim.setVisibility(View.GONE); dial.setVisibility(View.GONE); }
-        }
-        b.announceFab.setContentDescription(getString(open ? R.string.announce_fab_close_cd : R.string.announce_fab_cd));
-        ViewCompat.setStateDescription(b.announceFab, getString(open ? R.string.announce_fab_expanded_cd : R.string.announce_fab_collapsed_cd));
+    /** The owner gets a plain Announce button next to the message box. It opens the Announce form (Write for me lives inside the form). */
+    private void setupAnnounceButton() {
+        if (!isOwner) return;                                      // students never get the button
+        b.announceBtn.setVisibility(View.VISIBLE);
+        b.announceBtn.setOnClickListener(v -> openAnnounce());
     }
 
     // ---- loading ---------------------------------------------------------------------------------------------
@@ -304,14 +225,12 @@ public class BoardingChatFragment extends Fragment {
             b.loading.setVisibility(View.GONE);
             syncQueued();
             render(true);
-            updateFab();
             markRead();
             loadPinned();
             if (resumed) schedule(ChatRules.POLL_MIN_MS);
         }, e -> {
             if (my != token || b == null) return;
             loadFailed = true;
-            updateFab();
             b.loading.setVisibility(View.GONE);
             b.helloMascot.setVisibility(View.GONE);
             b.helloTitle.setVisibility(View.GONE);
@@ -377,7 +296,6 @@ public class BoardingChatFragment extends Fragment {
 
     @Override
     public void onPause() {
-        setDial(false, false);                                    // coming back from the Announce form: no stuck scrim
         resumed = false;
         polling = false;
         if (bhId != null && bhId.equals(com.bofo.finder.util.PushState.openGroup)) com.bofo.finder.util.PushState.openGroup = null;

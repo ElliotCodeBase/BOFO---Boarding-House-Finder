@@ -1,5 +1,19 @@
-changed  supabase/functions/bofo-announce/llm.ts
-changed  supabase/functions/bofo-announce/announce.test.ts
-changed  bofo-android/app/build.gradle
-changed  CHANGES_ANDROID.md
-changed  HANDOFF_ANDROID.md
+changed CHANGES_ANDROID.md
+changed HANDOFF_ANDROID.md
+changed bofo-android/app/build.gradle
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/BoardingChatFragment.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/ChatsFragment.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/OwnerBoardingFragment.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/ProfileFragment.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
+new     bofo-android/app/src/main/res/drawable/bg_ann_notice.xml
+new     bofo-android/app/src/main/res/drawable/bg_chat_tool.xml
+changed bofo-android/app/src/main/res/layout/fragment_boarding_chat.xml
+changed bofo-android/app/src/main/res/layout/fragment_chats.xml
+changed bofo-android/app/src/main/res/layout/fragment_owner_boarding.xml
+changed bofo-android/app/src/main/res/layout/fragment_profile.xml
+changed bofo-android/app/src/main/res/layout/item_group_msg.xml
+changed bofo-android/app/src/main/res/navigation/nav_graph.xml
+changed bofo-android/app/src/main/res/values/strings_announce_ai.xml
+changed bofo-android/app/src/main/res/values/strings_boarding.xml
+(optional, by hand) DELETE bofo-android/app/src/main/java/com/bofo/finder/util/AnnounceFabRules.java and bofo-android/app/src/test/java/com/bofo/finder/util/AnnounceFabRulesTest.java (now unused; they still compile if you keep them)

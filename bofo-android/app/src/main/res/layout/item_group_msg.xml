@@ -53,15 +53,16 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- announcement card (v2.2.1 look): small label + Pinned, title, text, then a footer with "Seen by N" (owner) or "Got it" (members) -->
+    <!-- announcement card (v2.4.8 notice look): plain white sheet, hairline border, small corners. No icon, no coloured border, no pill:
+         a quiet label + "Pinned" in text, title, text, then "Seen by N" (owner) or a text "Got it" (members). -->
     <LinearLayout
         android:id="@+id/ann"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_ann_card"
+        android:background="@drawable/bg_ann_notice"
         android:orientation="vertical"
-        android:paddingHorizontal="14dp"
-        android:paddingTop="12dp"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="14dp"
         android:paddingBottom="12dp"
         android:visibility="gone">
 
@@ -75,34 +76,26 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:drawablePadding="6dp"
-                android:drawableStart="@drawable/ic_announce"
-                android:drawableTint="@color/bofo_role_owner_text"
-                android:gravity="center_vertical"
+                android:fontFamily="sans-serif-medium"
                 android:text="@string/boarding_announcement"
-                android:textAllCaps="true"
-                android:textColor="@color/bofo_role_owner_text"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+                android:textColor="@color/bofo_text_2"
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/ann_pinned"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_role_owner"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="2dp"
+                android:fontFamily="sans-serif-medium"
                 android:text="@string/boarding_pinned_label"
                 android:textColor="@color/bofo_role_owner_text"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/ann_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="6dp"
             android:textColor="@color/bofo_ink"
             android:textSize="17sp"
             android:textStyle="bold" />
@@ -111,8 +104,8 @@
             android:id="@+id/ann_body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:lineSpacingMultiplier="1.15"
+            android:layout_marginTop="6dp"
+            android:lineSpacingMultiplier="1.2"
             android:textColor="@color/bofo_text"
             android:textSize="15sp" />
 
@@ -120,55 +113,43 @@
             android:id="@+id/ann_footer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:minHeight="40dp"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp"
             android:visibility="gone">
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="10dp"
-                android:background="@color/bofo_border" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/ann_seen"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:gravity="center_vertical"
-                android:minHeight="36dp"
-                android:orientation="horizontal">
+                android:textColor="@color/bofo_text_2"
+                android:textSize="13sp"
+                android:visibility="gone" />
 
-                <TextView
-                    android:id="@+id/ann_seen"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/bofo_text_2"
-                    android:textSize="13sp"
-                    android:visibility="gone" />
+            <TextView
+                android:id="@+id/ann_done"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/boarding_got_it_done"
+                android:textColor="@color/bofo_text_2"
+                android:textSize="13sp"
+                android:visibility="gone" />
 
-                <TextView
-                    android:id="@+id/ann_done"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/boarding_got_it_done"
-                    android:textColor="@color/bofo_text_2"
-                    android:textSize="13sp"
-                    android:visibility="gone" />
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
 
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
-
-                <Button
-                    android:id="@+id/got_it"
-                    style="@style/Widget.Bofo.Button.Tint"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:text="@string/boarding_got_it"
-                    android:visibility="gone" />
-            </LinearLayout>
+            <Button
+                android:id="@+id/got_it"
+                style="@style/Widget.Bofo.Button.Quiet"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:text="@string/boarding_got_it"
+                android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
 
