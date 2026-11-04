@@ -1,3 +1,9 @@
+# Handoff (Android) - v2.4.4 fix: Write for me did not show for the owner
+- **Cause 1:** `app_flags.ai_enabled` was `false` on the live project, so `AnnounceFragment` hid the button (`AiFlag`). Owners will not see it until an admin turns **BOFO AI for users** back ON. Left unchanged on purpose (it is an admin choice).
+- **Cause 2:** the edge function `bofo-announce` was never deployed and migration 031 never applied. Both are now done on project `zfxldzcoirqolflkkhrh` (function v1 ACTIVE, verify_jwt on; `ai_usage.kind` exists).
+- **Code change:** `AnnounceFragment.showWriteForMe()` = AI on OR admin. Version 2.4.4 / 20404.
+- **Not verified:** no live call with an owner login, no Gradle build, LLM secrets (`OPENROUTER_API_KEY`, `LLM_MODELS`) not checked (without them drafts are templates, `degraded:true`).
+
 # Handoff (Android) - AI Announcement Writer: Step 7 of 7 done (QA + docs; feature complete, still v2.4.3 / 20403, NO version bump)
 - **State:** documents only: `docs/ANNOUNCE_AI.md` (owner guide), `docs/ANNOUNCE_AI_TEST_MATRIX.md`, `FINAL-HANDOFF.md`, status section K. No app code, resource or `supabase/` file changed, so no bump and no `CHANGES_ANDROID.md` entry.
 - **BLOCKER (fixed by `BOFO-android-v2.4.3-step7-fix-changes.zip`, the 5 files copied unchanged from the 2.4.2 zip; never unzip the full 2.4.2 zip over the repo):** the repo copy used in Step 7 was missing the Step 5 files (`util/AnnounceFormState.java`, `layout/item_announce_type.xml`, `drawable/bg_ann_badge_urgent.xml`, `drawable/bg_ann_badge_important.xml`, `test/.../AnnounceFormStateTest.java`); details in `FINAL-HANDOFF.md` section 0.

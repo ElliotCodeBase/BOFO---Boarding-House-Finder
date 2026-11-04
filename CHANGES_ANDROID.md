@@ -1,3 +1,8 @@
+# v2.4.4 - Fix: "Write for me" not showing / not working for the owner
+- The **Write for me** button is now also shown to admins when BOFO AI is switched off (the server and the sheet already let admins through; only the button was hidden).
+- Server side (done on the live project, no app change): migration `031_ai_usage_kind` applied and the edge function `bofo-announce` deployed. Before this the button could not work for anyone.
+- If the button is still missing for a normal owner: the admin switch **BOFO AI for users** (Settings, admin) is OFF (`app_flags.ai_enabled = false`). Turn it on.
+
 # v2.4.3 - AI Announcement Writer, step 6: write, review, use
 - Owners now see a **Write for me** button above the title on the Announce screen (hidden when an admin switched BOFO AI off). It opens the sheet: pick the type, fill the details, press **Write for me**; the app shows "Writing..." (you can cancel) and then the draft.
 - The draft is editable (title up to 120, message up to 1000 with a counter) and always says to read it before posting. Buttons: Try again, Shorter, More friendly, More formal, change language, Edit details. Each one asks BOFO AI once, with the same details. If you edited the draft by hand, the app asks before it replaces your changes.
