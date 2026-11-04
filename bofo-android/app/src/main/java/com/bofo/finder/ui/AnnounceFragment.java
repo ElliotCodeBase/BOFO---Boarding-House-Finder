@@ -17,10 +17,12 @@ import com.bofo.finder.R;
 import com.bofo.finder.databinding.FragmentAnnounceBinding;
 import com.bofo.finder.model.BhGroup;
 import com.bofo.finder.model.GroupMessage;
+import com.bofo.finder.model.Role;
 import com.bofo.finder.service.BhGroupService;
 import com.bofo.finder.util.AiFlag;
 import com.bofo.finder.util.AnnounceDraftState;
 import com.bofo.finder.util.Async;
+import com.bofo.finder.util.BrowseState;
 import com.bofo.finder.util.BoardingRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
@@ -66,7 +68,7 @@ public class AnnounceFragment extends Fragment {
         b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
         b.post.setOnClickListener(v -> post());
         b.writeForMe.setOnClickListener(v -> AnnounceAiSheet.show(this));
-        b.writeForMe.setVisibility(AiFlag.on() ? View.VISIBLE : View.GONE);
+        b.writeForMe.setVisibility(showWriteForMe(AiFlag.on()) ? View.VISIBLE : View.GONE);
         b.selectAll.setOnClickListener(v -> {
             boolean all = allTicked();
             for (CheckBox c : boxes) c.setChecked(!all);
@@ -84,7 +86,12 @@ public class AnnounceFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        AiFlag.refresh(on -> { if (b != null) b.writeForMe.setVisibility(on ? View.VISIBLE : View.GONE); });   // same as ShellFragment
+        AiFlag.refresh(on -> { if (b != null) b.writeForMe.setVisibility(showWriteForMe(on) ? View.VISIBLE : View.GONE); });   // same as ShellFragment
+    }
+
+    /** v2.4.4: shown when the AI is on, and always for admins (the server and the sheet already exempt admins when the AI is switched off). */
+    private static boolean showWriteForMe(boolean aiOn) {
+        return aiOn || (BrowseState.me != null && BrowseState.me.role() == Role.ADMIN);
     }
 
     /** Use this: put the draft in the form (clipped to 120 / 1000). Existing text is replaced only after the owner agrees. Never posts. */

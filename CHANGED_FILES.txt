@@ -1,9 +1,4 @@
-BOFO AI Announcement Writer - Step 7 fix. Restores the 5 Step 5 files that were missing from the repo (Gradle: 31 "cannot find symbol" errors). Version stays 2.4.3 (versionCode 20403), NO bump: the files are unchanged copies from BOFO-android-v2.4.2-changes.zip.
-restored bofo-android/app/src/main/java/com/bofo/finder/util/AnnounceFormState.java
-restored bofo-android/app/src/main/res/layout/item_announce_type.xml
-restored bofo-android/app/src/main/res/drawable/bg_ann_badge_urgent.xml
-restored bofo-android/app/src/main/res/drawable/bg_ann_badge_important.xml
-restored bofo-android/app/src/test/java/com/bofo/finder/util/AnnounceFormStateTest.java
-new      docs/ANNOUNCE_AI.md, docs/ANNOUNCE_AI_TEST_MATRIX.md, FINAL-HANDOFF.md
-changed  BOFO-AI-ANNOUNCE-STATUS.md, HANDOFF_ANDROID.md, NEXT-STEP-PROMPT.md, CHANGED_FILES.txt
-Do NOT unzip the full BOFO-android-v2.4.2-changes.zip over the repo: it would overwrite newer 2.4.3 files. Nothing under supabase/ is in this zip.
+changed  bofo-android/app/build.gradle
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/AnnounceFragment.java
+changed  CHANGES_ANDROID.md
+changed  HANDOFF_ANDROID.md
