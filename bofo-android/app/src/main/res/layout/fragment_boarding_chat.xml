@@ -158,6 +158,21 @@
             android:paddingTop="8dp"
             android:paddingBottom="14dp" />
 
+        <!-- v2.4.9 owner only: floating Announce button (bottom right of the chat, above the message box) -->
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/announce_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:contentDescription="@string/announce_btn_cd"
+            android:text="@string/announce_button"
+            android:textColor="@color/bofo_white"
+            app:backgroundTint="@color/bofo_primary"
+            app:icon="@drawable/ic_announce"
+            app:iconTint="@color/bofo_white"
+            android:visibility="gone" />
+
         <ProgressBar
             android:id="@+id/loading"
             android:layout_width="wrap_content"
@@ -220,18 +235,6 @@
         android:paddingHorizontal="10dp"
         android:paddingTop="9dp"
         android:paddingBottom="9dp">
-
-        <!-- v2.4.8 owner only: plain Announce button next to the message box (replaces the floating button + speed-dial) -->
-        <ImageButton
-            android:id="@+id/announce_btn"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/bg_chat_tool"
-            android:contentDescription="@string/announce_btn_cd"
-            android:src="@drawable/ic_announce"
-            android:tint="@color/bofo_text_2"
-            android:visibility="gone" />
 
         <EditText
             android:id="@+id/input"

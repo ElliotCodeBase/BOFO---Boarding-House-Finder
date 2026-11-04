@@ -1,3 +1,14 @@
+# v2.4.9 - Floating Announce button, Messages tab, Listings moved into the Dashboard (owner)
+- **Announce button.** In your house group chat the small megaphone next to the message box is gone. There is now a floating **Announce** button at the bottom right of the chat (owners only). Tap it to open the Announce form; **Write for me** is still inside the form.
+- **Messages tab.** For owners the bottom bar is now Dashboard, **Messages**, Create, Groups, Profile. Messages is your direct-chat list with students (with its unread badge). The Groups tab badge now counts only group messages. The messages icon next to Announce in the Groups header is removed.
+- **Listings moved to the Dashboard.** The Listings tab is gone. The Dashboard now starts with **My places**: **Add a place**, **Boost** and **Payments**. Tap any place card to view, edit, boost, unlist / list again or delete it; unlisted or taken-down places show a grey tag.
+- How to get there: owner > Dashboard > Add a place / tap a place; owner > Messages tab; owner > Groups > a house > floating Announce button.
+- If something goes wrong:
+  - Announce button missing: you are not the owner of this house, or the chat has not finished loading.
+  - Can't find My places: it is at the top of the Dashboard.
+  - Place tags missing: the status could not be read (offline); pull down to refresh.
+- Version 2.4.9 (versionCode 20409). No server change. Not compiled or run on a device in the sandbox that made this change: build and test it (`gradlew testDebugUnitTest`, `gradlew assembleDebug`) before releasing.
+
 # v2.4.8 - Calmer Announce button, notice-style announcement card, Boarding groups in the bottom bar (owner)
 - **Announce button.** The big floating orange button and its two stacked choices are gone. In your house group chat there is now a small round megaphone button right beside the message box (owners only). Tap it to open the Announce form. If BOFO AI is on, **Write for me** is inside that form, so AI is an option and no longer the first thing you see.
 - **Announcement card.** In the chat an announcement is now a plain white notice: a small grey "Announcement" label, **Pinned** as plain text, the title, the message, then "Seen by N" for you or a text **Got it** for members. No purple border, no icon, no pills.

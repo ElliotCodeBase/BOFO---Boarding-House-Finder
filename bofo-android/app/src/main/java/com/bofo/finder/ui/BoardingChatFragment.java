@@ -202,11 +202,12 @@ public class BoardingChatFragment extends Fragment {
 
     // ---- Announce button in the message bar (v2.4.8, owner only) -------------------------------------------------
 
-    /** The owner gets a plain Announce button next to the message box. It opens the Announce form (Write for me lives inside the form). */
+    /** v2.4.9: the owner gets a floating Announce button over the chat (bottom right). It opens the Announce form (Write for me lives inside the form). */
     private void setupAnnounceButton() {
         if (!isOwner) return;                                      // students never get the button
-        b.announceBtn.setVisibility(View.VISIBLE);
-        b.announceBtn.setOnClickListener(v -> openAnnounce());
+        b.announceFab.setVisibility(View.VISIBLE);
+        b.announceFab.setOnClickListener(v -> openAnnounce());
+        b.list.setPadding(b.list.getPaddingLeft(), b.list.getPaddingTop(), b.list.getPaddingRight(), Math.round(84 * getResources().getDisplayMetrics().density));   // last message stays readable above the button
     }
 
     // ---- loading ---------------------------------------------------------------------------------------------
