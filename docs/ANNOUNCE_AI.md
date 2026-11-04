@@ -1,14 +1,18 @@
 # Write for me - owner guide (BOFO AI Announcement Writer)
 
-For boarding-house owners. Plain language. App version 2.4.3 and later.
+For boarding-house owners. Plain language. App version 2.4.3 and later (the opening steps below are for 2.4.7).
 
 ## What it is
 **Write for me** is a helper on the **Announce** screen. You tell it the facts (date, time, amount...), pick a language and a tone, and it writes a draft title and message for you.
 It **never posts anything by itself.** You always read the draft, change it if you want, and press **Post** yourself.
 
-## How to open it
-1. Open a house group chat and use the 3-dot menu > **Announce** (or open Announce from **My boarding house**).
-2. Tap **Write for me** (above the title box). The button is hidden when an admin has switched BOFO AI off.
+## How to open it (app version 2.4.7 and later)
+1. Open your house group chat (owner account). Tap the floating **Announce** button at the bottom right, just above the message box. Students never see it, and it hides while the keyboard is open.
+2. Tap **Write with AI**. (Or **Write it myself** to type your own title and message on the Announce screen. If an admin switched BOFO AI off, the button opens the Announce screen directly, because there is only one choice.)
+3. In the sheet, tap **Announcement type**. It is a searchable dropdown: type a word (for example "water") to find the type, tap it, and fill in the details that appear. The dropdown opens by itself the first time. To change the type later, tap the field again: the details you typed are cleared, but language, tone, length and emoji stay.
+4. You can also open Announce from **My boarding house** and tap **Write for me** (above the title box). That button is hidden when an admin has switched BOFO AI off.
+
+Older versions (2.4.5 and 2.4.6) opened it from the 3-dot menu of the group chat; those two items were removed in 2.4.7.
 
 ## The 26 types
 Urgency badge: **Urgent** (red-orange) and **Important** (quiet tint) help you find the right type; "-" = no badge. A `*` is a required detail.

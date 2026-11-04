@@ -225,7 +225,6 @@
     <string name="announce_label_tone">Tone</string>
     <string name="announce_label_length">Length</string>
     <string name="announce_closing_name_hint">Name for the sign-off</string>
-    <string name="announce_back_cd">Back to the list of types</string>
     <string name="announce_close_cd">Close</string>
     <string name="announce_type_row_cd">%1$s. %2$s</string>
     <string name="announce_type_row_urgency_cd">%1$s, %2$s. %3$s</string>
@@ -268,5 +267,21 @@
     <string name="announce_replace_yes">Replace</string>
     <string name="announce_replace_no">Keep mine</string>
     <string name="announce_draft_added">Draft added. Read it and edit it, then press Post.</string>
-    <string name="boarding_menu_announce_ai">Write announcement with AI</string>
+    <!-- v2.4.7 floating Announce button (house group chat, owner only) and the type dropdown -->
+    <string name="announce_fab">Announce</string>
+    <string name="announce_fab_cd">Create announcement</string>
+    <string name="announce_fab_close_cd">Close announcement choices</string>
+    <string name="announce_fab_ai">Write with AI</string>
+    <string name="announce_fab_ai_sub">Pick a type, BOFO AI writes the draft</string>
+    <string name="announce_fab_ai_cd">Write with AI. Pick a type, BOFO AI writes the draft</string>
+    <string name="announce_fab_manual">Write it myself</string>
+    <string name="announce_fab_manual_sub">Type your own title and message</string>
+    <string name="announce_fab_manual_cd">Write it myself. Type your own title and message</string>
+    <string name="announce_fab_expanded_cd">Announcement choices are open</string>
+    <string name="announce_fab_collapsed_cd">Announcement choices are closed</string>
+    <string name="announce_type_label">Announcement type</string>
+    <string name="announce_type_hint">Choose announcement type</string>
+    <string name="announce_type_start">Choose what you want to announce to start</string>
+    <string name="announce_type_clear_cd">Clear search</string>
+    <string name="announce_type_selected_cd">%1$s, selected</string>
 </resources>

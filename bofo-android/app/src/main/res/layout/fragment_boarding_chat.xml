@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- v2.2.0 Boarding group chat for ONE boarding house. Used by the student tab (step 2) and by the owner screen (step 4). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bofo_bg"
@@ -207,6 +208,156 @@
                 android:text="@string/common_try_again"
                 android:visibility="gone" />
         </LinearLayout>
+
+        <!-- v2.4.7 owner only: scrim + speed-dial + floating Announce button. They sit inside the list area, so they stay above the input row.
+             The Ask BOFO bubble belongs to the student shell and is hidden while a group chat is open, so nothing else floats here. -->
+        <View
+            android:id="@+id/announce_scrim"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/bofo_scrim"
+            android:importantForAccessibility="no"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/announce_dial"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="88dp"
+            android:gravity="end"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/announce_pill_ai"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:contentDescription="@string/announce_fab_ai_cd"
+                android:focusable="true"
+                app:cardBackgroundColor="@color/bofo_primary"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="6dp"
+                app:rippleColor="@color/bofo_ink_15">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="18dp"
+                    android:paddingTop="8dp"
+                    android:paddingEnd="22dp"
+                    android:paddingBottom="8dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_sparkle"
+                        app:tint="@color/bofo_on_primary" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/announce_fab_ai"
+                            android:textColor="@color/bofo_on_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:maxWidth="220dp"
+                            android:text="@string/announce_fab_ai_sub"
+                            android:textColor="@color/bofo_on_primary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/announce_pill_manual"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:contentDescription="@string/announce_fab_manual_cd"
+                android:focusable="true"
+                app:cardBackgroundColor="@color/bofo_white"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="6dp"
+                app:rippleColor="@color/bofo_ink_10"
+                app:strokeColor="@color/bofo_primary"
+                app:strokeWidth="1.5dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="18dp"
+                    android:paddingTop="8dp"
+                    android:paddingEnd="22dp"
+                    android:paddingBottom="8dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_pencil"
+                        app:tint="@color/bofo_primary" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/announce_fab_manual"
+                            android:textColor="@color/bofo_text"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:maxWidth="220dp"
+                            android:text="@string/announce_fab_manual_sub"
+                            android:textColor="@color/bofo_text_2"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/announce_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:contentDescription="@string/announce_fab_cd"
+            android:minHeight="56dp"
+            android:text="@string/announce_fab"
+            android:visibility="gone"
+            app:backgroundTint="@color/bofo_primary"
+            app:icon="@drawable/ic_announce"
+            app:iconTint="@color/bofo_on_primary" />
     </FrameLayout>
 
     <LinearLayout

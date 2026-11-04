@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,10 +18,7 @@ import androidx.activity.ComponentDialog;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.bofo.finder.R;
 import com.bofo.finder.model.AnnounceDraft;
@@ -34,6 +30,7 @@ import com.bofo.finder.service.AnnounceAiService;
 import com.bofo.finder.util.AiFlag;
 import com.bofo.finder.util.AnnounceDraftState;
 import com.bofo.finder.util.AnnounceFormState;
+import com.bofo.finder.util.AnnounceTypePickerRules;
 import com.bofo.finder.util.AppPrefs;
 import com.bofo.finder.util.BrowseState;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -52,10 +49,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The "Write for me" sheet: stages A and B (v2.4.2, step 5) and stage C (v2.4.3, step 6).
+ * The "Write for me" sheet: the details form (v2.4.2, step 5; type chosen from a searchable dropdown since v2.4.7) and stage C (v2.4.3, step 6).
  * <ul>
- * <li>Stage A: the 26 types ({@link AnnounceType#ALL}) with icon, title, one-line description and an urgency badge, plus a search box.</li>
- * <li>Stage B: one input per field of the chosen type, the options (language, tone, length, emojis, sign-off name) and <b>Write for me</b>.</li>
+ * <li>Type: the sheet opens on the form with one <b>Announcement type</b> dropdown on top ({@link AnnounceTypeDropdown}: search box + the 26 types of
+ *     {@link AnnounceType#ALL} with icon, title, one-line description and an urgency badge). It opens by itself once on the first open with no type.</li>
+ * <li>Details: once a type is chosen, one input per field of that type, the options (language, tone, length, emojis, sign-off name) and <b>Write for me</b>.
+ *     Changing the type clears the typed details but keeps language, tone, length and emoji.</li>
  * <li>Stage C: Write for me validates, then this sheet calls {@link AnnounceAiService} ONCE per press (the service is created once per sheet and
  *     cancelled in onDestroyView) and shows loading (Cancel allowed), the editable draft (title, message with counter, "check before posting",
  *     degraded note, tip, Try again / Shorter / More friendly / More formal / language chips / Edit details / <b>Use this</b>), or the error.
@@ -113,11 +112,13 @@ public class AnnounceAiSheet extends BottomSheetDialogFragment {
     private ChipGroup resLangGroup;
     private final Runnable tick = this::onTick;
 
-    private View root, stageList, stageForm, backBtn, emptyView;
+    private View root, stageForm, backBtn, detailsGroup, writeBtn, typeStart;
     private TextView titleView, typeDesc;
-    private RecyclerView list;
-    private TypeAdapter adapter;
-    private TextInputEditText search, closingName;
+    private TextInputLayout typeLayout;
+    private TextInputEditText typeInput;
+    private AnnounceTypeDropdown dropdown;
+    private boolean autoOpenPending;                        // v2.4.7: the dropdown opens by itself once, on the first open with no type
+    private TextInputEditText closingName;
     private TextInputLayout closingLayout;
     private MaterialSwitch emojiSwitch, closingSwitch;
     private ChipGroup langGroup, toneGroup, lengthGroup;
@@ -128,12 +129,13 @@ public class AnnounceAiSheet extends BottomSheetDialogFragment {
         super.onCreate(s);
         saved = s;
         state = AnnounceFormState.restore(s == null ? null : s.getString(S_TYPE));
+        autoOpenPending = AnnounceTypePickerRules.autoOpen(s == null, state.type());     // never again after a rotation
     }
 
     @NonNull @Override public Dialog onCreateDialog(@Nullable Bundle s) {
         Dialog d = super.onCreateDialog(s);
         if (d instanceof ComponentDialog) {
-            // Back on the form returns to the list; only Back on the list closes the sheet
+            // Back on the draft returns to the form; Back on the form closes the sheet (an open dropdown takes Back first, it is its own window)
             ((ComponentDialog) d).getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
                 @Override public void handleOnBackPressed() { if (!goBack()) dismissAllowingStateLoss(); }
             });
@@ -144,14 +146,15 @@ public class AnnounceAiSheet extends BottomSheetDialogFragment {
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle s) {
         root = inflater.inflate(R.layout.sheet_announce_ai, container, false);
-        stageList = root.findViewById(R.id.ann_stage_list);
         stageForm = root.findViewById(R.id.ann_stage_form);
+        detailsGroup = root.findViewById(R.id.ann_details);
+        writeBtn = root.findViewById(R.id.ann_write);
+        typeStart = root.findViewById(R.id.ann_type_start);
+        typeLayout = root.findViewById(R.id.ann_type_layout);
+        typeInput = root.findViewById(R.id.ann_type_input);
         backBtn = root.findViewById(R.id.ann_back);
         titleView = root.findViewById(R.id.ann_title);
         typeDesc = root.findViewById(R.id.ann_type_desc);
-        emptyView = root.findViewById(R.id.ann_empty);
-        list = root.findViewById(R.id.ann_list);
-        search = root.findViewById(R.id.ann_search);
         closingName = root.findViewById(R.id.ann_closing_name);
         closingLayout = root.findViewById(R.id.ann_closing_layout);
         emojiSwitch = root.findViewById(R.id.ann_emoji);
@@ -214,11 +217,10 @@ public class AnnounceAiSheet extends BottomSheetDialogFragment {
         resTitle.addTextChangedListener(draftWatcher);
         resMessage.addTextChangedListener(draftWatcher);
 
-        adapter = new TypeAdapter(this::pick);
-        list.setLayoutManager(new LinearLayoutManager(requireContext()));
-        list.setAdapter(adapter);
-        search.addTextChangedListener(new SimpleWatcher() { @Override public void afterTextChanged(Editable e) { filterList(); } });
-        filterList();
+        dropdown = new AnnounceTypeDropdown(requireContext(), typeLayout, this::pick);
+        dropdown.setSelected(state.type());
+        typeInput.setOnClickListener(v -> openDropdown());
+        typeLayout.setEndIconOnClickListener(v -> openDropdown());
 
         buildChips();
         langGroup.setSaveEnabled(false); toneGroup.setSaveEnabled(false); lengthGroup.setSaveEnabled(false); resLangGroup.setSaveEnabled(false);
@@ -231,6 +233,7 @@ public class AnnounceAiSheet extends BottomSheetDialogFragment {
 
     @Override public void onDestroyView() {
         if (root != null) root.removeCallbacks(tick);
+        if (dropdown != null) { dropdown.dismiss(); dropdown = null; }   // the panel is its own window: closed on rotation
         cancelCall();                                                    // a late result after the sheet closed is ignored
         if (confirm != null) { confirm.dismiss(); confirm = null; }
         draftState = null; service = null; resultShown = false;
@@ -250,6 +253,7 @@ public class AnnounceAiSheet extends BottomSheetDialogFragment {
             bh.setState(BottomSheetBehavior.STATE_EXPANDED);
         }
         if (getDialog().getWindow() != null) getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        if (autoOpenPending && dropdown != null) { autoOpenPending = false; dropdown.showWhenReady(); }        // once, so the owner can start typing to search
     }
 
     @Override public void onSaveInstanceState(@NonNull Bundle out) {
@@ -263,46 +267,53 @@ public class AnnounceAiSheet extends BottomSheetDialogFragment {
 
     /* ---------- stages ---------- */
 
+    private void openDropdown() {
+        if (dropdown == null || resultShown) return;
+        dropdown.setSelected(state.type());
+        dropdown.showWhenReady();
+    }
+
+    /** The owner chose a type in the dropdown: the field shows it and the form below is filled for it. The same type again changes nothing. */
     private void pick(AnnounceType t) {
         hideKeyboard();
+        if (!AnnounceTypePickerRules.isFreshPick(state.type(), t)) return;
+        boolean changing = state.type() != null;                         // a later change keeps language / tone / length / emoji
         state.pick(t);
-        bindType(t, true);
+        dropdown.setSelected(t);
+        bindType(t, true, changing);
         render();
     }
 
     private boolean goBack() {
         hideKeyboard();
-        if (resultShown) {                                              // stage C: Back = Cancel while writing, else Edit details
+        if (resultShown) {                                              // draft: Back = Cancel while writing, else Edit details
             if (draftState != null && draftState.loading()) cancelLoading(); else backToForm();
             return true;
         }
-        boolean handled = state.back();
-        if (handled) render();
-        return handled;
+        return false;                                                   // on the form Back closes the sheet
     }
 
     private void render() {
         boolean result = resultShown && draftState != null;
-        boolean form = !result && state.stage() == AnnounceFormState.Stage.DETAILS;
-        stageList.setVisibility(!result && !form ? View.VISIBLE : View.GONE);
-        stageForm.setVisibility(form ? View.VISIBLE : View.GONE);
+        AnnounceType chosen = state.type();
+        boolean details = !result && AnnounceTypePickerRules.showDetails(chosen);
+        stageForm.setVisibility(result ? View.GONE : View.VISIBLE);
         stageResult.setVisibility(result ? View.VISIBLE : View.GONE);
-        backBtn.setVisibility(form || result ? View.VISIBLE : View.GONE);
-        backBtn.setContentDescription(getString(result ? R.string.announce_back_details_cd : R.string.announce_back_cd));
-        titleView.setText(result ? getString(R.string.announce_result_title)
-                : form ? res(state.type().titleName(), state.type().id) : getString(R.string.announce_pick_type_title));
+        detailsGroup.setVisibility(details ? View.VISIBLE : View.GONE);
+        writeBtn.setVisibility(details ? View.VISIBLE : View.GONE);
+        typeStart.setVisibility(AnnounceTypePickerRules.showDetails(chosen) ? View.GONE : View.VISIBLE);
+        typeInput.setText(chosen == null ? "" : res(chosen.titleName(), chosen.id));
+        typeLayout.setHint(getString(chosen == null ? R.string.announce_type_hint : R.string.announce_type_label));
+        backBtn.setVisibility(result ? View.VISIBLE : View.GONE);
+        titleView.setText(getString(result ? R.string.announce_result_title : R.string.announce_pick_type_title));
         if (result) renderResult();
     }
 
-    private void filterList() {
-        List<AnnounceType> shown = AnnounceFormState.filter(AnnounceType.ALL, search.getText() == null ? "" : search.getText().toString(),
-                t -> res(t.titleName(), t.id));
-        adapter.submit(shown);
-        emptyView.setVisibility(shown.isEmpty() ? View.VISIBLE : View.GONE);
-    }
+    /** Fills the form for a type. {@code fresh} = the owner just picked it: empty inputs, remembered options. After a rotation the system restores the texts. */
+    private void bindType(AnnounceType t, boolean fresh) { bindType(t, fresh, false); }
 
-    /** Fills stage B for a type. {@code fresh} = the owner just picked it: empty inputs, remembered options. After a rotation the system restores the texts. */
-    private void bindType(AnnounceType t, boolean fresh) {
+    /** {@code keepOptions} = the owner switched from another type: the inputs are cleared but language, tone, length, emoji and sign-off stay as they are. */
+    private void bindType(AnnounceType t, boolean fresh, boolean keepOptions) {
         typeDesc.setText(res(t.descName(), ""));
         for (int i = 0; i < SLOTS; i++) {
             if (i >= t.fields.size()) { fieldLayouts[i].setVisibility(View.GONE); continue; }
@@ -314,6 +325,7 @@ public class AnnounceAiSheet extends BottomSheetDialogFragment {
             fieldLayouts[i].setError(null);
             if (fresh) fieldInputs[i].setText("");
         }
+        if (keepOptions) { closingLayout.setVisibility(closingSwitch.isChecked() ? View.VISIBLE : View.GONE); return; }
         Context c = requireContext();
         AnnounceFormState.Options o = AnnounceFormState.defaults(t, AppPrefs.announceLang(c), AppPrefs.announceTone(c), AppPrefs.announceLength(c), AppPrefs.announceEmoji(c));
         AnnounceType.Lang lang = o.lang; AnnounceType.Tone tone = o.tone; AnnounceType.Length length = o.length;
@@ -609,56 +621,5 @@ public class AnnounceAiSheet extends BottomSheetDialogFragment {
     private abstract static class SimpleWatcher implements TextWatcher {
         @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
         @Override public void onTextChanged(CharSequence s, int a, int b, int c) { }
-    }
-
-    /* ---------- stage A list ---------- */
-
-    private interface OnPick { void pick(AnnounceType t); }
-
-    private final class TypeAdapter extends RecyclerView.Adapter<TypeAdapter.Holder> {
-        private final OnPick onPick;
-        private List<AnnounceType> items = AnnounceType.ALL;
-        TypeAdapter(OnPick onPick) { this.onPick = onPick; }
-
-        void submit(List<AnnounceType> l) { items = l; notifyDataSetChanged(); }
-
-        @NonNull @Override public Holder onCreateViewHolder(@NonNull ViewGroup p, int viewType) {
-            return new Holder(LayoutInflater.from(p.getContext()).inflate(R.layout.item_announce_type, p, false));
-        }
-
-        @Override public void onBindViewHolder(@NonNull Holder h, int position) {
-            final AnnounceType t = items.get(position);
-            String title = res(t.titleName(), t.id), desc = res(t.descName(), "");
-            h.icon.setImageResource(drawable(t.icon));
-            h.title.setText(title);
-            h.desc.setText(desc);
-            h.desc.setVisibility(desc.isEmpty() ? View.GONE : View.VISIBLE);
-            String badgeName = AnnounceFormState.badgeStringName(t);
-            Context c = h.itemView.getContext();
-            if (badgeName == null) {
-                h.badge.setVisibility(View.GONE);
-                h.itemView.setContentDescription(getString(R.string.announce_type_row_cd, title, desc));
-            } else {
-                String badge = res(badgeName, "");
-                boolean urgent = t.isUrgent();
-                h.badge.setText(badge);
-                h.badge.setBackgroundResource(urgent ? R.drawable.bg_ann_badge_urgent : R.drawable.bg_ann_badge_important);
-                h.badge.setTextColor(ContextCompat.getColor(c, urgent ? R.color.bofo_error_deep : R.color.bofo_text_2));
-                h.badge.setVisibility(View.VISIBLE);
-                h.itemView.setContentDescription(getString(R.string.announce_type_row_urgency_cd, title, badge, desc));
-            }
-            h.itemView.setOnClickListener(v -> onPick.pick(t));
-        }
-
-        @Override public int getItemCount() { return items.size(); }
-
-        final class Holder extends RecyclerView.ViewHolder {
-            final ImageView icon; final TextView title, desc, badge;
-            Holder(@NonNull View v) {
-                super(v);
-                icon = v.findViewById(R.id.ann_row_icon); title = v.findViewById(R.id.ann_row_title);
-                desc = v.findViewById(R.id.ann_row_desc); badge = v.findViewById(R.id.ann_row_badge);
-            }
-        }
     }
 }

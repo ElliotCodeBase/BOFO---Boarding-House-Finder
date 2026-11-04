@@ -62,6 +62,30 @@ Do each on a real phone or emulator and tick it.
 - [ ] Type one type in each of the 4 languages; a native speaker reads the Filipino, Cebuano and Taglish drafts.
 - [ ] Rows 48dp high, no overlapping text with font size set to Large.
 
+### 4b. v2.4.7: floating Announce button + type dropdown (owner account; real phone and a 320dp emulator)
+- [ ] **Owner:** the **Announce** button shows at the bottom right of the group chat, above the message box. **Student account:** it never shows.
+- [ ] Tap it: the icon turns into an X, a light scrim dims the chat, and two pills slide up: **Write with AI** (filled, sparkle) and **Write it myself** (outlined, pencil). Each has a subtitle.
+- [ ] **Write with AI** opens the Announce screen with the sheet open. **Write it myself** opens the Announce screen without the sheet.
+- [ ] Tap the scrim, tap the X, or press system Back: the speed-dial closes first (Back does not leave the chat). A second Back leaves the chat.
+- [ ] **AI switched off by an admin:** tapping the button opens the manual Announce screen directly, no speed-dial.
+- [ ] The 3-dot menu of the chat no longer has "Write announcement with AI" or "New announcement". Pinned announcements, Group info and invite code, and Leave group (students) are still there.
+- [ ] Scroll the chat down: the button shrinks to the icon. Scroll up or reach the top: it extends again.
+- [ ] Tap the message box / open the keyboard: the button hides. Close the keyboard (and leave the box): it comes back. Airplane mode, loading and the load-error screen: hidden.
+- [ ] The button never covers the last message (scroll to the bottom), the send button, or the message box on a **320dp** screen. No Ask BOFO bubble floats in the group chat.
+- [ ] Phone setting "Remove animations" on: the speed-dial opens and closes without motion, nothing stuck.
+- [ ] **Rotate** with the speed-dial open: it is closed after rotation, no stuck scrim, the button still works.
+- [ ] **TalkBack:** the button reads "Create announcement" and its open/closed state; each pill reads its title and subtitle; touch targets are at least 48dp.
+- [ ] **Other theme (orange):** the button, pills and scrim use the theme colours, text readable.
+- [ ] AI sheet opens on the form with only the **Announcement type** dropdown and the line "Choose what you want to announce to start"; the details and **Write for me** are hidden. The dropdown opens by itself once and the keyboard opens.
+- [ ] Type "water": the list filters live to Water interruption. Type "zzz": "No matching type" shows. The clear (x) button empties the search.
+- [ ] The chosen type has a check mark when the dropdown is opened again. Picking it again changes nothing (typed details kept).
+- [ ] Pick a type: the field shows its title and the form fills in. Type some details, change the type: the details are cleared, language / tone / length / emoji are kept.
+- [ ] Rotate with the dropdown open: it closes, no crash, no automatic re-open. Rotate on the form: the chosen type and the typed details are kept.
+- [ ] **320dp with the keyboard open:** the dropdown panel stays fully visible and scrolls; after picking, **Write for me** is reachable.
+- [ ] Back on the form closes the sheet. Back on the draft returns to the form (as before). The back arrow is only shown on the draft.
+- [ ] **Write for me** still produces a draft; **Use this** still copies it into the Announce form (asks first if the form has text).
+- [ ] Unit tests: `AnnounceFabRulesTest`, `AnnounceTypePickerRulesTest` (new) and `AnnounceFormStateTest`, `AnnounceDraftStateTest`, `AnnounceTypeTest`, `AnnounceErrorsTest` all pass (`gradlew testDebugUnitTest`); `gradlew assembleDebug` installs.
+
 ## 5. Step 7 run log (what actually ran)
 - `node --experimental-strip-types --test supabase/functions/bofo-announce/announce.test.ts` -> 21 tests, 21 pass, 0 fail (Node v22.23.4).
 - JVM tests, stand-in JUnit + org.json (sandbox has no real jars / Gradle): `AnnounceFormStateTest` 12 of 12 and `AnnounceDraftStateTest` 18 of 18 pass with the restored Step 5 files. NOT re-run: `AnnounceRulesTest`, `AnnounceTypeTest`, `AnnounceDraftTest`, `AnnounceErrorsTest`, `AnnounceAiServiceTest` (need real org.json); earlier steps ran them (Step 4: 44, Step 5: 56 with real JUnit).

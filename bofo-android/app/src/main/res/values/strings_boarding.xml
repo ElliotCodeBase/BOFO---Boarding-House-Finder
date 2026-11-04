@@ -83,7 +83,6 @@
         <item quantity="other">Announcement posted to %1$d houses.</item>
     </plurals>
     <string name="announce_no_groups">You have no boarding house with a group yet.</string>
-    <string name="boarding_menu_announce">New announcement</string>
     <string name="boarding_pin">Pin announcement</string>
     <string name="boarding_unpin">Unpin announcement</string>
     <string name="boarding_edit">Edit announcement</string>

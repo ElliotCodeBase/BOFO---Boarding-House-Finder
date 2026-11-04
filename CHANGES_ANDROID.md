@@ -1,3 +1,14 @@
+# v2.4.7 - Floating Announce button in the group chat + searchable announcement type
+- **Floating Announce button (owner only).** In your house group chat there is now an **Announce** button at the bottom right, just above the message box. Tap it: two choices slide up, **Write with AI** (BOFO AI writes the draft) and **Write it myself** (type your own title and message). Tap the dimmed chat, the X or Back to close it. It shrinks to an icon while you scroll down and hides while you type. If an admin switched BOFO AI off, the button opens the manual Announce screen directly.
+- The 3-dot menu of the group chat no longer has "Write announcement with AI" and "New announcement" (they are the new button now). Pinned announcements, Group info and invite code, and Leave group stay.
+- **Announcement type is now a searchable dropdown** in the Write-with-AI sheet. The sheet opens straight on the form with one **Announcement type** field; tap it, type a word (for example "water") and pick. The first time, the dropdown opens by itself. Changing the type clears the details you typed but keeps language, tone, length and emoji. The old full list of types is gone.
+- How to get there: owner > house group chat > floating **Announce** button > **Write with AI** > **Announcement type**.
+- If something goes wrong:
+  - Button missing: you are not signed in as the owner of this house, or the chat is still loading / offline / the keyboard is open. (Missing **Write with AI** only: the admin switch **BOFO AI for users** is OFF.)
+  - Dropdown looks empty: the search box still has text. Tap the x in the search box to clear it.
+  - Choices or dimmed screen stuck: press Back or tap the dimmed area; leaving the chat also closes it.
+- Version 2.4.7 (versionCode 20407). No server change. Not compiled or run on a device in the sandbox that made this change: build and test it (`gradlew testDebugUnitTest`, `gradlew assembleDebug`) before releasing.
+
 # v2.4.6 - Fix: AI drafts always came from the template ("BOFO AI is busy")
 - Cause (from the live function logs): the free OpenRouter models in `LLM_MODELS` answered HTTP 429 (rate limited) or timed out, and the function only tried 3 models once.
 - `bofo-announce` now tries up to 6 models and retries the ones that said 429 once after 2 s (8 s per model, 32 s total, under the app's 40 s limit). Deployed to the live project as function version 2.

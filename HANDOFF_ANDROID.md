@@ -1,3 +1,8 @@
+# Handoff (Android) - v2.4.7: floating Announce button + searchable type dropdown
+- `BoardingChatFragment`: owner-only `ExtendedFloatingActionButton` (`announce_fab`) in `fragment_boarding_chat.xml` with scrim + speed-dial (Write with AI -> `openAnnounce(true)`, Write it myself -> `openAnnounce()`); AI off -> the tap opens `openAnnounce()` directly. The two 3-dot items and their strings were removed. Logic in `util/AnnounceFabRules` (tested). The Ask BOFO bubble is hidden while a group chat is open (`ShellFragment.setChatFull`) and the owner chat is a full-screen destination, so nothing else floats there.
+- `AnnounceAiSheet` opens on the form; type chosen via `ui/AnnounceTypeDropdown` (anchored PopupWindow, search + list), rows in `ui/AnnounceTypeAdapter` (moved out of the sheet, now with a check mark), rules in `util/AnnounceTypePickerRules` (tested). Stage A UI removed; `AnnounceFormState` / `AnnounceDraftState` and the request flow untouched.
+- Version 2.4.7 / 20407. NOT compiled, NOT run on a device (sandbox had no javac / Gradle / Android SDK): run `gradlew testDebugUnitTest assembleDebug` and the checklist in `docs/ANNOUNCE_AI_TEST_MATRIX.md` section 4b first.
+
 # Handoff (Android) - v2.4.6: bofo-announce LLM retry (backend only; app unchanged)
 - Live logs showed `google/gemma-4-26b-a4b-it:free` and `google/gemma-4-31b-it:free` -> HTTP 429 and `nvidia/nemotron-3-ultra-550b-a55b:free` timing out, so every draft was `degraded:true` (template). `llm.ts` now uses up to 6 models + one 429 retry; function redeployed (v2). 22 node tests pass.
 - Real fix for quality: set more working model ids (or a paid one) in the `LLM_MODELS` secret.
