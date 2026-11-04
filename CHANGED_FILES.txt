@@ -1,6 +1,5 @@
+changed  supabase/functions/bofo-announce/llm.ts
+changed  supabase/functions/bofo-announce/announce.test.ts
 changed  bofo-android/app/build.gradle
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/AnnounceFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/BoardingChatFragment.java
-changed  bofo-android/app/src/main/res/values/strings_announce_ai.xml
 changed  CHANGES_ANDROID.md
 changed  HANDOFF_ANDROID.md

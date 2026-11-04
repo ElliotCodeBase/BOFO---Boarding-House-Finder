@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.4.6: bofo-announce LLM retry (backend only; app unchanged)
+- Live logs showed `google/gemma-4-26b-a4b-it:free` and `google/gemma-4-31b-it:free` -> HTTP 429 and `nvidia/nemotron-3-ultra-550b-a55b:free` timing out, so every draft was `degraded:true` (template). `llm.ts` now uses up to 6 models + one 429 retry; function redeployed (v2). 22 node tests pass.
+- Real fix for quality: set more working model ids (or a paid one) in the `LLM_MODELS` secret.
+
 # Handoff (Android) - v2.4.5: AI shortcut in the owner chat menu
 - `BoardingChatFragment` menu item `boarding_menu_announce_ai` -> `openAnnounce(true)` -> `AnnounceFragment.ARG_OPEN_AI` opens `AnnounceAiSheet` once (only when `state == null`). Version 2.4.5 / 20405. Live `app_flags.ai_enabled` was set to true on 2026-11-04. Not compiled here; not tested on a device.
 

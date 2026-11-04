@@ -194,7 +194,7 @@ test("llm: missing secrets -> null; falls to next model; strips think blocks; ac
     if (m === "m1") return { ok: false, status: 500, json: async () => ({}) };
     if (m === "m2") return { ok: true, json: async () => ({ choices: [{ message: { content: "<think>hmm</think>BAD" } }] }) };
     return { ok: true, json: async () => ({ choices: [{ message: { content: "<think>x</think>GOOD" } }] }) }; }) as any;
-  const llm = quiet(() => makeLlm({ key: "k", models: ["m1", "m2", "m3", "m4"] }, f))!;
+  const llm = quiet(() => makeLlm({ key: "k", models: ["m1", "m2", "m3", "m4"] }, f, 8000, 32000, 1))!;
   const out = await quiet(() => llm("s", "u", { maxTokens: 10, temperature: 0, accept: (t) => t === "GOOD" }));
   assert.equal(out, "GOOD"); assert.deepEqual(calls, ["m1", "m2", "m3"]);
 });
@@ -212,4 +212,15 @@ test("limits: 10/min and 40/day with retry_after; before 031 the day limit is sk
   assert.deepEqual(decide(day, now, false), { ok: true });
   assert.equal(isMissingKindColumn({ code: "42703" }), true); assert.equal(isMissingKindColumn({ code: "PGRST204" }), true);
   assert.equal(isMissingKindColumn({ message: 'column ai_usage.kind does not exist' }), true); assert.equal(isMissingKindColumn({ code: "23505", message: "dup" }), false); assert.equal(isMissingKindColumn(null), false);
+});
+
+test("llm: a model that answers 429 gets one more try after the pause; 6 models are tried", async () => {
+  const calls: string[] = []; let n429 = 0;
+  const f = (async (_u: string, init: any) => { const m = JSON.parse(init.body).model; calls.push(m);
+    if (m === "a" && n429++ === 0) return { ok: false, status: 429, json: async () => ({}) };
+    if (m === "a") return { ok: true, json: async () => ({ choices: [{ message: { content: "GOOD" } }] }) };
+    return { ok: false, status: 500, json: async () => ({}) }; }) as any;
+  const llm = quiet(() => makeLlm({ key: "k", models: ["a", "b", "c", "d", "e", "f", "g"] }, f, 8000, 32000, 1))!;
+  const out = await quiet(() => llm("s", "u", { maxTokens: 10, temperature: 0, accept: (t) => t === "GOOD" }));
+  assert.equal(out, "GOOD"); assert.deepEqual(calls, ["a", "b", "c", "d", "e", "f", "a"]);
 });
