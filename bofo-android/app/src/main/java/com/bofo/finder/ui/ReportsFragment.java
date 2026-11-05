@@ -73,8 +73,6 @@ public class ReportsFragment extends Fragment {
         b.title.setContentDescription(getString(R.string.rep_more_filters));
         if (getArguments() != null) filter = Math.max(0, Math.min(FILTERS.length - 1, getArguments().getInt("filter", 0)));     // Admin Home preselects
         showTitle();
-        b.exportCsv.setVisibility(View.VISIBLE);
-        b.exportCsv.setOnClickListener(v -> exportCsv());
         rows = new AdminRowAdapter(requireContext());
         b.list.setAdapter(rows);
         chrome = new AdminListChrome(b, AdminListRules.reportsChip(filter), new AdminListChrome.Host() {
@@ -166,18 +164,6 @@ public class ReportsFragment extends Fragment {
     private boolean matchesQuery(JSONObject x) {
         return AdminListRules.matches(chrome.query(), reported(x), reporter(x), nullToEmpty(x.optString("bh_name", "")),
                 ReportDialog.reasonLabel(requireContext(), x.optString("reason")), nullToEmpty(x.optString("details", "")));
-    }
-
-    /** v2.8.0: the reports now in the list (same search), as CSV: id, date, reason key, status. No names and no details text. */
-    private void exportCsv() {
-        if (b == null) return;
-        List<String[]> out = new ArrayList<>();
-        for (JSONObject x : all) {
-            if (!matchesQuery(x)) continue;
-            out.add(new String[]{x.optString("id"), InsightRules.dayOf(x.optString("created_at", "")), x.optString("reason"), x.optString("status")});
-        }
-        if (out.isEmpty()) { ListArea.toast(this, getString(R.string.export_empty)); return; }
-        CsvShare.share(this, "reports.csv", CsvRules.document(new String[]{"id", "date", "reason", "status"}, out));
     }
 
     /** v2.8.0: show only the reports about one person (all statuses). */

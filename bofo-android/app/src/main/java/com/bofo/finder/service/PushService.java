@@ -68,6 +68,54 @@ public final class PushService {
         p.edit().putString(K_UID, uid).putString(K_TOKEN, token).putLong(K_AT, now).apply();
     }
 
+    public enum Reg { OK, OFF, NO_FIREBASE, NO_SESSION, OS_BLOCKED }
+
+    /**
+     * v2.9.5: Settings > Notifications. Registers this phone NOW (skips the "registered recently" shortcut) and says what happened,
+     * so the switch can tell the truth. Blocking: call from a background thread (Async.run).
+     */
+    public static Reg registerNowBlocking(Context app, String realRole) throws Exception {
+        if (!AppPrefs.pushEnabled(app)) return Reg.OFF;
+        if (!firebaseReady(app)) return Reg.NO_FIREBASE;
+        if (!AuthService.get().hasSession()) return Reg.NO_SESSION;
+        if (!NotificationManagerCompat.from(app).areNotificationsEnabled()) return Reg.OS_BLOCKED;
+        String uid = AuthService.get().userId();
+        String token = Tasks.await(FirebaseMessaging.getInstance().getToken());
+        SharedPreferences p = sp(app);
+        if (realRole != null && !realRole.isEmpty()) p.edit().putString(K_ROLE, realRole).apply();
+        SupabaseClient.get().rpc("register_push_token", new JSONObject().put("p_token", token).put("p_app_version", BuildConfig.VERSION_NAME));
+        p.edit().putString(K_UID, uid).putString(K_TOKEN, token).putLong(K_AT, System.currentTimeMillis()).apply();
+        return Reg.OK;
+    }
+
+    /**
+     * v2.9.5: asks the server to push a test to THIS account (rpc send_test_push, migration 037) and reads the edge function's answer.
+     * Returns "not_set_up" | "no_device" | "sent" | "no_answer" | "failed:<text>". Blocking (about 3 to 9 s).
+     */
+    public static String testBlocking() throws Exception {
+        JSONObject r = SupabaseClient.get().rpc("send_test_push", new JSONObject());
+        if (!"sent".equals(r.optString("stage"))) return "not_set_up";
+        long id = r.optLong("request_id", -1);
+        for (int i = 0; i < 3; i++) {
+            Thread.sleep(3000);
+            JSONObject a = SupabaseClient.get().rpc("push_test_result", new JSONObject().put("rid", id));
+            if (!a.optBoolean("ready", false)) continue;
+            int code = a.optInt("status_code", 0);
+            String body = a.isNull("answer") ? "" : a.optString("answer");
+            if (code == 200) {
+                try {
+                    JSONObject o = new JSONObject(body);
+                    if (o.optInt("sent", 0) > 0) return "sent";
+                    if ("no_device_token".equals(o.optString("reason"))) return "no_device";
+                    return "failed:" + body;
+                } catch (Exception notJson) { return "failed:" + body; }
+            }
+            String err = a.isNull("error") ? "" : a.optString("error");
+            return "failed:HTTP " + code + " " + (body.isEmpty() ? err : body);
+        }
+        return "no_answer";
+    }
+
     /** FirebaseMessagingService.onNewToken: the system rotated the token. Only matters while someone is signed in and the switch is on. */
     public static void onNewToken(Context ctx, String token) {
         final Context app = ctx.getApplicationContext();

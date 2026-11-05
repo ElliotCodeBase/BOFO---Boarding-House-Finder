@@ -9,6 +9,7 @@
         <item quantity="other">%d other waiting reports about this person</item>
     </plurals>
     <string name="export_csv">Export CSV</string>
+    <string name="export_csv_sub">Reports or payments as a file</string>
     <string name="export_share">Share the CSV file</string>
     <string name="export_empty">Nothing to export.</string>
     <string name="export_failed">Could not create the file.</string>

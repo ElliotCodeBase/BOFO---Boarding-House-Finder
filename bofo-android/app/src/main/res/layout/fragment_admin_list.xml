@@ -19,21 +19,6 @@
             android:paddingBottom="8dp"
             android:textAppearance="@style/Text.Bofo.Title" />
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
-
-        <!-- v2.8.0: only Reports and Payments turn this on -->
-        <Button
-            android:id="@+id/exportCsv"
-            style="@style/Widget.Bofo.Button.Tint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:minHeight="48dp"
-            android:text="@string/export_csv"
-            android:visibility="gone" />
     </LinearLayout>
 
     <!-- v2.4.13: search + filter chips + offline banner; hidden until a screen turns them on (AdminListChrome) -->

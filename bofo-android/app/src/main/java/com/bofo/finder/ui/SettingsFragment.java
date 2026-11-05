@@ -48,8 +48,9 @@ public class SettingsFragment extends Fragment {
         b.useLocation.setChecked(AppPrefs.useLocation(requireContext()));
         b.useLocation.setOnCheckedChangeListener((btn, on) -> AppPrefs.setUseLocation(requireContext(), on));
         // v2.3.0: Notifications. Checked state first, listener second. On = ask the system permission if needed, then register this phone; off = remove it from the server.
-        b.pushEnabled.setChecked(AppPrefs.pushEnabled(requireContext()));
+        b.pushEnabled.setChecked(AppPrefs.pushEnabled(requireContext()) && androidx.core.app.NotificationManagerCompat.from(requireContext()).areNotificationsEnabled());
         b.pushEnabled.setOnCheckedChangeListener((btn, on) -> setPush(on));
+        b.pushTest.setOnClickListener(v -> sendTest());
         // v2.3.2: admin only: switch the BOFO AI on/off for everyone (saved on the server, app_flags 'ai_enabled')
         b.aiEnabled.setChecked(com.bofo.finder.util.AiFlag.on());
         b.aiEnabled.setOnCheckedChangeListener((btn, on) -> setAi(on));
@@ -108,6 +109,7 @@ public class SettingsFragment extends Fragment {
         b.switchRole.setText(role == Role.OWNER ? R.string.settings_switch_student : R.string.settings_switch_owner);
         b.ownerAgreement.setVisibility(role == Role.OWNER ? View.VISIBLE : View.GONE);
         b.adminMfa.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
+        b.pushTest.setVisibility(isAdmin() ? View.VISIBLE : View.GONE);        // v2.9.5: test + server log text are admin only
         b.adminViewAs.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
         b.adminAiRow.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
         b.adminLockRow.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
@@ -168,8 +170,8 @@ public class SettingsFragment extends Fragment {
     private final androidx.activity.result.ActivityResultLauncher<String> notifPermission = registerForActivityResult(
             new androidx.activity.result.contract.ActivityResultContracts.RequestPermission(), granted -> {
                 if (!isAdded()) return;
-                if (granted) PushService.syncAsync(requireContext(), AuthRouter.realRole.db());
-                else message(getString(R.string.push_blocked_hint));
+                if (granted) registerAndReport();
+                else { pushFailed(getString(R.string.push_blocked_hint)); openOsNotificationSettings(); }
             });
 
     private void setAi(boolean on) {
@@ -184,18 +186,95 @@ public class SettingsFragment extends Fragment {
                 });
     }
 
+    /** v2.9.5: the real account type (an admin who views the app as a student is still an admin). */
+    private static boolean isAdmin() { return AuthRouter.realRole == Role.ADMIN; }
+
+    /** Server / registration details (error text, push log) only for admins; everyone else gets one plain line. */
+    private String registerError(Throwable e) {
+        return isAdmin() ? getString(R.string.push_err_register, ErrorText.full("", e)) : getString(R.string.push_err_generic);
+    }
+
+    private void setPushChecked(boolean on) {
+        if (b == null) return;
+        b.pushEnabled.setOnCheckedChangeListener(null);
+        b.pushEnabled.setChecked(on);
+        b.pushEnabled.setOnCheckedChangeListener((btn, o) -> setPush(o));
+    }
+
+    /** v2.9.5: the switch only stays ON when this phone really got registered; otherwise it flips back and says why. */
+    private void pushFailed(String text) {
+        AppPrefs.setPushEnabled(requireContext().getApplicationContext(), false);
+        setPushChecked(false);
+        message(text);
+        android.widget.Toast.makeText(requireContext().getApplicationContext(), text, android.widget.Toast.LENGTH_LONG).show();
+    }
+
+    private void openOsNotificationSettings() {
+        try {
+            startActivity(new android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName()));
+        } catch (Exception ignored) { }
+    }
+
     private void setPush(boolean on) {
         final android.content.Context app = requireContext().getApplicationContext();
         AppPrefs.setPushEnabled(app, on);
-        if (!on) { PushService.disableAsync(app); return; }
-        if (!PushService.firebaseReady(app)) { message(getString(R.string.push_unavailable_hint)); return; }
+        if (!on) { PushService.disableAsync(app); message(""); return; }
+        if (!PushService.firebaseReady(app)) { pushFailed(getString(R.string.push_unavailable_hint)); return; }
         if (android.os.Build.VERSION.SDK_INT >= 33 && androidx.core.content.ContextCompat.checkSelfPermission(app, android.Manifest.permission.POST_NOTIFICATIONS)
                 != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             notifPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS);
             return;
         }
-        if (!androidx.core.app.NotificationManagerCompat.from(app).areNotificationsEnabled()) message(getString(R.string.push_blocked_hint));
-        PushService.syncAsync(app, AuthRouter.realRole.db());
+        registerAndReport();
+    }
+
+    private void registerAndReport() {
+        final android.content.Context app = requireContext().getApplicationContext();
+        Async.run(() -> PushService.registerNowBlocking(app, AuthRouter.realRole.db()), (PushService.Reg r) -> {
+            if (b == null) return;
+            switch (r) {
+                case OK: message(getString(R.string.push_on_ok)); android.widget.Toast.makeText(app, R.string.push_on_ok, android.widget.Toast.LENGTH_SHORT).show(); break;
+                case OS_BLOCKED: pushFailed(getString(R.string.push_blocked_hint)); openOsNotificationSettings(); break;
+                case NO_SESSION: pushFailed(getString(R.string.push_err_session)); break;
+                case NO_FIREBASE: pushFailed(getString(R.string.push_unavailable_hint)); break;
+                default: break;
+            }
+        }, e -> { if (b != null) pushFailed(registerError(e)); });
+    }
+
+    /** v2.9.6: the test result is a pop-up next to the button (the old line at the top of Settings was off-screen). */
+    private void testResult(String text) {
+        if (b == null || !isAdded()) return;
+        b.pushTest.setEnabled(true);
+        b.pushTest.setText(R.string.push_test);
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.push_test).setMessage(text).setPositiveButton(android.R.string.ok, null).show();
+    }
+
+    private void sendTest() {
+        final android.content.Context app = requireContext().getApplicationContext();
+        if (!isAdmin()) return;
+        if (b.pushTest.isEnabled() == false) return;
+        if (!AppPrefs.pushEnabled(app)) { testResult(getString(R.string.push_test_off)); return; }
+        b.pushTest.setEnabled(false);
+        b.pushTest.setText(R.string.push_testing);
+        Async.run(() -> {
+            PushService.Reg r = PushService.registerNowBlocking(app, AuthRouter.realRole.db());      // the test also repairs a missing registration
+            if (r != PushService.Reg.OK) return "reg:" + r.name();
+            return PushService.testBlocking();
+        }, (String res) -> {
+            if (b == null) return;
+            if (res.startsWith("reg:")) {
+                PushService.Reg r = PushService.Reg.valueOf(res.substring(4));
+                testResult(getString(r == PushService.Reg.OS_BLOCKED ? R.string.push_blocked_hint : r == PushService.Reg.NO_SESSION ? R.string.push_err_session : r == PushService.Reg.NO_FIREBASE ? R.string.push_unavailable_hint : R.string.push_test_off));
+                if (r == PushService.Reg.OS_BLOCKED) openOsNotificationSettings();
+            } else if ("sent".equals(res)) testResult(getString(R.string.push_test_sent));
+            else if ("not_set_up".equals(res)) testResult(getString(R.string.push_test_server));
+            else if ("no_device".equals(res)) testResult(getString(R.string.push_test_nodevice));
+            else if ("no_answer".equals(res)) testResult(getString(R.string.push_test_unknown));
+            else testResult(getString(R.string.push_test_failed, res.startsWith("failed:") ? res.substring(7) : res));
+        }, e -> { if (b != null) testResult(registerError(e)); });
     }
 
     private void signOut() {

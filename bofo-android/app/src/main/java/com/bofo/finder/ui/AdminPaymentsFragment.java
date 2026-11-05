@@ -53,8 +53,6 @@ public class AdminPaymentsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
         b = FragmentAdminListBinding.inflate(inflater, container, false);
         b.title.setText(R.string.tab_admin_payments);
-        b.exportCsv.setVisibility(View.VISIBLE);
-        b.exportCsv.setOnClickListener(v -> exportCsv());
         rows = new AdminRowAdapter(requireContext());
         b.list.setAdapter(rows);
         int start = getArguments() == null ? AdminListRules.WAITING : getArguments().getInt("filter", AdminListRules.WAITING);     // Admin Home preselects the chip
@@ -72,18 +70,6 @@ public class AdminPaymentsFragment extends Fragment {
 
     @Override
     public void onResume() { super.onResume(); reload(); }
-
-    /** v2.8.0: the payments now in the list (same chip and search), as CSV: id, date, amount, status. No names, places or reference numbers. */
-    private void exportCsv() {
-        if (b == null) return;
-        List<String[]> out = new ArrayList<>();
-        for (JSONObject x : items) {
-            out.add(new String[]{x.optString("id"), InsightRules.dayOf(x.optString("created_at", "")),
-                    String.format(java.util.Locale.ROOT, "%.2f", x.optDouble("amount_php", 0)), x.optString("status")});
-        }
-        if (out.isEmpty()) { ListArea.toast(this, getString(R.string.export_empty)); return; }
-        CsvShare.share(this, "payments.csv", CsvRules.document(new String[]{"id", "date", "amount_php", "status"}, out));
-    }
 
     private String statusText(String s) {
         switch (BoostRules.pay(s)) {

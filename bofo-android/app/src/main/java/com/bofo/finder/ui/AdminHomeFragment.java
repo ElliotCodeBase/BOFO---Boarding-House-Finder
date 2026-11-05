@@ -52,6 +52,10 @@ public class AdminHomeFragment extends Fragment {
         ((TextView) log.findViewById(R.id.card_count)).setText("\u203A");
         ((TextView) log.findViewById(R.id.card_sub)).setText(R.string.act_log_sub);
         log.setContentDescription(getString(R.string.act_log_title) + ". " + getString(R.string.act_log_sub));
+        View exp = card(inflater, R.string.export_csv, v -> pickExport());                       // v2.9.7: the ONE place to export CSV files
+        ((TextView) exp.findViewById(R.id.card_count)).setText("\u203A");
+        ((TextView) exp.findViewById(R.id.card_sub)).setText(R.string.export_csv_sub);
+        exp.setContentDescription(getString(R.string.export_csv) + ". " + getString(R.string.export_csv_sub));
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
         b.swipe.setOnRefreshListener(this::reload);
         return b.getRoot();
@@ -66,6 +70,33 @@ public class AdminHomeFragment extends Fragment {
         v.setOnClickListener(click);
         b.cards.addView(v);
         return v;
+    }
+
+    /** v2.9.7: Export CSV lives only here. Everything in the table (not the tab's current filter): id, date, reason or amount, status. No names, places or details. */
+    private void pickExport() {
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.export_csv)
+                .setItems(new CharSequence[]{getString(R.string.tab_reports), getString(R.string.tab_admin_payments)}, (d, which) -> exportCsv(which == 0))
+                .show();
+    }
+
+    private void exportCsv(boolean reports) {
+        Async.run(() -> {
+            java.util.List<String[]> out = new java.util.ArrayList<>();
+            if (reports) {
+                org.json.JSONArray a = com.bofo.finder.service.SupabaseClient.get().select("reports_admin_v", "order=created_at.desc&limit=1000&select=id,reason,status,created_at");
+                for (int i = 0; i < a.length(); i++) { org.json.JSONObject x = a.getJSONObject(i); out.add(new String[]{x.optString("id"), InsightRules.dayOf(x.optString("created_at", "")), x.optString("reason"), x.optString("status")}); }
+            } else {
+                org.json.JSONArray a = new com.bofo.finder.service.BoostService().allPayments();
+                for (int i = 0; i < a.length(); i++) { org.json.JSONObject x = a.getJSONObject(i); out.add(new String[]{x.optString("id"), InsightRules.dayOf(x.optString("created_at", "")), String.format(java.util.Locale.ROOT, "%.2f", x.optDouble("amount_php", 0)), x.optString("status")}); }
+            }
+            return out;
+        }, (java.util.List<String[]> out) -> {
+            if (b == null || !isAdded()) return;
+            if (out.isEmpty()) { ListArea.toast(this, getString(R.string.export_empty)); return; }
+            if (reports) CsvShare.share(this, "reports.csv", com.bofo.finder.util.CsvRules.document(new String[]{"id", "date", "reason", "status"}, out));
+            else CsvShare.share(this, "payments.csv", com.bofo.finder.util.CsvRules.document(new String[]{"id", "date", "amount_php", "status"}, out));
+        }, e -> { if (b != null && isAdded()) ListArea.toast(this, getString(R.string.export_failed)); });
     }
 
     private void openTab(int id, int filter) {

@@ -104,11 +104,6 @@ public class ShellFragment extends Fragment {
         owner = AuthRouter.role == com.bofo.finder.model.Role.OWNER;
         admin = AuthRouter.role == com.bofo.finder.model.Role.ADMIN;
         binding.dock.setTabs(tabsFor());
-        if (admin) {                                                    // v2.4.14: always show which mode and which account this is
-            String em = com.bofo.finder.service.AuthService.get().email();
-            binding.adminBanner.setText(em.isEmpty() ? getString(R.string.admin_banner) : getString(R.string.admin_banner_as, em));
-            binding.adminBanner.setVisibility(View.VISIBLE);
-        }
         if (admin) binding.bofoFab.setVisibility(View.GONE);           // the Ask BOFO assistant is for students looking for a place
         if (admin && AdminLock.locked) lock();                          // v2.9.0: a rotation must not unlock
         if (admin && AuthRouter.takeMfaPrompt()) view.post(() -> AdminMfaSheet.show(this, null));      // v2.0.119: ask for the 6-digit code once per sign-in
