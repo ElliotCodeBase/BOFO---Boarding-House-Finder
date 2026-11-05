@@ -68,6 +68,18 @@ public final class VerificationService {
     public JSONArray pending() throws Exception {
         return api.select("owner_verifications", "status=eq.pending&order=submitted_at.asc&select=*");
     }
+    /** v2.4.11: the decision on one request (status, reviewed_by, reviewed_at, rejection_reason); null when not found. No ID photos or numbers. */
+    public JSONObject decision(String verificationId) throws Exception {
+        JSONArray a = api.select("owner_verifications", "id=eq." + verificationId + "&select=status,reviewed_by,reviewed_at,rejection_reason");
+        return a.length() == 0 ? null : a.getJSONObject(0);
+    }
+    /** v2.4.11: the reviewer's display name, "" when it cannot be read. */
+    public String reviewerName(String userId) {
+        try {
+            JSONArray a = api.select("users", "id=eq." + userId + "&select=full_name");
+            return a.length() == 0 ? "" : a.getJSONObject(0).optString("full_name", "");
+        } catch (Exception e) { return ""; }
+    }
     public String signed(String path) throws Exception { return api.signedUrl("id-verification", path, 120); }
     /** Reject (reason required). Approving goes through {@link #approve}: the server refuses the old approve path since v2.1.9. */
     public void decide(String verificationId, boolean approve, String reason) throws Exception {

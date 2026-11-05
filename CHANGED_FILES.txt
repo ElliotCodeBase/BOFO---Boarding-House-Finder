@@ -1,16 +1,12 @@
-BOFO v2.4.10 - Admin UI step 1 of 5 (not compiled, not run on a device)
+BOFO v2.4.11 - Admin UI step 2 of 5 (not compiled, not run on a device)
 changed  bofo-android/app/build.gradle
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
-changed  bofo-android/app/src/main/res/menu/bottom_nav_admin.xml
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/VerificationReviewFragment.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/service/VerificationService.java
+changed  bofo-android/app/src/main/res/layout/fragment_verification_review.xml
 changed  CHANGES_ANDROID.md
 changed  HANDOFF_ANDROID.md
-new      docs/ADMIN_UI_AUDIT.md
-new      bofo-android/app/src/main/java/com/bofo/finder/ui/AdminHomeFragment.java
-new      bofo-android/app/src/main/java/com/bofo/finder/service/AdminCountsService.java
-new      bofo-android/app/src/main/java/com/bofo/finder/util/AdminHomeRules.java
-new      bofo-android/app/src/test/java/com/bofo/finder/util/AdminHomeRulesTest.java
-new      bofo-android/app/src/main/res/layout/fragment_admin_home.xml
-new      bofo-android/app/src/main/res/layout/item_admin_home_card.xml
-new      bofo-android/app/src/main/res/drawable/bg_admin_role_tag.xml
-new      bofo-android/app/src/main/res/values/strings_admin_home.xml
+new      bofo-android/app/src/main/java/com/bofo/finder/ui/ZoomImageView.java
+new      bofo-android/app/src/main/java/com/bofo/finder/util/RejectReasonRules.java
+new      bofo-android/app/src/test/java/com/bofo/finder/util/RejectReasonRulesTest.java
+new      bofo-android/app/src/main/res/values/strings_review_admin.xml
 DELETE   (none)

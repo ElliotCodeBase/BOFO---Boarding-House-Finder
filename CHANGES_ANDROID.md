@@ -1,3 +1,12 @@
+# v2.4.11 - Admin ID review screen (Admin UI step 2 of 5)
+- **One photo at a time, one tap to switch.** ID front / ID back / Selfie buttons switch the large photo instantly. Pinch to zoom (up to 5x), drag when zoomed, double-tap to reset.
+- **Big buttons at the bottom.** Reject (left) and Approve (right) stay fixed at the bottom, easy to reach with the thumb. Approve still asks you to type the ID number from the photo.
+- **Reject with a reason.** Pick Photo is blurry, ID is expired, Face does not match, or Other, and add an optional note (Other needs a note).
+- **Who decided.** If the request was already decided (for example by another admin), the screen shows "Approved/Rejected by NAME on DATE" with the reason, and the buttons are hidden.
+- How to get there: Admin > Queue > tap a request.
+- If something goes wrong: a photo that cannot load shows a message above the photo; the decision line is simply missing if it cannot be read (offline).
+- Version 2.4.11 (versionCode 20411). No server change. Not compiled or run on a device in the sandbox that made this change.
+
 # v2.4.10 - Admin Home tab, tab badges, calmer admin top area (Admin UI step 1 of 5)
 - **Admin Home.** New first tab for admins. One card each for: IDs waiting for review, open reports, payments to check (pending or failed), unanswered AI questions (last 7 days), suspended users, banned users, listings taken down. Cards with waiting items show "Oldest waiting 3 days". Tap a card to open that list; pull down to refresh. When nothing is waiting it says "All caught up".
 - **Badges.** The Queue tab shows how many IDs are waiting; the Reports tab shows open reports.

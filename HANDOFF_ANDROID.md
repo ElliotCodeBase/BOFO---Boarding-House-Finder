@@ -1,3 +1,12 @@
+# Handoff (Android) - v2.4.11: Admin UI plan, step 2 of 5 done (ID review screen)
+- Next step: **Step 3 - safe decisions + quick actions** (confirm only destructive: ban / take down / delete; Undo snackbar 5 s where the server allows; long-press row = Approve / Reject / Open; apply to Queue, Reports, user and listing admin actions).
+- Changed `VerificationReviewFragment` + `fragment_verification_review.xml`: toggle group (3 photos, all loaded up front into 3 `ui/ZoomImageView`, no library), bottom bar Reject | Approve, reject dialog with chips (`util/RejectReasonRules`, tested) + note, `loadDecision()` shows reviewer + date + reason and hides the buttons when status is not pending (also re-read after a failed decision). `VerificationService` got `decision(vid)` and `reviewerName(id)` (read-only; no photos, no ID numbers). Strings in `strings_review_admin.xml` (prefix `vr_`).
+- "Side by side" was done as a one-tap switch (better on a phone). Glide is capped at 2048 px, no disk/memory cache, FLAG_SECURE kept, no URLs or personal data logged.
+- Reject reason is stored as plain English text in `owner_verifications.rejection_reason` (e.g. "ID is expired: ended 2023"); the server RPC is unchanged.
+- Step 3 note for undo: `review_verification` refuses non-pending requests, so an ID decision cannot be undone from the app without a new server function (do not fake it).
+- Checklist covered: reject with reason (code path). Still open on a device: pinch inside the screen on small phones, 360 dp, large font, dark theme, going offline mid-decision.
+- Version 2.4.11 / 20411. NOT compiled, NOT run on a device: run `gradlew testDebugUnitTest assembleDebug`.
+
 # Handoff (Android) - v2.4.10: Admin UI plan, step 1 of 5 done (Audit + Admin Home)
 - Plan: `BOFO-ADMIN-UI-PROMPT-5STEP.md` (user pastes it each step). Next step: **Step 2 - `VerificationReviewFragment` only** (ID/selfie switch + zoom, bottom Approve/Reject, reject reason chips + note, reviewed-by line).
 - New: `ui/AdminHomeFragment` + `fragment_admin_home.xml` + `item_admin_home_card.xml`, `service/AdminCountsService` (read-only selects returning only ids/timestamps), `util/AdminHomeRules` (+ test), `strings_admin_home.xml`, `bg_admin_role_tag`, `docs/ADMIN_UI_AUDIT.md`.
