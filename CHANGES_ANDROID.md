@@ -1,3 +1,12 @@
+# v2.4.10 - Admin Home tab, tab badges, calmer admin top area (Admin UI step 1 of 5)
+- **Admin Home.** New first tab for admins. One card each for: IDs waiting for review, open reports, payments to check (pending or failed), unanswered AI questions (last 7 days), suspended users, banned users, listings taken down. Cards with waiting items show "Oldest waiting 3 days". Tap a card to open that list; pull down to refresh. When nothing is waiting it says "All caught up".
+- **Badges.** The Queue tab shows how many IDs are waiting; the Reports tab shows open reports.
+- **Top area.** Title, today's date and an amber "Admin" tag.
+- How to get there: sign in as admin > Home (first tab).
+- If something goes wrong: a card shows "-" and "Could not load" when its number cannot be read (offline or no access); pull down to try again.
+- Version 2.4.10 (versionCode 20410). No server change. Not compiled or run on a device in the sandbox that made this change.
+- Audit of the admin screens: `docs/ADMIN_UI_AUDIT.md`.
+
 # v2.4.9 - Floating Announce button, Messages tab, Listings moved into the Dashboard (owner)
 - **Announce button.** In your house group chat the small megaphone next to the message box is gone. There is now a floating **Announce** button at the bottom right of the chat (owners only). Tap it to open the Announce form; **Write for me** is still inside the form.
 - **Messages tab.** For owners the bottom bar is now Dashboard, **Messages**, Create, Groups, Profile. Messages is your direct-chat list with students (with its unread badge). The Groups tab badge now counts only group messages. The messages icon next to Announce in the Groups header is removed.

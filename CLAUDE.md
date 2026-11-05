@@ -1,45 +1,32 @@
-## VERSION RULE (READ FIRST, overrides any older v2.0.N text below)
-- The app version line is **2.1.N**. Never use 2.0.N.
-- Before every change, read versionName and versionCode in bofo-android/app/build.gradle and bump them by +1 (patch). Do not trust version numbers written in old docs or in the chat.
-- Every pull request: bump the version shown in Settings, put it in the PR title, and add it at the top of CHANGES_ANDROID.md and HANDOFF_ANDROID.md.
-- Deliver every update, change or fix as a zip containing ONLY the changed files (plus CHANGED_FILES.txt), never the whole project.
-- Windows command block at the end of each reply: git checkout main, git pull, apply the zip, commit, push, then gh pr merge.
-- Before tokens run out, write or update HANDOFF_ANDROID.md and BOFO-AI-SMARTER-STATUS.md.
-# BOFO Finder - rules for Claude (READ THIS FIRST, EVERY SESSION)
+# BOFO Finder (Android) - rules for Claude (READ FIRST, EVERY SESSION)
 
-Read this file before doing anything, then only the top entry of `HANDOFF.md`. Do not read the rest of the repo unless the task needs it.
+Native Android app in `bofo-android/` (Java 17, Gradle Groovy, one Activity + Fragments, XML + ViewBinding, Material 3, no Kotlin in app code). Backend: Supabase (`supabase/`). `applicationId com.bofo.finder`, deep link `bofo://auth-callback`.
+Read this file, then only the top entry of `HANDOFF_ANDROID.md`. Do not read the rest of the repo unless the task needs it. Older history was removed from the repo; use git history if needed.
 
-## 1. Deliver changes as a CHANGES-ONLY zip (saves credit)
-- For every update, change or fix, NEVER send the whole project. Send ONE zip that contains ONLY the files you added or changed, in their real folders (e.g. `src/main/java/com/bofo/finder/ui/DirectionsCard.java`), so the user can unzip it over the project folder and overwrite.
-- Name it `BOFO-vX.Y.Z-changes.zip` (the new version). Put a `CHANGED_FILES.txt` inside listing each file as `changed`, `new` or `DELETE` (a zip cannot delete: list files to delete by hand there and in the chat).
-- Include the files the version bump touches (`config.properties`, `pom.xml`, `CHANGES.md`, `HANDOFF.md`), and nothing else. Never include the project zip, `target/`, `.git/`, or unchanged files.
-- Reply in a few lines: what was fixed, what zip to unzip, the PR title, the Windows commands (see HANDOFF.md for the repo path and push commands).
+## 1. Deliver changes as a CHANGES-ONLY zip
+- Never send the whole project. Send ONE zip `BOFO-android-vX.Y.Z-changes.zip` with only added/changed files in their real folders, plus `CHANGED_FILES.txt` (`changed` / `new` / `DELETE`; a zip cannot delete, so list deletions in the chat too).
+- Include the version-bump files (`bofo-android/app/build.gradle`, `CHANGES_ANDROID.md`, `HANDOFF_ANDROID.md`) and nothing else. Never include `build/`, `.git/` or unchanged files.
+- Reply in a few lines: what was fixed, which zip, the PR title, the commands below.
 
 ## 2. Spend as few tokens as possible
-- Find first, read second: `grep -n` for the symbol, then read only that line range. Do not open whole big files (`MapPane.java`, `BhDetailView.java`) to change ten lines.
-- Change files with small targeted edits, not full rewrites. Do not reformat code you are not changing.
-- Fix the cause once; batch related fixes into ONE version/zip instead of many tiny ones.
-- Do not re-explain the repo, do not paste code in the chat that is already in the zip, no long recaps.
-- Keep `HANDOFF.md` short: the newest 3 entries only. Move older ones to `docs/HANDOFF_ARCHIVE.md`.
-- No Maven/JavaFX in Claude's sandbox: do not try to build. Parse-check with `javac` only, and say that it was not run on screen.
-- Ask the user only when a wrong guess would be expensive; otherwise pick the sensible default and say it in one line.
+- `grep -n` first, then read only the needed line range. Never open whole big files to change a few lines.
+- Small targeted edits, no rewrites or reformatting. Batch related fixes into ONE version/zip.
+- No long recaps; do not paste code that is already in the zip.
+- Keep `HANDOFF_ANDROID.md` and `CHANGES_ANDROID.md` to the newest 3 entries; delete older ones (git history keeps them).
+- No Android SDK in the sandbox: never claim it builds or runs. Say it was not run.
+- Ask the user only when a wrong guess is expensive; otherwise pick a sensible default and say it in one line.
 
-## 3. Version and handoff (every change set / pull request)
-1. `src/main/resources/com/bofo/finder/config.properties` -> `app.version` (shown in Settings > About)
-2. `pom.xml` -> `<version>`, `<versionName>`, and `<versionCode>` +1
-3. Add a short entry at the top of `HANDOFF.md` and `CHANGES.md` naming the new version.
-4. Put the version in the pull request title (e.g. `vX.Y.Z - short summary`).
-5. Search the repo for the old version string and replace it everywhere (history entries excepted).
-Patch (x.y.Z) for fixes, minor (x.Y.0) for new features.
-- Before the token budget runs out, write/update `HANDOFF.md`.
+## 3. Version rule
+- The version line is **2.4.N+** (see `versionName` / `versionCode` in `bofo-android/app/build.gradle`; do not trust numbers in old docs or chat). Bump both by +1 (patch for fixes, minor for features) on every change set.
+- Version shown in Settings = `BuildConfig.VERSION_NAME`. Put it in the PR title and at the top of `CHANGES_ANDROID.md` and `HANDOFF_ANDROID.md`. Replace the old version string elsewhere (history entries excepted).
+- Before tokens run out, update `HANDOFF_ANDROID.md` and `BOFO-AI-SMARTER-STATUS.md`.
 
-## 4. Safety
-- Never commit `config.local.properties` or `KEYS.local.md`.
-- Supabase: changes to the Supabase project only with the user's current OK in this chat (an older note is not enough). Look at the existing tables first and say what was changed (also add a migration file under `supabase/migrations/`). Rules for AI database access: section 7.
+## 4. Where the project lives
+- Repo root on the user's PC: `C:\Users\user\bofo-finder` (open the `bofo-android` subfolder in Android Studio). Unzip INTO the repo root, overwriting. End replies with (PowerShell):
+  `git checkout main; git pull; Expand-Archive "$HOME\Downloads\<zip>" "C:\Users\user\bofo-finder" -Force`
+  `cd C:\Users\user\bofo-finder; git checkout -b <branch>; git add -A; git commit -m "<PR title>"; git push -u origin <branch>; gh pr merge`
 
-## 7. AI access to user data (v2.0.118, see docs/SECURITY.md)
-- Never read or print `auth.users`, `public.users` (names, phones, emails), chats, ID verifications, user agreements, favorites or AI chat logs. If a task seems to need them, stop and ask the user.
-- Never attribute anything (reviews, chats, favorites, listings, messages) to a real person's account. Demo and test data uses only test accounts (`@example.com`).
-- Prefer the restricted role `bofo_ai_dev` (migration 016) over an owner-level connector. Use the owner-level connector only for a schema change the user asked for in this chat, and write a migration file for it.
-- Before touching the live database, say in one line what will change; afterwards list exactly what changed. Select only the columns you need (never `select *` on user tables).
-- Never request, store or paste the postgres password or the service_role key.
+## 5. Safety
+- Never commit `local.properties`, `config.local.properties`, `KEYS.local.md`, keystores or any service_role key.
+- Supabase changes only with the user's current OK in this chat. Look at existing tables first, say what changed, and add a migration under `supabase/migrations/`.
+- AI access to user data (see `docs/SECURITY.md`): never read or print `auth.users`, `public.users`, chats, ID verifications, agreements, favorites or AI chat logs; if a task seems to need them, stop and ask. Never attribute data to a real person's account; demo data uses `@example.com` test accounts. Prefer role `bofo_ai_dev` (migration 016); use the owner-level connector only for a schema change asked for in this chat. Say in one line what will change before touching the live DB and list what changed after. Never `select *` on user tables. Never request or paste the postgres password or service_role key.

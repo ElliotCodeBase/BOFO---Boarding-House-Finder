@@ -1,3 +1,12 @@
+# Handoff (Android) - v2.4.10: Admin UI plan, step 1 of 5 done (Audit + Admin Home)
+- Plan: `BOFO-ADMIN-UI-PROMPT-5STEP.md` (user pastes it each step). Next step: **Step 2 - `VerificationReviewFragment` only** (ID/selfie switch + zoom, bottom Approve/Reject, reject reason chips + note, reviewed-by line).
+- New: `ui/AdminHomeFragment` + `fragment_admin_home.xml` + `item_admin_home_card.xml`, `service/AdminCountsService` (read-only selects returning only ids/timestamps), `util/AdminHomeRules` (+ test), `strings_admin_home.xml`, `bg_admin_role_tag`, `docs/ADMIN_UI_AUDIT.md`.
+- `ShellFragment`: admin tabs are now Home, Queue, Payments, Reports, Profile; Queue/Reports have badges (`refreshBadge` admin branch -> `AdminCountsService.badges()`); public `openAdminTab(id)` and `setAdminBadges(ids, reports)`; first admin tab = `tab_admin_home`. `bottom_nav_admin.xml` got `tab_admin_home` (that id is defined there).
+- Cards open: IDs -> Queue tab; reports, suspended, taken down -> Reports tab (**filter preselect is Step 4**); payments -> Payments tab; AI -> `aiUnansweredFragment`; banned -> `bannedUsersFragment`.
+- Counts are capped at 1000 rows each. Payments card counts status `pending` and `failed` (check these match `payments.status` values in the live DB). AI card has no "handled" state, so it shows the last 7 days.
+- Untested checklist items covered: counts shown on cards; owner/student never get this tab (tabs are admin-only). Still open: counts vs real lists on a device, 360 dp width, large font, dark theme.
+- Version 2.4.10 / 20410. NOT compiled, NOT run on a device: run `gradlew testDebugUnitTest assembleDebug`.
+
 # Handoff (Android) - v2.4.9: floating Announce button, Messages tab, Listings inside the Dashboard
 - `fragment_boarding_chat.xml`: `announce_btn` (in the message bar) removed; owner-only `ExtendedFloatingActionButton` `announce_fab` inside the list FrameLayout (bottom|end). `BoardingChatFragment.setupAnnounceButton()` shows it and adds 84 dp bottom padding to the list.
 - Owner dock (`ShellFragment.tabsFor`): `tab_listings` replaced by `tab_chats` (label `dock_messages`, shows `ChatsFragment`). Badges: Messages = `ChatService.totalUnread`, Groups = `BhGroupService.totalUnread`. Push `dm` for owners now selects the Messages tab. `OwnerBoardingFragment`: `messages` icon + click removed (nav destination `ownerChatsFragment` still exists, unused).

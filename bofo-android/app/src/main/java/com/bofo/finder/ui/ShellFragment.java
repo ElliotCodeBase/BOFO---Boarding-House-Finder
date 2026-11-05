@@ -52,7 +52,7 @@ import java.util.List;
  * Shell for all three user types: tab container + the dock bar (same look and tabs as the JavaFX app).
  * Student: Home, Explore, Boarding (centre), Chats, Profile. (Saved moved to Profile > Saved places in v2.2.0.)
  * Owner: Dashboard (v2.4.9: includes your listings), Messages, Create (raised button, opens the new-listing form), Groups (v2.4.8: the owner's Boarding groups; direct chats open from its header), Profile.
- * Admin: Queue, Payments, Reports, Profile.
+ * Admin: Home, Queue, Payments, Reports, Profile.
  */
 public class ShellFragment extends Fragment {
 
@@ -150,7 +150,7 @@ public class ShellFragment extends Fragment {
             // Back from a pushed screen, or after rotation: the child fragment is still there, only the bar has to show its tab again.
             binding.dock.select(selectedTab, false);
         } else if (savedInstanceState == null) {
-            int first = admin ? R.id.tab_queue : owner ? R.id.tab_dashboard : R.id.tab_home;       // first open (same as the JavaFX app: the first tab)
+            int first = admin ? R.id.tab_admin_home : owner ? R.id.tab_dashboard : R.id.tab_home;       // first open (same as the JavaFX app: the first tab)
             binding.dock.select(first, false);
             showTab(first);
         }
@@ -260,9 +260,10 @@ public class ShellFragment extends Fragment {
     private List<DockBarView.Tab> tabsFor() {
         List<DockBarView.Tab> t = new ArrayList<>();
         if (admin) {
-            t.add(tab(R.id.tab_queue, R.drawable.ic_dock_queue, getString(R.string.tab_queue), false, false));
+            t.add(tab(R.id.tab_admin_home, R.drawable.ic_dock_home, getString(R.string.tab_admin_home), false, false));      // v2.4.10: Admin Home comes first
+            t.add(tab(R.id.tab_queue, R.drawable.ic_dock_queue, getString(R.string.tab_queue), false, true));              // badge = IDs waiting
             t.add(tab(R.id.tab_admin_payments, R.drawable.ic_dock_payments, getString(R.string.tab_admin_payments), false, false));
-            t.add(tab(R.id.tab_reports, R.drawable.ic_dock_reports, getString(R.string.tab_reports), false, false));
+            t.add(tab(R.id.tab_reports, R.drawable.ic_dock_reports, getString(R.string.tab_reports), false, true));            // badge = open reports
             t.add(tab(R.id.tab_profile, R.drawable.ic_dock_profile, getString(R.string.tab_profile), false, false));
         } else if (owner) {
             t.add(tab(R.id.tab_dashboard, R.drawable.ic_dock_dashboard, getString(R.string.dock_dashboard), false, false));
@@ -286,7 +287,11 @@ public class ShellFragment extends Fragment {
 
     /** Unread count on the Chats icon (students and owners). A failed check just leaves the badge as it was. */
     private void refreshBadge() {
-        if (binding == null || admin) return;
+        if (binding == null) return;
+        if (admin) {                                        // v2.4.10: Queue + Reports badges (two small selects; a failure leaves the badge as it was)
+            Async.run(() -> new com.bofo.finder.service.AdminCountsService().badges(), (int[] n) -> setAdminBadges(n[0], n[1]), e -> { });
+            return;
+        }
         if (owner) {                                        // v2.4.9: Messages tab = direct-chat unread, Groups tab = group unread
             Async.run(() -> new ChatService().totalUnread(), (Integer n) -> {
                 if (binding != null) binding.dock.setBadge(R.id.tab_chats, n == null ? 0 : n);
@@ -418,12 +423,28 @@ public class ShellFragment extends Fragment {
         openExplore();
     }
 
+    /** v2.4.10: Admin Home cards open a tab. The dock is moved too (select() never calls the listener). */
+    public void openAdminTab(int id) {
+        if (binding == null || !admin) return;
+        binding.dock.select(id, true);
+        showTab(id);
+    }
+
+    /** v2.4.10: Queue / Reports badges; a negative (unknown) count hides the badge. */
+    public void setAdminBadges(int ids, int reports) {
+        if (binding == null || !admin) return;
+        binding.dock.setBadge(R.id.tab_queue, com.bofo.finder.util.AdminHomeRules.badge(ids));
+        binding.dock.setBadge(R.id.tab_reports, com.bofo.finder.util.AdminHomeRules.badge(reports));
+    }
+
     private void showTab(int id) {
         if (id == selectedTab && getChildFragmentManager().findFragmentById(R.id.tab_container) != null) return;    // v2.0.97: tapping the open tab does not rebuild it
         selectedTab = id;
         Fragment f;
         if (id == R.id.tab_profile) {
             f = new ProfileFragment();
+        } else if (id == R.id.tab_admin_home) {
+            f = new AdminHomeFragment();
         } else if (id == R.id.tab_queue) {
             f = new QueueFragment();
         } else if (id == R.id.tab_reports) {
