@@ -110,6 +110,7 @@ public class ShellFragment extends Fragment {
             binding.adminBanner.setVisibility(View.VISIBLE);
         }
         if (admin) binding.bofoFab.setVisibility(View.GONE);           // the Ask BOFO assistant is for students looking for a place
+        if (admin && AdminLock.locked) lock();                          // v2.9.0: a rotation must not unlock
         if (admin && AuthRouter.takeMfaPrompt()) view.post(() -> AdminMfaSheet.show(this, null));      // v2.0.119: ask for the 6-digit code once per sign-in
 
         // Floating tab bar: lift the bar and the mascot button above the system gesture area.
@@ -486,6 +487,35 @@ public class ShellFragment extends Fragment {
         androidx.fragment.app.FragmentTransaction tx = getChildFragmentManager().beginTransaction().setReorderingAllowed(true);
         if (android.animation.ValueAnimator.areAnimatorsEnabled()) tx.setCustomAnimations(R.anim.tab_fade_in, R.anim.tab_fade_out);      // v2.0.97 soft cross-fade; v2.4.14: not when the system has animations off
         tx.replace(R.id.tab_container, f).commit();
+    }
+
+    /** v2.9.0 auto-lock: remember when the app went to the background; when it comes back after 5 minutes or more the admin tools are covered until the 6-digit code is typed. */
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (admin && !AdminLock.locked && getContext() != null && AppPrefs.adminStoppedAt(requireContext()) == 0L) AppPrefs.setAdminStoppedAt(requireContext(), System.currentTimeMillis());
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (!admin || binding == null || AdminLock.locked) return;
+        final android.content.Context c = requireContext();
+        long was = AppPrefs.adminStoppedAt(c);
+        if (com.bofo.finder.util.AutoLockRules.shouldLock(AppPrefs.adminAutoLock(c), was, System.currentTimeMillis())) lock();
+        else if (was != 0L) AppPrefs.setAdminStoppedAt(c, 0L);
+    }
+
+    private void lock() {
+        if (binding == null) return;
+        AdminLock.locked = true;
+        binding.getRoot().setVisibility(View.INVISIBLE);                 // the screens stay as they are (half-typed text is kept), they are only covered
+        if (getChildFragmentManager().findFragmentByTag("admin_lock") == null) AdminMfaSheet.showLock(this);
+    }
+
+    /** Called by the lock sheet after a correct code (or when this account has no two-step sign-in). */
+    void unlocked() {
+        if (binding != null) binding.getRoot().setVisibility(View.VISIBLE);
     }
 
     @Override
