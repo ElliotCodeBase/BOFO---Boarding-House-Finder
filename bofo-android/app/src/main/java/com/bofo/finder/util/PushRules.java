@@ -8,6 +8,8 @@ public final class PushRules {
     private PushRules() {}
 
     public static final String DM = "dm", GROUP = "group", REPORT = "report";
+    /** v2.9.2: a plain test push for one account (server: push_notify('test', {"as":"me","user_id":...})). Any role may see it. */
+    public static final String TEST = "test";
     /** v2.6.0 (admins only): IDREVIEW = an owner sent an ID; STALE = the daily "items waiting more than 3 days" reminder. */
     public static final String IDREVIEW = "idreview", STALE = "stale";
     public static final String CH_CHATS = "bofo_chats", CH_BOARDING = "bofo_boarding", CH_ANNOUNCE = "bofo_announcements", CH_REPORTS = "bofo_reports", CH_ADMIN = "bofo_admin";
@@ -18,7 +20,7 @@ public final class PushRules {
     /** Messages kept inside one chat notification. */
     public static final int MAX_LINES = 6;
 
-    public static boolean known(String kind) { return DM.equals(kind) || GROUP.equals(kind) || adminOnly(kind); }
+    public static boolean known(String kind) { return DM.equals(kind) || GROUP.equals(kind) || TEST.equals(kind) || adminOnly(kind); }
 
     /** Pushes only an admin account may get or see (v2.6.0: report, idreview, stale). */
     public static boolean adminOnly(String kind) { return REPORT.equals(kind) || IDREVIEW.equals(kind) || STALE.equals(kind); }

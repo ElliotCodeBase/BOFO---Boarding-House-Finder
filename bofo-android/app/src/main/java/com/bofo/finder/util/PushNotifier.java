@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat;
 
 import com.bofo.finder.R;
 import com.bofo.finder.app.MainActivity;
+import com.bofo.finder.service.AuthService;
 import com.bofo.finder.service.PushService;
 
 import java.util.List;
@@ -62,10 +63,15 @@ public final class PushNotifier {
 
     private static void showNow(Context app, Map<String, String> d) {
         final String kind = d.get("kind"), id = d.get("id");
-        if (id == null || id.isEmpty() || !PushRules.allowedFor(kind, PushService.role(app))) return;     // wrong account type or nobody signed in
-        if (PushRules.isOpenNow(kind, id, PushState.openDm, PushState.openGroup)) return;                  // already looking at this chat
+        if (id == null || id.isEmpty()) { dropped("no id"); return; }
+        // v2.9.2: the saved role is only written after the first successful sync. A signed-in phone whose role is not saved yet used to drop EVERY push
+        // silently. Now such a phone still shows chats (admin pushes still need the saved "admin" role).
+        String role = PushService.role(app);
+        if (role.isEmpty() && AuthService.get().hasSession()) role = "signed-in";
+        if (!PushRules.allowedFor(kind, role)) { dropped("kind=" + kind + " not allowed for role '" + role + "' (empty = nobody signed in)"); return; }
+        if (PushRules.isOpenNow(kind, id, PushState.openDm, PushState.openGroup)) { dropped("that chat is on screen"); return; }
         final NotificationManagerCompat nm = NotificationManagerCompat.from(app);
-        if (!nm.areNotificationsEnabled()) return;
+        if (!nm.areNotificationsEnabled()) { dropped("notifications are off for BOFO in the phone settings"); return; }
 
         final boolean ann = "1".equals(d.get("ann"));
         final boolean report = PushRules.adminOnly(kind);          // v2.6.0: report, idreview and stale all use the lock-screen-safe layout
@@ -120,6 +126,9 @@ public final class PushNotifier {
         st.addMessage(text, now, new Person.Builder().setName(sender).build());
         return st;
     }
+
+    /** Logcat filter "BOFO": tells why a push that reached the phone was not drawn. */
+    private static void dropped(String why) { android.util.Log.i("BOFO", "push not shown: " + why); }
 
     private static String nz(String s) { return s == null ? "" : s; }
 }

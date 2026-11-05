@@ -104,4 +104,12 @@ public class PushRulesTest {
         assertFalse(PushRules.needsRegister("u1", "t1", 0, "", "t1", now));                      // signed out: nothing to register
         assertFalse(PushRules.needsRegister("u1", "t1", 0, "u1", null, now));
     }
+
+    @Test public void testKindIsKnownAndAnyRoleMaySeeIt() {            // v2.9.2
+        assertTrue(PushRules.known("test"));
+        assertFalse(PushRules.adminOnly("test"));
+        for (String r : new String[]{"student", "owner", "admin"}) assertTrue(PushRules.allowedFor("test", r));
+        assertFalse(PushRules.allowedFor("test", ""));
+        assertEquals(PushRules.CH_CHATS, PushRules.channel("test", false));
+    }
 }

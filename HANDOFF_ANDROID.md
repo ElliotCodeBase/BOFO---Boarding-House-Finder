@@ -1,3 +1,11 @@
+# Handoff (Android) - v2.9.2: notifications while the app is closed
+- Cause was not provable from the repo alone (no phone, no live DB). Ranked: (1) phone / battery saver kills or never starts the app, so data-only pushes never reach `BofoMessagingService`; (2) setup gaps (google-services.json missing in the build, `push_settings` empty, secrets mismatch, function not deployed with `--no-verify-jwt`); (3) code: `PushNotifier` dropped every push when the saved role was empty. All three are addressed or made visible, see `docs/NOTIFICATION_FIX_v2.9.2.md`.
+- Changed: `supabase/functions/send-push/index.ts` (hybrid payload, reasons, test-to-me), `PushNotifier`, `PushRouter`, `PushRules` (+ `TEST`, + test), `AndroidManifest.xml` (OPEN_PUSH filter, notification colour). Redeploy the function FIRST: it already fixes the closed-app case for the current app build.
+- Trade-off: while the app is closed each message is its own system notification (no MessagingStyle stack, no "chat already open" check; the server still filters blocked senders, muted members and admin-only kinds).
+- Open: force-stopped apps and some phones (Xiaomi, Oppo, Vivo, Realme, Infinix, Tecno, Samsung) need Autostart / battery "No restrictions": documented, no in-app prompt yet.
+- Nothing compiled or run: `gradlew testDebugUnitTest assembleDebug`, then the test in the guide on a real phone.
+- Version 2.9.2 / 20902.
+
 # Handoff (Android) - v2.9.1: build fix
 - `AdminRowAdapter.isEmpty()` made `public` + `@Override` after the user's build failed on it. Everything in the v2.9.0 handoff entry below still applies (moderator role split waiting for the user's OK on migration 035; other open items listed there).
 - Version 2.9.1 / 20901.
@@ -10,11 +18,3 @@
 - Nothing compiled or run: `gradlew testDebugUnitTest assembleDebug`.
 - Version 2.9.0 / 20900.
 
-# Handoff (Android) - v2.8.0: Admin next steps, step 4 of 5 PARTLY done (items 8, 9, 10)
-- Plan: `docs/ADMIN_NEXT_STEPS.md`. Done: Step 1 (v2.5.0, code missing in the user's repo zip: ask them to apply it), Step 2 (v2.6.0), Step 3 PARTLY (v2.7.0: 8 reject templates + second-opinion flag on IDs only, migration 034 not run; NOT done: saved own templates, "Approve clean" bulk approve (server needs the retyped ID number), flag on reports, filter chip), Step 4 PARTLY (v2.8.0).
-- New: `AdminWeeklyService` + "Last 7 days" card (`AdminHomeFragment.showWeek`), `InsightRules`, `CsvRules` (+ tests), `CsvShare` (cache `exports/`, FileProvider path added to `file_paths.xml`), `exportCsv` button in `fragment_admin_list.xml` (hidden except Reports and Payments), `ReportsFragment` person filter (`person`, `showPerson`, `personCount`), strings in `strings_admin_insights.xml`.
-- NOT done in step 4: item 11 (AI unanswered / chat log on `AdminListChrome` + `AdminRowAdapter`): the 6 reason filters do not fit the 3 chips; options: extend `AdminListChrome` with custom chips, or keep their own chips and add only search + row look.
-- Open risks: weekly numbers cap at 1000 ("1000+"); `reports_admin_v` is assumed readable for the weekly count; export and person filter not tested on a device.
-- Next: Step 5 (auto-lock, moderator role split, final QA).
-- Nothing compiled or run: `gradlew testDebugUnitTest assembleDebug`.
-- Version 2.8.0 / 20800.

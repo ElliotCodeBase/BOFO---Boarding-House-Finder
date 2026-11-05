@@ -1,3 +1,10 @@
+# v2.9.2 - Notifications now show while the app is closed
+- **Fix (server, works at once after a redeploy):** `send-push` now sends a HYBRID message (data + a ready-made notification with the right channel and tap action). The phone's system draws it by itself, so a message still pops when the app is closed, even if the app's own code never runs. While the app is open nothing changes (the app draws the richer chat stack).
+- **Fix (app):** a signed-in phone whose saved role was not written yet no longer drops every push silently; taps on system-drawn notifications open the right chat (`PushRouter`, new `OPEN_PUSH` intent-filter); every dropped push is now logged (Logcat filter `BOFO`: "push not shown: ...").
+- **Diagnostics:** `send-push` answers with a reason (`no_device_token`, `nobody_to_notify`, `failed` + `why`, or `error: ...`), visible in `net._http_response`. New test: `select public.push_notify('test', jsonb_build_object('as','me','user_id','<uuid>'));` sends a test to one account's phones, any role.
+- Also: a private key pasted with real line breaks in `FCM_SERVICE_ACCOUNT` is now accepted; notification accent colour set to the app purple. No migration. Full guide: `docs/NOTIFICATION_FIX_v2.9.2.md`.
+- Version 2.9.2 (versionCode 20902). Not compiled or run in the sandbox that made this change (the edge function was type-checked only).
+
 # v2.9.1 - Build fix
 - `AdminRowAdapter.isEmpty()` is now `public` with `@Override` (a weaker access does not compile: the build failed on it). This was the v2.5.0 fix that never reached the repo.
 - Version 2.9.1 (versionCode 20901).
@@ -9,10 +16,3 @@
 - Docs: `ADMIN_GUIDE.md` and `ADMIN_UI_AUDIT.md` updated. No server change.
 - Version 2.9.0 (versionCode 20900). Not compiled or run in the sandbox that made this change.
 
-# v2.8.0 - Weekly summary, reports about a person, CSV export (Admin next steps, step 4 of 5, parts 8-10)
-- **Last 7 days card** on Admin Home: new users, new listings, reports resolved, each with the 7 days before in brackets. Read-only, no migration.
-- **Reports about a person.** In a report's details: "N other waiting reports about this person" and a button "All reports about them" that filters the Reports list to that person (picking a filter from the title clears it).
-- **Export CSV** button on Reports and Payments (the list as shown, search included). Reports: id, date, reason key, status. Payments: id, date, amount, status. No names, ID data or details text. Opens the share sheet.
-- **Not done:** AI unanswered / AI chat log with the shared chips + row look (item 11): their reason filters do not fit the 3 Waiting / Done / All chips; needs a decision.
-- Also in this zip: `docs/ADMIN_NEXT_STEPS.md` (the plan, step 1 asked for it). No server change.
-- Version 2.8.0 (versionCode 20800). Not compiled or run in the sandbox that made this change.

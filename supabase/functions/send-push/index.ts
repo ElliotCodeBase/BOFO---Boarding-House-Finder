@@ -1,4 +1,4 @@
-// send-push (v2.3.0): turns a database event into phone notifications through Firebase Cloud Messaging (FCM HTTP v1).
+// send-push (v2.3.0, hybrid payload + diagnostics in v2.9.2): turns a database event into phone notifications through Firebase Cloud Messaging (FCM HTTP v1).
 // Called ONLY by the database triggers of migration 029 (public.push_notify) with the header x-bofo-push-secret.
 //   kind "dm"      new message in a student <-> owner chat      -> the OTHER person of the conversation
 //   kind "group"   new message / announcement in a boarding group -> every active, un-muted member except the sender (the owner is a member)
@@ -32,7 +32,12 @@ function sameSecret(a: string, b: string): boolean {
 const clip = (s: unknown, n: number) => { const t = String(s ?? "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
 
 // ---------------------------------------------------------------- FCM auth (service account -> OAuth access token)
-const SA = (() => { try { return JSON.parse(Deno.env.get("FCM_SERVICE_ACCOUNT") ?? "{}"); } catch { return {}; } })();
+// v2.9.2: also accepts a key pasted with real line breaks inside the private_key (a common copy/paste slip).
+const SA = (() => {
+  const raw = Deno.env.get("FCM_SERVICE_ACCOUNT") ?? "{}";
+  try { return JSON.parse(raw); } catch { /* try again below */ }
+  try { return JSON.parse(raw.replace(/\r?\n/g, "\\n")); } catch { return {}; }
+})();
 let cached: { token: string; exp: number } | null = null;
 
 const b64url = (v: string | ArrayBuffer) => {
@@ -66,18 +71,47 @@ async function accessToken(): Promise<string> {
   return cached.token;
 }
 
-/** "ok" | "dead" (token is gone: delete it) | "fail" */
-async function sendOne(token: string, data: Record<string, string>): Promise<"ok" | "dead" | "fail"> {
+// v2.9.2: HYBRID message = data + a ready-made notification. The phone's system draws the notification by itself, so it still appears when
+// the app is closed or our own code never gets to run (battery savers, a dropped role check, a crash). While the app is open Firebase hands the
+// message to BofoMessagingService instead, which draws the richer in-app version (chat stack, "already looking at this chat" check).
+const CHANNELS: Record<string, string> = { dm: "bofo_chats", group: "bofo_boarding", report: "bofo_reports", idreview: "bofo_admin", stale: "bofo_admin", test: "bofo_chats" };
+const ADMIN_KINDS = new Set(["report", "idreview", "stale"]);
+
+function shown(d: Record<string, string>) {
+  const kind = d.kind ?? "";
+  const ann = d.ann === "1";
+  const channel = kind === "group" && ann ? "bofo_announcements" : (CHANNELS[kind] ?? "bofo_chats");
+  let body = d.body ?? "";
+  if (kind === "group") body = ann ? "\u{1F4CC} " + body : (d.sender ? d.sender + ": " + body : body);
+  return { title: d.title || "BOFO", body, channel, priv: ADMIN_KINDS.has(kind) };
+}
+
+/** "ok" | "dead" (token is gone: delete it) | { fail: why } */
+async function sendOne(token: string, data: Record<string, string>): Promise<"ok" | "dead" | { fail: string }> {
+  const n = shown(data);
   const r = await fetch(`https://fcm.googleapis.com/v1/projects/${SA.project_id}/messages:send`, {
     method: "POST",
     headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ message: { token, data, android: { priority: "HIGH", ttl: "86400s" } } }),
+    body: JSON.stringify({
+      message: {
+        token,
+        data,
+        notification: { title: n.title, body: n.body },
+        android: {
+          priority: "HIGH", ttl: "86400s",
+          notification: {
+            channel_id: n.channel, click_action: "com.bofo.finder.OPEN_PUSH", notification_priority: "PRIORITY_HIGH", default_sound: true,
+            ...(n.priv ? { visibility: "PRIVATE" } : {}),     // admin pushes: contents hidden on a locked screen
+          },
+        },
+      },
+    }),
   });
   if (r.ok) return "ok";
   const t = await r.text();
   if (r.status === 404 || t.includes("UNREGISTERED")) return "dead";
   console.error("FCM refused", r.status, t.slice(0, 300));
-  return "fail";
+  return { fail: `FCM ${r.status}: ${t.slice(0, 160)}` };
 }
 
 // ---------------------------------------------------------------- who gets what
@@ -153,6 +187,11 @@ async function planStale(rec: any): Promise<Push | null> {
 async function planTest(rec: any): Promise<Push | null> {
   const as = String(rec?.as ?? "idreview");
   const stamp = String(Date.now());
+  if (as === "me") {          // v2.9.2: a plain test for ONE account (any role): select public.push_notify('test', '{"as":"me","user_id":"<uuid>"}'::jsonb);
+    const uid = String(rec?.user_id ?? "");
+    if (!uid) return null;
+    return { userIds: [uid], data: { kind: "test", id: "test-" + stamp, title: "BOFO test notification", body: "If you can read this, phone notifications work.", place: "", msg: stamp, sender: "BOFO" } };
+  }
   const plan = as === "stale" ? await planStale({ ids: 1, reports: 1, payments: 0 })
     : as === "report" ? await planReport({ id: "test-" + stamp, reason: "other", reporter_id: null })
     : await planIdReview({ id: "test-" + stamp, owner_id: null }, true);
@@ -167,18 +206,20 @@ Deno.serve(async (req) => {
     const { kind, record } = await req.json();
     const plan = kind === "dm" ? await planDm(record) : kind === "group" ? await planGroup(record) : kind === "report" ? await planReport(record)
       : kind === "idreview" ? await planIdReview(record) : kind === "stale" ? await planStale(record) : kind === "test" ? await planTest(record) : null;
-    if (!plan) return Response.json({ sent: 0 });
+    if (!plan) return Response.json({ sent: 0, reason: "nobody_to_notify" });       // e.g. blocked sender, unknown conversation, empty group
 
     const { data: rows } = await admin.from("device_tokens").select("token, user_id").in("user_id", plan.userIds);
-    let sent = 0; const dead: string[] = [];
+    if (!(rows ?? []).length) { console.warn("send-push", kind, "no device token for", plan.userIds.length, "user(s)"); return Response.json({ sent: 0, reason: "no_device_token", users: plan.userIds.length }); }
+    let sent = 0; const dead: string[] = []; const fails: string[] = [];
     await Promise.all((rows ?? []).map(async (t: any) => {
       const res = await sendOne(t.token, plan.data);
-      if (res === "ok") sent++; else if (res === "dead") dead.push(t.token);
+      if (res === "ok") sent++; else if (res === "dead") dead.push(t.token); else fails.push(res.fail);
     }));
     if (dead.length) await admin.from("device_tokens").delete().in("token", dead);
-    return Response.json({ sent, removed: dead.length });
+    console.log("send-push", kind, "tokens", (rows ?? []).length, "sent", sent, "dead", dead.length, "failed", fails.length);
+    return Response.json({ sent, removed: dead.length, tokens: (rows ?? []).length, ...(fails.length ? { failed: fails.length, why: fails[0] } : {}) });
   } catch (e) {
     console.error("send-push failed", e);
-    return new Response("error", { status: 500 });
+    return new Response("error: " + String((e as Error)?.message ?? e).slice(0, 300), { status: 500 });      // visible in net._http_response (e.g. "FCM_SERVICE_ACCOUNT is not set")
   }
 });

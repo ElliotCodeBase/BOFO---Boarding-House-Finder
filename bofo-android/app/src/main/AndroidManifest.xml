@@ -47,6 +47,11 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="bofo" android:host="auth-callback" />
             </intent-filter>
+            <!-- v2.9.2: tap on a notification the phone drew by itself (server sends click_action = this action) -->
+            <intent-filter>
+                <action android:name="com.bofo.finder.OPEN_PUSH" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 
         <!-- v2.3.0: receives the pushes (FCM) while the app is closed. Data-only messages: BofoMessagingService builds the notification. -->
@@ -60,6 +65,9 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_stat_bofo" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/bofo_primary" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="bofo_chats" />
