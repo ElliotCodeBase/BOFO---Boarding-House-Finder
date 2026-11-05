@@ -9,6 +9,10 @@
     <string name="vr_reason_blurry">Photo is blurry</string>
     <string name="vr_reason_expired">ID is expired</string>
     <string name="vr_reason_face">Face does not match</string>
+    <string name="vr_reason_cropped">ID is cut off or has glare</string>
+    <string name="vr_reason_back">Back of the ID is missing or unreadable</string>
+    <string name="vr_reason_name">Name does not match the account</string>
+    <string name="vr_reason_type">This ID type is not accepted</string>
     <string name="vr_reason_other">Other</string>
     <string name="vr_note_hint">Add a note (optional)</string>
     <string name="vr_note_hint_other">Tell the owner why (required)</string>

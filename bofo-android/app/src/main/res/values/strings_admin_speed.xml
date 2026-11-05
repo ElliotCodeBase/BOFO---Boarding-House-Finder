@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="act_second_ask">Ask for a second opinion</string>
+    <string name="act_second_clear">Clear second-opinion flag</string>
+    <string name="admin_st_second">Second opinion</string>
+    <string name="second_done_on">Flagged for a second opinion.</string>
+    <string name="second_done_off">Flag cleared.</string>
+    <string name="second_error">Could not change the flag.</string>
+</resources>

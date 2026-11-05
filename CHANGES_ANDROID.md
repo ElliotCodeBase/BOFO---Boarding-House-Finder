@@ -1,3 +1,9 @@
+# v2.7.0 - Faster ID reviews: more reject templates + second-opinion flag (Admin next steps, step 3 of 5, part 1)
+- **Reject templates.** The reject dialog now has 8 quick reasons (blurry, cut off/glare, back missing, expired, face mismatch, name mismatch, ID type not accepted, Other). Same dialog on the review screen and the Queue long-press.
+- **Second opinion.** Queue, long-press a waiting row: "Ask for a second opinion" (or "Clear flag"). The row pill says "Second opinion". Needs `supabase/migrations/034_second_opinion.sql` (not run by the AI); until then the app says it could not change the flag.
+- **Not done: "Approve clean (N)".** Approving needs the ID number retyped from the photo (v2.1.9); a bulk approve would skip that check, so it waits for the owner's decision.
+- Version 2.7.0 (versionCode 20700). Not compiled or run in the sandbox that made this change.
+
 # v2.6.0 - Admin push for new ID reviews and for items waiting over 3 days (Admin next steps, step 2 of 5)
 - **New ID to review.** When an owner submits an ID, admin phones get "New ID to review" (no name, no ID data). Tap: Queue with the Waiting filter.
 - **Waiting over 3 days.** Once a day an admin phone gets "N items have been waiting more than 3 days" (counts of IDs + reports + payments only). Tap: the tab with the most waiting items, Waiting filter.
@@ -13,14 +19,3 @@
 - "What I did" now has labels for the three new actions.
 - Fix: `AdminRowAdapter.isEmpty()` is now `public` with `@Override` (a weaker access does not compile).
 - Version 2.5.0 (versionCode 20500). Not compiled or run in the sandbox that made this change.
-
-# v2.4.14 - Admin clarity, trust and accessibility; admin guide (Admin UI step 5 of 5)
-- **What I did.** New last card on Admin Home: your own last 50 actions (what you did, to whom or what, and when).
-- **Plain messages.** Admin error messages are now short sentences ("Someone already handled this.") instead of HTTP numbers and codes.
-- **Hints.** A one-line explanation under Two-step verification, View the app as..., and the BOFO AI switch (Settings, admins only).
-- **Admin banner.** A thin amber strip at the top always says "Admin mode - signed in as ...".
-- **Accessibility.** Screen-reader descriptions on cards and rows, 48 dp targets on the new controls, no skeleton pulse and no tab fade when system animations are off.
-- **Docs.** `docs/ADMIN_GUIDE.md` (one page + test checklist).
-- How to get there: Admin > Home > What I did; Settings (admin) for the hints.
-- If something goes wrong: if What I did says it could not load, the admin account may not be allowed to read `audit_logs`; tell the developer (no data is lost).
-- Version 2.4.14 (versionCode 20414). No server change. Not compiled or run on a device in the sandbox that made this change.
