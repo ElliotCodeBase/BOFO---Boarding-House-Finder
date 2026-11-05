@@ -41,6 +41,10 @@ public class AdminHomeFragment extends Fragment {
         cSusp = card(inflater, R.string.admin_card_suspended, v -> openTab(R.id.tab_reports, 2));      // Reports > Answered: Suspended
         cBan = card(inflater, R.string.admin_card_banned, v -> go(R.id.bannedUsersFragment));
         cDown = card(inflater, R.string.admin_card_takendown, v -> openTab(R.id.tab_reports, 5));       // Reports > Answered: Taken down
+        View log = card(inflater, R.string.act_log_title, v -> go(R.id.activityLogFragment));         // v2.4.14: the admin's own recent actions
+        ((TextView) log.findViewById(R.id.card_count)).setText("\u203A");
+        ((TextView) log.findViewById(R.id.card_sub)).setText(R.string.act_log_sub);
+        log.setContentDescription(getString(R.string.act_log_title) + ". " + getString(R.string.act_log_sub));
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
         b.swipe.setOnRefreshListener(this::reload);
         return b.getRoot();

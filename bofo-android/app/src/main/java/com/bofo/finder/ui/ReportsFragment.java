@@ -25,6 +25,7 @@ import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BoostRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
+import com.bofo.finder.util.AdminErrorRules;
 import com.bofo.finder.util.SuspendRules;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -350,7 +351,7 @@ public class ReportsFragment extends Fragment {
                 ListArea.undo(this, getString(idBanned ? R.string.rep_banned_done : R.string.rep_banned_no_id), () ->       // v2.4.12: the server has admin_unban, so a ban can be undone
                         Async.run(() -> { new com.bofo.finder.service.BannedUsersService().unban(uid, null); return Boolean.TRUE; },
                                 ok -> { ListArea.toast(this, getString(R.string.act_ban_undone)); reload(); },
-                                e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.ban_unban_error), e))));
+                                e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.ban_unban_error), e))));
             } else {
                 ListArea.toast(this, getString("suspend".equals(act) ? R.string.rep_suspended_done : R.string.rep_dismissed_done));
             }
@@ -358,7 +359,7 @@ public class ReportsFragment extends Fragment {
         }, e -> {
             busy = false;
             if (b == null) return;
-            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_review_error), e));
+            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.rep_review_error), e));
             reload();
         });
     }
@@ -380,7 +381,7 @@ public class ReportsFragment extends Fragment {
             if (ids.isEmpty()) { ListArea.toast(this, getString(R.string.rep_no_places)); return; }
             new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_pick_place)
                     .setItems(labels.toArray(new String[0]), (d, which) -> takeDown(ids.get(which), labels.get(which), reportId)).show();
-        }, e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_error), e)));
+        }, e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.rep_error), e)));
     }
 
     /** v2.4.12: reason, then ONE plain confirmation that names the place (taking a place down cannot be undone from the app). */
@@ -401,7 +402,7 @@ public class ReportsFragment extends Fragment {
                     ListArea.toast(this, getString(R.string.rep_done, bhName));
                     reload();                                   // the report moves to Answered: Taken down
                 },
-                e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_takedown_error), e)));
+                e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.rep_takedown_error), e)));
     }
 
     @Override

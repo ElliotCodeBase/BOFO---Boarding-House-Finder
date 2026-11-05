@@ -46,6 +46,7 @@ final class AdminRowAdapter extends BaseAdapter {
         ((TextView) v.findViewById(R.id.row_sub)).setText(r.sub);
         TextView st = v.findViewById(R.id.row_status);
         st.setText(r.status);
+        st.setVisibility(r.status == null || r.status.isEmpty() ? View.GONE : View.VISIBLE);
         int bg, fg;
         switch (r.tone) {
             case WAITING: bg = R.color.bofo_amber_wash; fg = R.color.bofo_text; break;
@@ -63,7 +64,7 @@ final class AdminRowAdapter extends BaseAdapter {
             Glide.with(t).clear(t);
             t.setVisibility(View.GONE);
         }
-        v.setContentDescription(r.title + ". " + r.sub + ". " + r.status);
+        v.setContentDescription(r.title + ". " + r.sub + (r.status == null || r.status.isEmpty() ? "" : ". " + r.status));
         return v;
     }
 
