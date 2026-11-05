@@ -63,3 +63,5 @@ key.md
 bofo-finder-*firebase-adminsdk*.json
 
 GROQ_KEY.md
+
+secrets/

@@ -206,6 +206,7 @@ public class SettingsFragment extends Fragment {
         AppPrefs.setPushEnabled(requireContext().getApplicationContext(), false);
         setPushChecked(false);
         message(text);
+        android.widget.Toast.makeText(requireContext().getApplicationContext(), text, android.widget.Toast.LENGTH_LONG).show();
     }
 
     private void openOsNotificationSettings() {
@@ -233,7 +234,7 @@ public class SettingsFragment extends Fragment {
         Async.run(() -> PushService.registerNowBlocking(app, AuthRouter.realRole.db()), (PushService.Reg r) -> {
             if (b == null) return;
             switch (r) {
-                case OK: message(getString(R.string.push_on_ok)); break;
+                case OK: message(getString(R.string.push_on_ok)); android.widget.Toast.makeText(app, R.string.push_on_ok, android.widget.Toast.LENGTH_SHORT).show(); break;
                 case OS_BLOCKED: pushFailed(getString(R.string.push_blocked_hint)); openOsNotificationSettings(); break;
                 case NO_SESSION: pushFailed(getString(R.string.push_err_session)); break;
                 case NO_FIREBASE: pushFailed(getString(R.string.push_unavailable_hint)); break;
@@ -242,11 +243,22 @@ public class SettingsFragment extends Fragment {
         }, e -> { if (b != null) pushFailed(registerError(e)); });
     }
 
+    /** v2.9.6: the test result is a pop-up next to the button (the old line at the top of Settings was off-screen). */
+    private void testResult(String text) {
+        if (b == null || !isAdded()) return;
+        b.pushTest.setEnabled(true);
+        b.pushTest.setText(R.string.push_test);
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.push_test).setMessage(text).setPositiveButton(android.R.string.ok, null).show();
+    }
+
     private void sendTest() {
         final android.content.Context app = requireContext().getApplicationContext();
         if (!isAdmin()) return;
-        if (!AppPrefs.pushEnabled(app)) { message(getString(R.string.push_test_off)); return; }
-        message(getString(R.string.push_testing));
+        if (b.pushTest.isEnabled() == false) return;
+        if (!AppPrefs.pushEnabled(app)) { testResult(getString(R.string.push_test_off)); return; }
+        b.pushTest.setEnabled(false);
+        b.pushTest.setText(R.string.push_testing);
         Async.run(() -> {
             PushService.Reg r = PushService.registerNowBlocking(app, AuthRouter.realRole.db());      // the test also repairs a missing registration
             if (r != PushService.Reg.OK) return "reg:" + r.name();
@@ -255,14 +267,14 @@ public class SettingsFragment extends Fragment {
             if (b == null) return;
             if (res.startsWith("reg:")) {
                 PushService.Reg r = PushService.Reg.valueOf(res.substring(4));
-                message(getString(r == PushService.Reg.OS_BLOCKED ? R.string.push_blocked_hint : r == PushService.Reg.NO_SESSION ? R.string.push_err_session : r == PushService.Reg.NO_FIREBASE ? R.string.push_unavailable_hint : R.string.push_test_off));
+                testResult(getString(r == PushService.Reg.OS_BLOCKED ? R.string.push_blocked_hint : r == PushService.Reg.NO_SESSION ? R.string.push_err_session : r == PushService.Reg.NO_FIREBASE ? R.string.push_unavailable_hint : R.string.push_test_off));
                 if (r == PushService.Reg.OS_BLOCKED) openOsNotificationSettings();
-            } else if ("sent".equals(res)) message(getString(R.string.push_test_sent));
-            else if ("not_set_up".equals(res)) message(getString(R.string.push_test_server));
-            else if ("no_device".equals(res)) message(getString(R.string.push_test_nodevice));
-            else if ("no_answer".equals(res)) message(getString(R.string.push_test_unknown));
-            else message(getString(R.string.push_test_failed, res.startsWith("failed:") ? res.substring(7) : res));
-        }, e -> { if (b != null) message(registerError(e)); });
+            } else if ("sent".equals(res)) testResult(getString(R.string.push_test_sent));
+            else if ("not_set_up".equals(res)) testResult(getString(R.string.push_test_server));
+            else if ("no_device".equals(res)) testResult(getString(R.string.push_test_nodevice));
+            else if ("no_answer".equals(res)) testResult(getString(R.string.push_test_unknown));
+            else testResult(getString(R.string.push_test_failed, res.startsWith("failed:") ? res.substring(7) : res));
+        }, e -> { if (b != null) testResult(registerError(e)); });
     }
 
     private void signOut() {
