@@ -1,14 +1,4 @@
 changed bofo-android/app/build.gradle
 changed CHANGES_ANDROID.md
 changed HANDOFF_ANDROID.md
-changed docs/ADMIN_GUIDE.md
-changed docs/ADMIN_UI_AUDIT.md
-changed bofo-android/app/src/main/java/com/bofo/finder/util/AppPrefs.java
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/AdminMfaSheet.java
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
-changed bofo-android/app/src/main/java/com/bofo/finder/ui/SettingsFragment.java
-changed bofo-android/app/src/main/res/layout/fragment_settings.xml
-new bofo-android/app/src/main/java/com/bofo/finder/util/AutoLockRules.java
-new bofo-android/app/src/main/java/com/bofo/finder/ui/AdminLock.java
-new bofo-android/app/src/main/res/values/strings_admin_lock.xml
-new bofo-android/app/src/test/java/com/bofo/finder/util/AutoLockRulesTest.java
+changed bofo-android/app/src/main/java/com/bofo/finder/ui/AdminRowAdapter.java
