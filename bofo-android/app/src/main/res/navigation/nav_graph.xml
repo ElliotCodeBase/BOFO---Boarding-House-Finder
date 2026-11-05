@@ -248,6 +248,16 @@
 
     <!-- v2.1.9 Banned users (admin only): list, search, Unban. -->
     <fragment
+        android:id="@+id/activityLogFragment"
+        android:name="com.bofo.finder.ui.ActivityLogFragment"
+        android:label="What I did" />
+
+    <fragment
+        android:id="@+id/recentDecidedFragment"
+        android:name="com.bofo.finder.ui.RecentDecidedFragment"
+        android:label="Recently decided" />
+
+    <fragment
         android:id="@+id/bannedUsersFragment"
         android:name="com.bofo.finder.ui.BannedUsersFragment"
         android:label="Banned users" />

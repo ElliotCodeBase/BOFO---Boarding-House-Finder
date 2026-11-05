@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="act_log_title">What I did</string>
+    <string name="act_log_sub">Your last 50 actions</string>
+    <string name="act_log_empty">You have not done anything yet.</string>
+    <string name="admin_act_other">Other action</string>
+    <string-array name="admin_act_labels">
+        <item>Approved an ID</item>
+        <item>Rejected an ID</item>
+        <item>Suspended a user</item>
+        <item>Banned a user</item>
+        <item>Dismissed a report</item>
+        <item>Marked a report as handled</item>
+        <item>Took down a place after a report</item>
+        <item>Took down a place</item>
+        <item>Unbanned an account</item>
+        <item>Refunded a payment</item>
+        <item>Undid a suspension</item>
+        <item>Put a place back online</item>
+        <item>Reopened a report</item>
+    </string-array>
+    <string name="hint_admin_mfa">Asks for a 6-digit code from your authenticator app each time you sign in.</string>
+    <string name="hint_admin_view_as">See BOFO the way a student or an owner sees it. You stay an admin.</string>
+    <string name="hint_admin_ai">On: students and owners can use BOFO AI. Off: the AI button is hidden for them.</string>
+    <string name="admin_banner">Admin mode</string>
+    <string name="admin_banner_as">Admin mode - signed in as %1$s</string>
+</resources>

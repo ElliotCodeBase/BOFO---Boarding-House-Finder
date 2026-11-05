@@ -23,7 +23,12 @@ final class AdminRowAdapter extends BaseAdapter {
     static final class Row {
         final String title, sub, status, thumb;
         final int tone;
-        Row(String title, String sub, String status, int tone, String thumb) { this.title = title; this.sub = sub; this.status = status; this.tone = tone; this.thumb = thumb; }
+        final String undoLabel;          // v2.5.0: non-null = the row shows an Undo button
+        final Runnable onUndo;
+        Row(String title, String sub, String status, int tone, String thumb) { this(title, sub, status, tone, thumb, null, null); }
+        Row(String title, String sub, String status, int tone, String thumb, String undoLabel, Runnable onUndo) {
+            this.title = title; this.sub = sub; this.status = status; this.tone = tone; this.thumb = thumb; this.undoLabel = undoLabel; this.onUndo = onUndo;
+        }
     }
 
     private final Context ctx;
@@ -32,7 +37,7 @@ final class AdminRowAdapter extends BaseAdapter {
     AdminRowAdapter(Context ctx) { this.ctx = ctx; }
 
     void set(List<Row> r) { rows.clear(); rows.addAll(r); notifyDataSetChanged(); }
-    boolean isEmpty() { return rows.isEmpty(); }
+    @Override public boolean isEmpty() { return rows.isEmpty(); }       // BaseAdapter.isEmpty() is public: a weaker access here does not compile
 
     @Override public int getCount() { return rows.size(); }
     @Override public Object getItem(int i) { return rows.get(i); }
@@ -42,10 +47,22 @@ final class AdminRowAdapter extends BaseAdapter {
     public View getView(int pos, View v, ViewGroup parent) {
         if (v == null) v = LayoutInflater.from(ctx).inflate(R.layout.item_admin_row, parent, false);
         Row r = rows.get(pos);
+        v.setTranslationX(0f);                       // v2.5.0: a swiped row may be recycled
+        v.setAlpha(1f);
+        android.widget.Button undo = v.findViewById(R.id.row_undo);
+        if (r.undoLabel != null && r.onUndo != null) {
+            undo.setVisibility(View.VISIBLE);
+            undo.setText(r.undoLabel);
+            undo.setOnClickListener(x -> r.onUndo.run());
+        } else {
+            undo.setVisibility(View.GONE);
+            undo.setOnClickListener(null);
+        }
         ((TextView) v.findViewById(R.id.row_title)).setText(r.title);
         ((TextView) v.findViewById(R.id.row_sub)).setText(r.sub);
         TextView st = v.findViewById(R.id.row_status);
         st.setText(r.status);
+        st.setVisibility(r.status == null || r.status.isEmpty() ? View.GONE : View.VISIBLE);
         int bg, fg;
         switch (r.tone) {
             case WAITING: bg = R.color.bofo_amber_wash; fg = R.color.bofo_text; break;
@@ -63,7 +80,7 @@ final class AdminRowAdapter extends BaseAdapter {
             Glide.with(t).clear(t);
             t.setVisibility(View.GONE);
         }
-        v.setContentDescription(r.title + ". " + r.sub + ". " + r.status);
+        v.setContentDescription(r.title + ". " + r.sub + (r.status == null || r.status.isEmpty() ? "" : ". " + r.status));
         return v;
     }
 

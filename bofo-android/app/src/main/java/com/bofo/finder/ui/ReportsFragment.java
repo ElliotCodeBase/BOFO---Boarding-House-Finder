@@ -25,6 +25,7 @@ import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BoostRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
+import com.bofo.finder.util.AdminErrorRules;
 import com.bofo.finder.util.SuspendRules;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -78,6 +79,10 @@ public class ReportsFragment extends Fragment {
         });
         b.list.setOnItemClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) details(items.get(pos)); });
         b.list.setOnItemLongClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) quick(items.get(pos)); return true; });
+        b.list.setOnTouchListener(new RowSwipe(b.list, new RowSwipe.Host() {      // v2.5.0: swipe a waiting report to dismiss it (Undo in the snackbar)
+            @Override public boolean canSwipe(int position) { return b != null && position >= 0 && position < items.size() && "pending".equals(items.get(position).optString("status")); }
+            @Override public void onSwiped(int position) { if (b != null && position >= 0 && position < items.size()) swipeDismiss(items.get(position)); }
+        }));
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
         b.swipe.setOnRefreshListener(this::reload);
         return b.getRoot();
@@ -285,6 +290,59 @@ public class ReportsFragment extends Fragment {
     }
 
     /* ---------- dismiss ---------- */
+    /** v2.5.0: swipe = dismiss the row's waiting report(s) without a dialog; the snackbar Undo reopens them (admin_reopen_report). */
+    private void swipeDismiss(JSONObject x) {
+        if (busy) { applyFilter(); return; }                                     // put the row back
+        busy = true;
+        final List<JSONObject> grp = new ArrayList<>();
+        List<JSONObject> g = groupOf.get(x.optString("id"));
+        if (g != null) grp.addAll(g); else grp.add(x);
+        Async.run(() -> {
+            List<String> done = new ArrayList<>();
+            for (JSONObject o : grp) {
+                try {
+                    SupabaseClient.get().rpc("admin_review_report", new JSONObject().put("rid", o.optString("id")).put("act", "dismiss"));
+                    done.add(o.optString("id"));
+                } catch (Exception ex) {
+                    if (done.isEmpty()) throw ex;                                // the first one failed: nothing was dismissed
+                }                                                                // a later one failed: it simply stays waiting
+            }
+            return done;
+        }, done -> {
+            busy = false;
+            if (b == null) return;
+            String msg = done.size() > 1 ? getString(R.string.swipe_dismissed_n, done.size()) : getString(R.string.swipe_dismissed);
+            ListArea.undo(this, msg, () -> undoSwipe(done));
+            reload();
+        }, err -> {
+            busy = false;
+            if (b == null) return;
+            ListArea.toast(this, Connectivity.isNetworkError(err) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.swipe_error), err));
+            reload();
+        });
+    }
+
+    private void undoSwipe(List<String> ids) {
+        Async.run(() -> {
+            int n = 0;
+            Exception first = null;
+            for (String id : ids) {
+                try { new com.bofo.finder.service.AdminUndoService().reopen(id); n++; }
+                catch (Exception ex) { if (first == null) first = ex; }
+            }
+            if (n == 0 && first != null) throw first;
+            return n;
+        }, n -> {
+            if (b == null) { ListArea.toast(this, getString(R.string.swipe_undone)); return; }
+            ListArea.toast(this, getString(R.string.swipe_undone));
+            reload();
+        }, err -> {
+            if (b == null) return;
+            ListArea.toast(this, Connectivity.isNetworkError(err) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.rd_undo_error), err));
+            reload();
+        });
+    }
+
     private void dismiss(JSONObject x) {
         ReasonDialog.ask(this, R.string.rep_dismiss_title, R.string.rep_dismiss, false, notes -> review(x, "dismiss", null, null, notes));
     }
@@ -350,7 +408,7 @@ public class ReportsFragment extends Fragment {
                 ListArea.undo(this, getString(idBanned ? R.string.rep_banned_done : R.string.rep_banned_no_id), () ->       // v2.4.12: the server has admin_unban, so a ban can be undone
                         Async.run(() -> { new com.bofo.finder.service.BannedUsersService().unban(uid, null); return Boolean.TRUE; },
                                 ok -> { ListArea.toast(this, getString(R.string.act_ban_undone)); reload(); },
-                                e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.ban_unban_error), e))));
+                                e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.ban_unban_error), e))));
             } else {
                 ListArea.toast(this, getString("suspend".equals(act) ? R.string.rep_suspended_done : R.string.rep_dismissed_done));
             }
@@ -358,7 +416,7 @@ public class ReportsFragment extends Fragment {
         }, e -> {
             busy = false;
             if (b == null) return;
-            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_review_error), e));
+            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.rep_review_error), e));
             reload();
         });
     }
@@ -380,7 +438,7 @@ public class ReportsFragment extends Fragment {
             if (ids.isEmpty()) { ListArea.toast(this, getString(R.string.rep_no_places)); return; }
             new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_pick_place)
                     .setItems(labels.toArray(new String[0]), (d, which) -> takeDown(ids.get(which), labels.get(which), reportId)).show();
-        }, e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_error), e)));
+        }, e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.rep_error), e)));
     }
 
     /** v2.4.12: reason, then ONE plain confirmation that names the place (taking a place down cannot be undone from the app). */
@@ -401,7 +459,7 @@ public class ReportsFragment extends Fragment {
                     ListArea.toast(this, getString(R.string.rep_done, bhName));
                     reload();                                   // the report moves to Answered: Taken down
                 },
-                e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_takedown_error), e)));
+                e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.rep_takedown_error), e)));
     }
 
     @Override

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rd_title">Recently decided</string>
+    <string name="rd_sub">Your team\'s last 10 decisions</string>
+    <string name="rd_empty">No decisions yet.</string>
+    <string name="rd_you">you</string>
+    <string name="rd_an_admin">an admin</string>
+    <string name="rd_by">by %1$s</string>
+    <string name="rd_undone">Undone</string>
+    <string name="rd_undo_btn">Undo</string>
+    <string name="rd_undo_error">Could not undo this.</string>
+    <string name="rd_undo_done">Undone.</string>
+    <string name="rd_undo_confirm_title">Undo this decision?</string>
+    <string name="rd_undo_confirm_suspend">%1$s will be able to use BOFO again.</string>
+    <string name="rd_undo_confirm_relist">The place goes back online and can be found in search again.</string>
+    <string name="rd_undo_confirm_reopen">The report goes back to Waiting.</string>
+    <string name="rd_undo_confirm_unban">The account can sign in again. Places that were taken down stay down.</string>
+    <string name="swipe_dismissed">Report dismissed.</string>
+    <string name="swipe_dismissed_n">%1$d reports dismissed.</string>
+    <string name="swipe_undone">Report is waiting again.</string>
+    <string name="swipe_error">Could not dismiss the report.</string>
+</resources>
