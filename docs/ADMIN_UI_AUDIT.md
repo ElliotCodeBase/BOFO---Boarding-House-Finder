@@ -26,3 +26,7 @@ Read from the code, not run on a device. One line each: problem -> file.
 ## Status after step 5 (v2.4.14)
 Fixed: Admin Home + badges, review screen, confirmations + ban Undo, long-press, chips/search/offline/retry, grouped reports with inline place, activity log, plain error sentences, hints under admin switches, admin banner.
 Not done: Undo for suspend / take down / dismiss (needs new server functions), auto-lock after inactivity, AI screens on the new list look, Banned users search unchanged.
+
+## Status after the next-steps series (v2.9.0)
+Added: Undo + Recently decided (v2.5.0), admin push (v2.6.0), 8 reject reasons + second-opinion flag on IDs (v2.7.0), Last 7 days card, reports about a person, CSV export (v2.8.0), auto-lock (v2.9.0).
+Not done: moderator role split (needs migration 035 and the owner's OK), Approve clean (bulk approve), saved own reject templates, second-opinion flag on reports, AI screens on the shared list look.
