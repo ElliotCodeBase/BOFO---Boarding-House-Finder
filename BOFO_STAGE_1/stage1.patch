@@ -1,0 +1,125 @@
+diff --git a/.github/workflows/android-gradle.yml b/.github/workflows/android-gradle.yml
+index a04fa42..0928a37 100644
+--- a/.github/workflows/android-gradle.yml
++++ b/.github/workflows/android-gradle.yml
+@@ -18,6 +18,9 @@ on:
+         type: boolean
+         default: false
+ 
++permissions:
++  contents: read          # Stage 1: the default token can no longer write to the repo
++
+ jobs:
+   build:
+     runs-on: ubuntu-latest
+diff --git a/.gitignore b/.gitignore
+index 31529ca6c97899ca9da2457ecf42b03144a9efa7..2ed8103afb71ef9939a8809438cc0f73bfd9b8c0 100644
+GIT binary patch
+literal 964
+zcmZ`&!EV$r5WUY=Sn8#XlvvA=<I)xohb@E)r^vA<S+lVnd7Opt^^B8jyHxa&*q)i^
+zH}8#;iajO?l{KjNcP1SSN+_x!^Z-q(^l2Ik3D8b<FzYGYh#_b-2tpk(k+?N@76~bp
+zO6xHBBt}K_D?~$gKv7Gltd|ifOi?3A9h_`K7i4F>!N_~x*`C1}v>Ia=F(!)ye39~V
+zI$GZguN)eYdF7-+gebl|{HV9RGlG(uNdzxApTyG#UJf(-le4sy%bj^%UR`$qM}G!b
+z34+`o9uH+%?t_Ykd6b{RL|8s9#LJ~G2vaKc5%q~>x)D!Im|1AWM+8kX&daiCvZ}nv
+zIr}W8;JR^2Ak$_72M&C!!^q8Z=SHmZ6UfbohMkZ_^~a9+H_|SH)td{sVD)9y6RO-u
+z{!|5DeZn~tK$mMi-#;uD9BR?ofq52{bpurQbyKGh5xyTM*HUF#;Ly)gPGA69V(_M4
+zoRYPLY;L)lTNa&-*eVuH8D~A269ZE403W{{zBX*oQnJm`A|dN7>ZE!UJ8{c_DcUsO
+zy?>rJH&GHE&lp9EB1Iljo(-;oXOyClFY9XDz019Kzw?(BxTx`}u|9-;z>+YYEzjvn
+ulac;^{#IYbR)2X6Tf3ch7vxuwYoBNuRTfKD3Ee2+WzRkqaPi>!mHY)xd_NHY
+
+literal 860
+zcma)4O^?$s5Y5?=|AVDoAd(aD7s~De;*f=M;S@Rcq%}$G$m0~1U(eWXfl3SFV$ay~
+z@#ejWDjXrUoHf>fO7|JHH$Yb1%>Kw3XZ@h`w5>J0-8sW%XLAdRw?drl#O$@21%eI`
+zQM@v677;K?rM2H&6stn~?t{VCoMF)IqO5BJpx=T9Y_(t7!H>QjtuqkFccVR0C#u@4
+z!LJaa1x#>uLb*#kS$7mpEnq}Kox*D2gZTLP^>FnUBQUB93hxBPqj-Kx=6vDoE~t#1
+z3M}Tg{b$cx190aApa7+N-#v9w%Dq>?5FGj5ZwT@!PayMvocS$EeF8mYDtF?Upc5Xg
+z=#j?h`}LCTzR&!VS7zKNrUhlMTclQZTzB-N{Yrcg6-E@Ts91ZItxvlB7rI}g)XfjO
+zQc~Tl_@*E@T(wLsin>J<T9`~kI-5E%HUV);nXr`14-bzSSa%Skozs{vt(skC`gl0>
+zhv)-v_T{uK12$$TBIG@+n{N}P=N4GPIQz$L{Pl|<W_fQnXKCAH*)~~^Ho%}rJY^Q^
+n&`i`Ay-VY~``mr%X<>3Y?QUU(2*wI3T?IO0g;iVeid8=W1>^)i
+
+diff --git a/bofo-android/.gitignore b/bofo-android/.gitignore
+index 875c9e9..3803ce0 100644
+--- a/bofo-android/.gitignore
++++ b/bofo-android/.gitignore
+@@ -20,3 +20,13 @@ google-services.json
+ 
+ # release signing (Stage 9)
+ keystore.properties
++
++# Stage 1 (security)
++secrets/
++*.p12
++*.pem
++*.key
++.env
++.env.*
++*firebase-adminsdk*.json
++*service-account*.json
+diff --git a/bofo-android/app/build.gradle b/bofo-android/app/build.gradle
+index 3040fab..7df75f4 100644
+--- a/bofo-android/app/build.gradle
++++ b/bofo-android/app/build.gradle
+@@ -40,8 +40,8 @@ android {
+         minSdk 26
+         targetSdk 36
+         // Version rule: stage N = v2.0.N, versionCode = 200 + N. Bump in EVERY stage / pull request.
+-        versionCode 20904
+-        versionName '2.9.4'
++        versionCode 20905
++        versionName '2.9.5'
+ 
+         buildConfigField 'String', 'SUPABASE_URL', "\"${cfg('supabase.url')}\""
+         buildConfigField 'String', 'SUPABASE_ANON_KEY', "\"${cfg('supabase.anonKey')}\""
+diff --git a/supabase/.temp/linked-project.json b/supabase/.temp/linked-project.json
+deleted file mode 100644
+index d0a347c..0000000
+--- a/supabase/.temp/linked-project.json
++++ /dev/null
+@@ -1 +0,0 @@
+-{"ref":"zfxldzcoirqolflkkhrh","name":"BOFO","organization_id":"xlwruvwrwqonwweckzwy","organization_slug":"xlwruvwrwqonwweckzwy"}
+\ No newline at end of file
+diff --git a/supabase/migrations/038_stage1_security_fixes.sql b/supabase/migrations/038_stage1_security_fixes.sql
+new file mode 100644
+index 0000000..c68d4ab
+--- /dev/null
++++ b/supabase/migrations/038_stage1_security_fixes.sql
+@@ -0,0 +1,38 @@
++-- 038: Stage 1 emergency fix (BOFO Admin rebuild). Safe to run twice. Nothing a normal user does today changes.
++-- FIX S-02 (High): an owner could undo an admin take-down of their own listing, because bh_update only checks owner_id.
++--   An owner could run:  update boarding_houses set status = 'active' where id = '<taken down listing>'   and the listing was live again.
++--   Now: a signed-in user (role 'authenticated' / 'anon') can never leave 'taken_down', can never set 'taken_down',
++--   can only switch between 'active' and 'unlisted', and can never change owner_id.
++--   SECURITY DEFINER functions (admin_takedown, admin_review_report, ban, ...) run as the function owner, so they are not affected.
++--   Same pattern as protect_users() in 001 / 022 / 023.
++-- Old app keeps working: it only ever sets 'active' or 'unlisted' (BhService.setStatus).
++-- ROLLBACK:  drop trigger if exists trg_protect_bh on public.boarding_houses;  drop function if exists public.protect_bh();
++
++create or replace function public.protect_bh() returns trigger language plpgsql as $$
++begin
++  if current_user in ('authenticated', 'anon') then
++    new.owner_id := old.owner_id;
++    if old.status = 'taken_down' then
++      new.status := old.status;                                   -- only an admin function can change a take-down
++    elsif new.status is distinct from old.status and new.status not in ('active', 'unlisted') then
++      new.status := old.status;                                   -- a client can never set 'taken_down' itself
++    end if;
++  end if;
++  return new;
++end $$;
++
++drop trigger if exists trg_protect_bh on public.boarding_houses;
++create trigger trg_protect_bh before update on public.boarding_houses
++  for each row execute function public.protect_bh();
++
++notify pgrst, 'reload schema';
++
++-- ===================== TEST (run in the SQL editor; replace the two uuids with a TEST owner and one of their listings) =====================
++-- begin;
++--   update public.boarding_houses set status = 'taken_down' where id = '<listing-uuid>';           -- runs as postgres (like an admin function): allowed
++--   set local role authenticated;
++--   select set_config('request.jwt.claims', '{"sub":"<owner-uuid>","role":"authenticated"}', true);
++--   update public.boarding_houses set status = 'active' where id = '<listing-uuid>';                -- the owner tries to undo it
++--   reset role;
++--   select status from public.boarding_houses where id = '<listing-uuid>';                          -- EXPECT: taken_down
++-- rollback;

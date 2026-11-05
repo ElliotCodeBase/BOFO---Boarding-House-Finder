@@ -1,0 +1,32 @@
+# Android / Gradle
+build/
+.gradle/
+.idea/
+*.iml
+*.apk
+*.aab
+captures/
+.externalNativeBuild/
+.cxx/
+
+# secrets - never commit
+local.properties
+config.local.properties
+KEYS.local.md
+*.local.md
+*.jks
+*.keystore
+google-services.json
+
+# release signing (Stage 9)
+keystore.properties
+
+# Stage 1 (security)
+secrets/
+*.p12
+*.pem
+*.key
+.env
+.env.*
+*firebase-adminsdk*.json
+*service-account*.json

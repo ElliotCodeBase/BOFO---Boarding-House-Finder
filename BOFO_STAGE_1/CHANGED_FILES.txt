@@ -1,0 +1,6 @@
+changed .gitignore
+changed bofo-android/.gitignore
+changed .github/workflows/android-gradle.yml
+changed bofo-android/app/build.gradle   (version bump only; skip if your local file is newer)
+new     supabase/migrations/038_stage1_security_fixes.sql
+DELETE  supabase/.temp/linked-project.json   (git rm --cached supabase/.temp/linked-project.json)

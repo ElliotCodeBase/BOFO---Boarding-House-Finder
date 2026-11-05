@@ -1,0 +1,78 @@
+target/
+.idea/
+.vscode/
+*.log
+
+_backup*/
+
+build.log
+
+
+# local secrets (dev test-account passwords)
+src/main/resources/com/bofo/finder/config.local.properties
+
+# anything named *.local.* or KEYS.local.md stays on this PC only
+KEYS.local.md
+*.local.md
+*.local.properties
+*.local.env
+
+/bofo/
+/BOFO---Boarding-House-Finder-main/
+out-check/
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Build output
+/target/
+
+# Old copies and backups
+/_backup_*/
+/*.zip
+/*.ps1
+
+# Secrets and local config
+.env
+.env.*
+*.key
+*.pem
+
+# IDE and OS files
+*.iml
+.DS_Store
+Thumbs.db
+
+*.jks
+*.keystore
+
+config.local.properties
+
+key.md
+
+bofo-finder-*firebase-adminsdk*.json
+
+GROQ_KEY.md
+
+secrets/
+
+# --- Stage 1 (security): secrets must never be tracked ---
+secrets/
+**/secrets/
+*.p12
+*.pfx
+*.pem
+*.key
+*.jks
+*.keystore
+google-services.json
+**/google-services.json
+*firebase-adminsdk*.json
+*service-account*.json
+fcm-service-account*.json
+.env
+.env.*
+supabase/.temp/
+supabase/.env*
+keystore.properties
