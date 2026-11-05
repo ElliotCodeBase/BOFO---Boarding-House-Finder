@@ -84,7 +84,16 @@ public class BoardingFragment extends Fragment {
                 show(b.joinBox);
                 return;
             }
-            BhGroup g = groups.get(0);                                  // one house at a time (the database enforces it)
+            for (BhGroup x : groups) {
+                if (BhGroupRole.isOwner(x)) {                           // v2.9.4: an owner (or anyone with 2+ groups) sees the LIST first, never one random chat
+                    getChildFragmentManager().beginTransaction().setReorderingAllowed(true)
+                            .replace(R.id.chat_host, new OwnerBoardingFragment()).commitAllowingStateLoss();
+                    show(b.chatHost);
+                    setList();
+                    return;
+                }
+            }
+            BhGroup g = groups.get(0);                                  // student: one house at a time (the database enforces it)
             getChildFragmentManager().beginTransaction()
                     .setReorderingAllowed(true)
                     .replace(R.id.chat_host, BoardingChatFragment.newInstance(g.bhId(), g.bhName(), g.memberCount(), g.myRole(), true, true))
@@ -95,6 +104,17 @@ public class BoardingFragment extends Fragment {
             b.errorText.setText(Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.boarding_load_error), e));
             show(b.errorBox);
         });
+    }
+
+    /** v2.9.4: the group LIST is showing (not a chat): keep the tab bar. */
+    private void setList() {
+        if (backCallback != null) backCallback.setEnabled(false);
+        Fragment p = getParentFragment();
+        if (p instanceof ShellFragment) ((ShellFragment) p).setChatFull(false);
+    }
+
+    private static final class BhGroupRole {
+        static boolean isOwner(BhGroup g) { return com.bofo.finder.model.GroupMessage.OWNER.equals(g.myRole()); }
     }
 
     private void removeChat() {
