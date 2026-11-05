@@ -918,7 +918,7 @@ public class MapCardView extends FrameLayout implements DefaultLifecycleObserver
     /** Only the route sources (a new / cleared route no longer re-renders pins, colleges and the radar). */
     private void paintRoute() {
         if (style == null) return;
-        set("route-src", MapGeo.lineJson(routePts, routeApprox));
+        set("route-src", MapGeo.routeJson(routePts, routeApprox));       // v2.9.3: the two off-road connector legs are dashed
         boolean has = routePts != null;
         set("route-start-src", has ? MapGeo.pointJson(routePts[0][0], routePts[0][1]) : MapGeo.EMPTY);
         set("route-end-src", MapGeo.EMPTY);      // v2.0.90: no red dot, the selected pin already marks the destination (the dot sat under the pin and its name)
