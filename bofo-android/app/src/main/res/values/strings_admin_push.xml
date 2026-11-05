@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="push_channel_admin">ID reviews and reminders</string>
+    <string name="push_channel_admin_desc">Admins only: a new ID to review, and a daily note when items have waited more than 3 days.</string>
+</resources>
