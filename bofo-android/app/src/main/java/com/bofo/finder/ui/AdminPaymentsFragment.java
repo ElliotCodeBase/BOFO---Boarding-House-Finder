@@ -15,6 +15,7 @@ import com.bofo.finder.R;
 import com.bofo.finder.databinding.FragmentAdminListBinding;
 import com.bofo.finder.service.BoostService;
 import com.bofo.finder.service.SupabaseClient;
+import com.bofo.finder.util.AdminListRules;
 import com.bofo.finder.util.AdminRules;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BoostRules;
@@ -39,27 +40,24 @@ import java.util.Map;
 public class AdminPaymentsFragment extends Fragment {
 
     private FragmentAdminListBinding b;
-    private final List<JSONObject> items = new ArrayList<>();
+    private final List<JSONObject> all = new ArrayList<>(), items = new ArrayList<>();
     private final Map<String, String> owners = new HashMap<>(), places = new HashMap<>();
-    private ArrayAdapter<String> rows;
+    private AdminRowAdapter rows;
+    private AdminListChrome chrome;
     private int token;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
         b = FragmentAdminListBinding.inflate(inflater, container, false);
         b.title.setText(R.string.tab_admin_payments);
-        rows = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_2, android.R.id.text1, new ArrayList<String>()) {
-            @NonNull @Override public View getView(int pos, @Nullable View v, @NonNull ViewGroup p) {
-                View r = super.getView(pos, v, p);
-                if (pos < 0 || pos >= items.size()) return r;
-                JSONObject x = items.get(pos);
-                ((TextView) r.findViewById(android.R.id.text1)).setText(Money.peso(x.optDouble("amount_php", 0)) + "  -  " + statusText(x.optString("status")));
-                ((TextView) r.findViewById(android.R.id.text2)).setText(AdminRules.who(owners.get(x.optString("owner_id"))) + "  -  "
-                        + BoostRules.day(x.optString("created_at", ""), ZoneId.systemDefault()));
-                return r;
-            }
-        };
+        rows = new AdminRowAdapter(requireContext());
         b.list.setAdapter(rows);
+        int start = getArguments() == null ? AdminListRules.WAITING : getArguments().getInt("filter", AdminListRules.WAITING);     // Admin Home preselects the chip
+        chrome = new AdminListChrome(b, start, new AdminListChrome.Host() {
+            @Override public void onFilter(int chip) { applyFilter(); }              // the 100 latest payments are already loaded: filter on the phone
+            @Override public void onSearch(String query) { applyFilter(); }
+            @Override public void onRetry() { reload(); }
+        });
         b.list.setOnItemClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) details(items.get(pos)); });
         b.list.setOnItemLongClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) quick(items.get(pos)); return true; });
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
@@ -84,7 +82,7 @@ public class AdminPaymentsFragment extends Fragment {
     private void reload() {
         if (b == null) return;
         final int my = ++token;
-        b.swipe.setRefreshing(true);
+        chrome.loading(!items.isEmpty());
         Async.run(() -> {
             JSONArray a = new BoostService().allPayments();
             List<JSONObject> l = new ArrayList<>();
@@ -109,23 +107,48 @@ public class AdminPaymentsFragment extends Fragment {
             return new Object[]{l, om, pm};
         }, (Object[] r) -> {
             if (my != token || b == null) return;
-            b.swipe.setRefreshing(false);
             @SuppressWarnings("unchecked") List<JSONObject> l = (List<JSONObject>) r[0];
             @SuppressWarnings("unchecked") Map<String, String> om = (Map<String, String>) r[1];
             @SuppressWarnings("unchecked") Map<String, String> pm = (Map<String, String>) r[2];
-            items.clear(); items.addAll(l);
+            all.clear(); all.addAll(l);
             owners.clear(); owners.putAll(om);
             places.clear(); places.putAll(pm);
-            rows.clear();
-            for (int i = 0; i < items.size(); i++) rows.add("");
-            rows.notifyDataSetChanged();
-            b.message.setText(R.string.adminpay_empty);
-            b.message.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+            applyFilter();
         }, e -> {
             if (my != token || b == null) return;
-            b.swipe.setRefreshing(false);
-            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.pay_error), e));
+            chrome.failed(Connectivity.isNetworkError(e), !items.isEmpty());
         });
+    }
+
+    /** Chip + search. Waiting (pending or failed) shows the oldest first; the other chips show the newest first. */
+    private void applyFilter() {
+        if (b == null) return;
+        items.clear();
+        int chip = chrome.chip();
+        for (JSONObject x : all) {
+            String who = AdminRules.who(owners.get(x.optString("owner_id")));
+            if (AdminListRules.paymentInChip(x.optString("status"), chip)
+                    && AdminListRules.matches(chrome.query(), who, places.get(x.optString("boarding_house_id")), x.optString("reference_number", ""))) items.add(x);
+        }
+        if (chip == AdminListRules.WAITING) java.util.Collections.reverse(items);
+        List<AdminRowAdapter.Row> out = new ArrayList<>();
+        for (JSONObject x : items) {
+            String st = x.optString("status");
+            String when = BoostRules.day(x.optString("created_at", ""), ZoneId.systemDefault());
+            String who = AdminRules.who(owners.get(x.optString("owner_id")));
+            boolean wait = "pending".equals(st) || "failed".equals(st);
+            String sub = who + " - " + (wait ? AdminRowAdapter.waiting(requireContext(), x.optString("created_at", "")) : when);
+            int tone;
+            switch (BoostRules.pay(st)) {
+                case PENDING: tone = AdminRowAdapter.WAITING; break;
+                case PAID: tone = AdminRowAdapter.OK; break;
+                case FAILED: tone = AdminRowAdapter.BAD; break;
+                default: tone = AdminRowAdapter.NEUTRAL; break;
+            }
+            out.add(new AdminRowAdapter.Row(Money.peso(x.optDouble("amount_php", 0)), sub, statusText(st), tone, null));
+        }
+        rows.set(out);
+        chrome.loaded(!items.isEmpty(), chip == AdminListRules.WAITING ? R.string.admin_empty_waiting : R.string.adminpay_empty);
     }
 
     /** v2.4.12: long-press a row: Open, and Refund when the payment can be refunded. */
@@ -167,5 +190,5 @@ public class AdminPaymentsFragment extends Fragment {
     }
 
     @Override
-    public void onDestroyView() { token++; b = null; super.onDestroyView(); }
+    public void onDestroyView() { token++; if (chrome != null) chrome.destroy(); chrome = null; b = null; super.onDestroyView(); }
 }

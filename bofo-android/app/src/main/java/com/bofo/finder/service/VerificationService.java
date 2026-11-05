@@ -65,6 +65,10 @@ public final class VerificationService {
     private static double lum(int argb) { return 0.299 * ((argb >> 16) & 255) + 0.587 * ((argb >> 8) & 255) + 0.114 * (argb & 255); }
 
     /* ---------- admin ---------- */
+    /** v2.4.13: Queue list for a chip (0 waiting = oldest first, 1 done, 2 all). */
+    public JSONArray list(int chip) throws Exception {
+        return api.select("owner_verifications", com.bofo.finder.util.AdminListRules.queueQuery(chip));
+    }
     public JSONArray pending() throws Exception {
         return api.select("owner_verifications", "status=eq.pending&order=submitted_at.asc&select=*");
     }

@@ -1,14 +1,20 @@
-BOFO v2.4.12 - Admin UI step 3 of 5 (not compiled, not run on a device)
+BOFO v2.4.13 - Admin UI step 4 of 5 (not compiled, not run on a device)
 changed  bofo-android/app/build.gradle
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/VerificationReviewFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ReportsFragment.java
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/QueueFragment.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ReportsFragment.java
 changed  bofo-android/app/src/main/java/com/bofo/finder/ui/AdminPaymentsFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/BannedUsersFragment.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ReasonDialog.java
-changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ListArea.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/AdminHomeFragment.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/ui/ShellFragment.java
+changed  bofo-android/app/src/main/java/com/bofo/finder/service/VerificationService.java
+changed  bofo-android/app/src/main/res/layout/fragment_admin_list.xml
 changed  CHANGES_ANDROID.md
 changed  HANDOFF_ANDROID.md
-new      bofo-android/app/src/main/java/com/bofo/finder/ui/RejectDialog.java
-new      bofo-android/app/src/main/res/values/strings_admin_actions.xml
+new      bofo-android/app/src/main/java/com/bofo/finder/ui/AdminListChrome.java
+new      bofo-android/app/src/main/java/com/bofo/finder/ui/AdminRowAdapter.java
+new      bofo-android/app/src/main/java/com/bofo/finder/util/AdminListRules.java
+new      bofo-android/app/src/test/java/com/bofo/finder/util/AdminListRulesTest.java
+new      bofo-android/app/src/main/res/layout/item_admin_row.xml
+new      bofo-android/app/src/main/res/layout/item_admin_skeleton.xml
+new      bofo-android/app/src/main/res/drawable/bg_status_pill.xml
+new      bofo-android/app/src/main/res/values/strings_admin_lists.xml
 DELETE   (none)
