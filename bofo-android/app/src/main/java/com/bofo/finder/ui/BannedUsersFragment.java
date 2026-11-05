@@ -123,14 +123,10 @@ public class BannedUsersFragment extends Fragment {
         b.emptyBox.setVisibility(View.VISIBLE);
     }
 
-    /** Unban: a plain confirmation, then an optional note, then admin_unban. */
+    /** v2.4.12: Unban is harmless to undo (Ban again from a report), so ONE dialog: it names the person and takes an optional note. */
     private void confirmUnban(Row r) {
         String who = AdminRules.who(r.name().isEmpty() ? r.email() : r.name());
-        new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.ban_unban_title)
-                .setMessage(getString(R.string.ban_unban_confirm, who))
-                .setNegativeButton(R.string.common_cancel, null)
-                .setPositiveButton(R.string.ban_unban, (d, w) ->
-                        ReasonDialog.ask(this, R.string.ban_unban_title, R.string.ban_unban, false, note -> unban(r, note))).show();
+        ReasonDialog.ask(this, R.string.ban_unban_title, getString(R.string.ban_unban_confirm, who), R.string.ban_unban, false, note -> unban(r, note));
     }
 
     private void unban(Row r, String note) {

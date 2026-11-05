@@ -1,3 +1,11 @@
+# v2.4.12 - Safer admin decisions, Undo for bans, long-press quick actions (Admin UI step 3 of 5)
+- **Confirm only what is serious.** Taking down a place now shows one clear dialog that names the place and says it cannot be undone from the app. Refunding a payment shows one dialog with the amount and the owner. Ban and suspend keep their existing confirmations. Unban is now a single dialog (name + optional note) instead of two.
+- **Undo.** After a ban a message with **Undo** stays for 5 seconds. Undo unbans the account (places that were taken down stay down).
+- **Long-press a row.** Queue: Open or Reject. Reports: Open, Dismiss or Actions. Payments: Open or Refund. A normal tap works as before.
+- How to get there: Admin > Queue / Reports / Payments > press and hold a row.
+- If something goes wrong: if Undo does not work (offline) use Reports > filter > Banned users > Unban.
+- Version 2.4.12 (versionCode 20412). No server change. Not compiled or run on a device in the sandbox that made this change.
+
 # v2.4.11 - Admin ID review screen (Admin UI step 2 of 5)
 - **One photo at a time, one tap to switch.** ID front / ID back / Selfie buttons switch the large photo instantly. Pinch to zoom (up to 5x), drag when zoomed, double-tap to reset.
 - **Big buttons at the bottom.** Reject (left) and Approve (right) stay fixed at the bottom, easy to reach with the thumb. Approve still asks you to type the ID number from the photo.

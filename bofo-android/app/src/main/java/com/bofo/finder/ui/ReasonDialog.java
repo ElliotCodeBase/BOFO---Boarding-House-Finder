@@ -18,6 +18,11 @@ final class ReasonDialog {
     private ReasonDialog() {}
 
     static void ask(Fragment f, @StringRes int title, @StringRes int ok, boolean required, Consumer<String> done) {
+        ask(f, title, null, ok, required, done);
+    }
+
+    /** v2.4.12: same, with a plain sentence under the title (one dialog instead of "confirm" + "reason"). */
+    static void ask(Fragment f, @StringRes int title, CharSequence message, @StringRes int ok, boolean required, Consumer<String> done) {
         if (!f.isAdded()) return;
         EditText in = new EditText(f.requireContext());
         in.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
@@ -27,7 +32,7 @@ final class ReasonDialog {
         int m = Math.round(20 * f.getResources().getDisplayMetrics().density);
         box.setPadding(m, m / 2, m, 0);
         box.addView(in);
-        androidx.appcompat.app.AlertDialog d = new MaterialAlertDialogBuilder(f.requireContext()).setTitle(title).setView(box)
+        androidx.appcompat.app.AlertDialog d = new MaterialAlertDialogBuilder(f.requireContext()).setTitle(title).setMessage(message).setView(box)
                 .setNegativeButton(R.string.common_cancel, null)
                 .setPositiveButton(ok, null).create();
         d.setOnShowListener(x -> d.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {

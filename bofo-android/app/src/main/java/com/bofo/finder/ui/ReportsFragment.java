@@ -77,6 +77,7 @@ public class ReportsFragment extends Fragment {
         };
         b.list.setAdapter(rows);
         b.list.setOnItemClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) details(items.get(pos)); });
+        b.list.setOnItemLongClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) quick(items.get(pos)); return true; });
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
         b.swipe.setOnRefreshListener(this::reload);
         return b.getRoot();
@@ -138,6 +139,18 @@ public class ReportsFragment extends Fragment {
             b.swipe.setRefreshing(false);
             ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_error), e));
         });
+    }
+
+    /** v2.4.12: long-press a row: Open / Dismiss / Actions (waiting reports); plain tap still opens the details. */
+    private void quick(JSONObject x) {
+        boolean pending = "pending".equals(x.optString("status"));
+        String[] labels = pending ? new String[]{getString(R.string.act_open), getString(R.string.rep_dismiss), getString(R.string.rep_actions_btn)}
+                                  : new String[]{getString(R.string.act_open)};
+        new MaterialAlertDialogBuilder(requireContext()).setTitle(reported(x)).setItems(labels, (d, which) -> {
+            if (which == 0) details(x);
+            else if (which == 1) dismiss(x);
+            else actions(x, x.optString("reported_user_id"));
+        }).show();
     }
 
     private void details(JSONObject x) {
@@ -255,7 +268,11 @@ public class ReportsFragment extends Fragment {
             if ("ban".equals(act)) {
                 // v2.1.9: tell the admin plainly when there was no ID number on file (only the account was banned)
                 boolean idBanned = r != null && r.optBoolean("id_banned", false);
-                ListArea.toast(this, getString(idBanned ? R.string.rep_banned_done : R.string.rep_banned_no_id));
+                final String uid = x.optString("reported_user_id");
+                ListArea.undo(this, getString(idBanned ? R.string.rep_banned_done : R.string.rep_banned_no_id), () ->       // v2.4.12: the server has admin_unban, so a ban can be undone
+                        Async.run(() -> { new com.bofo.finder.service.BannedUsersService().unban(uid, null); return Boolean.TRUE; },
+                                ok -> { ListArea.toast(this, getString(R.string.act_ban_undone)); reload(); },
+                                e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.ban_unban_error), e))));
             } else {
                 ListArea.toast(this, getString("suspend".equals(act) ? R.string.rep_suspended_done : R.string.rep_dismissed_done));
             }
@@ -288,17 +305,25 @@ public class ReportsFragment extends Fragment {
         }, e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_error), e)));
     }
 
+    /** v2.4.12: reason, then ONE plain confirmation that names the place (taking a place down cannot be undone from the app). */
     private void takeDown(String bhId, String bhName, String reportId) {
         ReasonDialog.ask(this, R.string.rep_takedown_title, R.string.rep_takedown_do, true, reason -> {
             if (!AdminRules.takedownOk(reason)) return;
-            Async.run(() -> reportId == null
-                    ? SupabaseClient.get().rpc("admin_takedown", new JSONObject().put("bh", bhId).put("reason", reason))
-                    : SupabaseClient.get().rpc("admin_report_takedown", new JSONObject().put("rid", reportId).put("bh", bhId).put("reason", reason)), r -> {
-                        ListArea.toast(this, getString(R.string.rep_done, bhName));
-                        reload();                                   // the report moves to Answered: Taken down
-                    },
-                    e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_takedown_error), e)));
+            new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_takedown_title)
+                    .setMessage(getString(R.string.act_takedown_confirm, bhName, reason))
+                    .setNegativeButton(R.string.common_cancel, null)
+                    .setPositiveButton(R.string.rep_takedown_do, (d, w) -> runTakeDown(bhId, bhName, reportId, reason)).show();
         });
+    }
+
+    private void runTakeDown(String bhId, String bhName, String reportId, String reason) {
+        Async.run(() -> reportId == null
+                ? SupabaseClient.get().rpc("admin_takedown", new JSONObject().put("bh", bhId).put("reason", reason))
+                : SupabaseClient.get().rpc("admin_report_takedown", new JSONObject().put("rid", reportId).put("bh", bhId).put("reason", reason)), r -> {
+                    ListArea.toast(this, getString(R.string.rep_done, bhName));
+                    reload();                                   // the report moves to Answered: Taken down
+                },
+                e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_takedown_error), e)));
     }
 
     @Override
