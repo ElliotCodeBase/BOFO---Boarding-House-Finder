@@ -90,6 +90,11 @@ public final class VerificationService {
         api.rpc("review_verification", new JSONObject().put("vid", verificationId).put("approve", approve).put("reason", reason == null ? "" : reason));
     }
 
+    /** v2.7.0: ask another admin to look at a waiting request (flag = true) or clear that flag. Needs migration 034. */
+    public void flagSecondOpinion(String verificationId, boolean flag) throws Exception {
+        api.rpc("admin_flag_second_opinion", new JSONObject().put("vid", verificationId).put("flag", flag));
+    }
+
     /** v2.1.9: the admin retypes the number from the ID photo; the server hashes it and must match what the owner typed (and must not be banned). */
     public void approve(String verificationId, String idNumber) throws Exception {
         if (!BanRules.validNumber(idNumber)) throw new IllegalArgumentException("Type the ID number from the photo (4 to 30 letters or digits).");

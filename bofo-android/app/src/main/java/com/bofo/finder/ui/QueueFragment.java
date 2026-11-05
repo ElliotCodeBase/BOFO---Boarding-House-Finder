@@ -20,6 +20,7 @@ import com.bofo.finder.util.AdminListRules;
 import com.bofo.finder.util.AdminRules;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BoostRules;
+import com.bofo.finder.util.ReviewSpeedRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
 import com.bofo.finder.util.AdminErrorRules;
@@ -72,10 +73,33 @@ public class QueueFragment extends Fragment {
      */
     private void quick(JSONObject x) {
         String who = AdminRules.who(names.get(x.optString("owner_id")));
+        final boolean canFlag = ReviewSpeedRules.canFlag(x.optString("status"));
+        final boolean flagged = x.optBoolean("needs_second_opinion", false);
+        java.util.List<String> labels = new ArrayList<>();
+        labels.add(getString(R.string.act_open));
+        labels.add(getString(R.string.act_reject_quick));
+        if (canFlag) labels.add(getString(flagged ? R.string.act_second_clear : R.string.act_second_ask));
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext()).setTitle(who)
-                .setItems(new String[]{getString(R.string.act_open), getString(R.string.act_reject_quick)}, (d, which) -> {
-                    if (which == 0) open(x); else RejectDialog.ask(this, r -> reject(x, r));
+                .setItems(labels.toArray(new String[0]), (d, which) -> {
+                    if (which == 0) open(x);
+                    else if (which == 1) RejectDialog.ask(this, r -> reject(x, r));
+                    else flag(x, !flagged);
                 }).show();
+    }
+
+    /** v2.7.0: ask for (or clear) a second opinion. Until migration 034 is run the server says so in plain words. */
+    private void flag(JSONObject x, boolean on) {
+        if (busy) return;
+        busy = true;
+        Async.run(() -> { new VerificationService().flagSecondOpinion(x.optString("id"), on); return Boolean.TRUE; }, ok -> {
+            busy = false;
+            ListArea.toast(this, getString(on ? R.string.second_done_on : R.string.second_done_off));
+            reload();
+        }, e -> {
+            busy = false;
+            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.second_error), e));
+            reload();
+        });
     }
 
     private void reject(JSONObject x, String reason) {
@@ -149,9 +173,11 @@ public class QueueFragment extends Fragment {
             String sent = BoostRules.day(x.optString("submitted_at", ""), ZoneId.systemDefault());
             String wait = "pending".equals(st) ? AdminRowAdapter.waiting(requireContext(), x.optString("submitted_at", "")) : "";
             String sub = wait.isEmpty() ? getString(R.string.admin_row_sub_queue, x.optString("id_type"), sent) : wait + " - " + x.optString("id_type");
+            int state = ReviewSpeedRules.rowState(st, x.optBoolean("needs_second_opinion", false));
             out.add(new AdminRowAdapter.Row(name, sub,
-                    getString("verified".equals(st) ? R.string.admin_st_approved : "rejected".equals(st) ? R.string.admin_st_rejected : R.string.admin_st_waiting),
-                    "verified".equals(st) ? AdminRowAdapter.OK : "rejected".equals(st) ? AdminRowAdapter.BAD : AdminRowAdapter.WAITING, null));
+                    getString(state == ReviewSpeedRules.APPROVED ? R.string.admin_st_approved : state == ReviewSpeedRules.REJECTED ? R.string.admin_st_rejected
+                            : state == ReviewSpeedRules.SECOND_OPINION ? R.string.admin_st_second : R.string.admin_st_waiting),
+                    state == ReviewSpeedRules.APPROVED ? AdminRowAdapter.OK : state == ReviewSpeedRules.REJECTED ? AdminRowAdapter.BAD : AdminRowAdapter.WAITING, null));
         }
         rows.set(out);
         chrome.loaded(!items.isEmpty(), chrome.chip() == AdminListRules.WAITING ? R.string.queue_empty : R.string.admin_empty_done);

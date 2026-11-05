@@ -1,3 +1,10 @@
+# Handoff (Android) - v2.7.0: Admin next steps, step 3 of 5 PARTLY done (reject templates + second opinion)
+- Done: reject templates (`RejectDialog`, strings in `strings_review_admin.xml`), second-opinion flag (`ReviewSpeedRules` + test, `VerificationService.flagSecondOpinion`, `QueueFragment.quick/flag`, `strings_admin_speed.xml`, migration `034_second_opinion.sql` NOT run). Audit actions `verification_flagged` / `verification_unflagged` show as "Other action" in What I did (not added to `AdminActivityRules.ACTIONS` to avoid clashing with step 1).
+- NOT done: "Approve clean (N)". `admin_approve_verification` requires the retyped ID number, so a bulk approve needs a new server path that skips that check. Wait for the user's decision before building it.
+- Repo check: the zip the user supplied has the v2.5.0 notes but NO step 1 code (no `RecentDecidedFragment`, `AdminUndoRules`, `032_admin_undo.sql`). Ask the user to apply the step 1 zip.
+- Nothing compiled or run: `gradlew testDebugUnitTest assembleDebug`.
+- Version 2.7.0 / 20700.
+
 # Handoff (Android) - v2.6.0: Admin next steps, step 2 of 5 done (admin push)
 - Plan: `docs/ADMIN_NEXT_STEPS.md` (one step per turn, STOP until `next`). Done: Step 1 (v2.5.0), **Step 2 (v2.6.0)**. **Next: Step 3 = faster reviews**: rejection templates in the ID reject dialog, "Approve clean (N)" bulk approve on the Queue, "needs a second opinion" flag (column + RPC = migration 034, needs the user's OK first).
 - New: migration `033_admin_push.sql` (user approved; NOT run live by the AI): trigger `push_idreview` on `owner_verifications` + `push_stale_check()` (no grants; called by pg_cron or by hand). Cron is NOT in the migration: see `docs/PUSH_SETUP.md` "Admin pushes".
@@ -18,11 +25,3 @@
 - Fixed the non-public `AdminRowAdapter.isEmpty()` compile error (if the user's local copy already fixed it, the zip just overwrites with the same fix).
 - Nothing was compiled or run: run `gradlew testDebugUnitTest assembleDebug`.
 - Version 2.5.0 / 20500.
-
-# Handoff (Android) - v2.4.14: Admin UI plan COMPLETE (step 5 of 5 done)
-- All 5 steps are shipped: 2.4.10 Home + badges, 2.4.11 review screen, 2.4.12 safe decisions + ban Undo + long-press, 2.4.13 lists + reports, 2.4.14 clarity / trust / accessibility / docs. Guide + test checklist: `docs/ADMIN_GUIDE.md`; audit with final status: `docs/ADMIN_UI_AUDIT.md`.
-- Step 5: `ui/ActivityLogFragment` (nav `activityLogFragment`, reads `audit_logs` where `actor_id` = me via the existing admin-read policy; no migration; shows action/target/time only, never reasons), `util/AdminActivityRules`, `util/AdminErrorRules` (drop-in for `ErrorText.full` in the 5 admin screens), hints in `SettingsFragment.withHint`, admin banner in `fragment_shell.xml` / `ShellFragment`, tab fade skipped when animations are off, strings in `strings_admin_clarity.xml`.
-- Not done (say so to the user): auto-lock after inactivity; Undo for suspend / take down / dismiss (needs a migration with `admin_unsuspend`, `admin_relist`, `admin_reopen_report`; the user has not approved it); AI unanswered / AI chat log screens still use their own list look; dark theme and 200% text were not checked on a device.
-- Open risk: if `audit_logs` has no SELECT grant for `authenticated`, What I did shows "could not load" (RLS policy `audit_admin_read` exists, the table grant was not verified).
-- Nothing was compiled or run: run `gradlew testDebugUnitTest assembleDebug` and the checklist in `docs/ADMIN_GUIDE.md`.
-- Version 2.4.14 / 20414.

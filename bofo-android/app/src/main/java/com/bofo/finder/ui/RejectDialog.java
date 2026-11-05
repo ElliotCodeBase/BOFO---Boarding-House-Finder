@@ -14,7 +14,8 @@ final class RejectDialog {
 
     static void ask(Fragment f, java.util.function.Consumer<String> done) {
         if (!f.isAdded()) return;
-        final int[] ids = {R.string.vr_reason_blurry, R.string.vr_reason_expired, R.string.vr_reason_face, R.string.vr_reason_other};
+        final int[] ids = {R.string.vr_reason_blurry, R.string.vr_reason_cropped, R.string.vr_reason_back, R.string.vr_reason_expired, R.string.vr_reason_face,
+                R.string.vr_reason_name, R.string.vr_reason_type, R.string.vr_reason_other};
         android.content.Context c = f.requireContext();
         int m = Math.round(20 * f.getResources().getDisplayMetrics().density);
         android.widget.LinearLayout box = new android.widget.LinearLayout(c);
