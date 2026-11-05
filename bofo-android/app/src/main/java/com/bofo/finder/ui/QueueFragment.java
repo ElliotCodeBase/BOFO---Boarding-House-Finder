@@ -39,6 +39,7 @@ public class QueueFragment extends Fragment {
     private final Map<String, String> names = new HashMap<>();
     private ArrayAdapter<String> rows;
     private int token;
+    private boolean busy;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
@@ -56,6 +57,7 @@ public class QueueFragment extends Fragment {
         };
         b.list.setAdapter(rows);
         b.list.setOnItemClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) open(items.get(pos)); });
+        b.list.setOnItemLongClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) quick(items.get(pos)); return true; });
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
         b.swipe.setOnRefreshListener(this::reload);
         return b.getRoot();
@@ -63,6 +65,32 @@ public class QueueFragment extends Fragment {
 
     @Override
     public void onResume() { super.onResume(); reload(); }          // also after a decision on the review screen
+
+    /**
+     * v2.4.12: long-press = Open / Reject. There is no Approve here on purpose: approving needs the ID number typed from the photo,
+     * so Approve stays on the review screen (Open).
+     */
+    private void quick(JSONObject x) {
+        String who = AdminRules.who(names.get(x.optString("owner_id")));
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext()).setTitle(who)
+                .setItems(new String[]{getString(R.string.act_open), getString(R.string.act_reject_quick)}, (d, which) -> {
+                    if (which == 0) open(x); else RejectDialog.ask(this, r -> reject(x, r));
+                }).show();
+    }
+
+    private void reject(JSONObject x, String reason) {
+        if (busy) return;
+        busy = true;
+        Async.run(() -> { new VerificationService().decide(x.optString("id"), false, reason); return Boolean.TRUE; }, ok -> {
+            busy = false;
+            ListArea.toast(this, getString(R.string.review_done_rejected));
+            reload();
+        }, e -> {
+            busy = false;
+            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.review_error), e));
+            reload();
+        });
+    }
 
     private void open(JSONObject x) {
         Bundle a = new Bundle();
