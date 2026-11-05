@@ -126,11 +126,13 @@
                         android:src="@drawable/ic_set_ai" />
 
                     <TextView
+                        android:id="@+id/admin_ai_title"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="14dp"
                         android:layout_marginEnd="8dp"
                         android:layout_weight="1"
+                        android:paddingVertical="8dp"
                         android:text="@string/ai_switch_title"
                         android:textColor="@color/bofo_text"
                         android:textSize="15sp" />

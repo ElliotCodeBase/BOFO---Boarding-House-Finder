@@ -92,6 +92,15 @@ public class SettingsFragment extends Fragment {
 
     private NavController nav() { return NavHostFragment.findNavController(this); }
 
+    /** Title on the first line, a smaller grey sentence under it. */
+    private CharSequence withHint(String title, String hint) {
+        android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder(title).append('\n').append(hint);
+        int from = title.length() + 1;
+        sb.setSpan(new android.text.style.RelativeSizeSpan(0.85f), from, sb.length(), 0);
+        sb.setSpan(new android.text.style.ForegroundColorSpan(requireContext().getColor(R.color.bofo_text_2)), from, sb.length(), 0);
+        return sb;
+    }
+
     private void applyRole() {
         b.switchRole.setVisibility(role == Role.ADMIN ? View.GONE : View.VISIBLE);
         b.switchRole.setText(role == Role.OWNER ? R.string.settings_switch_student : R.string.settings_switch_owner);
@@ -99,6 +108,11 @@ public class SettingsFragment extends Fragment {
         b.adminMfa.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
         b.adminViewAs.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
         b.adminAiRow.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
+        if (role == Role.ADMIN) {                                       // v2.4.14: one plain line under each admin switch
+            b.adminMfa.setText(withHint(getString(R.string.mfa_row), getString(R.string.hint_admin_mfa)));
+            b.adminViewAs.setText(withHint(getString(R.string.view_as_row), getString(R.string.hint_admin_view_as)));
+            b.adminAiTitle.setText(withHint(getString(R.string.ai_switch_title), getString(R.string.hint_admin_ai)));
+        }
         b.orangeThemeRow.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);   // v2.3.2: theme switch is admin only
     }
 

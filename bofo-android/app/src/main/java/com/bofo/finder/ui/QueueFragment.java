@@ -22,6 +22,7 @@ import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BoostRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
+import com.bofo.finder.util.AdminErrorRules;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -86,7 +87,7 @@ public class QueueFragment extends Fragment {
             reload();
         }, e -> {
             busy = false;
-            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.review_error), e));
+            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.review_error), e));
             reload();
         });
     }

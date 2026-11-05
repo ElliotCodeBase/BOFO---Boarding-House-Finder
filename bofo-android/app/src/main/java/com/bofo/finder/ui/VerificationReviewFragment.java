@@ -20,6 +20,7 @@ import com.bofo.finder.util.BanRules;
 import com.bofo.finder.util.BoostRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
+import com.bofo.finder.util.AdminErrorRules;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -115,7 +116,7 @@ public class VerificationReviewFragment extends Fragment {
             Glide.with(this).load(url).override(2048, 2048).diskCacheStrategy(DiskCacheStrategy.NONE).skipMemoryCache(true).fitCenter().into(into);
         }, e -> {
             if (b == null || my != token) return;
-            note(Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.review_img_error), e));
+            note(Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.review_img_error), e));
         });
     }
 
@@ -161,7 +162,7 @@ public class VerificationReviewFragment extends Fragment {
             if (b == null) return;
             b.approve.setEnabled(true); b.reject.setEnabled(true);
             String msg = e instanceof com.bofo.finder.service.SupabaseClient.ApiException api ? approveError(api) : null;
-            ListArea.toast(this, msg != null ? msg : Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.review_error), e));
+            ListArea.toast(this, msg != null ? msg : Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.review_error), e));
         });
     }
 
@@ -185,7 +186,7 @@ public class VerificationReviewFragment extends Fragment {
             busy = false;
             if (b == null) return;
             b.approve.setEnabled(true); b.reject.setEnabled(true);
-            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.review_error), e));
+            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.review_error), e));
             if (!Connectivity.isNetworkError(e)) loadDecision();      // maybe another admin already decided: show who and when
         });
     }

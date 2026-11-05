@@ -50,6 +50,9 @@ final class AdminListChrome {
         b.retry.setOnClickListener(v -> host.onRetry());
     }
 
+    /** For a plain list (no chips, no search), e.g. "What I did". */
+    void hideFilters() { b.filtersScroll.setVisibility(View.GONE); b.search.setVisibility(View.GONE); }
+
     int chip() { return chip; }
     String query() { return query; }
 
