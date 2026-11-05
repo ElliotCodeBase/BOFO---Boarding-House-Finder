@@ -3,6 +3,9 @@
 //   kind "dm"      new message in a student <-> owner chat      -> the OTHER person of the conversation
 //   kind "group"   new message / announcement in a boarding group -> every active, un-muted member except the sender (the owner is a member)
 //   kind "report"  new user report                              -> ONLY users whose users.role = 'admin' (checked here, at send time)
+//   kind "idreview" an owner sent an ID for verification (v2.6.0, migration 033) -> ONLY admins; no name, no ID data
+//   kind "stale"   items waiting more than 3 days (v2.6.0; sent once a day by public.push_stale_check()) -> ONLY admins; counts only
+//   kind "test"    {"as": "idreview" | "stale" | "report"}: a labelled test notification to every admin phone (run push_notify('test', ...) in the SQL editor)
 // Messages are DATA-ONLY: the app builds the notification itself (channels, grouping, tap target).
 // Secrets (never commit): PUSH_WEBHOOK_SECRET = long random string (same value as push_settings.secret),
 //                         FCM_SERVICE_ACCOUNT = the whole Firebase service-account JSON (one line).
@@ -123,12 +126,47 @@ async function planReport(rec: any): Promise<Push | null> {
   return { userIds: to, data: { kind: "report", id: String(rec.id), title: "New report", body: (REASONS[rec.reason] ?? "A user") + " report is waiting for review", msg: String(rec.id) } };
 }
 
+// v2.6.0: an owner sent an ID. Admins only. Lock-screen safe: the type only. The row must still be waiting (a banned ID is rejected right after the insert).
+async function planIdReview(rec: any, skipCheck = false): Promise<Push | null> {
+  if (!skipCheck) {
+    const { data: v } = await admin.from("owner_verifications").select("status").eq("id", rec.id).maybeSingle();
+    if (!v || v.status !== "pending") return null;
+  }
+  const { data: admins } = await admin.from("users").select("id").eq("role", "admin");
+  const to = (admins ?? []).map((u: any) => u.id as string).filter((id: string) => id !== rec.owner_id);
+  if (!to.length) return null;
+  return { userIds: to, data: { kind: "idreview", id: String(rec.id), title: "New ID to review", body: "An ID is waiting for review", msg: String(rec.id) } };
+}
+
+// v2.6.0: the daily reminder. Counts only. "place" tells the app which tab to open: the group with the most waiting items (ties: IDs, reports, payments).
+async function planStale(rec: any): Promise<Push | null> {
+  const n = (v: unknown) => Math.max(0, Math.min(9999, Math.floor(Number(v) || 0)));
+  const ids = n(rec.ids), reports = n(rec.reports), payments = n(rec.payments), total = ids + reports + payments;
+  if (total <= 0) return null;
+  const { data: admins } = await admin.from("users").select("id").eq("role", "admin");
+  const to = (admins ?? []).map((u: any) => u.id as string);
+  if (!to.length) return null;
+  const target = ids >= reports && ids >= payments ? "queue" : reports >= payments ? "reports" : "payments";
+  return { userIds: to, data: { kind: "stale", id: "stale", title: "Items are waiting", body: `${total} ${total === 1 ? "item has" : "items have"} been waiting more than 3 days`, place: target, msg: "stale" } };
+}
+
+async function planTest(rec: any): Promise<Push | null> {
+  const as = String(rec?.as ?? "idreview");
+  const stamp = String(Date.now());
+  const plan = as === "stale" ? await planStale({ ids: 1, reports: 1, payments: 0 })
+    : as === "report" ? await planReport({ id: "test-" + stamp, reason: "other", reporter_id: null })
+    : await planIdReview({ id: "test-" + stamp, owner_id: null }, true);
+  if (plan) plan.data.title = "Test: " + plan.data.title;
+  return plan;
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("method not allowed", { status: 405 });
   if (!sameSecret(WEBHOOK_SECRET, req.headers.get("x-bofo-push-secret") ?? "")) return new Response("unauthorized", { status: 401 });
   try {
     const { kind, record } = await req.json();
-    const plan = kind === "dm" ? await planDm(record) : kind === "group" ? await planGroup(record) : kind === "report" ? await planReport(record) : null;
+    const plan = kind === "dm" ? await planDm(record) : kind === "group" ? await planGroup(record) : kind === "report" ? await planReport(record)
+      : kind === "idreview" ? await planIdReview(record) : kind === "stale" ? await planStale(record) : kind === "test" ? await planTest(record) : null;
     if (!plan) return Response.json({ sent: 0 });
 
     const { data: rows } = await admin.from("device_tokens").select("token, user_id").in("user_id", plan.userIds);

@@ -1,4 +1,4 @@
-# Phone notifications: one-time setup (v2.3.0)
+# Phone notifications: one-time setup (v2.3.0; admin pushes added in v2.6.0)
 
 The app code is done. Notifications start working after these 6 steps. Until step 1 is done the app builds and runs exactly as before (no Firebase = push is skipped).
 
@@ -45,6 +45,32 @@ Use a phone or emulator **with Google Play services** (an emulator image "with G
 | Admin signs out, then a report is sent | that phone shows nothing (sign-out removes its token) |
 | Settings > Notifications off | that phone stops getting notifications; on again: it gets them again |
 | Muted member / blocked sender | no notification |
+
+## Admin pushes: ID reviews and the daily reminder (v2.6.0, migration 033)
+Both go only to accounts whose `users.role = 'admin'` (the function checks this when it sends; the phone drops them too). Lock screen shows the type or a count only: no names, no ID data.
+| Push | When | Tap opens |
+|---|---|---|
+| "New ID to review" (`idreview`) | an owner submits an ID | Queue, Waiting filter |
+| "N items have been waiting more than 3 days" (`stale`) | once a day, only if N > 0 (IDs + reports + payments, same meaning of "waiting" as Admin Home) | the tab with the most waiting items (Queue, Reports or Payments), Waiting filter |
+
+**Set up (once):**
+1. Redeploy the function (it has two new kinds): `supabase functions deploy send-push --no-verify-jwt --project-ref zfxldzcoirqolflkkhrh`
+2. SQL editor: run `supabase/migrations/033_admin_push.sql` (needs 029 already done and `push_settings` filled in, see step 5 above).
+3. Daily reminder: Supabase > Database > Extensions > turn on **pg_cron**, then run once (1:00 UTC = 9:00 in the Philippines; change the hour if you like):
+```sql
+select cron.schedule('bofo-stale-push', '0 1 * * *', $$select public.push_stale_check()$$);
+```
+Stop it with `select cron.unschedule('bofo-stale-push');`. The cron job calls the same `push_notify` as the triggers, so it uses the URL and secret already in `push_settings` (no second secret).
+
+**Test it (SQL editor, signed-in admin phone with the app open once so its token is registered):**
+| Run | Expected on every admin phone |
+|---|---|
+| `select public.push_notify('test', '{"as":"idreview"}'::jsonb);` | "Test: New ID to review". Tap: Queue with Waiting |
+| `select public.push_notify('test', '{"as":"stale"}'::jsonb);` | "Test: Items are waiting". Tap: Queue |
+| `select public.push_notify('test', '{"as":"report"}'::jsonb);` | "Test: New report". Tap: Reports |
+| `select public.push_stale_check();` | the real reminder, but only when something has waited more than 3 days |
+| An owner account submits an ID | "New ID to review" on admin phones only (not the owner's phone) |
+Student and owner phones must show nothing for any of these. Chats, groups and reports keep working as before. Android: Settings > Notifications > BOFO shows the admin channels "Reports (admin)" and "ID reviews and reminders" once an admin has signed in.
 
 ## If nothing arrives
 1. App: Settings > Notifications is on and Android's notification permission for BOFO is allowed.

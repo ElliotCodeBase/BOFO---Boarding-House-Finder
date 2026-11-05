@@ -41,6 +41,15 @@ public final class PushNotifier {
         } catch (Throwable ignored) { /* channels are re-created on the next push */ }
     }
 
+    /** v2.6.0: the admin channels (Reports, ID reviews + reminders). Called when an admin signs in (PushService.syncAsync) and again before an admin push is drawn. */
+    public static void createAdminChannels(Context ctx) {
+        try {
+            NotificationManagerCompat nm = NotificationManagerCompat.from(ctx);
+            nm.createNotificationChannel(channel(ctx, PushRules.CH_REPORTS, R.string.push_channel_reports, R.string.push_channel_reports_desc));
+            nm.createNotificationChannel(channel(ctx, PushRules.CH_ADMIN, R.string.push_channel_admin, R.string.push_channel_admin_desc));
+        } catch (Throwable ignored) { /* re-created on the next admin push */ }
+    }
+
     private static NotificationChannelCompat channel(Context ctx, String id, int name, int desc) {
         return new NotificationChannelCompat.Builder(id, NotificationManagerCompat.IMPORTANCE_HIGH)
                 .setName(ctx.getString(name)).setDescription(ctx.getString(desc)).build();
@@ -59,11 +68,9 @@ public final class PushNotifier {
         if (!nm.areNotificationsEnabled()) return;
 
         final boolean ann = "1".equals(d.get("ann"));
-        final boolean report = PushRules.REPORT.equals(kind);
+        final boolean report = PushRules.adminOnly(kind);          // v2.6.0: report, idreview and stale all use the lock-screen-safe layout
         final String chan = PushRules.channel(kind, ann);
-        if (report) nm.createNotificationChannel(new NotificationChannelCompat.Builder(chan, NotificationManagerCompat.IMPORTANCE_HIGH)
-                .setName(app.getString(R.string.push_channel_reports)).setDescription(app.getString(R.string.push_channel_reports_desc)).build());
-        else createCommonChannels(app);
+        if (report) createAdminChannels(app); else createCommonChannels(app);
 
         final String tag = PushRules.tag(kind, id);
         final String title = nz(d.get("title")), body = PushRules.preview(d.get("body"), 140), place = nz(d.get("place")), sender = nz(d.get("sender"));
@@ -81,7 +88,7 @@ public final class PushNotifier {
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
         if (report) {
-            // Admin reports: only the reason shows on a locked screen.
+            // Admin pushes (report / idreview / stale): only the type or a count shows on a locked screen; the server never sends names or ID data.
             Notification pub = new NotificationCompat.Builder(app, chan).setSmallIcon(R.drawable.ic_stat_bofo)
                     .setContentTitle(app.getString(R.string.app_name)).setContentText(title).build();
             b.setContentTitle(title).setContentText(body).setStyle(new NotificationCompat.BigTextStyle().bigText(body))

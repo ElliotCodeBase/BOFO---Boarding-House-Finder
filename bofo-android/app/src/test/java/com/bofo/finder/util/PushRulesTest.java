@@ -37,6 +37,41 @@ public class PushRulesTest {
         assertEquals(PushRules.CH_REPORTS, PushRules.channel("report", false));
     }
 
+    @Test public void idReviewAndStaleAreKnownAndAdminOnly() {            // v2.6.0
+        for (String k : new String[]{"idreview", "stale"}) {
+            assertTrue(PushRules.known(k));
+            assertTrue(PushRules.adminOnly(k));
+            assertTrue(PushRules.allowedFor(k, "admin"));
+            assertFalse(PushRules.allowedFor(k, "student"));
+            assertFalse(PushRules.allowedFor(k, "owner"));
+            assertFalse(PushRules.allowedFor(k, ""));
+            assertFalse(PushRules.allowedFor(k, null));
+            assertEquals(PushRules.CH_ADMIN, PushRules.channel(k, false));
+        }
+        assertTrue(PushRules.adminOnly("report"));
+        assertFalse(PushRules.adminOnly("dm"));
+        assertFalse(PushRules.adminOnly("group"));
+        assertFalse(PushRules.adminOnly(null));
+    }
+
+    @Test public void tapsOpenTheRightAdminTab() {                        // v2.6.0
+        assertEquals(PushRules.TAB_REPORTS, PushRules.adminTab("report", ""));
+        assertEquals(PushRules.TAB_QUEUE, PushRules.adminTab("idreview", ""));
+        assertEquals(PushRules.TAB_QUEUE, PushRules.adminTab("stale", "queue"));
+        assertEquals(PushRules.TAB_REPORTS, PushRules.adminTab("stale", "reports"));
+        assertEquals(PushRules.TAB_PAYMENTS, PushRules.adminTab("stale", "payments"));
+        assertEquals(PushRules.TAB_QUEUE, PushRules.adminTab("stale", null));      // unknown target: the Queue, never a crash
+        assertEquals(PushRules.TAB_NONE, PushRules.adminTab("dm", "reports"));
+        assertEquals(PushRules.TAB_NONE, PushRules.adminTab(null, null));
+    }
+
+    @Test public void chatKindsAreUnchanged() {                           // v2.6.0: dm / group must keep working
+        assertEquals(PushRules.CH_CHATS, PushRules.channel("dm", false));
+        assertEquals(PushRules.CH_ANNOUNCE, PushRules.channel("group", true));
+        assertTrue(PushRules.allowedFor("dm", "student"));
+        assertTrue(PushRules.allowedFor("group", "owner"));
+    }
+
     @Test public void aChatOnScreenMakesNoBanner() {
         assertTrue(PushRules.isOpenNow("dm", "c1", "c1", null));
         assertTrue(PushRules.isOpenNow("group", "b1", null, "b1"));
