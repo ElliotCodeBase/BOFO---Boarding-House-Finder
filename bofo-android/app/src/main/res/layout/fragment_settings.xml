@@ -286,6 +286,19 @@
                         android:layout_height="wrap_content"
                         android:contentDescription="@string/settings_notifications" />
                 </LinearLayout>
+                <TextView
+                    android:id="@+id/push_test"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:minHeight="48dp"
+                    android:paddingStart="68dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/push_test"
+                    android:textColor="@color/bofo_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
