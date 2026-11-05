@@ -25,6 +25,8 @@ import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BoostRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
+import com.bofo.finder.util.CsvRules;
+import com.bofo.finder.util.InsightRules;
 import com.bofo.finder.util.AdminErrorRules;
 import com.bofo.finder.util.SuspendRules;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -61,6 +63,7 @@ public class ReportsFragment extends Fragment {
     private int token;
     private int filter = 0;          // index into FILTERS: starts on "pending"
     private boolean busy;
+    private String person, personName = "";      // v2.8.0: set = only the reports about this person (title shows it; picking a filter from the title clears it)
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
@@ -70,6 +73,8 @@ public class ReportsFragment extends Fragment {
         b.title.setContentDescription(getString(R.string.rep_more_filters));
         if (getArguments() != null) filter = Math.max(0, Math.min(FILTERS.length - 1, getArguments().getInt("filter", 0)));     // Admin Home preselects
         showTitle();
+        b.exportCsv.setVisibility(View.VISIBLE);
+        b.exportCsv.setOnClickListener(v -> exportCsv());
         rows = new AdminRowAdapter(requireContext());
         b.list.setAdapter(rows);
         chrome = new AdminListChrome(b, AdminListRules.reportsChip(filter), new AdminListChrome.Host() {
@@ -89,14 +94,15 @@ public class ReportsFragment extends Fragment {
 
     private void showTitle() {
         String[] labels = getResources().getStringArray(R.array.rep_filters);
-        b.title.setText(getString(R.string.rep_title, labels[Math.min(filter, labels.length - 1)]) + " \u25BE");
+        b.title.setText((person != null ? getString(R.string.rep_person_title, AdminRules.who(personName))
+                : getString(R.string.rep_title, labels[Math.min(filter, labels.length - 1)])) + " \u25BE");
     }
 
     private void pickFilter() {
         new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_filter_title)
                 .setItems(R.array.rep_filters, (d, which) -> {
                     if (which == BANNED_USERS) { NavHostFragment.findNavController(this).navigate(R.id.bannedUsersFragment); return; }     // v2.2.2: moved here from Profile
-                    filter = which; showTitle(); chrome.setChip(AdminListRules.reportsChip(which)); reload();
+                    person = null; filter = which; showTitle(); chrome.setChip(AdminListRules.reportsChip(which)); reload();
                 }).show();
     }
 
@@ -121,7 +127,7 @@ public class ReportsFragment extends Fragment {
     private void reload() {
         if (b == null) return;
         final int my = ++token;
-        final String part = FILTERS[filter];
+        final String part = (person == null ? "" : "reported_user_id=eq." + person + "&") + FILTERS[filter];
         final String order = filter == 0 ? "order=created_at.asc&limit=200" : "order=created_at.desc&limit=100";      // waiting = oldest first
         chrome.loading(!items.isEmpty());
         Async.run(() -> {
@@ -157,14 +163,38 @@ public class ReportsFragment extends Fragment {
         });
     }
 
+    private boolean matchesQuery(JSONObject x) {
+        return AdminListRules.matches(chrome.query(), reported(x), reporter(x), nullToEmpty(x.optString("bh_name", "")),
+                ReportDialog.reasonLabel(requireContext(), x.optString("reason")), nullToEmpty(x.optString("details", "")));
+    }
+
+    /** v2.8.0: the reports now in the list (same search), as CSV: id, date, reason key, status. No names and no details text. */
+    private void exportCsv() {
+        if (b == null) return;
+        List<String[]> out = new ArrayList<>();
+        for (JSONObject x : all) {
+            if (!matchesQuery(x)) continue;
+            out.add(new String[]{x.optString("id"), InsightRules.dayOf(x.optString("created_at", "")), x.optString("reason"), x.optString("status")});
+        }
+        if (out.isEmpty()) { ListArea.toast(this, getString(R.string.export_empty)); return; }
+        CsvShare.share(this, "reports.csv", CsvRules.document(new String[]{"id", "date", "reason", "status"}, out));
+    }
+
+    /** v2.8.0: show only the reports about one person (all statuses). */
+    private void showPerson(String userId, String name) {
+        person = userId; personName = name; filter = 6;
+        chrome.setChip(AdminListRules.ALL);
+        showTitle();
+        reload();
+    }
+
     /** Search, then group the waiting reports about the same person + place into one row; show the place (name + photo) and the start of the details inline. */
     private void applyFilter() {
         if (b == null) return;
         items.clear(); groupOf.clear();
         List<JSONObject> match = new ArrayList<>();
         for (JSONObject x : all) {
-            if (AdminListRules.matches(chrome.query(), reported(x), reporter(x), nullToEmpty(x.optString("bh_name", "")),
-                    ReportDialog.reasonLabel(requireContext(), x.optString("reason")), nullToEmpty(x.optString("details", "")))) match.add(x);
+            if (matchesQuery(x)) match.add(x);
         }
         List<List<JSONObject>> groups = AdminListRules.groupBy(match, x -> "pending".equals(x.optString("status"))
                 ? "g|" + x.optString("reported_user_id") + "|" + nullToEmpty(x.optString("bh_id", "")) : "r|" + x.optString("id"));
@@ -247,14 +277,26 @@ public class ReportsFragment extends Fragment {
             }
         }
         final String target = x.optString("reported_user_id");
-        MaterialAlertDialogBuilder d = new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_kind_report).setMessage(msg.toString());
+        final String base = msg.toString();
+        MaterialAlertDialogBuilder d = new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_kind_report).setMessage(base);
+        if (InsightRules.isUuid(target) && !target.equals(person)) d.setNeutralButton(R.string.rep_person_btn, (dd, w) -> showPerson(target, reported(x)));
         if ("pending".equals(x.optString("status"))) {
             // v2.1.9: four choices no longer fit three dialog buttons: one "Actions" button opens a list (Suspend, Ban, Dismiss, Take down, Close)
             d.setPositiveButton(R.string.rep_actions_btn, (dd, w) -> actions(x, target)).setNegativeButton(R.string.common_close, null);
         } else {
             d.setPositiveButton(R.string.rep_takedown, (dd, w) -> pickPlace(target, null)).setNegativeButton(R.string.common_close, null);
         }
-        d.show();
+        final androidx.appcompat.app.AlertDialog dlg = d.show();
+        if (InsightRules.isUuid(target)) personCount(dlg, base, target, "pending".equals(x.optString("status")));
+    }
+
+    /** v2.8.0: adds "N other waiting reports about this person" to the open details dialog once the count is read (nothing is added when it fails or is 0). */
+    private void personCount(androidx.appcompat.app.AlertDialog dlg, String base, String userId, boolean thisWaiting) {
+        Async.run(() -> SupabaseClient.get().select("reports_admin_v", "reported_user_id=eq." + userId + "&status=eq.pending&select=id&limit=200").length(), (Integer n) -> {
+            if (b == null || !dlg.isShowing()) return;
+            int more = InsightRules.otherWaiting(n, thisWaiting);
+            if (more > 0) dlg.setMessage(base + "\n\n" + getResources().getQuantityString(R.plurals.rep_person_more, more, more));
+        }, e -> { /* the count is a bonus */ });
     }
 
     /** v2.1.9: the decision list of a waiting report. */

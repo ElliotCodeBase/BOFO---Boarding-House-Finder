@@ -1,3 +1,12 @@
+# Handoff (Android) - v2.8.0: Admin next steps, step 4 of 5 PARTLY done (items 8, 9, 10)
+- Plan: `docs/ADMIN_NEXT_STEPS.md`. Done: Step 1 (v2.5.0, code missing in the user's repo zip: ask them to apply it), Step 2 (v2.6.0), Step 3 PARTLY (v2.7.0: 8 reject templates + second-opinion flag on IDs only, migration 034 not run; NOT done: saved own templates, "Approve clean" bulk approve (server needs the retyped ID number), flag on reports, filter chip), Step 4 PARTLY (v2.8.0).
+- New: `AdminWeeklyService` + "Last 7 days" card (`AdminHomeFragment.showWeek`), `InsightRules`, `CsvRules` (+ tests), `CsvShare` (cache `exports/`, FileProvider path added to `file_paths.xml`), `exportCsv` button in `fragment_admin_list.xml` (hidden except Reports and Payments), `ReportsFragment` person filter (`person`, `showPerson`, `personCount`), strings in `strings_admin_insights.xml`.
+- NOT done in step 4: item 11 (AI unanswered / chat log on `AdminListChrome` + `AdminRowAdapter`): the 6 reason filters do not fit the 3 chips; options: extend `AdminListChrome` with custom chips, or keep their own chips and add only search + row look.
+- Open risks: weekly numbers cap at 1000 ("1000+"); `reports_admin_v` is assumed readable for the weekly count; export and person filter not tested on a device.
+- Next: Step 5 (auto-lock, moderator role split, final QA).
+- Nothing compiled or run: `gradlew testDebugUnitTest assembleDebug`.
+- Version 2.8.0 / 20800.
+
 # Handoff (Android) - v2.7.0: Admin next steps, step 3 of 5 PARTLY done (reject templates + second opinion)
 - Done: reject templates (`RejectDialog`, strings in `strings_review_admin.xml`), second-opinion flag (`ReviewSpeedRules` + test, `VerificationService.flagSecondOpinion`, `QueueFragment.quick/flag`, `strings_admin_speed.xml`, migration `034_second_opinion.sql` NOT run). Audit actions `verification_flagged` / `verification_unflagged` show as "Other action" in What I did (not added to `AdminActivityRules.ACTIONS` to avoid clashing with step 1).
 - NOT done: "Approve clean (N)". `admin_approve_verification` requires the retyped ID number, so a bulk approve needs a new server path that skips that check. Wait for the user's decision before building it.
@@ -14,14 +23,3 @@
 - Open risks: tap while the Queue tab is already open does not re-apply the Waiting filter (existing `showTab` behaviour). Nothing was tested on a device or against FCM.
 - Nothing was compiled or run: run `gradlew testDebugUnitTest assembleDebug`. `PushRules`/`PushRulesTest` were compiled and run with plain javac/JUnit (11 tests pass).
 - Version 2.6.0 / 20600.
-
-# Handoff (Android) - v2.5.0: Admin next steps, step 1 of 5 done (Undo + Recently decided)
-- Plan: `docs/ADMIN_NEXT_STEPS.md` (the user pastes it; says one step per turn, then STOP until `next`). Done: **Step 1**. **Next: Step 2 = admin push for new ID reviews and items waiting over 3 days** (`send-push`, `PushRules`, `PushNotifier`, migration 033 needs the user's OK).
-- New: migration `032_admin_undo.sql` (user approved; NOT run on live by the AI): `admin_unsuspend(uid)`, `admin_relist(bh)`, `admin_reopen_report(rid)`; audit actions `user_unsuspend`, `listing_relist`, `report_reopen`.
-- New app files: `ui/RecentDecidedFragment` (nav `recentDecidedFragment`, card on `AdminHomeFragment`), `service/AdminUndoService`, `util/AdminUndoRules` (+ test), `ui/RowSwipe` (ListView swipe helper), strings in `strings_admin_undo.xml`. `AdminRowAdapter.Row` has an optional Undo button (`row_undo` in `item_admin_row.xml`). `ReportsFragment.swipeDismiss` / `undoSwipe`. `AdminActivityRules.ACTIONS` + `admin_act_labels` got 3 entries at the END (indexes unchanged). `AdminErrorRules` knows "nothing to undo".
-- Recently decided reads `audit_logs` (all admins' rows, columns action / target / actor / time / report id; never reasons) and hides Undo when a newer row of the list already undid it.
-- Open risk: `audit_logs` SELECT grant for `authenticated` unverified (check: `select has_table_privilege('authenticated','public.audit_logs','select');`). Without it Recently decided and What I did show "could not load".
-- Open risk: swipe (`RowSwipe`) and screen-reader use were not tested on a device; swipe has no TalkBack action (long-press menu is the non-gesture way).
-- Fixed the non-public `AdminRowAdapter.isEmpty()` compile error (if the user's local copy already fixed it, the zip just overwrites with the same fix).
-- Nothing was compiled or run: run `gradlew testDebugUnitTest assembleDebug`.
-- Version 2.5.0 / 20500.
