@@ -6,7 +6,7 @@
 // If every model fails, the rule-based path (parseLocal + templates) answers, with "degraded": true.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
-const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info, x-bofo-app-version" };
+const cors = { "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info, x-bofo-app-version" };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
 // ------------------------------------------------------------------ types / constants

@@ -16,7 +16,8 @@ Deno.serve(async (req) => {
   const header = req.headers.get("Paymongo-Signature") ?? "";
   const parts = Object.fromEntries(header.split(",").map((p) => p.split("=") as [string, string]));
   if (!parts.t) return new Response("bad signature", { status: 401 });
-  if (Math.abs(Date.now() / 1000 - Number(parts.t)) > 600) return new Response("stale", { status: 401 });   // replay protection
+  const ts = Number(parts.t);
+  if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > 600) return new Response("stale", { status: 401 });   // replay protection (S-15: a non-numeric t is refused too)
   const expected = await hmacHex(Deno.env.get("PAYMONGO_WEBHOOK_SECRET")!, `${parts.t}.${raw}`);
   if (!safeEq(expected, parts.te ?? "") && !safeEq(expected, parts.li ?? "")) return new Response("bad signature", { status: 401 });
 

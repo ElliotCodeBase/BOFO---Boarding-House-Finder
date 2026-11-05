@@ -11,7 +11,7 @@ import { generate, templateResult } from "./generate.ts";
 import { decide, isMissingKindColumn } from "./limits.ts";
 import { makeLlm, readLlmEnv } from "./llm.ts";
 
-const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info, x-bofo-app-version" };
+const cors = { "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info, x-bofo-app-version" };
 const json = (b: unknown, s = 200, extra: Record<string, string> = {}) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, ...extra, "Content-Type": "application/json" } });
 
 Deno.serve(async (req) => {

@@ -3,7 +3,7 @@
 // Secrets: PAYMONGO_SECRET_KEY (sk_test_... / sk_live_...), BOOST_SUCCESS_URL, BOOST_CANCEL_URL (https pages you host)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
-const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info, x-bofo-app-version" };
+const cors = { "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info, x-bofo-app-version" };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
 Deno.serve(async (req) => {
