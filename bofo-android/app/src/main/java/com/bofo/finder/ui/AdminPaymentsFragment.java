@@ -61,6 +61,7 @@ public class AdminPaymentsFragment extends Fragment {
         };
         b.list.setAdapter(rows);
         b.list.setOnItemClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) details(items.get(pos)); });
+        b.list.setOnItemLongClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) quick(items.get(pos)); return true; });
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
         b.swipe.setOnRefreshListener(this::reload);
         return b.getRoot();
@@ -127,6 +128,15 @@ public class AdminPaymentsFragment extends Fragment {
         });
     }
 
+    /** v2.4.12: long-press a row: Open, and Refund when the payment can be refunded. */
+    private void quick(JSONObject x) {
+        boolean can = AdminRules.canRefund(x.optString("status"));
+        String[] labels = can ? new String[]{getString(R.string.act_open), getString(R.string.adminpay_refund)} : new String[]{getString(R.string.act_open)};
+        new MaterialAlertDialogBuilder(requireContext()).setTitle(Money.peso(x.optDouble("amount_php", 0))).setItems(labels, (d, which) -> {
+            if (which == 0) details(x); else refund(x);
+        }).show();
+    }
+
     private void details(JSONObject x) {
         String pl = places.get(x.optString("boarding_house_id"));
         String msg = getString(R.string.adminpay_detail, AdminRules.who(owners.get(x.optString("owner_id"))), pl == null ? getString(R.string.pay_place_gone) : pl,
@@ -134,17 +144,25 @@ public class AdminPaymentsFragment extends Fragment {
                 BoostRules.day(x.optString("created_at", ""), ZoneId.systemDefault()), x.optString("reference_number", "-"));
         MaterialAlertDialogBuilder d = new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.pay_detail_title).setMessage(msg)
                 .setNegativeButton(R.string.common_close, null);
-        if (AdminRules.canRefund(x.optString("status"))) d.setPositiveButton(R.string.adminpay_refund, (dd, w) -> refund(x.optString("id")));
+        if (AdminRules.canRefund(x.optString("status"))) d.setPositiveButton(R.string.adminpay_refund, (dd, w) -> refund(x));
         d.show();
     }
 
-    private void refund(String paymentId) {
+    /** v2.4.12: reason, then ONE confirmation that names the owner and the amount. The refund only changes our records (and ends the boost now). */
+    private void refund(JSONObject x) {
+        final String paymentId = x.optString("id");
+        final String who = AdminRules.who(owners.get(x.optString("owner_id")));
+        final String amount = Money.peso(x.optDouble("amount_php", 0));
         ReasonDialog.ask(this, R.string.adminpay_refund_title, R.string.adminpay_refund_do, true, reason -> {
             if (!AdminRules.takedownOk(reason)) return;
-            Async.run(() -> { new BoostService().refund(paymentId, reason); return Boolean.TRUE; }, ok -> {
-                ListArea.toast(this, getString(R.string.adminpay_done));
-                reload();
-            }, e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.adminpay_error), e)));
+            new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.adminpay_refund_title)
+                    .setMessage(getString(R.string.act_refund_confirm, amount, who, reason))
+                    .setNegativeButton(R.string.common_cancel, null)
+                    .setPositiveButton(R.string.adminpay_refund_do, (d, w) ->
+                        Async.run(() -> { new BoostService().refund(paymentId, reason); return Boolean.TRUE; }, ok -> {
+                            ListArea.toast(this, getString(R.string.adminpay_done));
+                            reload();
+                        }, e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.adminpay_error), e)))).show();
         });
     }
 

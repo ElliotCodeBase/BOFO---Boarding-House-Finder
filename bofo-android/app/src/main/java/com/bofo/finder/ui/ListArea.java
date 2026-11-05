@@ -167,6 +167,14 @@ final class ListArea {
         if (f.isAdded() && f.getContext() != null) Toast.makeText(f.requireContext(), msg, Toast.LENGTH_SHORT).show();
     }
 
+    /** v2.4.12: a message with an Undo button for 5 seconds. Without a screen to attach to it is a plain toast (and no Undo). */
+    static void undo(Fragment f, String msg, Runnable undo) {
+        View v = f.getView();
+        if (v == null || !f.isAdded()) { toast(f, msg); return; }
+        com.google.android.material.snackbar.Snackbar.make(v, msg, 5000)
+                .setAction(R.string.act_undo, x -> undo.run()).show();
+    }
+
     /** Tab selection without implementing the three-method listener every time. */
     static void onTab(TabLayout t, IntConsumer c) {
         t.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
