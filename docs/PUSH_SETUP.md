@@ -72,6 +72,14 @@ Stop it with `select cron.unschedule('bofo-stale-push');`. The cron job calls th
 | An owner account submits an ID | "New ID to review" on admin phones only (not the owner's phone) |
 Student and owner phones must show nothing for any of these. Chats, groups and reports keep working as before. Android: Settings > Notifications > BOFO shows the admin channels "Reports (admin)" and "ID reviews and reminders" once an admin has signed in.
 
+## Test one phone (v2.9.2, any account type)
+Open the app once signed in, close it completely, then in the SQL editor:
+```sql
+select public.push_notify('test', jsonb_build_object('as','me','user_id',(select user_id from public.device_tokens order by updated_at desc limit 1)));
+select status_code, left(content,200) as answer, error_msg, created from net._http_response order by created desc limit 3;
+```
+The answer tells what is wrong (`no_device_token`, `unauthorized`, `FCM_SERVICE_ACCOUNT is not set`, ...). The full table of answers and fixes: `docs/NOTIFICATION_FIX_v2.9.2.md`.
+
 ## If nothing arrives
 1. App: Settings > Notifications is on and Android's notification permission for BOFO is allowed.
 2. SQL: `select user_id, left(token, 12), updated_at from public.device_tokens;` has a row for your account (it appears a few seconds after the app opens).
