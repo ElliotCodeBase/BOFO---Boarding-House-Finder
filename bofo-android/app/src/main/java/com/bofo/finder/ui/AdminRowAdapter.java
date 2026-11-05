@@ -32,7 +32,7 @@ final class AdminRowAdapter extends BaseAdapter {
     AdminRowAdapter(Context ctx) { this.ctx = ctx; }
 
     void set(List<Row> r) { rows.clear(); rows.addAll(r); notifyDataSetChanged(); }
-    boolean isEmpty() { return rows.isEmpty(); }
+    @Override public boolean isEmpty() { return rows.isEmpty(); }
 
     @Override public int getCount() { return rows.size(); }
     @Override public Object getItem(int i) { return rows.get(i); }

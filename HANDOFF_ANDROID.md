@@ -1,3 +1,7 @@
+# Handoff (Android) - v2.9.1: build fix
+- `AdminRowAdapter.isEmpty()` made `public` + `@Override` after the user's build failed on it. Everything in the v2.9.0 handoff entry below still applies (moderator role split waiting for the user's OK on migration 035; other open items listed there).
+- Version 2.9.1 / 20901.
+
 # Handoff (Android) - v2.9.0: Admin next steps, step 5 of 5 PARTLY done (auto-lock only)
 - Done: auto-lock. `AutoLockRules` (+ test), `AppPrefs.adminAutoLock / adminStoppedAt`, `AdminLock.locked` (static, survives rotation), `ShellFragment.onStop/onStart/lock/unlocked`, `AdminMfaSheet.showLock` (lock mode: not cancelable, "Sign out instead" button, Try again when offline, closes at once when the account has no authenticator), Settings row `admin_lock_row`, strings in `strings_admin_lock.xml`.
 - NOT done: moderator role split. Plan: migration `035_admin_level.sql` (`users.admin_level` 'admin'|'moderator', default 'admin'; extend `protect_users` so nobody changes their own level; check the level inside admin_review_report ban/suspend/takedown actions, admin_unban, boost refund, admin_unsuspend / admin_relist if step 1 exists), app hides those buttons, banner shows "Moderator". Needs the user's OK for the migration first.
@@ -14,10 +18,3 @@
 - Next: Step 5 (auto-lock, moderator role split, final QA).
 - Nothing compiled or run: `gradlew testDebugUnitTest assembleDebug`.
 - Version 2.8.0 / 20800.
-
-# Handoff (Android) - v2.7.0: Admin next steps, step 3 of 5 PARTLY done (reject templates + second opinion)
-- Done: reject templates (`RejectDialog`, strings in `strings_review_admin.xml`), second-opinion flag (`ReviewSpeedRules` + test, `VerificationService.flagSecondOpinion`, `QueueFragment.quick/flag`, `strings_admin_speed.xml`, migration `034_second_opinion.sql` NOT run). Audit actions `verification_flagged` / `verification_unflagged` show as "Other action" in What I did (not added to `AdminActivityRules.ACTIONS` to avoid clashing with step 1).
-- NOT done: "Approve clean (N)". `admin_approve_verification` requires the retyped ID number, so a bulk approve needs a new server path that skips that check. Wait for the user's decision before building it.
-- Repo check: the zip the user supplied has the v2.5.0 notes but NO step 1 code (no `RecentDecidedFragment`, `AdminUndoRules`, `032_admin_undo.sql`). Ask the user to apply the step 1 zip.
-- Nothing compiled or run: `gradlew testDebugUnitTest assembleDebug`.
-- Version 2.7.0 / 20700.
