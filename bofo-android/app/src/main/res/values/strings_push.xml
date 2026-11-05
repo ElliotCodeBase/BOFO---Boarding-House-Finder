@@ -14,4 +14,17 @@
     <string name="push_channel_announce_desc">Pinned announcements from your boarding house owner</string>
     <string name="push_channel_reports">Reports (admin)</string>
     <string name="push_channel_reports_desc">New user reports waiting for review. Admin accounts only.</string>
+    <string name="push_test">Send test notification</string>
+    <string name="push_on_ok">Notifications are on. This phone is registered.</string>
+    <string name="push_err_session">Sign in again, then switch notifications on.</string>
+    <string name="push_err_register">Could not register this phone: %1$s</string>
+    <string name="push_err_generic">Could not turn notifications on right now. Check your connection and try again.</string>
+    <string name="push_testing">Sending a test notification...</string>
+    <string name="push_test_off">Switch Notifications on first.</string>
+    <string name="push_test_server">Server not set up: the push_settings table has no url/secret. Run the setup in docs/PUSH_SETUP.md (step 5.2).</string>
+    <string name="push_test_sent">Test sent. It should pop up within a few seconds. If nothing appears, the phone is hiding it: set BOFO battery to Unrestricted and allow auto-start, then do not Force stop the app.</string>
+    <string name="push_test_unknown">The test was queued but the server has not answered yet. Wait 10 seconds and try again; if it keeps happening, redeploy send-push.</string>
+    <string name="push_test_nodevice">The server has no registered phone for your account. Switch Notifications off and on again.</string>
+    <string name="push_test_failed">The server answered %1$s. See docs/NOTIFICATION_FIX_v2.9.2.md section 6.</string>
+    <string name="push_open_settings">Open phone notification settings</string>
 </resources>
