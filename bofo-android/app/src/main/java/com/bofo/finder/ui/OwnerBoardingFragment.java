@@ -50,7 +50,7 @@ public class OwnerBoardingFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle state) {
         super.onViewCreated(view, state);
         b.back.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
-        b.back.setVisibility(getParentFragment() instanceof ShellFragment ? View.GONE : View.VISIBLE);      // v2.4.8: now a bottom-bar tab, so no Back arrow
+        b.back.setVisibility(getParentFragment() instanceof ShellFragment || getParentFragment() instanceof BoardingFragment ? View.GONE : View.VISIBLE);      // v2.4.8: now a bottom-bar tab, so no Back arrow
         b.announce.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.announceFragment));
         b.retry.setOnClickListener(v -> load());
         b.list.setLayoutManager(new LinearLayoutManager(requireContext()));
