@@ -21,6 +21,7 @@ import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BoostRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
+import com.bofo.finder.util.AdminErrorRules;
 import com.bofo.finder.util.Money;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -185,7 +186,7 @@ public class AdminPaymentsFragment extends Fragment {
                         Async.run(() -> { new BoostService().refund(paymentId, reason); return Boolean.TRUE; }, ok -> {
                             ListArea.toast(this, getString(R.string.adminpay_done));
                             reload();
-                        }, e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.adminpay_error), e)))).show();
+                        }, e -> ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.adminpay_error), e)))).show();
         });
     }
 

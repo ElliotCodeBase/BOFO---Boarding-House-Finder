@@ -26,6 +26,7 @@ import com.bofo.finder.util.BanRules.Row;
 import com.bofo.finder.util.BoostRules;
 import com.bofo.finder.util.Connectivity;
 import com.bofo.finder.util.ErrorText;
+import com.bofo.finder.util.AdminErrorRules;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.time.ZoneId;
@@ -96,7 +97,7 @@ public class BannedUsersFragment extends Fragment {
             if (my != token || b == null) return;
             b.swipe.setRefreshing(false);
             if (!all.isEmpty()) return;                                 // keep what is shown
-            message(Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.ban_list_error), e), true);
+            message(Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.ban_list_error), e), true);
         });
     }
 
@@ -140,7 +141,7 @@ public class BannedUsersFragment extends Fragment {
         }, e -> {
             busy = false;
             if (b == null) return;
-            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.ban_unban_error), e));
+            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : AdminErrorRules.plain(getString(R.string.ban_unban_error), e));
             reload();
         });
     }

@@ -22,3 +22,7 @@ Read from the code, not run on a device. One line each: problem -> file.
 - Errors for lists are a short toast that disappears; no retry button -> `QueueFragment.reload`, `ListArea.toast`. (Step 4.)
 - Offline looks the same as "empty list" after a failed load (list keeps old rows, only a toast) -> `QueueFragment`, `AdminPaymentsFragment`. (Step 4.)
 - No record visible to the admin of what they did (audit_logs exists server-side for take-down only) -> step 5.
+
+## Status after step 5 (v2.4.14)
+Fixed: Admin Home + badges, review screen, confirmations + ban Undo, long-press, chips/search/offline/retry, grouped reports with inline place, activity log, plain error sentences, hints under admin switches, admin banner.
+Not done: Undo for suspend / take down / dismiss (needs new server functions), auto-lock after inactivity, AI screens on the new list look, Banned users search unchanged.

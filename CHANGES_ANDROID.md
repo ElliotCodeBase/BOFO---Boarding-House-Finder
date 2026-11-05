@@ -1,3 +1,14 @@
+# v2.4.14 - Admin clarity, trust and accessibility; admin guide (Admin UI step 5 of 5)
+- **What I did.** New last card on Admin Home: your own last 50 actions (what you did, to whom or what, and when).
+- **Plain messages.** Admin error messages are now short sentences ("Someone already handled this.") instead of HTTP numbers and codes.
+- **Hints.** A one-line explanation under Two-step verification, View the app as..., and the BOFO AI switch (Settings, admins only).
+- **Admin banner.** A thin amber strip at the top always says "Admin mode - signed in as ...".
+- **Accessibility.** Screen-reader descriptions on cards and rows, 48 dp targets on the new controls, no skeleton pulse and no tab fade when system animations are off.
+- **Docs.** `docs/ADMIN_GUIDE.md` (one page + test checklist).
+- How to get there: Admin > Home > What I did; Settings (admin) for the hints.
+- If something goes wrong: if What I did says it could not load, the admin account may not be allowed to read `audit_logs`; tell the developer (no data is lost).
+- Version 2.4.14 (versionCode 20414). No server change. Not compiled or run on a device in the sandbox that made this change.
+
 # v2.4.13 - Admin lists and Reports: filters, search, grouping, clearer states (Admin UI step 4 of 5)
 - **Queue, Reports and Payments** now share one look: filter chips **Waiting / Done / All**, a search box, and a status in words on a coloured pill (Waiting, Approved, Rejected, Paid, Failed, ...). Waiting items are shown oldest first, with "Waiting 3 days".
 - **Loading and errors.** A skeleton shows while a list loads for the first time. If you are offline (or a refresh fails) you keep the last list and see a banner; with nothing to show you get a plain sentence and a **Try again** button.
