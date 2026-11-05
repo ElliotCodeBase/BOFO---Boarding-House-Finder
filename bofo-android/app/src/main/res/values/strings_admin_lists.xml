@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="admin_search_hint">Search by name or place</string>
+    <string name="admin_chip_waiting">Waiting</string>
+    <string name="admin_chip_done">Done</string>
+    <string name="admin_chip_all">All</string>
+    <string name="admin_retry">Try again</string>
+    <string name="admin_offline_cached">You are offline. Showing the last list we loaded.</string>
+    <string name="admin_refresh_failed_cached">Could not refresh. Showing the last list we loaded.</string>
+    <string name="admin_error_friendly">Something went wrong while loading. Please try again.</string>
+    <string name="admin_no_match">Nothing matches your search.</string>
+    <string name="admin_empty_waiting">Nothing is waiting here. All caught up.</string>
+    <string name="admin_empty_done">Nothing has been decided yet.</string>
+    <string name="admin_st_waiting">Waiting</string>
+    <string name="admin_st_approved">Approved</string>
+    <string name="admin_st_rejected">Rejected</string>
+    <string name="admin_row_waiting_lt_hour">Waiting less than an hour</string>
+    <plurals name="admin_row_waiting_hours">
+        <item quantity="one">Waiting %d hour</item>
+        <item quantity="other">Waiting %d hours</item>
+    </plurals>
+    <plurals name="admin_row_waiting_days">
+        <item quantity="one">Waiting %d day</item>
+        <item quantity="other">Waiting %d days</item>
+    </plurals>
+    <plurals name="admin_report_count">
+        <item quantity="one">%d report</item>
+        <item quantity="other">%d reports</item>
+    </plurals>
+    <string name="admin_row_sub_queue">%1$s - sent %2$s</string>
+    <string name="admin_group_lines">Other reports about the same person and place (%1$d):</string>
+    <string name="admin_group_line">- %1$s, by %2$s, %3$s</string>
+    <string name="admin_group_handled">%1$d other report(s) about the same person were marked as handled.</string>
+    <string name="rep_more_filters">Reports. Tap for more filters.</string>
+</resources>

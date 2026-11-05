@@ -16,6 +16,7 @@ import com.bofo.finder.databinding.FragmentAdminHomeBinding;
 import com.bofo.finder.service.AdminCountsService;
 import com.bofo.finder.service.AdminCountsService.Counts;
 import com.bofo.finder.util.AdminHomeRules;
+import com.bofo.finder.util.AdminListRules;
 import com.bofo.finder.util.Async;
 
 import java.time.LocalDate;
@@ -33,13 +34,13 @@ public class AdminHomeFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
         b = FragmentAdminHomeBinding.inflate(inflater, container, false);
         b.homeDate.setText(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).format(LocalDate.now()));
-        cIds = card(inflater, R.string.admin_card_ids, v -> openTab(R.id.tab_queue));
-        cReports = card(inflater, R.string.admin_card_reports, v -> openTab(R.id.tab_reports));
-        cPay = card(inflater, R.string.admin_card_payments, v -> openTab(R.id.tab_admin_payments));
+        cIds = card(inflater, R.string.admin_card_ids, v -> openTab(R.id.tab_queue, AdminListRules.WAITING));
+        cReports = card(inflater, R.string.admin_card_reports, v -> openTab(R.id.tab_reports, 0));
+        cPay = card(inflater, R.string.admin_card_payments, v -> openTab(R.id.tab_admin_payments, AdminListRules.WAITING));
         cAi = card(inflater, R.string.admin_card_ai, v -> go(R.id.aiUnansweredFragment));
-        cSusp = card(inflater, R.string.admin_card_suspended, v -> openTab(R.id.tab_reports));      // the Reports list has the "suspended" filter (preselected in a later step)
+        cSusp = card(inflater, R.string.admin_card_suspended, v -> openTab(R.id.tab_reports, 2));      // Reports > Answered: Suspended
         cBan = card(inflater, R.string.admin_card_banned, v -> go(R.id.bannedUsersFragment));
-        cDown = card(inflater, R.string.admin_card_takendown, v -> openTab(R.id.tab_reports));
+        cDown = card(inflater, R.string.admin_card_takendown, v -> openTab(R.id.tab_reports, 5));       // Reports > Answered: Taken down
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
         b.swipe.setOnRefreshListener(this::reload);
         return b.getRoot();
@@ -56,8 +57,8 @@ public class AdminHomeFragment extends Fragment {
         return v;
     }
 
-    private void openTab(int id) {
-        if (getParentFragment() instanceof ShellFragment s) s.openAdminTab(id);
+    private void openTab(int id, int filter) {
+        if (getParentFragment() instanceof ShellFragment s) s.openAdminTab(id, filter);
     }
 
     private void go(int dest) {
