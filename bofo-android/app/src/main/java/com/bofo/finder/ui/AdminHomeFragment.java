@@ -15,6 +15,9 @@ import com.bofo.finder.R;
 import com.bofo.finder.databinding.FragmentAdminHomeBinding;
 import com.bofo.finder.service.AdminCountsService;
 import com.bofo.finder.service.AdminCountsService.Counts;
+import com.bofo.finder.service.AdminWeeklyService;
+import com.bofo.finder.service.AdminWeeklyService.Weekly;
+import com.bofo.finder.util.InsightRules;
 import com.bofo.finder.util.AdminHomeRules;
 import com.bofo.finder.util.AdminListRules;
 import com.bofo.finder.util.Async;
@@ -28,7 +31,7 @@ public class AdminHomeFragment extends Fragment {
 
     private FragmentAdminHomeBinding b;
     private int token;
-    private View cIds, cReports, cAi, cPay, cSusp, cBan, cDown;
+    private View cIds, cReports, cAi, cPay, cSusp, cBan, cDown, cWeek;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
@@ -41,6 +44,10 @@ public class AdminHomeFragment extends Fragment {
         cSusp = card(inflater, R.string.admin_card_suspended, v -> openTab(R.id.tab_reports, 2));      // Reports > Answered: Suspended
         cBan = card(inflater, R.string.admin_card_banned, v -> go(R.id.bannedUsersFragment));
         cDown = card(inflater, R.string.admin_card_takendown, v -> openTab(R.id.tab_reports, 5));       // Reports > Answered: Taken down
+        cWeek = card(inflater, R.string.admin_week_title, null);                                    // v2.8.0: last 7 days vs the 7 before (not tappable)
+        cWeek.setClickable(false);
+        cWeek.setFocusable(false);
+        ((TextView) cWeek.findViewById(R.id.card_count)).setText("7d");
         View log = card(inflater, R.string.act_log_title, v -> go(R.id.activityLogFragment));         // v2.4.14: the admin's own recent actions
         ((TextView) log.findViewById(R.id.card_count)).setText("\u203A");
         ((TextView) log.findViewById(R.id.card_sub)).setText(R.string.act_log_sub);
@@ -73,6 +80,13 @@ public class AdminHomeFragment extends Fragment {
         if (b == null) return;
         final int my = ++token;
         b.swipe.setRefreshing(true);
+        Async.run(() -> new AdminWeeklyService().load(), (Weekly w) -> {
+            if (my != token || b == null) return;
+            showWeek(w);
+        }, e -> {
+            if (my != token || b == null) return;
+            ((TextView) cWeek.findViewById(R.id.card_sub)).setText(R.string.admin_card_unknown);
+        });
         Async.run(() -> new AdminCountsService().load(), (Counts c) -> {
             if (my != token || b == null) return;
             b.swipe.setRefreshing(false);
@@ -83,6 +97,16 @@ public class AdminHomeFragment extends Fragment {
             b.swipe.setRefreshing(false);
             b.homeError.setVisibility(View.VISIBLE);
         });
+    }
+
+    private void showWeek(Weekly w) {
+        int cap = AdminWeeklyService.CAP;
+        String s = getString(R.string.admin_week_body,
+                InsightRules.countText(w.usersNow, cap), InsightRules.countText(w.usersBefore, cap),
+                InsightRules.countText(w.listingsNow, cap), InsightRules.countText(w.listingsBefore, cap),
+                InsightRules.countText(w.resolvedNow, cap), InsightRules.countText(w.resolvedBefore, cap));
+        ((TextView) cWeek.findViewById(R.id.card_sub)).setText(s);
+        cWeek.setContentDescription(getString(R.string.admin_week_title) + ". " + s.replace('\n', '.'));
     }
 
     private void show(Counts c) {

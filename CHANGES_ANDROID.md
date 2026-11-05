@@ -1,3 +1,11 @@
+# v2.8.0 - Weekly summary, reports about a person, CSV export (Admin next steps, step 4 of 5, parts 8-10)
+- **Last 7 days card** on Admin Home: new users, new listings, reports resolved, each with the 7 days before in brackets. Read-only, no migration.
+- **Reports about a person.** In a report's details: "N other waiting reports about this person" and a button "All reports about them" that filters the Reports list to that person (picking a filter from the title clears it).
+- **Export CSV** button on Reports and Payments (the list as shown, search included). Reports: id, date, reason key, status. Payments: id, date, amount, status. No names, ID data or details text. Opens the share sheet.
+- **Not done:** AI unanswered / AI chat log with the shared chips + row look (item 11): their reason filters do not fit the 3 Waiting / Done / All chips; needs a decision.
+- Also in this zip: `docs/ADMIN_NEXT_STEPS.md` (the plan, step 1 asked for it). No server change.
+- Version 2.8.0 (versionCode 20800). Not compiled or run in the sandbox that made this change.
+
 # v2.7.0 - Faster ID reviews: more reject templates + second-opinion flag (Admin next steps, step 3 of 5, part 1)
 - **Reject templates.** The reject dialog now has 8 quick reasons (blurry, cut off/glare, back missing, expired, face mismatch, name mismatch, ID type not accepted, Other). Same dialog on the review screen and the Queue long-press.
 - **Second opinion.** Queue, long-press a waiting row: "Ask for a second opinion" (or "Clear flag"). The row pill says "Second opinion". Needs `supabase/migrations/034_second_opinion.sql` (not run by the AI); until then the app says it could not change the flag.
@@ -11,11 +19,3 @@
 - **Server (you run it).** Migration `033_admin_push.sql`, redeploy `send-push`, and schedule the daily call (steps in `docs/PUSH_SETUP.md`). Until then nothing new is sent; chats, groups and reports are unchanged.
 - **Test.** `select public.push_notify('test', '{"as":"idreview"}'::jsonb);` (also `stale`, `report`) sends a labelled test to admin phones.
 - Version 2.6.0 (versionCode 20600). Not compiled or run in the sandbox that made this change.
-
-# v2.5.0 - Recently decided + Undo, swipe to dismiss a report (Admin next steps, step 1 of 5)
-- **Recently decided.** New card on Admin Home: the team's last 10 decisions (what, about whom or what, when, by whom). An **Undo** button shows only where it can work: suspend, take down, dismiss, ban. Approvals, rejections and refunds show no button. A confirmation says what will happen; the server refuses (plain sentence) if the state already changed.
-- **Swipe to dismiss.** In Reports, swipe a waiting row sideways to dismiss it (all waiting reports in that row). A snackbar **Undo** reopens them. The long-press menu stays as the no-gesture way.
-- **Server.** `supabase/migrations/032_admin_undo.sql`: `admin_unsuspend`, `admin_relist`, `admin_reopen_report` (admin only, audit row each). **Run it before the Undo buttons work.**
-- "What I did" now has labels for the three new actions.
-- Fix: `AdminRowAdapter.isEmpty()` is now `public` with `@Override` (a weaker access does not compile).
-- Version 2.5.0 (versionCode 20500). Not compiled or run in the sandbox that made this change.
