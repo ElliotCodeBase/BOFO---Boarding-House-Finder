@@ -59,6 +59,8 @@ public class SettingsFragment extends Fragment {
             b.aiEnabled.setChecked(v);
             b.aiEnabled.setOnCheckedChangeListener((btn, on) -> setAi(on));
         });
+        b.adminLock.setChecked(AppPrefs.adminAutoLock(requireContext()));          // v2.9.0: admin only (row hidden for everyone else)
+        b.adminLock.setOnCheckedChangeListener((btn, on) -> AppPrefs.setAdminAutoLock(requireContext(), on));
         b.pathFade.setChecked(AppPrefs.seeThroughPath(requireContext()));
         b.pathFade.setOnCheckedChangeListener((btn, on) -> AppPrefs.setSeeThroughPath(requireContext(), on));
         // v2.0.117: Orange theme. Checked state first, listener second (so building the screen never flips the theme). The activity recreates itself on this same screen.
@@ -108,10 +110,12 @@ public class SettingsFragment extends Fragment {
         b.adminMfa.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
         b.adminViewAs.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
         b.adminAiRow.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
+        b.adminLockRow.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);
         if (role == Role.ADMIN) {                                       // v2.4.14: one plain line under each admin switch
             b.adminMfa.setText(withHint(getString(R.string.mfa_row), getString(R.string.hint_admin_mfa)));
             b.adminViewAs.setText(withHint(getString(R.string.view_as_row), getString(R.string.hint_admin_view_as)));
             b.adminAiTitle.setText(withHint(getString(R.string.ai_switch_title), getString(R.string.hint_admin_ai)));
+            b.adminLockTitle.setText(withHint(getString(R.string.admin_lock_switch), getString(R.string.hint_admin_lock)));
         }
         b.orangeThemeRow.setVisibility(role == Role.ADMIN ? View.VISIBLE : View.GONE);   // v2.3.2: theme switch is admin only
     }

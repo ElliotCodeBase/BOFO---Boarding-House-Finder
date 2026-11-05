@@ -1,4 +1,4 @@
-# BOFO admin guide (v2.4.14, one page)
+# BOFO admin guide (v2.9.0, one page)
 
 ## Where things are
 - **Home** (first tab): cards with counts - IDs waiting, open reports, payments to check (pending or failed), unanswered AI questions (last 7 days), suspended users, banned users, listings taken down. "Oldest waiting 3 days" shows how long the oldest item has waited. Tap a card to open the list already filtered. Pull down to refresh. **What I did** (last card) lists your own last 50 actions.
@@ -17,7 +17,7 @@ Switch between ID front, ID back and selfie. Pinch to zoom, double-tap to reset.
 - A ban does not bring taken-down places back when you unban.
 
 ## Safety
-Two-step sign-in is kept (Settings). Screenshots are blocked on the ID review screen. Reasons you type may be shown to the person, so keep them short and polite.
+Two-step sign-in is kept (Settings). After 5 minutes in the background the admin tools lock and ask for the 6-digit code again (switch in Settings; lost authenticator: "Sign out instead"). Screenshots are blocked on the ID review screen. Reasons you type may be shown to the person, so keep them short and polite.
 
 ## Test checklist (tick on a device)
 - [ ] Admin Home counts match the real lists; each card opens the right filtered list.
@@ -28,3 +28,5 @@ Two-step sign-in is kept (Settings). Screenshots are blocked on the ID review sc
 - [ ] Skeleton, offline banner and Try again on each list (turn on airplane mode).
 - [ ] "What I did" shows the actions just taken (needs the admin to be allowed to read `audit_logs`).
 - [ ] With system animations off: no skeleton pulse, no tab fade.
+- [ ] Auto-lock: leave the app 5+ minutes, come back: the code is asked, typed text is still there, a wrong code is refused, Sign out instead works; rotate while locked: still locked.
+- [ ] Faster reviews: 8 reject reasons, second-opinion flag (needs migration 034), Last 7 days card, "All reports about them", Export CSV on Reports and Payments (opens in Excel, no names).

@@ -41,12 +41,22 @@ public class AdminMfaSheet extends BottomSheetDialogFragment {
     private Mode mode = Mode.LOADING;
     private String factorId = "", secret = "", uri = "";
     private boolean busy;
+    private boolean lock, loadFailed;          // v2.9.0: lock mode = the auto-lock asks for the code again (cannot be dismissed; Sign out is the way out)
 
     static void show(Fragment host, Done done) {
         if (!host.isAdded()) return;
         AdminMfaSheet s = new AdminMfaSheet();
         s.done = done;
         s.show(host.getChildFragmentManager(), "admin_mfa");
+    }
+
+    /** v2.9.0: the auto-lock sheet. If this account has no authenticator the sheet closes at once and the tools unlock. */
+    static void showLock(Fragment host) {
+        if (!host.isAdded()) return;
+        AdminMfaSheet s = new AdminMfaSheet();
+        s.lock = true;
+        s.setCancelable(false);
+        s.show(host.getChildFragmentManager(), "admin_lock");
     }
 
     @Nullable @Override
@@ -65,6 +75,13 @@ public class AdminMfaSheet extends BottomSheetDialogFragment {
             @Override public void onTextChanged(CharSequence s, int st, int bf, int c) { }
             @Override public void afterTextChanged(android.text.Editable e) { refreshButton(); }
         });
+        if (AdminLock.locked) lock = true;                 // restored after a rotation
+        setCancelable(!lock);
+        if (lock) {
+            b.mfaTitle.setText(R.string.admin_lock_title);
+            b.mfaTurnOff.setText(R.string.admin_lock_signout);
+            b.mfaTurnOff.setOnClickListener(v -> signOutFromLock());
+        }
         render();
         load();
         return b.getRoot();
@@ -81,13 +98,22 @@ public class AdminMfaSheet extends BottomSheetDialogFragment {
         }, r -> {
             if (b == null) return;
             factorId = r[0];
-            mode = factorId.isEmpty() ? Mode.INTRO : "aal2".equals(r[1]) ? Mode.ON : Mode.ENTER;
+            if (lock) {
+                if (factorId.isEmpty()) { finishLock(); return; }          // no two-step sign-in on this account: nothing to ask
+                mode = Mode.ENTER;
+            } else mode = factorId.isEmpty() ? Mode.INTRO : "aal2".equals(r[1]) ? Mode.ON : Mode.ENTER;
             render();
-        }, e -> { if (b != null) error(ErrorText.full("Could not check two-step verification", e)); });
+        }, e -> {
+            if (b == null) return;
+            loadFailed = lock;                                              // locked and offline: stay locked, offer Try again
+            if (lock) { mode = Mode.LOADING; render(); }
+            error(ErrorText.full("Could not check two-step verification", e));
+        });
     }
 
     private void primary() {
         if (busy) return;
+        if (loadFailed) { loadFailed = false; mode = Mode.LOADING; render(); load(); return; }
         if (mode == Mode.INTRO) startSetup();
         else if (mode == Mode.SETUP || mode == Mode.ENTER) verify();
         else if (mode == Mode.ON) dismissAllowingStateLoss();
@@ -113,6 +139,7 @@ public class AdminMfaSheet extends BottomSheetDialogFragment {
             busy(false);
             toast(firstTime ? R.string.mfa_ok_on : R.string.mfa_done);
             if (done != null) done.changed();
+            if (lock) { finishLock(); return; }
             if (b == null) return;
             mode = Mode.ON;
             b.mfaCode.setText("");
@@ -123,6 +150,30 @@ public class AdminMfaSheet extends BottomSheetDialogFragment {
             boolean wrong = e instanceof SupabaseClient.ApiException && (((SupabaseClient.ApiException) e).status == 400 || ((SupabaseClient.ApiException) e).status == 422);
             error(wrong ? getString(R.string.mfa_bad_code) : ErrorText.full("Could not verify the code", e));
         });
+    }
+
+    /** Unlocks: clears the flag and the recorded time, tells the shell to show itself again, closes the sheet. */
+    private void finishLock() {
+        AdminLock.locked = false;
+        Context c = getContext();
+        if (c != null) com.bofo.finder.util.AppPrefs.setAdminStoppedAt(c, 0L);
+        if (getParentFragment() instanceof ShellFragment) ((ShellFragment) getParentFragment()).unlocked();
+        dismissAllowingStateLoss();
+    }
+
+    /** The way out of the lock when the authenticator is lost: sign out (same steps as Settings). */
+    private void signOutFromLock() {
+        if (busy) return;
+        final Context app = requireContext().getApplicationContext();
+        final androidx.navigation.NavController nav = androidx.navigation.fragment.NavHostFragment.findNavController(requireParentFragment());
+        busy(true);
+        Async.run(() -> { AuthService.get().signOut(); return Boolean.TRUE; }, ok -> {
+            AdminLock.locked = false;
+            com.bofo.finder.util.AppPrefs.clear(app);
+            AuthRouter.reset();
+            AuthRouter.go(nav, R.id.action_global_login);
+            dismissAllowingStateLoss();
+        }, e -> { busy(false); error(ErrorText.full("Could not sign out", e)); });
     }
 
     private void turnOff() {
@@ -157,18 +208,18 @@ public class AdminMfaSheet extends BottomSheetDialogFragment {
         boolean needCode = mode == Mode.SETUP || mode == Mode.ENTER;
         b.mfaKeyBox.setVisibility(mode == Mode.SETUP ? View.VISIBLE : View.GONE);
         b.mfaCode.setVisibility(needCode ? View.VISIBLE : View.GONE);
-        b.mfaTurnOff.setVisibility(mode == Mode.ON ? View.VISIBLE : View.GONE);
+        b.mfaTurnOff.setVisibility(lock || mode == Mode.ON ? View.VISIBLE : View.GONE);
         switch (mode) {
             case INTRO:
                 b.mfaBody.setText(R.string.mfa_intro); b.mfaPrimary.setText(R.string.mfa_start); break;
             case SETUP:
                 b.mfaBody.setText(R.string.mfa_setup_body); b.mfaKey.setText(spaced(secret)); b.mfaPrimary.setText(R.string.mfa_verify_on); break;
             case ENTER:
-                b.mfaBody.setText(R.string.mfa_enter_body); b.mfaPrimary.setText(R.string.mfa_verify); break;
+                b.mfaBody.setText(lock ? R.string.admin_lock_body : R.string.mfa_enter_body); b.mfaPrimary.setText(R.string.mfa_verify); break;
             case ON:
                 b.mfaBody.setText(R.string.mfa_on_body); b.mfaPrimary.setText(R.string.mfa_done); break;
             default:
-                b.mfaBody.setText(""); b.mfaPrimary.setText(R.string.mfa_loading); break;
+                b.mfaBody.setText(""); b.mfaPrimary.setText(loadFailed ? R.string.admin_lock_retry : R.string.mfa_loading); break;
         }
         refreshButton();
     }
@@ -176,7 +227,7 @@ public class AdminMfaSheet extends BottomSheetDialogFragment {
     private void refreshButton() {
         if (b == null) return;
         boolean needCode = mode == Mode.SETUP || mode == Mode.ENTER;
-        boolean ready = mode != Mode.LOADING && (!needCode || b.mfaCode.getText().toString().trim().length() == 6);
+        boolean ready = loadFailed || mode != Mode.LOADING && (!needCode || b.mfaCode.getText().toString().trim().length() == 6);
         b.mfaPrimary.setEnabled(ready && !busy);
     }
 

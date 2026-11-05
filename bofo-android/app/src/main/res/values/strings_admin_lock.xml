@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="admin_lock_title">Admin tools locked</string>
+    <string name="admin_lock_body">BOFO was in the background for a while. Type the 6-digit code from your authenticator app to carry on. What you were typing is kept.</string>
+    <string name="admin_lock_signout">Sign out instead</string>
+    <string name="admin_lock_retry">Try again</string>
+    <string name="admin_lock_switch">Lock after 5 minutes away</string>
+    <string name="hint_admin_lock">Asks for the 6-digit code again when you come back after 5 minutes. Only if two-step verification is on.</string>
+</resources>
