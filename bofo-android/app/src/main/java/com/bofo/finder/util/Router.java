@@ -149,11 +149,9 @@ public final class Router {
         if (!"Ok".equals(code) || o.getJSONArray("routes").length() == 0) { lastError = "OSRM: " + code; System.err.println("[Router] OSRM answered '" + code + "'"); return null; }
         JSONObject r = o.getJSONArray("routes").getJSONObject(0);
         JSONArray c = r.getJSONObject("geometry").getJSONArray("coordinates");                      // [lng, lat] pairs
-        List<double[]> pts = new ArrayList<>(c.length() + 2);
-        pts.add(new double[]{lat1, lng1});                                                           // start exactly on the college / you
-        for (int i = 0; i < c.length(); i++) { JSONArray pt = c.getJSONArray(i); pts.add(new double[]{pt.getDouble(1), pt.getDouble(0)}); }
-        pts.add(new double[]{lat2, lng2});                                                           // end exactly on the BH
-        return new Route(thin(simplify(pts, 2.0), 1500), Math.max(r.optDouble("distance", 0), Geo.km(lat1, lng1, lat2, lng2) * 1000), false);
+        List<double[]> road = new ArrayList<>(c.length());
+        for (int i = 0; i < c.length(); i++) { JSONArray pt = c.getJSONArray(i); road.add(new double[]{pt.getDouble(1), pt.getDouble(0)}); }
+        return new Route(withEnds(lat1, lng1, lat2, lng2, thin(simplify(road, 2.0), 1500)), Math.max(r.optDouble("distance", 0), Geo.km(lat1, lng1, lat2, lng2) * 1000), false);
     }
 
     private static final String OSRM_DEMO = "https://router.project-osrm.org/route/v1/driving/{lng1},{lat1};{lng2},{lat2}?overview=full&geometries=geojson";
@@ -168,13 +166,23 @@ public final class Router {
         JSONObject q = new JSONObject().put("costing", foot ? "pedestrian" : "auto").put("locations", new JSONArray()
                 .put(new JSONObject().put("lat", lat1).put("lon", lng1)).put(new JSONObject().put("lat", lat2).put("lon", lng2)));
         JSONObject trip = new JSONObject(get(VALHALLA + Url.encode(q.toString()))).getJSONObject("trip");
-        List<double[]> pts = new ArrayList<>();
-        pts.add(new double[]{lat1, lng1});
+        List<double[]> road = new ArrayList<>();
         JSONArray legs = trip.getJSONArray("legs");
-        for (int l = 0; l < legs.length(); l++) pts.addAll(decodePolyline6(legs.getJSONObject(l).getString("shape")));
-        pts.add(new double[]{lat2, lng2});
+        for (int l = 0; l < legs.length(); l++) road.addAll(decodePolyline6(legs.getJSONObject(l).getString("shape")));
         double meters = trip.getJSONObject("summary").optDouble("length", 0) * 1000;                 // Valhalla reports km
-        return new Route(thin(simplify(pts, 2.0), 1500), Math.max(meters, Geo.km(lat1, lng1, lat2, lng2) * 1000), false);
+        return new Route(withEnds(lat1, lng1, lat2, lng2, thin(simplify(road, 2.0), 1500)), Math.max(meters, Geo.km(lat1, lng1, lat2, lng2) * 1000), false);
+    }
+
+    /**
+     * v2.9.3: {start} + road + {end}. Only the ROAD part is simplified, so for every real route the first and the last segment are exactly the
+     * two connectors (you -> the road, the road -> the house). The map draws those two dashed because they are not on a road.
+     */
+    static double[][] withEnds(double lat1, double lng1, double lat2, double lng2, double[][] road) {
+        double[][] o = new double[road.length + 2][];
+        o[0] = new double[]{lat1, lng1};
+        System.arraycopy(road, 0, o, 1, road.length);
+        o[o.length - 1] = new double[]{lat2, lng2};
+        return o;
     }
 
     /** Standard encoded-polyline decoder, precision 6 (Valhalla). Returns {lat,lng} pairs. */

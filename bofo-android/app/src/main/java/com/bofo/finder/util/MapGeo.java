@@ -99,6 +99,35 @@ public final class MapGeo {
         return sb.append("]},\"properties\":{\"approx\":").append(approx ? 1 : 0).append("}}]}").toString();
     }
 
+    /**
+     * v2.9.3: like {@link #lineJson} but for a real road route the first and last segment (you -> the road, the road -> the house) are
+     * separate dashed features (approx = 1), because they cross open ground and buildings, not a road. Segments under 5 m stay solid.
+     * An estimate, or a path with fewer than 3 points, is drawn exactly as lineJson does.
+     */
+    public static String routeJson(double[][] pts, boolean approx) {
+        if (pts == null || pts.length < 3 || approx) return lineJson(pts, approx);
+        int n = pts.length;
+        boolean head = Geo.km(pts[0][0], pts[0][1], pts[1][0], pts[1][1]) * 1000 > 5;
+        boolean tail = Geo.km(pts[n - 2][0], pts[n - 2][1], pts[n - 1][0], pts[n - 1][1]) * 1000 > 5;
+        if (!head && !tail) return lineJson(pts, false);
+        int from = head ? 1 : 0, to = tail ? n - 2 : n - 1;
+        StringBuilder sb = new StringBuilder("{\"type\":\"FeatureCollection\",\"features\":[");
+        boolean first = true;
+        if (head) { first = false; feature(sb, pts, 0, 1, 1); }
+        if (to - from >= 1) { if (!first) sb.append(','); first = false; feature(sb, pts, from, to, 0); }
+        if (tail) { if (!first) sb.append(','); feature(sb, pts, n - 2, n - 1, 1); }
+        return sb.append("]}").toString();
+    }
+
+    private static void feature(StringBuilder sb, double[][] pts, int a, int z, int approx) {
+        sb.append("{\"type\":\"Feature\",\"geometry\":{\"type\":\"LineString\",\"coordinates\":[");
+        for (int i = a; i <= z; i++) {
+            if (i > a) sb.append(',');
+            sb.append('[').append(num(pts[i][1])).append(',').append(num(pts[i][0])).append(']');
+        }
+        sb.append("]},\"properties\":{\"approx\":").append(approx).append("}}");
+    }
+
     /** {minLat, minLng, maxLat, maxLng} of a {lat,lng} path, or null when it is empty. */
     public static double[] pathBounds(double[][] pts) {
         if (pts == null || pts.length == 0) return null;
