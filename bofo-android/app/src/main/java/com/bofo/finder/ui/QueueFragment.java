@@ -16,6 +16,7 @@ import com.bofo.finder.R;
 import com.bofo.finder.databinding.FragmentAdminListBinding;
 import com.bofo.finder.service.SupabaseClient;
 import com.bofo.finder.service.VerificationService;
+import com.bofo.finder.util.AdminListRules;
 import com.bofo.finder.util.AdminRules;
 import com.bofo.finder.util.Async;
 import com.bofo.finder.util.BoostRules;
@@ -31,13 +32,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Admin > Queue (8h): owner verifications waiting for review, oldest first. Tap one to look at the ID photos and approve or reject it. */
+/** Admin > Queue: owner ID requests. Chips Waiting (oldest first) / Done / All, search by name, status in words. Tap a row to review it; long-press for Open / Reject. */
 public class QueueFragment extends Fragment {
 
     private FragmentAdminListBinding b;
-    private final List<JSONObject> items = new ArrayList<>();
+    private final List<JSONObject> all = new ArrayList<>(), items = new ArrayList<>();
     private final Map<String, String> names = new HashMap<>();
-    private ArrayAdapter<String> rows;
+    private AdminRowAdapter rows;
+    private AdminListChrome chrome;
     private int token;
     private boolean busy;
 
@@ -45,17 +47,14 @@ public class QueueFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
         b = FragmentAdminListBinding.inflate(inflater, container, false);
         b.title.setText(R.string.tab_queue);
-        rows = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_2, android.R.id.text1, new ArrayList<String>()) {
-            @NonNull @Override public View getView(int pos, @Nullable View v, @NonNull ViewGroup p) {
-                View r = super.getView(pos, v, p);
-                if (pos < 0 || pos >= items.size()) return r;
-                JSONObject x = items.get(pos);
-                ((TextView) r.findViewById(android.R.id.text1)).setText(AdminRules.who(names.get(x.optString("owner_id"))));
-                ((TextView) r.findViewById(android.R.id.text2)).setText(x.optString("id_type") + "  -  " + BoostRules.day(x.optString("submitted_at", ""), ZoneId.systemDefault()));
-                return r;
-            }
-        };
+        rows = new AdminRowAdapter(requireContext());
         b.list.setAdapter(rows);
+        int start = getArguments() == null ? AdminListRules.WAITING : getArguments().getInt("filter", AdminListRules.WAITING);     // Admin Home preselects the chip
+        chrome = new AdminListChrome(b, start, new AdminListChrome.Host() {
+            @Override public void onFilter(int chip) { reload(); }
+            @Override public void onSearch(String query) { applyFilter(); }
+            @Override public void onRetry() { reload(); }
+        });
         b.list.setOnItemClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) open(items.get(pos)); });
         b.list.setOnItemLongClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) quick(items.get(pos)); return true; });
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
@@ -107,9 +106,10 @@ public class QueueFragment extends Fragment {
     private void reload() {
         if (b == null) return;
         final int my = ++token;
-        b.swipe.setRefreshing(true);
+        final int chip = chrome.chip();
+        chrome.loading(!items.isEmpty());
         Async.run(() -> {
-            JSONArray pend = new VerificationService().pending();
+            JSONArray pend = new VerificationService().list(chip);
             List<JSONObject> l = new ArrayList<>();
             List<String> owners = new ArrayList<>();
             for (int i = 0; i < pend.length(); i++) { l.add(pend.getJSONObject(i)); owners.add(pend.getJSONObject(i).optString("owner_id")); }
@@ -124,23 +124,38 @@ public class QueueFragment extends Fragment {
             return new Object[]{l, m};
         }, (Object[] r) -> {
             if (my != token || b == null) return;
-            b.swipe.setRefreshing(false);
             @SuppressWarnings("unchecked") List<JSONObject> l = (List<JSONObject>) r[0];
             @SuppressWarnings("unchecked") Map<String, String> m = (Map<String, String>) r[1];
-            items.clear(); items.addAll(l);
+            all.clear(); all.addAll(l);
             names.clear(); names.putAll(m);
-            rows.clear();
-            for (int i = 0; i < items.size(); i++) rows.add("");
-            rows.notifyDataSetChanged();
-            b.message.setText(R.string.queue_empty);
-            b.message.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+            applyFilter();
         }, e -> {
             if (my != token || b == null) return;
-            b.swipe.setRefreshing(false);
-            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.queue_error), e));
+            chrome.failed(Connectivity.isNetworkError(e), !items.isEmpty());
         });
     }
 
+    /** Search + rows. The status is a word on a coloured pill (Waiting / Approved / Rejected). */
+    private void applyFilter() {
+        if (b == null) return;
+        items.clear();
+        List<AdminRowAdapter.Row> out = new ArrayList<>();
+        for (JSONObject x : all) {
+            String name = AdminRules.who(names.get(x.optString("owner_id")));
+            if (!AdminListRules.matches(chrome.query(), name, x.optString("id_type"))) continue;
+            items.add(x);
+            String st = x.optString("status");
+            String sent = BoostRules.day(x.optString("submitted_at", ""), ZoneId.systemDefault());
+            String wait = "pending".equals(st) ? AdminRowAdapter.waiting(requireContext(), x.optString("submitted_at", "")) : "";
+            String sub = wait.isEmpty() ? getString(R.string.admin_row_sub_queue, x.optString("id_type"), sent) : wait + " - " + x.optString("id_type");
+            out.add(new AdminRowAdapter.Row(name, sub,
+                    getString("verified".equals(st) ? R.string.admin_st_approved : "rejected".equals(st) ? R.string.admin_st_rejected : R.string.admin_st_waiting),
+                    "verified".equals(st) ? AdminRowAdapter.OK : "rejected".equals(st) ? AdminRowAdapter.BAD : AdminRowAdapter.WAITING, null));
+        }
+        rows.set(out);
+        chrome.loaded(!items.isEmpty(), chrome.chip() == AdminListRules.WAITING ? R.string.queue_empty : R.string.admin_empty_done);
+    }
+
     @Override
-    public void onDestroyView() { token++; b = null; super.onDestroyView(); }
+    public void onDestroyView() { token++; if (chrome != null) chrome.destroy(); chrome = null; b = null; super.onDestroyView(); }
 }

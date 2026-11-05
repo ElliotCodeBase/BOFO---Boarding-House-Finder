@@ -1,3 +1,12 @@
+# v2.4.13 - Admin lists and Reports: filters, search, grouping, clearer states (Admin UI step 4 of 5)
+- **Queue, Reports and Payments** now share one look: filter chips **Waiting / Done / All**, a search box, and a status in words on a coloured pill (Waiting, Approved, Rejected, Paid, Failed, ...). Waiting items are shown oldest first, with "Waiting 3 days".
+- **Loading and errors.** A skeleton shows while a list loads for the first time. If you are offline (or a refresh fails) you keep the last list and see a banner; with nothing to show you get a plain sentence and a **Try again** button.
+- **Reports.** Each row shows the reported place's photo, its name and the start of what was written. Waiting reports about the same person and place are grouped into one row ("2 reports"); the details list the others. When you suspend, ban or dismiss a grouped row, the other waiting reports in it are marked handled too. The title still opens the finer filters (Suspended, Dismissed, Taken down, Banned users).
+- **Admin Home.** Cards now open the right list already filtered: IDs > Queue Waiting, Reports > Waiting, Payments > Waiting (pending or failed), Suspended > Reports answered with a suspension, Taken down > Reports answered with a take down.
+- How to get there: Admin > Home > any card, or the Queue / Payments / Reports tabs.
+- If something goes wrong: pull down to refresh, or tap Try again. A grouped row whose other reports could not be marked handled shows them again after the refresh.
+- Version 2.4.13 (versionCode 20413). No server change. Not compiled or run on a device in the sandbox that made this change.
+
 # v2.4.12 - Safer admin decisions, Undo for bans, long-press quick actions (Admin UI step 3 of 5)
 - **Confirm only what is serious.** Taking down a place now shows one clear dialog that names the place and says it cannot be undone from the app. Refunding a payment shows one dialog with the amount and the owner. Ban and suspend keep their existing confirmations. Unban is now a single dialog (name + optional note) instead of two.
 - **Undo.** After a ban a message with **Undo** stays for 5 seconds. Undo unbans the account (places that were taken down stay down).

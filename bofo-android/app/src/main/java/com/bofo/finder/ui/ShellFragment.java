@@ -63,6 +63,7 @@ public class ShellFragment extends Fragment {
     private int bottomInset;                  // system bar height, used while the tab bar is hidden
     private OnBackPressedCallback closeBofo;      // Back closes the Ask BOFO card first
     private boolean owner, admin;
+    private int pendingFilter = -1;
     private LocationHelper loc;                   // reads the phone position for Ask BOFO
     private boolean askedLocation;
     /** v2.3.0: Android 13+ asks before notifications may show. The answer (yes or no) ends in a sync: it registers this phone only when allowed. */
@@ -424,10 +425,15 @@ public class ShellFragment extends Fragment {
     }
 
     /** v2.4.10: Admin Home cards open a tab. The dock is moved too (select() never calls the listener). */
-    public void openAdminTab(int id) {
+    public void openAdminTab(int id) { openAdminTab(id, -1); }
+
+    /** v2.4.13: {@code filter} is handed to the list (Queue / Payments: chip 0-2; Reports: its filter index); -1 = the screen's own default. */
+    public void openAdminTab(int id, int filter) {
         if (binding == null || !admin) return;
+        pendingFilter = filter;
         binding.dock.select(id, true);
         showTab(id);
+        pendingFilter = -1;
     }
 
     /** v2.4.10: Queue / Reports badges; a negative (unknown) count hides the badge. */
@@ -463,6 +469,11 @@ public class ShellFragment extends Fragment {
             f = new ChatsFragment();
         } else {
             f = new HomeFragment();
+        }
+        if (pendingFilter >= 0 && (id == R.id.tab_queue || id == R.id.tab_reports || id == R.id.tab_admin_payments)) {
+            Bundle fa = new Bundle();
+            fa.putInt("filter", pendingFilter);
+            f.setArguments(fa);
         }
         getChildFragmentManager().beginTransaction()
                 .setReorderingAllowed(true)

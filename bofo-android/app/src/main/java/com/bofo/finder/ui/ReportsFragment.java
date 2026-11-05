@@ -18,6 +18,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.bofo.finder.R;
 import com.bofo.finder.databinding.FragmentAdminListBinding;
 import com.bofo.finder.service.SupabaseClient;
+import com.bofo.finder.util.AdminListRules;
 import com.bofo.finder.util.AdminRules;
 import com.bofo.finder.util.BanRules;
 import com.bofo.finder.util.Async;
@@ -51,8 +52,11 @@ public class ReportsFragment extends Fragment {
     private static final String[] OUTCOMES = {"suspend", "ban", "dismiss", "takedown"};
 
     private FragmentAdminListBinding b;
-    private final List<JSONObject> items = new ArrayList<>();
-    private ArrayAdapter<String> rows;
+    private final List<JSONObject> all = new ArrayList<>(), items = new ArrayList<>();
+    private final java.util.Map<String, List<JSONObject>> groupOf = new java.util.HashMap<>();     // v2.4.13: waiting reports about the same person + place share one row
+    private final java.util.Map<String, String> photos = new java.util.HashMap<>();
+    private AdminRowAdapter rows;
+    private AdminListChrome chrome;
     private int token;
     private int filter = 0;          // index into FILTERS: starts on "pending"
     private boolean busy;
@@ -61,21 +65,17 @@ public class ReportsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
         b = FragmentAdminListBinding.inflate(inflater, container, false);
         b.title.setOnClickListener(v -> pickFilter());
+        b.title.setMinHeight(Math.round(48 * getResources().getDisplayMetrics().density));
+        b.title.setContentDescription(getString(R.string.rep_more_filters));
+        if (getArguments() != null) filter = Math.max(0, Math.min(FILTERS.length - 1, getArguments().getInt("filter", 0)));     // Admin Home preselects
         showTitle();
-        rows = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_2, android.R.id.text1, new ArrayList<String>()) {
-            @NonNull @Override public View getView(int pos, @Nullable View v, @NonNull ViewGroup p) {
-                View r = super.getView(pos, v, p);
-                if (pos < 0 || pos >= items.size()) return r;
-                JSONObject x = items.get(pos);
-                ((TextView) r.findViewById(android.R.id.text1)).setText(ReportDialog.reasonLabel(requireContext(), x.optString("reason")) + ": " + reported(x));
-                String bh = x.optString("bh_name", "");
-                ((TextView) r.findViewById(android.R.id.text2)).setText(BoostRules.day(x.optString("created_at", ""), ZoneId.systemDefault())
-                        + "  -  " + outcomeLabel(x)
-                        + (bh.isEmpty() || "null".equals(bh) ? "" : "  -  " + bh));
-                return r;
-            }
-        };
+        rows = new AdminRowAdapter(requireContext());
         b.list.setAdapter(rows);
+        chrome = new AdminListChrome(b, AdminListRules.reportsChip(filter), new AdminListChrome.Host() {
+            @Override public void onFilter(int chip) { filter = AdminListRules.reportsFilter(chip); showTitle(); reload(); }
+            @Override public void onSearch(String query) { applyFilter(); }
+            @Override public void onRetry() { reload(); }
+        });
         b.list.setOnItemClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) details(items.get(pos)); });
         b.list.setOnItemLongClickListener((p, v, pos, id) -> { if (pos >= 0 && pos < items.size()) quick(items.get(pos)); return true; });
         b.swipe.setColorSchemeResources(R.color.bofo_primary);
@@ -88,14 +88,14 @@ public class ReportsFragment extends Fragment {
 
     private void showTitle() {
         String[] labels = getResources().getStringArray(R.array.rep_filters);
-        b.title.setText(getString(R.string.rep_title, labels[Math.min(filter, labels.length - 1)]));
+        b.title.setText(getString(R.string.rep_title, labels[Math.min(filter, labels.length - 1)]) + " \u25BE");
     }
 
     private void pickFilter() {
         new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_filter_title)
                 .setItems(R.array.rep_filters, (d, which) -> {
                     if (which == BANNED_USERS) { NavHostFragment.findNavController(this).navigate(R.id.bannedUsersFragment); return; }     // v2.2.2: moved here from Profile
-                    filter = which; showTitle(); reload();
+                    filter = which; showTitle(); chrome.setChip(AdminListRules.reportsChip(which)); reload();
                 }).show();
     }
 
@@ -121,24 +121,94 @@ public class ReportsFragment extends Fragment {
         if (b == null) return;
         final int my = ++token;
         final String part = FILTERS[filter];
-        b.swipe.setRefreshing(true);
-        Async.run(() -> SupabaseClient.get().select("reports_admin_v", part
-                + "order=created_at.desc&limit=100&select=id,reporter_id,reported_user_id,bh_id,reason,details,status,created_at,reviewed_at,admin_notes,reporter_name,reported_name,bh_name,reported_suspended_until,action"),
-                (JSONArray a) -> {
+        final String order = filter == 0 ? "order=created_at.asc&limit=200" : "order=created_at.desc&limit=100";      // waiting = oldest first
+        chrome.loading(!items.isEmpty());
+        Async.run(() -> {
+            JSONArray a = SupabaseClient.get().select("reports_admin_v", part + order + "&select=id,reporter_id,reported_user_id,bh_id,reason,details,status,created_at,reviewed_at,admin_notes,reporter_name,reported_name,bh_name,reported_suspended_until,action");
+            List<JSONObject> l = new ArrayList<>();
+            List<String> bhIds = new ArrayList<>();
+            for (int i = 0; i < a.length(); i++) {
+                JSONObject o = a.optJSONObject(i);
+                if (o == null) continue;
+                l.add(o);
+                String id = nullToEmpty(o.optString("bh_id", ""));
+                if (!id.isEmpty()) bhIds.add(id);
+            }
+            java.util.Map<String, String> ph = new java.util.HashMap<>();
+            String in = AdminRules.inList(bhIds);
+            if (!in.isEmpty()) {
+                try {                                          // the listing photo is a bonus: a failure still shows the reports
+                    JSONArray c = SupabaseClient.get().select("bh_cards", "id=in.(" + in + ")&select=id,photo_url");
+                    for (int i = 0; i < c.length(); i++) ph.put(c.getJSONObject(i).getString("id"), c.getJSONObject(i).optString("photo_url", ""));
+                } catch (Exception ignored) { /* rows without a picture */ }
+            }
+            return new Object[]{l, ph};
+        }, (Object[] r) -> {
             if (my != token || b == null) return;
-            b.swipe.setRefreshing(false);
-            items.clear();
-            for (int i = 0; i < a.length(); i++) { JSONObject o = a.optJSONObject(i); if (o != null) items.add(o); }
-            rows.clear();
-            for (int i = 0; i < items.size(); i++) rows.add("");
-            rows.notifyDataSetChanged();
-            b.message.setText(R.string.rep_empty);
-            b.message.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+            @SuppressWarnings("unchecked") List<JSONObject> l = (List<JSONObject>) r[0];
+            @SuppressWarnings("unchecked") java.util.Map<String, String> ph = (java.util.Map<String, String>) r[1];
+            all.clear(); all.addAll(l);
+            photos.clear(); photos.putAll(ph);
+            applyFilter();
         }, e -> {
             if (my != token || b == null) return;
-            b.swipe.setRefreshing(false);
-            ListArea.toast(this, Connectivity.isNetworkError(e) ? getString(R.string.list_offline) : ErrorText.full(getString(R.string.rep_error), e));
+            chrome.failed(Connectivity.isNetworkError(e), !items.isEmpty());
         });
+    }
+
+    /** Search, then group the waiting reports about the same person + place into one row; show the place (name + photo) and the start of the details inline. */
+    private void applyFilter() {
+        if (b == null) return;
+        items.clear(); groupOf.clear();
+        List<JSONObject> match = new ArrayList<>();
+        for (JSONObject x : all) {
+            if (AdminListRules.matches(chrome.query(), reported(x), reporter(x), nullToEmpty(x.optString("bh_name", "")),
+                    ReportDialog.reasonLabel(requireContext(), x.optString("reason")), nullToEmpty(x.optString("details", "")))) match.add(x);
+        }
+        List<List<JSONObject>> groups = AdminListRules.groupBy(match, x -> "pending".equals(x.optString("status"))
+                ? "g|" + x.optString("reported_user_id") + "|" + nullToEmpty(x.optString("bh_id", "")) : "r|" + x.optString("id"));
+        List<AdminRowAdapter.Row> out = new ArrayList<>();
+        for (List<JSONObject> g : groups) {
+            JSONObject x = g.get(0);
+            items.add(x); groupOf.put(x.optString("id"), g);
+            boolean pending = "pending".equals(x.optString("status"));
+            String title = ReportDialog.reasonLabel(requireContext(), x.optString("reason")) + ": " + reported(x)
+                    + (g.size() > 1 ? "  (" + getResources().getQuantityString(R.plurals.admin_report_count, g.size(), g.size()) + ")" : "");
+            String bh = nullToEmpty(x.optString("bh_name", ""));
+            String why = nullToEmpty(x.optString("details", ""));
+            if (why.length() > 70) why = why.substring(0, 70) + "...";
+            StringBuilder sub = new StringBuilder(pending ? AdminRowAdapter.waiting(requireContext(), x.optString("created_at", ""))
+                    : BoostRules.day(x.optString("created_at", ""), ZoneId.systemDefault()));
+            if (!bh.isEmpty()) sub.append(" - ").append(bh);
+            if (!why.isEmpty()) sub.append(" - ").append(why);
+            String act = nullToEmpty(x.optString("action", ""));
+            int tone = pending ? AdminRowAdapter.WAITING : ("suspend".equals(act) || "ban".equals(act) || "takedown".equals(act)) ? AdminRowAdapter.BAD
+                    : "dismiss".equals(act) || "reviewed".equals(x.optString("status")) ? AdminRowAdapter.NEUTRAL : AdminRowAdapter.OK;
+            out.add(new AdminRowAdapter.Row(title, sub.toString(), pending ? getString(R.string.admin_st_waiting) : outcomeLabel(x), tone,
+                    photos.get(nullToEmpty(x.optString("bh_id", "")))));
+        }
+        rows.set(out);
+        chrome.loaded(!items.isEmpty(), filter == 0 ? R.string.admin_empty_waiting : R.string.rep_empty);
+    }
+
+    /** After a suspend / ban / dismiss: the other waiting reports about the same person + place are marked handled too, so the row really goes away. */
+    private void afterReview(JSONObject x, String act) {
+        List<JSONObject> g = groupOf.get(x.optString("id"));
+        if (g == null || g.size() < 2 || !("dismiss".equals(act) || "suspend".equals(act) || "ban".equals(act))) { reload(); return; }
+        final String sibling = "dismiss".equals(act) ? "dismiss" : "reviewed";
+        Async.run(() -> {
+            int n = 0;
+            for (JSONObject o : g) {
+                if (o == x) continue;
+                try { SupabaseClient.get().rpc("admin_review_report", new JSONObject().put("rid", o.optString("id")).put("act", sibling)); n++; }
+                catch (Exception ignored) { /* stays waiting: the list shows it again */ }
+            }
+            return n;
+        }, n -> {
+            if (b == null) return;
+            if (n > 0) ListArea.toast(this, getString(R.string.admin_group_handled, n));
+            reload();
+        }, e -> reload());
     }
 
     /** v2.4.12: long-press a row: Open / Dismiss / Actions (waiting reports); plain tap still opens the details. */
@@ -167,6 +237,14 @@ public class ReportsFragment extends Fragment {
         String until = x.optString("reported_suspended_until", "");
         if (SuspendRules.active(until, Instant.now())) msg.append(getString(R.string.rep_line_suspended, SuspendRules.when(until, z)));
 
+        List<JSONObject> grp = groupOf.get(x.optString("id"));
+        if (grp != null && grp.size() > 1) {
+            msg.append("\n\n").append(getString(R.string.admin_group_lines, grp.size() - 1));
+            for (JSONObject o : grp) {
+                if (o == x) continue;
+                msg.append('\n').append(getString(R.string.admin_group_line, ReportDialog.reasonLabel(requireContext(), o.optString("reason")), reporter(o), SuspendRules.when(o.optString("created_at", ""), z)));
+            }
+        }
         final String target = x.optString("reported_user_id");
         MaterialAlertDialogBuilder d = new MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.rep_kind_report).setMessage(msg.toString());
         if ("pending".equals(x.optString("status"))) {
@@ -276,7 +354,7 @@ public class ReportsFragment extends Fragment {
             } else {
                 ListArea.toast(this, getString("suspend".equals(act) ? R.string.rep_suspended_done : R.string.rep_dismissed_done));
             }
-            reload();
+            afterReview(x, act);
         }, e -> {
             busy = false;
             if (b == null) return;
@@ -327,5 +405,5 @@ public class ReportsFragment extends Fragment {
     }
 
     @Override
-    public void onDestroyView() { token++; b = null; super.onDestroyView(); }
+    public void onDestroyView() { token++; if (chrome != null) chrome.destroy(); chrome = null; b = null; super.onDestroyView(); }
 }
