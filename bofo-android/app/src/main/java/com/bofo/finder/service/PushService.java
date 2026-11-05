@@ -49,6 +49,7 @@ public final class PushService {
     public static void syncAsync(Context ctx, String realRole) {
         final Context app = ctx.getApplicationContext();
         Async.bg(() -> {
+            if ("admin".equals(realRole)) com.bofo.finder.util.PushNotifier.createAdminChannels(app);       // v2.6.0: the admin switches exist as soon as an admin signs in
             try { sync(app, realRole); } catch (Throwable t) { Log.w("BOFO", "push sync failed", t); }
         });
     }

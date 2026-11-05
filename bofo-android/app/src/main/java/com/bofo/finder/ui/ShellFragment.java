@@ -179,7 +179,7 @@ public class ShellFragment extends Fragment {
 
     /**
      * v2.3.0: a notification was tapped. dm = that chat (Chats tab, then the chat on top), group = the boarding group chat (student: Boarding tab,
-     * owner: the owner's group chat screen), report = the Reports tab (admin only). Anything that does not fit this account is ignored.
+     * owner: the owner's group chat screen), report = the Reports tab, idreview = the Queue, stale = Queue / Reports / Payments (admin only, Waiting filter). Anything that does not fit this account is ignored.
      */
     void openFromPush(String kind, String id, String title, String place) {
         if (binding == null || id == null || id.isEmpty()) return;
@@ -194,9 +194,12 @@ public class ShellFragment extends Fragment {
         } else if ("group".equals(kind) && !admin) {
             binding.dock.select(R.id.tab_boarding, true);
             showTab(R.id.tab_boarding);
-        } else if ("report".equals(kind) && admin && AuthRouter.realRole == com.bofo.finder.model.Role.ADMIN) {
-            binding.dock.select(R.id.tab_reports, true);
-            showTab(R.id.tab_reports);
+        } else if (com.bofo.finder.util.PushRules.adminOnly(kind) && admin && AuthRouter.realRole == com.bofo.finder.model.Role.ADMIN) {
+            // v2.6.0: report -> Reports; idreview -> Queue; stale -> the tab the server chose. Always with the Waiting filter.
+            int target = com.bofo.finder.util.PushRules.adminTab(kind, place);
+            if (target == com.bofo.finder.util.PushRules.TAB_REPORTS) openAdminTab(R.id.tab_reports, 0);
+            else if (target == com.bofo.finder.util.PushRules.TAB_PAYMENTS) openAdminTab(R.id.tab_admin_payments, com.bofo.finder.util.AdminListRules.WAITING);
+            else if (target == com.bofo.finder.util.PushRules.TAB_QUEUE) openAdminTab(R.id.tab_queue, com.bofo.finder.util.AdminListRules.WAITING);
         }
         refreshBadge();
     }
