@@ -562,7 +562,7 @@
         <item>30 days</item>
         <item>Custom number of days…</item>
     </string-array>
-    <string name="rep_title">Reports · %1$s ▾</string>
+    <string name="rep_title">Reports · %1$s</string>
     <string name="rep_filter_title">Show reports</string>
     <string name="rep_detail2">From: %1$s\nAbout: %2$s\nPlace: %3$s\nReason: %4$s\nDetails: %5$s\nDate: %6$s\nStatus: %7$s</string>
     <string name="rep_no_place">(none)</string>

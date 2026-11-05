@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.9.8: small heading above a group of Admin Home cards -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    android:paddingHorizontal="4dp"
+    android:accessibilityHeading="true"
+    android:textAppearance="@style/Text.Bofo.Label"
+    android:textColor="@color/bofo_text_2"
+    android:textSize="12sp"
+    android:letterSpacing="0.06" />

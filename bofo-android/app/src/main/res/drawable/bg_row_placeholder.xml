@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.9.8: stand-in when a report has no listing photo, so rows keep the same left edge. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/bofo_error_tint" />
+    <corners android:radius="12dp" />
+</shape>

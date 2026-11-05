@@ -73,7 +73,7 @@ public class ReportsFragment extends Fragment {
         b.title.setContentDescription(getString(R.string.rep_more_filters));
         if (getArguments() != null) filter = Math.max(0, Math.min(FILTERS.length - 1, getArguments().getInt("filter", 0)));     // Admin Home preselects
         showTitle();
-        rows = new AdminRowAdapter(requireContext());
+        rows = new AdminRowAdapter(requireContext()).withPlaceholder(R.drawable.ic_adm_report);
         b.list.setAdapter(rows);
         chrome = new AdminListChrome(b, AdminListRules.reportsChip(filter), new AdminListChrome.Host() {
             @Override public void onFilter(int chip) { filter = AdminListRules.reportsFilter(chip); showTitle(); reload(); }
@@ -92,8 +92,11 @@ public class ReportsFragment extends Fragment {
 
     private void showTitle() {
         String[] labels = getResources().getStringArray(R.array.rep_filters);
-        b.title.setText((person != null ? getString(R.string.rep_person_title, AdminRules.who(personName))
-                : getString(R.string.rep_title, labels[Math.min(filter, labels.length - 1)])) + " \u25BE");
+        b.title.setText(person != null ? getString(R.string.rep_person_title, AdminRules.who(personName))
+                : getString(R.string.rep_title, labels[Math.min(filter, labels.length - 1)]));
+        // v2.9.8: a real chevron icon (the text arrow in the string showed up twice, "All reports ▾ ▾")
+        b.title.setCompoundDrawablePadding(Math.round(4 * getResources().getDisplayMetrics().density));
+        b.title.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, R.drawable.ic_chevron_down, 0);
     }
 
     private void pickFilter() {
@@ -194,15 +197,16 @@ public class ReportsFragment extends Fragment {
             String bh = nullToEmpty(x.optString("bh_name", ""));
             String why = nullToEmpty(x.optString("details", ""));
             if (why.length() > 70) why = why.substring(0, 70) + "...";
-            StringBuilder sub = new StringBuilder(pending ? AdminRowAdapter.waiting(requireContext(), x.optString("created_at", ""))
-                    : BoostRules.day(x.optString("created_at", ""), ZoneId.systemDefault()));
-            if (!bh.isEmpty()) sub.append(" - ").append(bh);
-            if (!why.isEmpty()) sub.append(" - ").append(why);
+            // v2.9.8: place and details on the detail line; the date (or how long it has waited) sits under the status pill
+            StringBuilder sub = new StringBuilder(bh);
+            if (!why.isEmpty()) sub.append(bh.isEmpty() ? "" : " \u00B7 ").append(why);
+            String meta = pending ? AdminRowAdapter.waiting(requireContext(), x.optString("created_at", ""))
+                    : BoostRules.day(x.optString("created_at", ""), ZoneId.systemDefault());
             String act = nullToEmpty(x.optString("action", ""));
             int tone = pending ? AdminRowAdapter.WAITING : ("suspend".equals(act) || "ban".equals(act) || "takedown".equals(act)) ? AdminRowAdapter.BAD
                     : "dismiss".equals(act) || "reviewed".equals(x.optString("status")) ? AdminRowAdapter.NEUTRAL : AdminRowAdapter.OK;
             out.add(new AdminRowAdapter.Row(title, sub.toString(), pending ? getString(R.string.admin_st_waiting) : outcomeLabel(x), tone,
-                    photos.get(nullToEmpty(x.optString("bh_id", "")))));
+                    photos.get(nullToEmpty(x.optString("bh_id", ""))), meta));
         }
         rows.set(out);
         chrome.loaded(!items.isEmpty(), filter == 0 ? R.string.admin_empty_waiting : R.string.rep_empty);

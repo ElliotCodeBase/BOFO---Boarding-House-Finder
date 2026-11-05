@@ -107,7 +107,7 @@
                 android:id="@+id/list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:divider="@color/bofo_border"
+                android:divider="@drawable/divider_admin_row"
                 android:dividerHeight="1dp" />
 
             <LinearLayout

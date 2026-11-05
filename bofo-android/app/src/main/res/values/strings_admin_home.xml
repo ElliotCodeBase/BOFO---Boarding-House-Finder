@@ -27,4 +27,17 @@
         <item quantity="one">Oldest waiting %d day</item>
         <item quantity="other">Oldest waiting %d days</item>
     </plurals>
+    <!-- v2.9.8: Admin Home sections, icons row, Last 7 days stats -->
+    <string name="admin_sec_action">Needs action</string>
+    <string name="admin_sec_look">Worth a look</string>
+    <string name="admin_sec_week">This week</string>
+    <string name="admin_sec_tools">Tools</string>
+    <string name="admin_week_sub">Compared with the 7 days before</string>
+    <string name="admin_week_users">New users</string>
+    <string name="admin_week_listings">New listings</string>
+    <string name="admin_week_resolved">Reports resolved</string>
+    <string name="admin_week_up">Up from %1$s</string>
+    <string name="admin_week_down">Down from %1$s</string>
+    <string name="admin_week_same">Same as before</string>
+    <string name="admin_week_unknown">Could not load</string>
 </resources>

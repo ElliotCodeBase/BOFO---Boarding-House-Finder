@@ -57,10 +57,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:background="@drawable/bg_dash_card"
+                android:background="@drawable/bg_caught_up"
+                android:drawableStart="@drawable/ic_adm_check"
+                android:drawableTint="@color/bofo_success_deep"
+                android:drawablePadding="12dp"
+                android:gravity="center_vertical"
                 android:padding="16dp"
                 android:text="@string/admin_home_caught_up"
                 android:textAppearance="@style/Text.Bofo.Label"
+                android:textColor="@color/bofo_success_deep"
+                android:textSize="14sp"
                 android:visibility="gone" />
 
             <TextView
