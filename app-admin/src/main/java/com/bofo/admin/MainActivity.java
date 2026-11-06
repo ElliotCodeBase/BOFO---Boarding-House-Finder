@@ -128,10 +128,10 @@ public final class MainActivity extends AppCompatActivity {
             access = ac; locked = false; shell();
         }, e -> {
             if (e instanceof com.bofo.shared.Api.ApiException x && x.status == 401) { AdminAuth.get().signOut(); loginNote = ""; login(); return; }
-            LinearLayout l = centered(); l.addView(Ui.text(this, Ui.err(e), R.style.Text_Bofo_Body));
-            android.widget.Button retry = Ui.button(this, "Try again", true); retry.setOnClickListener(v -> gate()); l.addView(retry);
-            android.widget.Button out = Ui.button(this, "Sign out", false); out.setOnClickListener(v -> { AdminAuth.get().signOut(); login(); }); l.addView(out);
-            show(l);
+            LinearLayout el = centered(); el.addView(Ui.text(this, Ui.err(e), R.style.Text_Bofo_Body));
+            android.widget.Button retry = Ui.button(this, "Try again", true); retry.setOnClickListener(v -> gate()); el.addView(retry);
+            android.widget.Button out = Ui.button(this, "Sign out", false); out.setOnClickListener(v -> { AdminAuth.get().signOut(); login(); }); el.addView(out);
+            show(el);
         });
     }
 
