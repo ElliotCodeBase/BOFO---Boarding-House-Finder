@@ -17,3 +17,9 @@ dependencyResolutionManagement {
 }
 rootProject.name = 'BOFO'
 include ':app'
+
+// Stage 3: the shared library and the new admin app live next to bofo-android/ (repo root). The main app does not depend on them yet.
+include ':shared'
+project(':shared').projectDir = file('../shared')
+include ':app-admin'
+project(':app-admin').projectDir = file('../app-admin')

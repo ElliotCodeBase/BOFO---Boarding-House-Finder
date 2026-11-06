@@ -1,0 +1,2 @@
+-keep class com.bofo.shared.** { *; }
+-dontwarn org.slf4j.**

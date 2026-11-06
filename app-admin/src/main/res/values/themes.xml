@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.BofoAdmin" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/bofo_primary</item>
+        <item name="colorOnPrimary">@color/bofo_white</item>
+        <item name="android:colorBackground">@color/bofo_bg</item>
+        <item name="android:windowBackground">@color/bofo_bg</item>
+        <item name="android:statusBarColor">@color/bofo_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+    <!-- same names and roles as the main app's Text.Bofo styles -->
+    <style name="Text.Bofo.Title" parent="TextAppearance.Material3.HeadlineSmall"><item name="android:textColor">@color/bofo_text</item><item name="android:textStyle">bold</item></style>
+    <style name="Text.Bofo.Section" parent="TextAppearance.Material3.TitleMedium"><item name="android:textColor">@color/bofo_text</item></style>
+    <style name="Text.Bofo.Body" parent="TextAppearance.Material3.BodyLarge"><item name="android:textColor">@color/bofo_text</item></style>
+    <style name="Text.Bofo.Caption" parent="TextAppearance.Material3.BodySmall"><item name="android:textColor">@color/bofo_text_2</item></style>
+</resources>
