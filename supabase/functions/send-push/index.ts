@@ -1,11 +1,15 @@
-// send-push (v2.3.0, hybrid payload + diagnostics in v2.9.2): turns a database event into phone notifications through Firebase Cloud Messaging (FCM HTTP v1).
+// send-push (v2.3.0, hybrid payload + diagnostics in v2.9.2, admin app targeting in v2.9.11): turns a database event into phone notifications through Firebase Cloud Messaging (FCM HTTP v1).
 // Called ONLY by the database triggers of migration 029 (public.push_notify) with the header x-bofo-push-secret.
 //   kind "dm"      new message in a student <-> owner chat      -> the OTHER person of the conversation
 //   kind "group"   new message / announcement in a boarding group -> every active, un-muted member except the sender (the owner is a member)
 //   kind "report"  new user report                              -> ONLY users whose users.role = 'admin' (checked here, at send time)
 //   kind "idreview" an owner sent an ID for verification (v2.6.0, migration 033) -> ONLY admins; no name, no ID data
 //   kind "stale"   items waiting more than 3 days (v2.6.0; sent once a day by public.push_stale_check()) -> ONLY admins; counts only
-//   kind "test"    {"as": "idreview" | "stale" | "report"}: a labelled test notification to every admin phone (run push_notify('test', ...) in the SQL editor)
+//   kind "approval" a moderator asked for an approval (v2.9.11, migration 042) -> staff with approvals_decide, ADMIN APP phones only; type only
+//   kind "test"    {"as": "idreview" | "stale" | "report" | "approval"}: a labelled test notification to every phone that would get that kind (run push_notify('test', ...) in the SQL editor)
+// v2.9.11: admin kinds go to staff by PERMISSION (public.push_admin_tokens, migration 042): report = reports_act, idreview = id_review, stale = any of
+//   id_review / reports_act / payments_view (each person only sees the counts they could act on), approval = approvals_decide. dm / group go to the 'user' app tokens only.
+//   If migration 042 is not applied yet this function falls back to the old rule (users.role = 'admin') so nothing breaks; apply 042 BEFORE deploying anyway.
 // Messages are DATA-ONLY: the app builds the notification itself (channels, grouping, tap target).
 // Secrets (never commit): PUSH_WEBHOOK_SECRET = long random string (same value as push_settings.secret),
 //                         FCM_SERVICE_ACCOUNT = the whole Firebase service-account JSON (one line).
@@ -20,7 +24,9 @@ const REASONS: Record<string, string> = {
   inappropriate: "Inappropriate content", wrong_info: "Wrong information", other: "Other",
 };
 
-type Push = { userIds: string[]; data: Record<string, string> };
+type Row = { token: string; user_id: string; app?: string; perms?: string[] };
+// rows = the exact phones to use (admin kinds); apps = which app's tokens to read for userIds when rows is not set (default: the user app only)
+type Push = { userIds: string[]; data: Record<string, string>; rows?: Row[]; apps?: string[] };
 
 function sameSecret(a: string, b: string): boolean {
   if (!a || a.length !== b.length) return false;
@@ -74,8 +80,8 @@ async function accessToken(): Promise<string> {
 // v2.9.2: HYBRID message = data + a ready-made notification. The phone's system draws the notification by itself, so it still appears when
 // the app is closed or our own code never gets to run (battery savers, a dropped role check, a crash). While the app is open Firebase hands the
 // message to BofoMessagingService instead, which draws the richer in-app version (chat stack, "already looking at this chat" check).
-const CHANNELS: Record<string, string> = { dm: "bofo_chats", group: "bofo_boarding", report: "bofo_reports", idreview: "bofo_admin", stale: "bofo_admin", test: "bofo_chats" };
-const ADMIN_KINDS = new Set(["report", "idreview", "stale"]);
+const CHANNELS: Record<string, string> = { dm: "bofo_chats", group: "bofo_boarding", report: "bofo_reports", idreview: "bofo_admin", stale: "bofo_admin", approval: "bofo_admin", test: "bofo_chats" };
+const ADMIN_KINDS = new Set(["report", "idreview", "stale", "approval"]);
 
 function shown(d: Record<string, string>) {
   const kind = d.kind ?? "";
@@ -87,7 +93,7 @@ function shown(d: Record<string, string>) {
 }
 
 /** "ok" | "dead" (token is gone: delete it) | { fail: why } */
-async function sendOne(token: string, data: Record<string, string>): Promise<"ok" | "dead" | { fail: string }> {
+async function sendOne(token: string, data: Record<string, string>, app = "user"): Promise<"ok" | "dead" | { fail: string }> {
   const n = shown(data);
   const r = await fetch(`https://fcm.googleapis.com/v1/projects/${SA.project_id}/messages:send`, {
     method: "POST",
@@ -100,7 +106,7 @@ async function sendOne(token: string, data: Record<string, string>): Promise<"ok
         android: {
           priority: "HIGH", ttl: "86400s",
           notification: {
-            channel_id: n.channel, click_action: "com.bofo.finder.OPEN_PUSH", notification_priority: "PRIORITY_HIGH", default_sound: true,
+            channel_id: n.channel, click_action: app === "admin" ? "com.bofo.admin.OPEN_PUSH" : "com.bofo.finder.OPEN_PUSH", notification_priority: "PRIORITY_HIGH", default_sound: true,
             ...(n.priv ? { visibility: "PRIVATE" } : {}),     // admin pushes: contents hidden on a locked screen
           },
         },
@@ -121,6 +127,30 @@ async function names(ids: string[]): Promise<Record<string, string>> {
   for (const u of data ?? []) m[u.id] = u.full_name || "Someone";
   return m;
 }
+
+// ---------------------------------------------------------------- phones
+/** Phones of the staff who hold at least one of the permissions (migration 042). Falls back to the old "users.role = admin" rule if 042 is missing. */
+async function staffTokens(perms: string[], exclude: string | null): Promise<Row[]> {
+  const { data, error } = await admin.rpc("push_admin_tokens", { p_perms: perms, p_exclude: exclude });
+  if (!error) return (data ?? []) as Row[];
+  console.warn("push_admin_tokens failed (migration 042 not applied?), using the old admin rule:", error.message);
+  const { data: admins } = await admin.from("users").select("id").eq("role", "admin");
+  const ids = (admins ?? []).map((u: any) => u.id as string).filter((id: string) => id !== exclude);
+  if (!ids.length) return [];
+  const { data: t } = await admin.from("device_tokens").select("token, user_id").in("user_id", ids);
+  return (t ?? []).map((r: any) => ({ token: r.token, user_id: r.user_id, app: "user", perms }));
+}
+
+/** Tokens of the given users, only for the given apps. Before migration 042 there is no app column: then every token counts as a user-app token. */
+async function tokensFor(userIds: string[], apps: string[]): Promise<Row[]> {
+  const r = await admin.from("device_tokens").select("token, user_id, app").in("user_id", userIds).in("app", apps);
+  if (!r.error) return (r.data ?? []) as Row[];
+  if (!apps.includes("user")) return [];
+  const o = await admin.from("device_tokens").select("token, user_id").in("user_id", userIds);
+  return (o.data ?? []).map((x: any) => ({ token: x.token, user_id: x.user_id, app: "user" }));
+}
+
+const uniq = (rows: Row[]) => [...new Set(rows.map((r) => r.user_id))];
 
 async function planDm(rec: any): Promise<Push | null> {
   const { data: c } = await admin.from("conversations").select("student_id, owner_id, boarding_house_id").eq("id", rec.conversation_id).maybeSingle();
@@ -152,12 +182,11 @@ async function planGroup(rec: any): Promise<Push | null> {
 }
 
 async function planReport(rec: any): Promise<Push | null> {
-  // ONLY admin accounts: the role is read from the database now, not from anything the phone says.
-  const { data: admins } = await admin.from("users").select("id").eq("role", "admin");
-  const to = (admins ?? []).map((u: any) => u.id as string).filter((id: string) => id !== rec.reporter_id);
-  if (!to.length) return null;
+  // Staff who may act on reports (reports_act): checked in the database now, not from anything the phone says. The reporter is left out.
+  const rows = await staffTokens(["reports_act"], rec.reporter_id ?? null);
+  if (!rows.length) return null;
   // Lock-screen safe: the reason label only. No names, no details.
-  return { userIds: to, data: { kind: "report", id: String(rec.id), title: "New report", body: (REASONS[rec.reason] ?? "A user") + " report is waiting for review", msg: String(rec.id) } };
+  return { userIds: uniq(rows), rows, data: { kind: "report", id: String(rec.id), title: "New report", body: (REASONS[rec.reason] ?? "A user") + " report is waiting for review", msg: String(rec.id) } };
 }
 
 // v2.6.0: an owner sent an ID. Admins only. Lock-screen safe: the type only. The row must still be waiting (a banned ID is rejected right after the insert).
@@ -166,36 +195,61 @@ async function planIdReview(rec: any, skipCheck = false): Promise<Push | null> {
     const { data: v } = await admin.from("owner_verifications").select("status").eq("id", rec.id).maybeSingle();
     if (!v || v.status !== "pending") return null;
   }
-  const { data: admins } = await admin.from("users").select("id").eq("role", "admin");
-  const to = (admins ?? []).map((u: any) => u.id as string).filter((id: string) => id !== rec.owner_id);
-  if (!to.length) return null;
-  return { userIds: to, data: { kind: "idreview", id: String(rec.id), title: "New ID to review", body: "An ID is waiting for review", msg: String(rec.id) } };
+  const rows = await staffTokens(["id_review"], rec.owner_id ?? null);
+  if (!rows.length) return null;
+  return { userIds: uniq(rows), rows, data: { kind: "idreview", id: String(rec.id), title: "New ID to review", body: "An ID is waiting for review", msg: String(rec.id) } };
 }
 
 // v2.6.0: the daily reminder. Counts only. "place" tells the app which tab to open: the group with the most waiting items (ties: IDs, reports, payments).
-async function planStale(rec: any): Promise<Push | null> {
+async function planStale(rec: any): Promise<Push[] | null> {
   const n = (v: unknown) => Math.max(0, Math.min(9999, Math.floor(Number(v) || 0)));
-  const ids = n(rec.ids), reports = n(rec.reports), payments = n(rec.payments), total = ids + reports + payments;
-  if (total <= 0) return null;
-  const { data: admins } = await admin.from("users").select("id").eq("role", "admin");
-  const to = (admins ?? []).map((u: any) => u.id as string);
-  if (!to.length) return null;
-  const target = ids >= reports && ids >= payments ? "queue" : reports >= payments ? "reports" : "payments";
-  return { userIds: to, data: { kind: "stale", id: "stale", title: "Items are waiting", body: `${total} ${total === 1 ? "item has" : "items have"} been waiting more than 3 days`, place: target, msg: "stale" } };
+  const all = { id_review: n(rec.ids), reports_act: n(rec.reports), payments_view: n(rec.payments) };
+  if (all.id_review + all.reports_act + all.payments_view <= 0) return null;
+  const rows = await staffTokens(Object.keys(all), null);
+  if (!rows.length) return null;
+  // Each person is told only about the counts they could act on (their permissions); people with the same set share one message.
+  const groups = new Map<string, Row[]>();
+  for (const r of rows) { const k = [...(r.perms ?? Object.keys(all))].sort().join(","); groups.set(k, [...(groups.get(k) ?? []), r]); }
+  const out: Push[] = [];
+  for (const [k, g] of groups) {
+    const has = new Set(k.split(","));
+    const ids = has.has("id_review") ? all.id_review : 0, reports = has.has("reports_act") ? all.reports_act : 0, payments = has.has("payments_view") ? all.payments_view : 0;
+    const total = ids + reports + payments;
+    if (total <= 0) continue;
+    // "place" tells the app which tab to open: the group with the most waiting items (ties: IDs, reports, payments).
+    const target = ids >= reports && ids >= payments ? "queue" : reports >= payments ? "reports" : "payments";
+    out.push({ userIds: uniq(g), rows: g, data: { kind: "stale", id: "stale", title: "Items are waiting", body: `${total} ${total === 1 ? "item has" : "items have"} been waiting more than 3 days`, place: target, msg: "stale" } });
+  }
+  return out.length ? out : null;
 }
 
-async function planTest(rec: any): Promise<Push | null> {
+// v2.9.11: a moderator asked for an approval. Staff with approvals_decide, ADMIN APP phones only (the user app has no approvals screen). Lock-screen safe: the type only.
+const APPROVAL_LABEL: Record<string, string> = { report_ban: "A ban", report_suspend: "A suspension", report_takedown: "A listing take-down" };
+async function planApproval(rec: any, skipCheck = false): Promise<Push | null> {
+  let label = "An approval", by: string | null = rec?.requested_by ?? null;
+  if (!skipCheck) {
+    const { data: a } = await admin.from("admin_approvals").select("status, kind, requested_by").eq("id", rec.id).maybeSingle();
+    if (!a || a.status !== "pending") return null;
+    label = APPROVAL_LABEL[a.kind] ?? label; by = a.requested_by;
+  }
+  const rows = (await staffTokens(["approvals_decide"], by)).filter((r) => r.app === "admin");
+  if (!rows.length) return null;
+  return { userIds: uniq(rows), rows, data: { kind: "approval", id: String(rec.id), title: "Approval needed", body: `${label} is waiting for your decision`, msg: String(rec.id) } };
+}
+
+async function planTest(rec: any): Promise<Push | Push[] | null> {
   const as = String(rec?.as ?? "idreview");
   const stamp = String(Date.now());
   if (as === "me") {          // v2.9.2: a plain test for ONE account (any role): select public.push_notify('test', '{"as":"me","user_id":"<uuid>"}'::jsonb);
     const uid = String(rec?.user_id ?? "");
     if (!uid) return null;
-    return { userIds: [uid], data: { kind: "test", id: "test-" + stamp, title: "BOFO test notification", body: "If you can read this, phone notifications work.", place: "", msg: stamp, sender: "BOFO" } };
+    return { userIds: [uid], apps: ["user", "admin"], data: { kind: "test", id: "test-" + stamp, title: "BOFO test notification", body: "If you can read this, phone notifications work.", place: "", msg: stamp, sender: "BOFO" } };
   }
-  const plan = as === "stale" ? await planStale({ ids: 1, reports: 1, payments: 0 })
+  const plan = as === "stale" ? await planStale({ ids: 1, reports: 1, payments: 1 })
     : as === "report" ? await planReport({ id: "test-" + stamp, reason: "other", reporter_id: null })
+    : as === "approval" ? await planApproval({ id: "test-" + stamp, requested_by: null }, true)
     : await planIdReview({ id: "test-" + stamp, owner_id: null }, true);
-  if (plan) plan.data.title = "Test: " + plan.data.title;
+  for (const p of plan ? (Array.isArray(plan) ? plan : [plan]) : []) p.data.title = "Test: " + p.data.title;
   return plan;
 }
 
@@ -204,20 +258,25 @@ Deno.serve(async (req) => {
   if (!sameSecret(WEBHOOK_SECRET, req.headers.get("x-bofo-push-secret") ?? "")) return new Response("unauthorized", { status: 401 });
   try {
     const { kind, record } = await req.json();
-    const plan = kind === "dm" ? await planDm(record) : kind === "group" ? await planGroup(record) : kind === "report" ? await planReport(record)
-      : kind === "idreview" ? await planIdReview(record) : kind === "stale" ? await planStale(record) : kind === "test" ? await planTest(record) : null;
-    if (!plan) return Response.json({ sent: 0, reason: "nobody_to_notify" });       // e.g. blocked sender, unknown conversation, empty group
+    const planned = kind === "dm" ? await planDm(record) : kind === "group" ? await planGroup(record) : kind === "report" ? await planReport(record)
+      : kind === "idreview" ? await planIdReview(record) : kind === "stale" ? await planStale(record) : kind === "approval" ? await planApproval(record)
+      : kind === "test" ? await planTest(record) : null;
+    const plans: Push[] = planned ? (Array.isArray(planned) ? planned : [planned]) : [];
+    if (!plans.length) return Response.json({ sent: 0, reason: "nobody_to_notify" });       // e.g. blocked sender, unknown conversation, empty group
 
-    const { data: rows } = await admin.from("device_tokens").select("token, user_id").in("user_id", plan.userIds);
-    if (!(rows ?? []).length) { console.warn("send-push", kind, "no device token for", plan.userIds.length, "user(s)"); return Response.json({ sent: 0, reason: "no_device_token", users: plan.userIds.length }); }
-    let sent = 0; const dead: string[] = []; const fails: string[] = [];
-    await Promise.all((rows ?? []).map(async (t: any) => {
-      const res = await sendOne(t.token, plan.data);
-      if (res === "ok") sent++; else if (res === "dead") dead.push(t.token); else fails.push(res.fail);
-    }));
+    let tokens = 0, sent = 0; const dead: string[] = []; const fails: string[] = [];
+    for (const plan of plans) {
+      const rows = plan.rows ?? await tokensFor(plan.userIds, plan.apps ?? ["user"]);
+      tokens += rows.length;
+      await Promise.all(rows.map(async (t) => {
+        const res = await sendOne(t.token, plan.data, t.app ?? "user");
+        if (res === "ok") sent++; else if (res === "dead") dead.push(t.token); else fails.push(res.fail);
+      }));
+    }
+    if (!tokens) { console.warn("send-push", kind, "no device token for", plans.reduce((a, p) => a + p.userIds.length, 0), "user(s)"); return Response.json({ sent: 0, reason: "no_device_token" }); }
     if (dead.length) await admin.from("device_tokens").delete().in("token", dead);
-    console.log("send-push", kind, "tokens", (rows ?? []).length, "sent", sent, "dead", dead.length, "failed", fails.length);
-    return Response.json({ sent, removed: dead.length, tokens: (rows ?? []).length, ...(fails.length ? { failed: fails.length, why: fails[0] } : {}) });
+    console.log("send-push", kind, "tokens", tokens, "sent", sent, "dead", dead.length, "failed", fails.length);
+    return Response.json({ sent, removed: dead.length, tokens, ...(fails.length ? { failed: fails.length, why: fails[0] } : {}) });
   } catch (e) {
     console.error("send-push failed", e);
     return new Response("error: " + String((e as Error)?.message ?? e).slice(0, 300), { status: 500 });      // visible in net._http_response (e.g. "FCM_SERVICE_ACCOUNT is not set")

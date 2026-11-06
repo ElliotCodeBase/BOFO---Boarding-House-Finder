@@ -23,6 +23,7 @@ public final class AdminAuth {
     private volatile long expiresAt;
 
     private AdminAuth(Context c) {
+        appCtx = c;
         store = new SessionStore(c);
         Api.get().setTokenProvider(this::token);
         Optional<JSONObject> s = store.load();
@@ -58,7 +59,11 @@ public final class AdminAuth {
         apply(Api.get().authPost("token?grant_type=id_token", new JSONObject().put("provider", "google").put("id_token", idToken).put("nonce", rawNonce)));
     }
 
+    private volatile Context appCtx;
+
     public void signOut() {
+        AdminApp.setAccess(null);
+        if (appCtx != null && access != null) PushRegistrar.unregister(appCtx);   // while the session still works; does nothing on the main thread (caught)
         try { Api.get().logout(); } catch (Exception ignored) { }
         access = refresh = userId = null; email = null; expiresAt = 0; store.clear();
     }
