@@ -72,6 +72,25 @@ Stop it with `select cron.unschedule('bofo-stale-push');`. The cron job calls th
 | An owner account submits an ID | "New ID to review" on admin phones only (not the owner's phone) |
 Student and owner phones must show nothing for any of these. Chats, groups and reports keep working as before. Android: Settings > Notifications > BOFO shows the admin channels "Reports (admin)" and "ID reviews and reminders" once an admin has signed in.
 
+## Admin app push (v2.9.11, migration 042)
+The BOFO Admin app (`com.bofo.admin`) has its own Firebase app and its own device tokens (`device_tokens.app = 'admin'`). Admin pushes now go to staff **by permission**, not to everyone with `users.role = 'admin'`:
+| Push | Who gets it | Tap opens |
+|---|---|---|
+| `report` | `reports_act` (not Support), never the reporter | Reports |
+| `idreview` | `id_review`, never the owner who sent it | IDs |
+| `stale` (daily) | anyone with `id_review`, `reports_act` or `payments_view`; each person is told only the counts they could act on | the tab with most waiting items |
+| `approval` (new) | `approvals_decide` (Owner, Admin), never the requester, **admin app phones only** | Approvals |
+Chats (`dm`, `group`) only go to user-app tokens. A person with the admin app installed gets admin pushes there only; without it the user-app token is used. A phone registered before "log out everywhere" gets nothing.
+
+**Set up (once, in this order):**
+1. Firebase: add an Android app `com.bofo.admin` (and `com.bofo.admin.debug`), put its `google-services.json` in `app-admin/` (git-ignored). Same Firebase project / service account as the user app.
+2. SQL editor: run `supabase/migrations/042_admin_push.sql` (needs 029, 033, 039).
+3. Redeploy: `supabase functions deploy send-push --no-verify-jwt` (if you deploy first, it falls back to the old admin rule until 042 is applied).
+4. Open the admin app once, signed in: Android 13+ asks for notification permission; the token registers after the role check.
+
+**Test it (admin app signed in, then closed):** `select public.push_notify('test', '{"as":"approval"}'::jsonb);` (also `idreview`, `report`, `stale`). Expect "Test: ..." on staff phones that hold the permission. Real approval: a Moderator account taps "Request approval" on a ban; Owner/Admin phones get "A ban is waiting for your decision".
+Undo: top of `042_admin_push.sql`.
+
 ## Test one phone (v2.9.2, any account type)
 Open the app once signed in, close it completely, then in the SQL editor:
 ```sql

@@ -24,6 +24,7 @@ import androidx.credentials.exceptions.GetCredentialException;
 import com.bofo.shared.Async;
 import com.bofo.shared.AutoLockRules;
 import com.bofo.shared.PermissionRules;
+import com.bofo.shared.PushRules;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -47,6 +48,8 @@ public final class MainActivity extends AppCompatActivity {
     private String loginNote = "";
     private FrameLayout body0; private BottomNavigationView nav0;
     void showMore() { if (body0 != null) open(body0, 4); }
+    private int pendingTab = PushRules.TAB_NONE;      // a notification tap waiting for the shell to be on screen
+    private boolean askedNotifications;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -59,7 +62,34 @@ public final class MainActivity extends AppCompatActivity {
             v.setPadding(i.left, i.top, i.right, i.bottom);
             return in;
         });
+        pushIntent(getIntent());
         if (AdminAuth.get().hasSession()) gate(); else login();
+    }
+
+    @Override protected void onNewIntent(android.content.Intent i) {
+        super.onNewIntent(i); setIntent(i);
+        pushIntent(i);
+        if (access != null && !locked) applyPendingTab();      // already inside: jump now; otherwise shell() does it after sign-in / unlock
+    }
+
+    /** A tap on an admin notification: remember which tab it wants. Only our own action counts; permissions are still decided by which tabs exist. */
+    private void pushIntent(android.content.Intent i) {
+        if (i == null || !PushRules.ACTION_OPEN.equals(i.getAction())) return;
+        pendingTab = PushRules.tabFor(i.getStringExtra("kind"), i.getStringExtra("place"));
+    }
+
+    private void applyPendingTab() {
+        int t = pendingTab; pendingTab = PushRules.TAB_NONE;
+        if (t == PushRules.TAB_NONE || nav0 == null) return;
+        if (nav0.getMenu().findItem(t) != null) nav0.setSelectedItemId(t);      // a tab this role does not have is simply not there
+    }
+
+    /** Android 13+: without this the phone never shows our notifications. Asked once per run, only after a staff account is confirmed. */
+    private void askNotifications() {
+        if (askedNotifications || android.os.Build.VERSION.SDK_INT < 33) return;
+        askedNotifications = true;
+        if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 7);
     }
 
     @Override protected void onStop() { super.onStop(); stoppedAt = System.currentTimeMillis(); }
@@ -77,7 +107,7 @@ public final class MainActivity extends AppCompatActivity {
 
     /* ---------------- login (Google only) ---------------- */
     private void login() {
-        access = null;
+        access = null; AdminApp.setAccess(null);
         LinearLayout l = centered();
         l.addView(Ui.text(this, "BOFO Admin", R.style.Text_Bofo_Title));
         l.addView(Ui.text(this, "Sign in with the Google account your owner invited.", R.style.Text_Bofo_Caption));
@@ -127,7 +157,7 @@ public final class MainActivity extends AppCompatActivity {
             if ("mfa".equals(r[0])) { mfa((String) r[1]); return; }
             Access ac = (Access) r[1];
             if (!ac.active) { noAccess(); return; }
-            access = ac; locked = false; shell();
+            access = ac; locked = false; AdminApp.setAccess(ac); PushRegistrar.registerNow(this); askNotifications(); shell();
         }, e -> {
             if (e instanceof com.bofo.shared.Api.ApiException x && x.status == 401) { AdminAuth.get().signOut(); loginNote = ""; login(); return; }
             LinearLayout el = centered(); el.addView(Ui.text(this, Ui.err(e), R.style.Text_Bofo_Body));
@@ -223,6 +253,7 @@ public final class MainActivity extends AppCompatActivity {
         nav.setOnItemSelectedListener(it -> { open(body, it.getItemId()); return true; });
         show(page);
         nav.setSelectedItemId(first);
+        applyPendingTab();
     }
 
     private void open(FrameLayout body, int tab) {
