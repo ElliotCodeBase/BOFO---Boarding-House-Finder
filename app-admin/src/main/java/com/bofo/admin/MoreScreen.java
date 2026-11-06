@@ -12,6 +12,7 @@ final class MoreScreen extends FrameLayout {
         super(a);
         LinearLayout l = Ui.col(a); int p = Ui.dp(a, 16); l.setPadding(p, p, p, p);
         l.addView(Ui.text(a, "More", R.style.Text_Bofo_Title));
+        l.addView(entry(a, "Two-step sign-in", () -> sub(a, new TwoStepScreen(a, null))));
         if (access.can(PermissionRules.AUDIT_VIEW_OWN)) l.addView(entry(a, "What I did", () -> sub(a, new ActivityScreen(a, false))));
         if (access.can(PermissionRules.AUDIT_VIEW_ALL)) l.addView(entry(a, "All admin activity", () -> sub(a, new ActivityScreen(a, true))));
         if (access.can(PermissionRules.BANNED_VIEW)) l.addView(entry(a, "Banned and suspended", () -> sub(a, new BannedScreen(a, access))));

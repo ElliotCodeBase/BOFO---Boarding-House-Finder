@@ -182,9 +182,22 @@ public final class MainActivity extends AppCompatActivity {
                     e -> { go.setEnabled(true); Ui.toast(this, "This code is not valid for this account. It may be used, expired, or for another e-mail."); });
         });
         l.addView(go);
+        l.addView(Ui.text(this, "If the owner requires two-step sign-in, set it up first:", R.style.Text_Bofo_Caption));
+        android.widget.Button ts = Ui.button(this, "Set up two-step sign-in", false);
+        ts.setOnClickListener(v -> twoStepFromBlocked());
+        l.addView(ts);
         android.widget.Button out = Ui.button(this, "Sign out", false);
         out.setOnClickListener(v -> Async.run(() -> { AdminAuth.get().signOut(); return 1; }, ok -> { loginNote = "Signed out."; login(); loginNote = ""; }));
         l.addView(out);
+        show(l);
+    }
+
+    /** From "No access": set up two-step sign-in, then run the role check again (a server that requires two-step answers "no access" until it exists). */
+    private void twoStepFromBlocked() {
+        LinearLayout l = Ui.col(this);
+        android.widget.Button back = Ui.button(this, "< Back", false); back.setOnClickListener(v -> noAccess());
+        l.addView(back);
+        l.addView(new TwoStepScreen(this, this::gate), new LinearLayout.LayoutParams(-1, 0, 1f));
         show(l);
     }
 
