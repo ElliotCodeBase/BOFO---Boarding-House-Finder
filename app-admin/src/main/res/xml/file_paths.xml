@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CSV exports only: cache/exports/ (cleared before each export and at app start). Nothing else is shareable. -->
+<paths>
+    <cache-path name="exports" path="exports/" />
+</paths>

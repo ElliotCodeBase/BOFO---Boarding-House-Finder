@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.bofo.shared.AiUnansweredRulesTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-11-06T13:23:50.094Z" hostname="COFER" time="0.014">
+  <properties/>
+  <testcase name="rowIsNullSafe" classname="com.bofo.shared.AiUnansweredRulesTest" time="0.009"/>
+  <testcase name="unknownReasonNeverCrashes" classname="com.bofo.shared.AiUnansweredRulesTest" time="0.001"/>
+  <testcase name="queryFiltersByReason" classname="com.bofo.shared.AiUnansweredRulesTest" time="0.0"/>
+  <testcase name="rolesWithAiAnswerSeeTheScreen" classname="com.bofo.shared.AiUnansweredRulesTest" time="0.001"/>
+  <testcase name="countsAndKnown" classname="com.bofo.shared.AiUnansweredRulesTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

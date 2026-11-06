@@ -9,5 +9,6 @@ public final class AdminApp extends Application {
         super.onCreate();
         Api.get().init(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_ANON_KEY, BuildConfig.VERSION_NAME, "admin");   // x-bofo-client: admin
         AdminAuth.init(this);
+        CsvShare.clean(this);   // no export left in the cache from an earlier run
     }
 }
