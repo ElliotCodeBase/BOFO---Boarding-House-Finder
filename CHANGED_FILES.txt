@@ -1,13 +1,9 @@
-new      shared/src/main/java/com/bofo/shared/TwoStepRules.java
-new      shared/src/test/java/com/bofo/shared/TwoStepRulesTest.java
-new      app-admin/src/main/java/com/bofo/admin/TwoStepScreen.java
-changed  app-admin/src/main/java/com/bofo/admin/AdminAuth.java
-changed  app-admin/src/main/java/com/bofo/admin/MoreScreen.java
-changed  app-admin/src/main/java/com/bofo/admin/MainActivity.java
-changed  app-admin/build.gradle                           (2.9.14 / 20914)
-changed  bofo-android/app/build.gradle                    (2.9.14 / 20914)
+new      shared/src/main/java/com/bofo/shared/SavedReplyRules.java
+new      shared/src/test/java/com/bofo/shared/SavedReplyRulesTest.java
+new      app-admin/src/main/java/com/bofo/admin/RepliesStore.java
+changed  app-admin/src/main/java/com/bofo/admin/IdScreen.java
+changed  app-admin/build.gradle                           (2.9.15 / 20915)
+changed  bofo-android/app/build.gradle                    (2.9.15 / 20915)
 changed  CHANGES_ANDROID.md
 changed  HANDOFF_ANDROID.md
-new      STATE_STAGE4g.md
-changed  CHANGED_FILES.txt
-DELETE   (none)
+new      STATE_STAGE4h.md
