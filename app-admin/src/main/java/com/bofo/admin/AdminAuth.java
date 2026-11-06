@@ -86,6 +86,14 @@ public final class AdminAuth {
         return null;
     }
 
+    /** Starts setting up an authenticator app. Returns {id, secret, uri}; the factor counts only after {@link #verifyTotp} succeeds. Blocking. */
+    public JSONObject enrollTotp() throws Exception {
+        JSONObject r = new JSONObject(Api.get().authCall("POST", "factors", new JSONObject().put("factor_type", "totp")
+                .put("friendly_name", "BOFO Admin " + System.currentTimeMillis() / 1000).put("issuer", "BOFO Admin")));
+        JSONObject t = r.getJSONObject("totp");
+        return new JSONObject().put("id", r.getString("id")).put("secret", t.getString("secret")).put("uri", t.optString("uri", ""));
+    }
+
     public void verifyTotp(String factorId, String code) throws Exception {
         String ch = new JSONObject(Api.get().authCall("POST", "factors/" + factorId + "/challenge", new JSONObject())).getString("id");
         apply(new JSONObject(Api.get().authCall("POST", "factors/" + factorId + "/verify", new JSONObject().put("challenge_id", ch).put("code", code))));
