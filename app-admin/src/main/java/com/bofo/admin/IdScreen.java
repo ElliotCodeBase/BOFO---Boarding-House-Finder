@@ -17,6 +17,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.bofo.shared.Api;
 import com.bofo.shared.Async;
 import com.bofo.shared.PermissionRules;
+import com.bofo.shared.SavedReplyRules;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.json.JSONArray;
@@ -27,7 +28,6 @@ import java.util.Map;
 
 /** ID verification queue and review. Server rules: only PENDING requests are readable by a reviewer; a second reviewer is asked via "second opinion". */
 final class IdScreen extends FrameLayout {
-    private static final String[] REASONS = {"Photo is blurry", "Name does not match", "ID is expired", "Selfie does not match the ID", "Other"};
     private final MainActivity act;
     private final Access access;
     private final LinearLayout list;
@@ -127,19 +127,57 @@ final class IdScreen extends FrameLayout {
     }
 
     private void reject(String vid, Dialog d) {
-        final int[] pick = {-1};
-        EditText note = new EditText(getContext()); note.setHint("Note (required for Other)");
-        LinearLayout box = Ui.col(getContext()); box.setPadding(Ui.dp(getContext(), 20), 0, Ui.dp(getContext(), 20), 0); box.addView(note);
-        new MaterialAlertDialogBuilder(act).setTitle("Why reject?").setSingleChoiceItems(REASONS, -1, (dd, i) -> pick[0] = i).setView(box)
+        android.content.Context c = getContext();
+        EditText note = new EditText(c); note.setHint("Reason the owner will read (5+ characters)");
+        note.setMinLines(3); note.setGravity(Gravity.TOP | Gravity.START);
+        note.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        note.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(SavedReplyRules.MAX_LEN)});
+        LinearLayout box = Ui.col(c); int pd = Ui.dp(c, 20); box.setPadding(pd, 0, pd, 0);
+        box.addView(Ui.text(c, "Tap a saved reply, then edit it if you like. Long-press one of yours to delete it.", R.style.Text_Bofo_Caption));
+        android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(c); LinearLayout chips = Ui.row(c); hs.addView(chips);
+        box.addView(hs); box.addView(note);
+        android.widget.Button keep = Ui.button(c, "Save this as my reply", false);
+        keep.setOnClickListener(v -> {
+            java.util.List<String> own = RepliesStore.load(c);
+            java.util.List<String> next = SavedReplyRules.add(own, note.getText().toString());
+            if (next.size() == own.size() && next.equals(own)) {
+                Ui.toast(c, own.size() >= SavedReplyRules.MAX_OWN ? "You already have " + SavedReplyRules.MAX_OWN + " saved replies. Long-press one to delete it." : "Write at least 5 characters that are not already saved.");
+                return;
+            }
+            RepliesStore.save(c, next); fillChips(chips, note); Ui.toast(c, "Saved.");
+        });
+        box.addView(keep);
+        fillChips(chips, note);
+        new MaterialAlertDialogBuilder(act).setTitle("Why reject?").setView(MainActivity.scroll(c, box))
                 .setNegativeButton("Cancel", null).setPositiveButton("Reject", (dd, w) -> {
-                    if (pick[0] < 0) { Ui.toast(getContext(), "Pick a reason."); return; }
-                    boolean other = pick[0] == REASONS.length - 1; String nt = note.getText().toString().trim().replaceAll("\\s+", " ");
-                    if (other && nt.isEmpty()) { Ui.toast(getContext(), "Write a short note for Other."); return; }
-                    String reason = other ? nt : REASONS[pick[0]] + (nt.isEmpty() ? "" : ": " + nt);
-                    if (reason.length() > 300) reason = reason.substring(0, 300);
-                    final String why = reason;
+                    final String why = SavedReplyRules.clean(note.getText().toString());
+                    if (!SavedReplyRules.validReason(why)) { Ui.toast(c, "Write a reason of at least 5 characters."); return; }
                     Reauth.ask(act, "Reject ID request", () -> run(() -> Api.get().rpc("review_verification", new JSONObject().put("vid", vid).put("approve", false).put("reason", why)), d, "Rejected."), null);
                 }).show();
+    }
+
+    /** Built-in replies first, then the reviewer's own (long-press deletes). Tapping one fills the text box. */
+    private void fillChips(LinearLayout chips, EditText note) {
+        android.content.Context c = getContext();
+        chips.removeAllViews();
+        for (int i = 0; i < SavedReplyRules.LABELS.length; i++) {
+            final String text = SavedReplyRules.TEXTS[i];
+            android.widget.Button b = Ui.button(c, SavedReplyRules.LABELS[i], false);
+            b.setOnClickListener(v -> { note.setText(text); note.setSelection(note.length()); });
+            chips.addView(b);
+        }
+        java.util.List<String> own = RepliesStore.load(c);
+        for (int i = 0; i < own.size(); i++) {
+            final int idx = i; final String text = own.get(i);
+            android.widget.Button b = Ui.button(c, "Mine: " + (text.length() > 18 ? text.substring(0, 18) + "..." : text), false);
+            b.setOnClickListener(v -> { note.setText(text); note.setSelection(note.length()); });
+            b.setOnLongClickListener(v -> {
+                new MaterialAlertDialogBuilder(act).setTitle("Delete this saved reply?").setMessage(text).setNegativeButton("Keep", null)
+                        .setPositiveButton("Delete", (dd, w) -> { RepliesStore.save(c, SavedReplyRules.remove(RepliesStore.load(c), idx)); fillChips(chips, note); }).show();
+                return true;
+            });
+            chips.addView(b);
+        }
     }
 
     private void run(Async.Work<String> w, Dialog d, String done) {
