@@ -67,6 +67,11 @@ final class Ui {
         }
         return "Something went wrong. Try again.";
     }
+    /** JSON object from key, value pairs (org.json throws a checked exception on Android; this wraps it for use in click handlers). */
+    static JSONObject json(Object... kv) {
+        try { JSONObject o = new JSONObject(); for (int i = 0; i + 1 < kv.length; i += 2) o.put((String) kv[i], kv[i + 1]); return o; }
+        catch (org.json.JSONException e) { throw new IllegalStateException(e); }
+    }
     static void toast(Context c, String s) { android.widget.Toast.makeText(c, s, android.widget.Toast.LENGTH_LONG).show(); }
     static View space(Context c, int h) { View v = new View(c); v.setLayoutParams(new LinearLayout.LayoutParams(1, dp(c, h))); return v; }
 }
