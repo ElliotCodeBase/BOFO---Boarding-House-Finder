@@ -45,6 +45,8 @@ public final class MainActivity extends AppCompatActivity {
     private long stoppedAt;
     private boolean locked;
     private String loginNote = "";
+    private FrameLayout body0; private BottomNavigationView nav0;
+    void showMore() { if (body0 != null) open(body0, 4); }
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -135,12 +137,25 @@ public final class MainActivity extends AppCompatActivity {
         });
     }
 
-    /** No active role: sign out at once and say so on the login screen. */
+    /** No active role: say so, let a newly invited person enter the invite code, or sign out. */
     private void noAccess() {
-        Async.run(() -> { AdminAuth.get().signOut(); return Boolean.TRUE; }, ok -> {
-            loginNote = "No access. This Google account has no active BOFO Admin role. Ask the owner for an invite.";
-            login(); loginNote = "";
+        LinearLayout l = centered();
+        l.addView(Ui.text(this, "No access", R.style.Text_Bofo_Title));
+        l.addView(Ui.text(this, AdminAuth.get().email() + " has no active BOFO Admin role. If the owner sent you an invite code, enter it here.", R.style.Text_Bofo_Caption));
+        EditText code = new EditText(this); code.setHint("Invite code"); code.setSingleLine(); l.addView(code);
+        android.widget.Button go = Ui.button(this, "Use invite code", true);
+        go.setOnClickListener(v -> {
+            String t = code.getText().toString().trim();
+            if (t.length() < 20) { code.setError("Paste the full code"); return; }
+            go.setEnabled(false);
+            Async.run(() -> com.bofo.shared.Api.get().rpc("admin_invite_accept", new JSONObject().put("token_", t)), ok -> gate(),
+                    e -> { go.setEnabled(true); Ui.toast(this, "This code is not valid for this account. It may be used, expired, or for another e-mail."); });
         });
+        l.addView(go);
+        android.widget.Button out = Ui.button(this, "Sign out", false);
+        out.setOnClickListener(v -> Async.run(() -> { AdminAuth.get().signOut(); return 1; }, ok -> { loginNote = "Signed out."; login(); loginNote = ""; }));
+        l.addView(out);
+        show(l);
     }
 
     private void mfa(String factorId) {
@@ -193,13 +208,17 @@ public final class MainActivity extends AppCompatActivity {
         page.addView(nav, new LinearLayout.LayoutParams(-1, -2));
 
         int id = 0; int first = -1;
-        String[] titles = {"Home", "IDs", "Reports"};
-        String[] keys = {PermissionRules.DASHBOARD_VIEW, PermissionRules.ID_REVIEW, PermissionRules.REPORTS_VIEW};
-        for (int i = 0; i < 3; i++) {
-            if (!access.can(keys[i])) continue;                     // hidden, and the server rejects it anyway
-            nav.getMenu().add(0, i, i, titles[i]).setIcon(i == 0 ? android.R.drawable.ic_menu_agenda : i == 1 ? android.R.drawable.ic_menu_gallery : android.R.drawable.ic_menu_report_image);
+        String[] titles = {"Home", "IDs", "Reports", "Approvals", "More"};
+        boolean more = access.can(PermissionRules.AUDIT_VIEW_OWN) || access.can(PermissionRules.MEMBERS_MANAGE) || access.can(PermissionRules.BANNED_VIEW) || access.can(PermissionRules.PAYMENTS_VIEW);
+        boolean[] show = {access.can(PermissionRules.DASHBOARD_VIEW), access.can(PermissionRules.ID_REVIEW), access.can(PermissionRules.REPORTS_VIEW),
+                access.can(PermissionRules.APPROVALS_DECIDE) || access.can(PermissionRules.APPROVALS_REQUEST), more};
+        int[] icons = {android.R.drawable.ic_menu_agenda, android.R.drawable.ic_menu_gallery, android.R.drawable.ic_menu_report_image, android.R.drawable.ic_menu_send, android.R.drawable.ic_menu_more};
+        for (int i = 0; i < 5; i++) {
+            if (!show[i]) continue;                                 // hidden, and the server rejects it anyway
+            nav.getMenu().add(0, i, i, titles[i]).setIcon(icons[i]);
             if (first < 0) first = i;
         }
+        body0 = body; nav0 = nav;
         if (first < 0) { body.addView(Ui.text(this, "Your role has no screens in this version yet.", R.style.Text_Bofo_Body)); show(page); return; }
         nav.setOnItemSelectedListener(it -> { open(body, it.getItemId()); return true; });
         show(page);
@@ -208,7 +227,8 @@ public final class MainActivity extends AppCompatActivity {
 
     private void open(FrameLayout body, int tab) {
         body.removeAllViews();
-        View v = tab == 0 ? new HomeScreen(this, access) : tab == 1 ? new IdScreen(this, access) : new ReportsScreen(this, access);
+        View v = tab == 0 ? new HomeScreen(this, access) : tab == 1 ? new IdScreen(this, access) : tab == 2 ? new ReportsScreen(this, access)
+                : tab == 3 ? new ApprovalsScreen(this, access) : new MoreScreen(this, access);
         body.addView(v, new FrameLayout.LayoutParams(-1, -1));
     }
 

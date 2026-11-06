@@ -127,7 +127,13 @@ final class ReportsScreen extends FrameLayout {
         boolean ask = !direct && PermissionRules.needsApproval(access.perms, key);
         if (!direct && !ask) { Ui.toast(getContext(), "Your role cannot do this."); return; }
         String title = (ask ? "Request approval: " : "") + act0 + " " + name(x, "reported_name");
-        new MaterialAlertDialogBuilder(act).setTitle(title).setView(in).setNegativeButton("Cancel", null)
+        LinearLayout box = Ui.col(getContext()); int pd = Ui.dp(getContext(), 20); box.setPadding(pd, 0, pd, 0);
+        android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(getContext()); LinearLayout chips = Ui.row(getContext()); hs.addView(chips);
+        for (String q : new String[]{"Scam", "Fake listing", "Harassment", "Inappropriate content", "Wrong information", "Repeat offence"}) {       // quick-pick reasons
+            android.widget.Button cb = Ui.button(getContext(), q, false); cb.setOnClickListener(v -> in.setText(q)); chips.addView(cb);
+        }
+        box.addView(hs); box.addView(in);
+        new MaterialAlertDialogBuilder(act).setTitle(title).setView(box).setNegativeButton("Cancel", null)
                 .setPositiveButton(ask ? "Send request" : "Confirm", (d, w) -> {
                     String r = in.getText().toString().trim();
                     if (required && r.isEmpty()) { Ui.toast(getContext(), "A reason is required."); return; }
