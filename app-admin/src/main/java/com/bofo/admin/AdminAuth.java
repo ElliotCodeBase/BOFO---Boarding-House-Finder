@@ -45,7 +45,7 @@ public final class AdminAuth {
         apply(r);
     }
 
-    private void apply(JSONObject s) {
+    private void apply(JSONObject s) throws org.json.JSONException {
         access = s.getString("access_token"); refresh = s.getString("refresh_token");
         expiresAt = System.currentTimeMillis() / 1000 + s.optLong("expires_in", 3600);
         JSONObject u = s.optJSONObject("user");
