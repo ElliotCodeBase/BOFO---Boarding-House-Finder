@@ -1,7 +1,14 @@
-new  shared/**
-new  app-admin/**
-changed  bofo-android/settings.gradle
-changed  bofo-android/app/build.gradle   (version bump only)
-new  STATE.md (replaces the Stage 2 one)
-new  PROMPT.md
-new  stage3.patch
+new      shared/src/main/java/com/bofo/shared/CsvRules.java
+new      shared/src/main/java/com/bofo/shared/AiUnansweredRules.java
+new      shared/src/test/java/com/bofo/shared/CsvRulesTest.java
+new      shared/src/test/java/com/bofo/shared/AiUnansweredRulesTest.java
+new      app-admin/src/main/java/com/bofo/admin/AiUnansweredScreen.java
+new      app-admin/src/main/java/com/bofo/admin/ExportScreen.java
+new      app-admin/src/main/java/com/bofo/admin/CsvShare.java
+new      app-admin/src/main/res/xml/file_paths.xml
+changed  app-admin/src/main/java/com/bofo/admin/MoreScreen.java
+changed  app-admin/src/main/java/com/bofo/admin/AdminApp.java
+changed  app-admin/src/main/AndroidManifest.xml   (FileProvider)
+changed  app-admin/build.gradle                   (version 2.9.10 / 20910)
+changed  bofo-android/app/build.gradle            (version 2.9.10 / 20910)
+new      STATE_STAGE4c.md

@@ -1,0 +1,506 @@
+diff -ruN a/STATE_STAGE4c.md b/STATE_STAGE4c.md
+--- a/STATE_STAGE4c.md	1970-01-01 08:00:00.000000000 +0800
++++ b/STATE_STAGE4c.md	2026-11-06 21:22:11.614328481 +0800
+@@ -0,0 +1,31 @@
++# STATE after Stage 4, part 3 (admin app 2.9.10 / 20910)
++
++Interpreted "next stage" as the next slice of Stage 4 (its backlog was still open). Stage 5 deletes admin from the main app, so it waits until the admin app has parity.
++
++## Done (app-admin + shared only; NO new SQL, nothing touches the live database)
++- **More > Needs attention (AI)** (`ai_answer`: Owner, Admin, Moderator, Support): newest 50 questions BOFO could not answer, filter by reason, shows "(text not stored)" when the AI chat monitor was off. Read-only. Server gate: policy `ai_unanswered_admin_read` (040).
++- **More > Export CSV** (`csv_export`, Owner only): Reports or Payments, newest 1000, columns id / date / reason-or-amount / status (no names). Order: fingerprint/screen lock -> read rows -> `admin_log_export` (audit log; if it fails NO file is made) -> write file -> share sheet.
++- Formula-injection protection (`= + - @ tab` get a leading apostrophe), UTF-8 BOM for Excel: `shared/CsvRules` (moved from the main app, same tests).
++- Export file lives in the app cache `exports/`, deleted before each export and at app start. A `FileProvider` (not exported, only that folder) was added to the admin manifest: `app-admin/src/main/res/xml/file_paths.xml`.
++- `shared/AiUnansweredRules` (moved, now checks `ai_answer` through `PermissionRules` instead of the old `Role` enum) + tests.
++- Version 2.9.10 / 20910 in `app-admin/build.gradle` and `bofo-android/app/build.gradle`. The main app keeps its own copies of both rules classes until Stage 5.
++
++## What was and was NOT run
++- RAN: `javac` + JUnit on `shared` pure-Java classes: CsvRulesTest, AiUnansweredRulesTest, PermissionRulesTest, AutoLockRulesTest = 21 tests, all OK.
++- NOT run: Gradle, Android build, the screens on a phone (no SDK here). Expect possible small compile errors in the 3 new screens: send me the first error.
++
++## How to test (Owner unless stated)
++1. `.\gradlew :shared:testDebugUnitTest :app-admin:assembleDebug`
++2. More > Needs attention: list loads, chips filter. Support role: entry visible, no Export entry.
++3. More > Export CSV > Payments: lock prompt, share sheet, open file in Excel: header row, no names. Then More > All admin activity shows a `csv_export` row with the row count.
++4. Moderator / Admin: no "Export CSV" entry (server would also refuse `admin_log_export`).
++
++## NOT done (backlog, suggested order)
++1. Admin push: `FirebaseMessagingService` in the admin app, `device_tokens` app column, `send-push` targeting by permission, "approval needs you" push (read `send-push` first; needs a migration and your OK).
++2. Strikes ladder, Escalate, queue claiming + waiting colours, saved replies, unusual-activity alert, session list + revoke, break-glass, appeals (all need migrations).
++3. Refunds screen, AI chat log + AI settings/announcements in the admin app.
++4. Two-step enrolment inside the admin app.
++5. Stage 5 only after 1-4 (or after you decide to drop some of them).
++
++## First step of the next part
++Read `supabase/functions/send-push/index.ts` and migrations 029/033, then write `042_admin_push.sql` and tell me before I apply anything.
+diff -ruN a/app-admin/build.gradle b/app-admin/build.gradle
+--- a/app-admin/build.gradle	2026-11-06 21:22:11.599263346 +0800
++++ b/app-admin/build.gradle	2026-11-06 21:22:11.600687234 +0800
+@@ -23,8 +23,8 @@
+         applicationId 'com.bofo.admin'
+         minSdk 26
+         targetSdk 36
+-        versionCode 20909
+-        versionName '2.9.9'
++        versionCode 20910
++        versionName '2.9.10'
+         buildConfigField 'String', 'SUPABASE_URL', "\"${cfg('supabase.url')}\""
+         buildConfigField 'String', 'SUPABASE_ANON_KEY', "\"${cfg('supabase.anonKey')}\""
+         buildConfigField 'String', 'GOOGLE_WEB_CLIENT_ID', "\"${cfg('google.webClientId')}\""
+diff -ruN a/app-admin/src/main/AndroidManifest.xml b/app-admin/src/main/AndroidManifest.xml
+--- a/app-admin/src/main/AndroidManifest.xml	2026-11-06 21:22:11.591805004 +0800
++++ b/app-admin/src/main/AndroidManifest.xml	2026-11-06 21:22:11.593312761 +0800
+@@ -19,5 +19,9 @@
+                 <category android:name="android.intent.category.LAUNCHER" />
+             </intent-filter>
+         </activity>
++        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files"
++            android:exported="false" android:grantUriPermissions="true">
++            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
++        </provider>
+     </application>
+ </manifest>
+diff -ruN a/app-admin/src/main/java/com/bofo/admin/AdminApp.java b/app-admin/src/main/java/com/bofo/admin/AdminApp.java
+--- a/app-admin/src/main/java/com/bofo/admin/AdminApp.java	2026-11-06 21:22:11.583761293 +0800
++++ b/app-admin/src/main/java/com/bofo/admin/AdminApp.java	2026-11-06 21:22:11.585541563 +0800
+@@ -9,5 +9,6 @@
+         super.onCreate();
+         Api.get().init(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_ANON_KEY, BuildConfig.VERSION_NAME, "admin");   // x-bofo-client: admin
+         AdminAuth.init(this);
++        CsvShare.clean(this);   // no export left in the cache from an earlier run
+     }
+ }
+diff -ruN a/app-admin/src/main/java/com/bofo/admin/AiUnansweredScreen.java b/app-admin/src/main/java/com/bofo/admin/AiUnansweredScreen.java
+--- a/app-admin/src/main/java/com/bofo/admin/AiUnansweredScreen.java	1970-01-01 08:00:00.000000000 +0800
++++ b/app-admin/src/main/java/com/bofo/admin/AiUnansweredScreen.java	2026-11-06 21:22:11.551697847 +0800
+@@ -0,0 +1,82 @@
++package com.bofo.admin;
++
++import android.widget.FrameLayout;
++import android.widget.LinearLayout;
++
++import com.bofo.shared.AiUnansweredRules;
++import com.bofo.shared.AiUnansweredRules.Reason;
++import com.bofo.shared.AiUnansweredRules.Row;
++import com.bofo.shared.Api;
++import com.bofo.shared.Async;
++
++import org.json.JSONArray;
++import org.json.JSONObject;
++
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Map;
++
++/** "Needs attention" (ai_answer): the newest 50 questions BOFO could not answer well, read-only. The server policy ai_unanswered_admin_read is the real gate. Text is shown only if the server stored it. */
++final class AiUnansweredScreen extends FrameLayout {
++    private final LinearLayout list; private Reason filter = Reason.ALL;
++
++    AiUnansweredScreen(MainActivity a) {
++        super(a);
++        list = Ui.col(a); int p = Ui.dp(a, 16); list.setPadding(p, p, p, p);
++        addView(MainActivity.scroll(a, list), new LayoutParams(-1, -1));
++        load();
++    }
++
++    private void load() {
++        Async.run(() -> {
++            JSONArray a = Api.get().select("ai_unanswered", AiUnansweredRules.query(filter));
++            List<Row> out = new ArrayList<>(a.length());
++            for (int i = 0; i < a.length(); i++) {
++                JSONObject o = a.getJSONObject(i);
++                out.add(new Row(o.optString("id", ""), o.optString("created_at", ""), o.optString("reason", ""),
++                        o.isNull("intent") ? "" : o.optString("intent", ""), o.isNull("lang") ? "" : o.optString("lang", ""),
++                        o.isNull("message") ? "" : o.optString("message", "")));
++            }
++            return out;
++        }, this::render, e -> Ui.toast(getContext(), Ui.err(e)));
++    }
++
++    private static String label(Reason r) {
++        switch (r) {
++            case DEGRADED: return "AI was down";
++            case CLARIFY: return "Needed more detail";
++            case NOT_FOUND: return "Nothing found";
++            case OFF_TOPIC: return "Off topic";
++            case THUMBS_DOWN: return "Thumbs down";
++            default: return "All";
++        }
++    }
++
++    private void render(List<Row> loaded) {
++        android.content.Context c = getContext();
++        List<Row> rows = AiUnansweredRules.known(loaded);
++        list.removeAllViews();
++        list.addView(Ui.text(c, "Needs attention", R.style.Text_Bofo_Title));
++        list.addView(Ui.text(c, "Questions BOFO could not answer well. Newest " + AiUnansweredRules.LIMIT + ".", R.style.Text_Bofo_Caption));
++        Map<Reason, Integer> counts = AiUnansweredRules.counts(rows);
++        LinearLayout chips = Ui.row(c); chips.setPadding(0, Ui.dp(c, 8), 0, Ui.dp(c, 8));
++        android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(c); hs.setHorizontalScrollBarEnabled(false); hs.addView(chips);
++        for (Reason r : Reason.values()) {
++            String n = r == Reason.ALL || filter != Reason.ALL ? "" : " (" + counts.get(r) + ")";
++            android.widget.Button b = Ui.button(c, label(r) + n, r == filter);
++            b.setOnClickListener(v -> { filter = r; load(); });
++            chips.addView(b);
++        }
++        list.addView(hs);
++        if (rows.isEmpty()) { list.addView(Ui.text(c, "Nothing here. Good news.", R.style.Text_Bofo_Caption)); return; }
++        for (Row r : rows) {
++            LinearLayout card = Ui.card(c);
++            card.addView(Ui.text(c, r.hasText() ? r.message() : "(text not stored)", r.hasText() ? R.style.Text_Bofo_Body : R.style.Text_Bofo_Caption));
++            String t = r.createdAt();
++            String meta = label(r.kind()) + "  |  " + t.replace('T', ' ').substring(0, Math.min(16, t.length()))
++                    + (r.intent().isEmpty() ? "" : "  |  " + r.intent()) + (r.lang().isEmpty() ? "" : "  |  " + r.lang());
++            card.addView(Ui.text(c, meta, R.style.Text_Bofo_Caption));
++            list.addView(card);
++        }
++    }
++}
+diff -ruN a/app-admin/src/main/java/com/bofo/admin/CsvShare.java b/app-admin/src/main/java/com/bofo/admin/CsvShare.java
+--- a/app-admin/src/main/java/com/bofo/admin/CsvShare.java	1970-01-01 08:00:00.000000000 +0800
++++ b/app-admin/src/main/java/com/bofo/admin/CsvShare.java	2026-11-06 21:22:11.564130515 +0800
+@@ -0,0 +1,34 @@
++package com.bofo.admin;
++
++import android.content.Context;
++import android.content.Intent;
++import android.net.Uri;
++
++import androidx.core.content.FileProvider;
++
++import java.io.File;
++import java.io.FileOutputStream;
++import java.io.OutputStream;
++import java.nio.charset.StandardCharsets;
++
++/** Writes a CSV into the app cache (exports/) and opens the share sheet through the app's FileProvider. Old files are deleted before each export and at app start. */
++final class CsvShare {
++    private CsvShare() {}
++
++    static void clean(Context c) {
++        File[] f = new File(c.getCacheDir(), "exports").listFiles();
++        if (f != null) for (File x : f) { //noinspection ResultOfMethodCallIgnored
++            x.delete(); }
++    }
++
++    static void share(MainActivity a, String fileName, String content) throws java.io.IOException {
++        clean(a);
++        File dir = new File(a.getCacheDir(), "exports");
++        if (!dir.exists() && !dir.mkdirs()) throw new java.io.IOException("no folder");
++        File file = new File(dir, fileName);
++        try (OutputStream o = new FileOutputStream(file)) { o.write(content.getBytes(StandardCharsets.UTF_8)); }
++        Uri uri = FileProvider.getUriForFile(a, a.getPackageName() + ".files", file);
++        Intent i = new Intent(Intent.ACTION_SEND).setType("text/csv").putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
++        a.startActivity(Intent.createChooser(i, "Share CSV"));
++    }
++}
+diff -ruN a/app-admin/src/main/java/com/bofo/admin/ExportScreen.java b/app-admin/src/main/java/com/bofo/admin/ExportScreen.java
+--- a/app-admin/src/main/java/com/bofo/admin/ExportScreen.java	1970-01-01 08:00:00.000000000 +0800
++++ b/app-admin/src/main/java/com/bofo/admin/ExportScreen.java	2026-11-06 21:22:11.557503736 +0800
+@@ -0,0 +1,65 @@
++package com.bofo.admin;
++
++import android.widget.FrameLayout;
++import android.widget.LinearLayout;
++
++import com.bofo.shared.Api;
++import com.bofo.shared.Async;
++import com.bofo.shared.CsvRules;
++
++import org.json.JSONArray;
++import org.json.JSONObject;
++
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Locale;
++
++/**
++ * CSV export (csv_export, owner only). Same columns as the old app: id, date, reason or amount, status. No names, places or details.
++ * Order matters: fingerprint / screen lock -> read rows -> admin_log_export (audit log, server checks csv_export) -> only then write the file.
++ * If the log call fails, nothing is exported.
++ */
++final class ExportScreen extends FrameLayout {
++    private static final int MAX_ROWS = 1000;
++    private final MainActivity act; private final LinearLayout list; private boolean busy;
++
++    ExportScreen(MainActivity a) {
++        super(a); act = a;
++        list = Ui.col(a); int p = Ui.dp(a, 16); list.setPadding(p, p, p, p);
++        addView(MainActivity.scroll(a, list), new LayoutParams(-1, -1));
++        list.addView(Ui.text(a, "Export CSV", R.style.Text_Bofo_Title));
++        list.addView(Ui.text(a, "Up to " + MAX_ROWS + " newest rows. Columns: id, date, reason or amount, status. Every export is written to the audit log.", R.style.Text_Bofo_Caption));
++        list.addView(Ui.space(a, 8));
++        list.addView(entry("Reports", "reports"));
++        list.addView(entry("Payments", "payments"));
++    }
++
++    private LinearLayout entry(String label, String kind) {
++        LinearLayout c = Ui.card(act); c.addView(Ui.text(act, label, R.style.Text_Bofo_Section));
++        c.setOnClickListener(v -> { if (!busy) Reauth.ask(act, "Export " + label.toLowerCase(Locale.ROOT), () -> run(kind), null); });
++        return c;
++    }
++
++    private void run(String kind) {
++        busy = true;
++        Async.run(() -> {
++            boolean reports = "reports".equals(kind);
++            JSONArray a = reports
++                    ? Api.get().select("reports_admin_v", "order=created_at.desc&limit=" + MAX_ROWS + "&select=id,reason,status,created_at")
++                    : Api.get().select("payments", "order=created_at.desc&limit=" + MAX_ROWS + "&select=id,amount_php,status,created_at");
++            List<String[]> out = new ArrayList<>();
++            for (int i = 0; i < a.length(); i++) {
++                JSONObject x = a.getJSONObject(i);
++                String d = x.optString("created_at", ""); d = d.length() >= 10 ? d.substring(0, 10) : d;
++                out.add(new String[]{x.optString("id"), d, reports ? x.optString("reason") : String.format(Locale.ROOT, "%.2f", x.optDouble("amount_php", 0)), x.optString("status")});
++            }
++            if (out.isEmpty()) return null;
++            Api.get().rpc("admin_log_export", new JSONObject().put("kind", kind).put("row_count", out.size()));   // throws (no file) if not allowed or not logged
++            return CsvRules.document(reports ? new String[]{"id", "date", "reason", "status"} : new String[]{"id", "date", "amount_php", "status"}, out);
++        }, csv -> {
++            busy = false;
++            if (csv == null) { Ui.toast(act, "Nothing to export."); return; }
++            try { CsvShare.share(act, kind + ".csv", csv); } catch (Exception e) { Ui.toast(act, "Could not create the file."); }
++        }, e -> { busy = false; Ui.toast(act, Ui.err(e)); });
++    }
++}
+diff -ruN a/app-admin/src/main/java/com/bofo/admin/MoreScreen.java b/app-admin/src/main/java/com/bofo/admin/MoreScreen.java
+--- a/app-admin/src/main/java/com/bofo/admin/MoreScreen.java	2026-11-06 21:22:11.576253987 +0800
++++ b/app-admin/src/main/java/com/bofo/admin/MoreScreen.java	2026-11-06 21:22:11.577664687 +0800
+@@ -16,6 +16,8 @@
+         if (access.can(PermissionRules.AUDIT_VIEW_ALL)) l.addView(entry(a, "All admin activity", () -> sub(a, new ActivityScreen(a, true))));
+         if (access.can(PermissionRules.BANNED_VIEW)) l.addView(entry(a, "Banned and suspended", () -> sub(a, new BannedScreen(a, access))));
+         if (access.can(PermissionRules.PAYMENTS_VIEW)) l.addView(entry(a, "Payments", () -> sub(a, new PaymentsScreen(a))));
++        if (access.can(PermissionRules.AI_ANSWER)) l.addView(entry(a, "Needs attention (AI)", () -> sub(a, new AiUnansweredScreen(a))));
++        if (access.can(PermissionRules.CSV_EXPORT)) l.addView(entry(a, "Export CSV", () -> sub(a, new ExportScreen(a))));
+         if (access.can(PermissionRules.MEMBERS_MANAGE)) l.addView(entry(a, "Team", () -> sub(a, new TeamScreen(a))));
+         addView(l, new LayoutParams(-1, -1));
+     }
+diff -ruN a/app-admin/src/main/res/xml/file_paths.xml b/app-admin/src/main/res/xml/file_paths.xml
+--- a/app-admin/src/main/res/xml/file_paths.xml	1970-01-01 08:00:00.000000000 +0800
++++ b/app-admin/src/main/res/xml/file_paths.xml	2026-11-06 21:22:11.570660021 +0800
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- CSV exports only: cache/exports/ (cleared before each export and at app start). Nothing else is shareable. -->
++<paths>
++    <cache-path name="exports" path="exports/" />
++</paths>
+diff -ruN a/bofo-android/app/build.gradle b/bofo-android/app/build.gradle
+--- a/bofo-android/app/build.gradle	2026-11-06 21:22:11.606751879 +0800
++++ b/bofo-android/app/build.gradle	2026-11-06 21:22:11.608608395 +0800
+@@ -40,8 +40,8 @@
+         minSdk 26
+         targetSdk 36
+         // Version rule: stage N = v2.0.N, versionCode = 200 + N. Bump in EVERY stage / pull request.
+-        versionCode 20909
+-        versionName '2.9.9'
++        versionCode 20910
++        versionName '2.9.10'
+ 
+         buildConfigField 'String', 'SUPABASE_URL', "\"${cfg('supabase.url')}\""
+         buildConfigField 'String', 'SUPABASE_ANON_KEY', "\"${cfg('supabase.anonKey')}\""
+diff -ruN a/shared/src/main/java/com/bofo/shared/AiUnansweredRules.java b/shared/src/main/java/com/bofo/shared/AiUnansweredRules.java
+--- a/shared/src/main/java/com/bofo/shared/AiUnansweredRules.java	1970-01-01 08:00:00.000000000 +0800
++++ b/shared/src/main/java/com/bofo/shared/AiUnansweredRules.java	2026-11-06 21:22:11.534009379 +0800
+@@ -0,0 +1,69 @@
++package com.bofo.shared;
++
++import java.util.ArrayList;
++import java.util.EnumMap;
++import java.util.List;
++import java.util.Map;
++
++/**
++ * "Needs attention" (ai_answer), moved to shared in 2.9.10: the pure logic for the list of questions BOFO could not answer well (table ai_unanswered, migration 020).
++ * No Android classes, so it runs in plain JVM unit tests (AiUnansweredRulesTest).
++ */
++public final class AiUnansweredRules {
++    private AiUnansweredRules() {}
++
++    /** Newest rows loaded at once. */
++    public static final int LIMIT = 50;
++    public static final String COLUMNS = "id,created_at,reason,intent,lang,message";
++
++    /** The reasons the Edge Function writes (check constraint of ai_unanswered.reason); ALL = no filter. */
++    public enum Reason {
++        ALL(null), DEGRADED("degraded"), CLARIFY("clarify"), NOT_FOUND("not_found"), OFF_TOPIC("off_topic"), THUMBS_DOWN("thumbs_down");
++        public final String key;
++        Reason(String key) { this.key = key; }
++
++        /** The reason for a column value; null or an unknown text gives ALL (so a new reason on the server never crashes the screen). */
++        public static Reason of(String key) {
++            if (key != null) for (Reason r : values()) if (key.equals(r.key)) return r;
++            return ALL;
++        }
++    }
++
++    /** One row. {@code message} is empty when the server did not store the text (AI chat monitor off, or a thumbs down). */
++    public record Row(String id, String createdAt, String reason, String intent, String lang, String message) {
++        public Row {
++            id = nz(id); createdAt = nz(createdAt); reason = nz(reason); intent = nz(intent); lang = nz(lang); message = nz(message).trim();
++        }
++        public Reason kind() { return Reason.of(reason); }
++        public boolean hasText() { return !message.isEmpty(); }
++    }
++
++    private static String nz(String s) { return s == null ? "" : s; }
++
++    /** Shown only to roles with ai_answer (RLS policy ai_unanswered_admin_read in 040 is the real gate: others get 0 rows). */
++    public static boolean canSee(String role, java.util.Collection<String> grants, java.util.Collection<String> denies) {
++        return PermissionRules.has(role, grants, denies, PermissionRules.AI_ANSWER);
++    }
++
++    /** PostgREST query for the newest rows, optionally of one reason. */
++    public static String query(Reason r) {
++        String q = "select=" + COLUMNS + "&order=created_at.desc&limit=" + LIMIT;
++        if (r != null && r.key != null) q += "&reason=eq." + r.key;
++        return q;
++    }
++
++    /** How many of the loaded rows each reason has (every reason is present, 0 when none). */
++    public static Map<Reason, Integer> counts(List<Row> rows) {
++        Map<Reason, Integer> m = new EnumMap<>(Reason.class);
++        for (Reason r : Reason.values()) if (r != Reason.ALL) m.put(r, 0);
++        if (rows != null) for (Row row : rows) { Reason k = row.kind(); if (k != Reason.ALL) m.merge(k, 1, Integer::sum); }
++        return m;
++    }
++
++    /** Same list without rows of an unknown reason, newest first as the server sent them. */
++    public static List<Row> known(List<Row> rows) {
++        List<Row> out = new ArrayList<>();
++        if (rows != null) for (Row r : rows) if (r.kind() != Reason.ALL) out.add(r);
++        return out;
++    }
++}
+diff -ruN a/shared/src/main/java/com/bofo/shared/CsvRules.java b/shared/src/main/java/com/bofo/shared/CsvRules.java
+--- a/shared/src/main/java/com/bofo/shared/CsvRules.java	1970-01-01 08:00:00.000000000 +0800
++++ b/shared/src/main/java/com/bofo/shared/CsvRules.java	2026-11-06 21:22:11.527322308 +0800
+@@ -0,0 +1,32 @@
++package com.bofo.shared;
++
++import java.util.List;
++
++/** Moved to shared in 2.9.10 (admin app). Builds the CSV text for the admin exports (pure, unit tested). UTF-8 BOM so Excel opens it; cells that could run as a formula are neutralised. */
++public final class CsvRules {
++    public static final String BOM = "\uFEFF";
++    private CsvRules() {}
++
++    /** One cell: line breaks become spaces; a cell starting with = + - @ or a tab gets a leading apostrophe; commas and quotes are escaped. */
++    public static String cell(String s) {
++        String v = s == null ? "" : s.replace("\r", " ").replace("\n", " ");
++        if (!v.isEmpty()) {
++            char c = v.charAt(0);
++            if (c == '=' || c == '+' || c == '-' || c == '@' || c == '\t') v = "'" + v;
++        }
++        if (v.indexOf(',') >= 0 || v.indexOf('"') >= 0) v = "\"" + v.replace("\"", "\"\"") + "\"";
++        return v;
++    }
++
++    public static String line(String... cells) {
++        StringBuilder sb = new StringBuilder();
++        for (int i = 0; i < cells.length; i++) { if (i > 0) sb.append(','); sb.append(cell(cells[i])); }
++        return sb.append("\r\n").toString();
++    }
++
++    public static String document(String[] header, List<String[]> rows) {
++        StringBuilder sb = new StringBuilder(BOM).append(line(header));
++        for (String[] r : rows) sb.append(line(r));
++        return sb.toString();
++    }
++}
+diff -ruN a/shared/src/test/java/com/bofo/shared/AiUnansweredRulesTest.java b/shared/src/test/java/com/bofo/shared/AiUnansweredRulesTest.java
+--- a/shared/src/test/java/com/bofo/shared/AiUnansweredRulesTest.java	1970-01-01 08:00:00.000000000 +0800
++++ b/shared/src/test/java/com/bofo/shared/AiUnansweredRulesTest.java	2026-11-06 21:22:11.545719928 +0800
+@@ -0,0 +1,58 @@
++package com.bofo.shared;
++
++import static org.junit.Assert.assertEquals;
++import static org.junit.Assert.assertFalse;
++import static org.junit.Assert.assertTrue;
++
++import com.bofo.shared.AiUnansweredRules.Reason;
++import com.bofo.shared.AiUnansweredRules.Row;
++
++import org.junit.Test;
++
++import java.util.Arrays;
++import java.util.List;
++import java.util.Map;
++
++public class AiUnansweredRulesTest {
++    @Test public void rolesWithAiAnswerSeeTheScreen() {
++        assertTrue(AiUnansweredRules.canSee("owner", null, null));
++        assertTrue(AiUnansweredRules.canSee("support", null, null));
++        assertTrue(AiUnansweredRules.canSee("moderator", null, null));
++        assertFalse(AiUnansweredRules.canSee("support", null, java.util.Arrays.asList("ai_answer")));
++        assertFalse(AiUnansweredRules.canSee(null, null, null));
++        assertFalse(AiUnansweredRules.canSee("nobody", null, null));
++    }
++
++    @Test public void queryFiltersByReason() {
++        assertEquals("select=id,created_at,reason,intent,lang,message&order=created_at.desc&limit=50", AiUnansweredRules.query(Reason.ALL));
++        assertEquals("select=id,created_at,reason,intent,lang,message&order=created_at.desc&limit=50", AiUnansweredRules.query(null));
++        assertTrue(AiUnansweredRules.query(Reason.THUMBS_DOWN).endsWith("&reason=eq.thumbs_down"));
++        assertTrue(AiUnansweredRules.query(Reason.NOT_FOUND).endsWith("&reason=eq.not_found"));
++    }
++
++    @Test public void unknownReasonNeverCrashes() {
++        assertEquals(Reason.ALL, Reason.of(null));
++        assertEquals(Reason.ALL, Reason.of("something_new"));
++        assertEquals(Reason.CLARIFY, Reason.of("clarify"));
++    }
++
++    @Test public void rowIsNullSafe() {
++        Row r = new Row(null, null, null, null, null, null);
++        assertFalse(r.hasText());
++        assertEquals(Reason.ALL, r.kind());
++        assertTrue(new Row("1", "t", "degraded", "search", "tl", "  malapit  ").hasText());
++        assertEquals("malapit", new Row("1", "t", "degraded", "search", "tl", "  malapit  ").message());
++    }
++
++    @Test public void countsAndKnown() {
++        List<Row> rows = Arrays.asList(
++                new Row("1", "t", "clarify", "", "", "a"), new Row("2", "t", "clarify", "", "", "b"),
++                new Row("3", "t", "thumbs_down", "", "", ""), new Row("4", "t", "future_reason", "", "", "x"));
++        Map<Reason, Integer> m = AiUnansweredRules.counts(rows);
++        assertEquals(2, (int) m.get(Reason.CLARIFY));
++        assertEquals(1, (int) m.get(Reason.THUMBS_DOWN));
++        assertEquals(0, (int) m.get(Reason.DEGRADED));
++        assertEquals(3, AiUnansweredRules.known(rows).size());
++        assertEquals(0, (int) AiUnansweredRules.counts(null).get(Reason.OFF_TOPIC));
++    }
++}
+diff -ruN a/shared/src/test/java/com/bofo/shared/CsvRulesTest.java b/shared/src/test/java/com/bofo/shared/CsvRulesTest.java
+--- a/shared/src/test/java/com/bofo/shared/CsvRulesTest.java	1970-01-01 08:00:00.000000000 +0800
++++ b/shared/src/test/java/com/bofo/shared/CsvRulesTest.java	2026-11-06 21:22:11.539938827 +0800
+@@ -0,0 +1,31 @@
++package com.bofo.shared;
++
++import static org.junit.Assert.assertEquals;
++import static org.junit.Assert.assertTrue;
++
++import java.util.Arrays;
++import java.util.Collections;
++import org.junit.Test;
++
++public class CsvRulesTest {
++    @Test public void formulaCellsAreNeutralised() {
++        assertEquals("'=1+1", CsvRules.cell("=1+1"));
++        assertEquals("'+5", CsvRules.cell("+5"));
++        assertEquals("'-5", CsvRules.cell("-5"));
++        assertEquals("'@x", CsvRules.cell("@x"));
++        assertEquals("'\tx", CsvRules.cell("\tx"));
++        assertEquals("scam", CsvRules.cell("scam"));
++    }
++    @Test public void escaping() {
++        assertEquals("\"a,b\"", CsvRules.cell("a,b"));
++        assertEquals("\"say \"\"hi\"\"\"", CsvRules.cell("say \"hi\""));
++        assertEquals("a b", CsvRules.cell("a\nb"));
++        assertEquals("", CsvRules.cell(null));
++    }
++    @Test public void document() {
++        String d = CsvRules.document(new String[]{"id", "status"}, Arrays.asList(new String[]{"1", "pending"}, new String[]{"2", "=x"}));
++        assertTrue(d.startsWith(CsvRules.BOM + "id,status\r\n"));
++        assertTrue(d.endsWith("2,'=x\r\n"));
++        assertEquals(CsvRules.BOM + "a\r\n", CsvRules.document(new String[]{"a"}, Collections.emptyList()));
++    }
++}
