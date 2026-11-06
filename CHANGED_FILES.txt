@@ -1,18 +1,12 @@
-new      supabase/migrations/042_admin_push.sql           (NOT applied: needs your OK)
-changed  supabase/functions/send-push/index.ts            (redeploy)
-new      shared/src/main/java/com/bofo/shared/PushRules.java
-new      shared/src/test/java/com/bofo/shared/PushRulesTest.java
-new      app-admin/src/main/java/com/bofo/admin/PushRegistrar.java
-new      app-admin/src/main/java/com/bofo/admin/AdminMessagingService.java
-changed  app-admin/src/main/java/com/bofo/admin/AdminApp.java
-changed  app-admin/src/main/java/com/bofo/admin/AdminAuth.java
-changed  app-admin/src/main/java/com/bofo/admin/MainActivity.java
-changed  app-admin/src/main/AndroidManifest.xml
-changed  app-admin/build.gradle                           (2.9.11 / 20911)
-changed  bofo-android/app/build.gradle                    (2.9.11 / 20911)
-changed  docs/PUSH_SETUP.md
+new      supabase/migrations/043_refund_hardening.sql     (NOT applied: needs your OK)
+new      shared/src/main/java/com/bofo/shared/RefundRules.java
+new      shared/src/test/java/com/bofo/shared/RefundRulesTest.java
+changed  app-admin/src/main/java/com/bofo/admin/PaymentsScreen.java
+changed  app-admin/src/main/java/com/bofo/admin/MoreScreen.java
+changed  app-admin/build.gradle                           (2.9.12 / 20912)
+changed  bofo-android/app/build.gradle                    (2.9.12 / 20912)
 changed  CHANGES_ANDROID.md
 changed  HANDOFF_ANDROID.md
-new      STATE_STAGE4d.md
+new      STATE_STAGE4e.md
 changed  CHANGED_FILES.txt
 DELETE   (none)
