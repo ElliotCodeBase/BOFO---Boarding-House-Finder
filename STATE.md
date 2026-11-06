@@ -1,38 +1,47 @@
-# STATE after Stage 2 (version 2.9.6 / versionCode 20906)
+# STATE after Stage 3 (version 2.9.7 / versionCode 20907)
 
-## Done (all files are in this zip, same paths as the repo, plus `stage2.patch`)
-- `supabase/migrations/039_admin_roles.sql`: tables `admin_roles`, `admin_members`, `admin_sessions`, `admin_invites`, `admin_audit_log` (append-only), `admin_approvals`, `rate_limits`; functions `has_permission`, `require_permission`, `is_staff`, `is_admin` (redefined = any active staff), `my_admin_access`, `bootstrap_owner`, invites (create/revoke/accept), member management (update/suspend/remove/logout-all), activity reads, `admin_log_export`, approvals (request/list/decide); rate limits on reports, chat, ID check (S-05, S-06); storage count caps (S-06).
-- `supabase/migrations/040_admin_permission_gates.sql`: 13 existing admin functions re-created with a permission check instead of `is_admin()` (bodies copied by script from the latest migration that defines them, see the `-- from` comments); sensitive policies moved to permissions; owner-only wrappers `admin_set_min_app_version`, `admin_set_min_admin_app_version`, `admin_reset_mfa`; AI chat log owner-only + retention job (S-17); `check_id_number` rate limit (S-05).
-- `supabase/tests/stage2_role_tests.sql`: runs in a rolled-back transaction, one PASS/FAIL row per check (permission matrix for Owner/Admin/Moderator/Support/no-role, approvals, invites, expiry, log-out-all, owner rules, audit-log immutability).
-- `bofo-android/.../util/PermissionRules.java` + `PermissionRulesTest.java`: client mirror of the permission model (UI only; server decides).
-- Edge functions: CORS wildcard removed from 4 functions (S-13); `paymongo-webhook` refuses a non-numeric timestamp (S-15).
-- `bofo-android/app/build.gradle`: version bump only (2.9.5 -> 2.9.6). If your local file is newer, do not copy mine; bump yours by +1.
-- Security findings closed in Stage 2: S-05, S-06, S-13, S-15, S-17. (S-14 re-auth for delete-account moves to Stage 5.)
+## Done
+- `shared/` (Android library `com.bofo.shared`, Java 17): `PermissionRules`, `AutoLockRules`, `Async`, `Http`, `SessionStore` (own Keystore key + file, so it never collides with the user app), new `Api` (Supabase client; sends `x-bofo-client: admin` + `x-bofo-app-version`), and the two unit tests moved with their package renamed. The main app keeps its own copies for now (no behaviour change; Stage 5 removes the duplicates).
+- `app-admin/` (`com.bofo.admin`, debug suffix `.debug`, v2.9.7): one Activity, screens built in code.
+  - Google sign-in only, with a nonce (Google gets the SHA-256, Supabase gets the raw value). No password, no dev accounts.
+  - After sign-in: authenticator-app code if the account has a verified factor, then `my_admin_access()`. No active role -> the app signs out and the login screen says "No access".
+  - Tabs shown only for the role's permissions (Home = `dashboard_view`, IDs = `id_review`, Reports = `reports_view`). The server still rejects anything not allowed.
+  - Auto-lock after 5 min in the background (`AutoLockRules`), unlock with fingerprint / face / screen lock. Same check before approve, reject, suspend, ban, take down (60 s grace). No screen lock on the phone = sensitive actions refused (fails closed).
+  - Security: FLAG_SECURE on the whole app (and on the ID dialog window), session encrypted with the Android Keystore, `allowBackup=false` + data-extraction rules, cleartext off, R8 on, no logging of personal data, ID photos watermarked with the reviewer's e-mail, signed links valid 2 min, photos never cached to disk.
+  - Home: grouped cards (Needs you / Safety / Last 7 days with change vs the week before). A card is hidden when the role cannot read it.
+  - ID queue + review: three photos, approve (ID number typed, server checks it), reject with reasons + note, second-opinion flag.
+  - Reports: Waiting / Answered / All, waiting reports grouped per person (your action applies to all of that person's waiting reports), reports about one person, dismiss, suspend (1-30 days), ban, take down, undo ban (needs `unban`). A role without the permission but with `approvals_request` sees "Request approval" instead.
+- `bofo-android/settings.gradle`: includes `:shared` and `:app-admin` (folders next to `bofo-android/`). `bofo-android/app/build.gradle`: version bump only (2.9.6 -> 2.9.7; if your local file is newer, do not copy mine, bump yours by +1).
 
-## What WAS and was NOT run
-- RUN: `PermissionRulesTest` logic (10 tests, compiled with javac 21 and a stub JUnit, all passed); a script check that the Java permission lists, owner-only list and presets are identical to the SQL ones.
-- NOT RUN: the SQL (no Postgres in this sandbox), the Gradle build, the real JUnit run, the Deno edge functions. Run `stage2_role_tests.sql` once after the migrations and send me any FAIL row.
+## What was and was NOT run
+- NOT run: Gradle build, any Android code, unit tests, the app on a phone. There is no Android SDK or JDK in this sandbox. The Java was written carefully and re-read, but expect a few compile errors on the first build: send me the first error text.
+- The two unit tests in `shared` are the same tests that passed in Stage 2, only the package name changed.
 
-## How to apply (order matters)
-1. Back up: Supabase dashboard > Database > Backups (or `pg_dump`).
-2. SQL editor: run `039_admin_roles.sql`, then `select public.bootstrap_owner('YOUR-OWNER-GOOGLE-EMAIL');` (the account must have signed in once), then `040_admin_permission_gates.sql`, then `supabase/tests/stage2_role_tests.sql`.
-3. Extract this zip over the repo root, then `supabase functions deploy bofo-chat delete-account bofo-announce create-boost-checkout` and `supabase functions deploy paymongo-webhook --no-verify-jwt`.
-4. Stage 1 items still pending from you: rotate Firebase key (S-01), migration 038, delete dev accounts (S-04), admin MFA on (S-03).
+## Deviations from the prompt (say if you want them changed)
+1. Screens are built in code (no XML / ViewBinding) and English text is in the code, not `strings.xml`, to keep Stage 3 small. Colors and the Text.Bofo style names are reused.
+2. Colors are a copy of the main app's `colors.xml` (light only; no night variants yet). The "single source of the look" move into `shared/res` is left for Stage 5.
+3. Images use plain `BitmapFactory`, not Glide.
 
-## Behaviour to know
-- Nothing changes for the current admin today: a user with `users.role='admin'` and no `admin_members` row keeps full access ("legacy", removed in Stage 5). Once you run `bootstrap_owner`, that account is an Owner (still everything).
-- Any OTHER old admin account (for example a leftover dev admin) is still a full legacy admin: delete it (S-04).
-- Owner-only items (the 12) are now REALLY owner-only on the server: Admin loses `set_ai_enabled`, refunds, unban, take-down, AI chat log, payments view. If you want an Admin to keep one, remove nothing: just do it as Owner, or tell me and Stage 3 adds a per-person toggle (owner-only keys can never be granted to a sub-admin, by design).
-- An owner cannot delete their own account through the app (the owner row is protected). Move ownership with the break-glass steps in STAGE2_CHANGES.md first.
+## NOT done (first items of Stage 4 unless noted)
+1. Server: `app_version_ok()` still compares one minimum. The admin app already sends `x-bofo-client: admin`; a small migration (041) must use it before anyone sets `min_admin_app_version`. Do not set that value yet.
+2. FCM for the admin app: the plugin line is in `app-admin/build.gradle` but no `FirebaseMessagingService`, no `platform/app` column on `device_tokens`, and `send-push` still targets `users.role='admin'`. You need to add the `com.bofo.admin` app in Firebase and put its `google-services.json` in `app-admin/` (git-ignored).
+3. Two-step enrollment is not in this app: use the main app's current screen to enrol, then the admin app asks for the code. Stage 4 adds enrol + reset.
+4. Report detail shows no photo of the place and no per-place picker (it uses the report's own place); "take down" is hidden when the report has no place.
+5. `hidden` listing status for moderators, CSV export and `admin_log_export`, approvals inbox, members screen, audit log, strikes: Stage 4.
+6. A separate release key and secrets `BOFO_ADMIN_KEYSTORE_*` (build.gradle reads them from the environment) and a GitHub workflow for `:app-admin`: yours to create (the existing workflow only builds the user app).
+7. Second Google OAuth Android client (package `com.bofo.admin` + SHA-1 of the admin keys) in Google Cloud Console; the same Web client ID is used for the id-token flow.
 
-## Known limits / decisions for later stages
-1. Admin pushes (`send-push`, triggers `push_report`, `push_idreview`) still target users with `users.role='admin'`: sub-admins get no push yet. Stage 3/4: target `admin_members` by permission (reports_view / id_review).
-2. App-version gate: `app_version_ok()` compares ONE minimum to the header `x-bofo-app-version`; the new admin app has its own version numbers. Stage 3 must send a header the gate can tell apart (plan: `x-bofo-client: admin` + a separate minimum) before anyone sets `min_admin_app_version` above the admin app's version.
-3. "Moderators can hide a listing pending review" is not possible: listings only have `active/unlisted/taken_down`, and `unlisted` is the owner's own switch. Moderators use the approval flow (`report_takedown`). A `hidden` status needs an app change (Stage 4).
-4. CSV export, watermark and "no download" for ID images are client behaviour: the server can only refuse the data (`admin_log_export` and `id_view_raw`). Stage 3/4 must call `admin_log_export` before exporting and add the watermark.
-5. Users and listings are readable by every active staff member (needed for names in queues). Payments, ID photos outside a pending review, AI chat log, audit trail of others, banned list are permission-gated.
-6. `reports_admin_v`, `bh_cards` keep `is_admin()` in their WHERE: this now means "any staff" (read-only views).
-7. Session list: `admin_touch_session` records devices; revoking works through `revoked_before` (JWT issue time) in `admin_member_logout_all`, enforced inside every permission check.
+## How to apply
+1. Extract this zip over the repo root (or `git apply stage3.patch`). New top-level folders: `shared/`, `app-admin/`.
+2. Google Cloud: add the Android OAuth client for `com.bofo.admin` (debug and release SHA-1). Firebase: add the app (optional for now).
+3. Android Studio: open `bofo-android/` (the settings file pulls in the new modules). Build `:app-admin:assembleDebug`, run `:shared:testDebugUnitTest`.
+4. Test per role (use `admin_invite_create` from the SQL editor or Stage 2's test accounts):
+   - Owner: Home, IDs, Reports all visible; ban shows Undo.
+   - Admin: no ban / take down buttons that work (server says "Your role cannot do this"); suspend over 7 days works.
+   - Moderator: suspend up to 7 days works; longer, ban, take down show "Request approval".
+   - Support: Home + Reports list only, no action buttons, no IDs tab.
+   - Google account with no role: lands on the login screen with "No access".
+   - Leave the app 5+ min: lock screen. Screenshot attempt: blocked.
 
-## Stage 3 first step
-Read `PROMPT.md` Stage 3. Create the Gradle modules `shared/` and `app-admin/` next to `bofo-android/` (applicationId `com.bofo.admin`), move `PermissionRules` into `shared`, Google sign-in with nonce, call `my_admin_access()`, show "No access" + sign out when `active=false`, then port Home, ID queue/review and Reports using the RPCs above. Bump to 2.9.7.
+## Stage 4 first step
+Read `PROMPT.md` Stage 4. First migration 041 (admin-client version gate + `device_tokens` app column + push targeting by permission), then the members screen (invite / change role / suspend / log out all), audit log, approvals inbox, then the remaining admin features from ADMIN_INVENTORY.md.

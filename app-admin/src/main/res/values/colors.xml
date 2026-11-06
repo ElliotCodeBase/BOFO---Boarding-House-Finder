@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ported from bofo.css (.root block). Change colours ONLY here. -->
+<resources>
+    <color name="bofo_primary">#5B3BF0</color>
+    <color name="bofo_primary_dark">#3A22B8</color>
+    <color name="bofo_primary_tint">#EFEDFB</color>
+    <color name="bofo_ink">#17142A</color>
+    <color name="bofo_amber">#FFB400</color>
+    <color name="bofo_text">#17142A</color>
+    <color name="bofo_text_2">#5F5C75</color>
+    <color name="bofo_muted">#8D8AA3</color>
+    <color name="bofo_bg">#F7F7F9</color>
+    <color name="bofo_border">#E9E8EE</color>
+    <color name="bofo_skeleton">#E4E5F2</color>
+    <color name="bofo_success">#1E8E5E</color>
+    <color name="bofo_success_tint">#E1F4EA</color>
+    <color name="bofo_error">#D14343</color>
+    <color name="bofo_error_tint">#FCEBEB</color>
+    <color name="bofo_warn_tint">#FFF4DC</color>
+    <color name="bofo_google">#4285F4</color>
+    <color name="bofo_scrim">#8017142A</color>
+    <color name="bofo_white">#FFFFFF</color>
+    <color name="bofo_icon_bg">#F0EFF4</color>
+    <!-- v2.0.95 -->
+    <color name="bofo_tile">#F0EFF4</color>
+    <color name="bofo_amber_wash">#FFF1C9</color>
+    <color name="bofo_idle">#9B98AA</color>
+    <color name="bofo_card_ink">#241A5C</color>
+
+    <!-- v2.0.112: BOFO mascot colours. Change these to recolour every mascot in the app (floating button, chat, empty states, login, profile). -->
+    <color name="mascot_body">#FFFFFF</color>
+    <color name="mascot_outline">#B7A0EC</color>
+    <color name="mascot_screen">#3A22B8</color>
+    <color name="mascot_glass">#5B3BF0</color>
+    <color name="mascot_face">#FFFFFF</color>
+    <color name="mascot_roof">#D9C8F5</color>
+    <color name="mascot_roof_dark">#C4ABEE</color>
+    <color name="mascot_feet">#E4D9F7</color>
+    <color name="mascot_light">#D9C8F5</color>
+
+    <!-- v2.0.117 lavender / tint helpers (classic = the literals that used to be hardcoded) -->
+    <color name="bofo_line_tint">#ECE8FA</color>
+    <color name="bofo_stroke_soft">#E7E2FB</color>
+    <color name="bofo_stroke_neutral">#E3E2EA</color>
+    <color name="bofo_stroke_accent">#DCD5F7</color>
+    <color name="bofo_disabled">#D9D6EA</color>
+    <color name="bofo_surface_tint">#F8F7FE</color>
+    <color name="bofo_chip_tint">#F5F2FF</color>
+    <color name="bofo_chip_stroke">#C9BFFA</color>
+    <color name="bofo_day_chip">#E9E6FA</color>
+    <color name="bofo_ripple">#1A5B3BF0</color>
+    <color name="bofo_primary_wash">#265B3BF0</color>
+    <color name="bofo_primary_ring">#995B3BF0</color>
+    <color name="bofo_ink_10">#1A17142A</color>
+    <color name="bofo_ink_12">#1F17142A</color>
+    <color name="bofo_ink_15">#2617142A</color>
+    <color name="bofo_ink_70">#B317142A</color>
+    <color name="bofo_ink_85">#D917142A</color>
+    <!-- map pins, dots, halos (MapCardView) and the basemap (assets/bofo-map-style.json is recoloured with the map_* names) -->
+    <color name="bofo_primary_deep">#2A1C8F</color>
+    <color name="bofo_primary_soft">#7A5CF5</color>
+    <color name="map_halo">#E2DCFC</color>
+    <color name="map_halo_selected">#C9C0EE</color>
+    <color name="map_pin_edge">#C9C4E6</color>
+    <color name="map_pin_edge_seen">#8F89B8</color>
+    <color name="map_pin_seen_text">#4A4568</color>
+    <color name="map_bg">#E8EAF2</color>
+    <color name="map_landuse">#E0DFF3</color>
+    <color name="map_building">#D2CFE5</color>
+    <color name="map_building_edge">#BDB9D8</color>
+    <color name="map_road_casing">#C7C9DA</color>
+    <color name="map_road_major_casing">#A9ABC6</color>
+    <color name="map_road_service">#FAFAFD</color>
+    <color name="map_raster_bg">#F5F6FC</color>
+    <!-- loading screen (SplashFragment, SplashStageView, SplashDotsView) -->
+    <color name="splash_bg">#17142A</color>
+    <color name="splash_title">#FFFFFF</color>
+    <color name="splash_subtitle">#EFEDFB</color>
+    <color name="splash_status">#8D8AA3</color>
+    <color name="splash_dots">#FFFFFF</color>
+    <color name="splash_shadow">#8D7BFF</color>
+    <color name="splash_dust">#C9BBFF</color>
+    <color name="splash_spark">#FFFFFF</color>
+    <color name="splash_mascot_outline">#00FFFFFF</color>
+    <!-- first frame before the app runs: fixed per theme (the system draws it, so it cannot follow the switch; see Theme.Bofo.Launch) -->
+    <color name="launch_bg_classic">#17142A</color>
+    <color name="launch_bg_orange">#FFFFFF</color>
+    <!-- v2.2.5 redesign: text-safe deep tones for chips on the success / error tints (contrast >= 4.5:1) -->
+    <color name="bofo_success_deep">#136B45</color>
+    <color name="bofo_error_deep">#A12D2D</color>
+    <!-- v2.2.6: text/icon colour on a bofo_primary fill (white on purple, ink on orange: white on orange is only 2.4:1) -->
+    <color name="bofo_on_accent">#FFFFFF</color>
+</resources>

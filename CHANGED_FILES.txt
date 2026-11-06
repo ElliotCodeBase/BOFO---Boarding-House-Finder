@@ -1,12 +1,7 @@
-new     supabase/migrations/039_admin_roles.sql
-new     supabase/migrations/040_admin_permission_gates.sql
-new     supabase/tests/stage2_role_tests.sql
-new     bofo-android/app/src/main/java/com/bofo/finder/util/PermissionRules.java
-new     bofo-android/app/src/test/java/com/bofo/finder/util/PermissionRulesTest.java
-changed supabase/functions/bofo-chat/index.ts            (CORS wildcard removed)
-changed supabase/functions/delete-account/index.ts       (CORS wildcard removed)
-changed supabase/functions/bofo-announce/index.ts        (CORS wildcard removed)
-changed supabase/functions/create-boost-checkout/index.ts(CORS wildcard removed)
-changed supabase/functions/paymongo-webhook/index.ts     (timestamp check, S-15)
-changed bofo-android/app/build.gradle                    (version 2.9.6 only; skip if your local file is newer)
-new     STATE.md, STAGE2_CHANGES.md, PROMPT.md, stage2.patch
+new  shared/**
+new  app-admin/**
+changed  bofo-android/settings.gradle
+changed  bofo-android/app/build.gradle   (version bump only)
+new  STATE.md (replaces the Stage 2 one)
+new  PROMPT.md
+new  stage3.patch
