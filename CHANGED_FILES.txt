@@ -1,12 +1,12 @@
-new      supabase/migrations/043_refund_hardening.sql     (NOT applied: needs your OK)
-new      shared/src/main/java/com/bofo/shared/RefundRules.java
-new      shared/src/test/java/com/bofo/shared/RefundRulesTest.java
-changed  app-admin/src/main/java/com/bofo/admin/PaymentsScreen.java
+new      shared/src/main/java/com/bofo/shared/AiChatLogRules.java
+new      shared/src/test/java/com/bofo/shared/AiChatLogRulesTest.java
+new      app-admin/src/main/java/com/bofo/admin/AiChatLogScreen.java
+new      app-admin/src/main/java/com/bofo/admin/AiSettingsScreen.java
 changed  app-admin/src/main/java/com/bofo/admin/MoreScreen.java
-changed  app-admin/build.gradle                           (2.9.12 / 20912)
-changed  bofo-android/app/build.gradle                    (2.9.12 / 20912)
+changed  app-admin/build.gradle                           (2.9.13 / 20913)
+changed  bofo-android/app/build.gradle                    (2.9.13 / 20913)
 changed  CHANGES_ANDROID.md
 changed  HANDOFF_ANDROID.md
-new      STATE_STAGE4e.md
+new      STATE_STAGE4f.md
 changed  CHANGED_FILES.txt
 DELETE   (none)
