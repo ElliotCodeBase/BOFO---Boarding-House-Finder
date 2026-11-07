@@ -1,5 +1,10 @@
 # Archived Android handoff entries (older than the newest 3)
 
+# Handoff (Android) - v2.9.15: admin app saved replies (Stage 4 part 8)
+- See `STATE_STAGE4h.md`. No migration. Migrations 042 (push) and 043 (refunds) may still be unapplied.
+- Nothing compiled: from `bofo-android`: `.\gradlew :shared:testDebugUnitTest :app-admin:assembleDebug`.
+- Next: strikes / escalate / queue claiming (migrations, need OK), push when an approval is decided, then Stage 5. Version 2.9.15 / 20915.
+
 # Handoff (Android) - v2.9.14: admin app two-step setup (Stage 4 part 7)
 - See `STATE_STAGE4g.md`. No migration. Migrations 042 (push) and 043 (refunds) may still be unapplied.
 - Nothing compiled or run: from `bofo-android`: `.\gradlew :shared:testDebugUnitTest :app-admin:assembleDebug`.
