@@ -42,7 +42,7 @@ final class ApprovalsScreen extends FrameLayout {
             String when = o.optString("requested_at", ""); card.addView(Ui.text(c, "Requested " + when.replace('T', ' ').substring(0, Math.min(16, when.length())) + (o.optString("requested_by").equals(me) ? "  |  by you" : ""), R.style.Text_Bofo_Caption));
             if ("pending".equals(st)) {
                 if (PermissionRules.canDecide(access.perms, PermissionRules.approvalKey(kind), o.optString("requested_by"), me)) {
-                    LinearLayout r = Ui.row(c);
+                    LinearLayout r = Ui.actions(c);
                     android.widget.Button no = Ui.button(c, "Deny", false); no.setOnClickListener(v -> decide(o.optString("id"), false));
                     android.widget.Button ok = Ui.button(c, "Approve", true); ok.setOnClickListener(v -> decide(o.optString("id"), true));
                     r.addView(no); r.addView(ok); card.addView(r);

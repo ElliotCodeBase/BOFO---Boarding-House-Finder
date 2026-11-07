@@ -63,7 +63,7 @@ final class PaymentsScreen extends FrameLayout {
             if (manage && RefundRules.canRefund(st)) {
                 c.addView(Ui.text(act, "Tap to refund", R.style.Text_Bofo_Caption));
                 final String id = o.optString("id");
-                c.setOnClickListener(v -> askReason(id, who, amount));
+                Ui.asButton(c); c.setOnClickListener(v -> askReason(id, who, amount));
             }
             list.addView(c);
         }

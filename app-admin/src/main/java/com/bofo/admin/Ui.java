@@ -25,6 +25,7 @@ final class Ui {
         TextView t = new TextView(c);
         t.setText(s);
         t.setTextAppearance(style);
+        if (style == R.style.Text_Bofo_Title || style == R.style.Text_Bofo_Section) androidx.core.view.ViewCompat.setAccessibilityHeading(t, true);   // TalkBack heading navigation
         return t;
     }
     static LinearLayout col(Context c) { LinearLayout l = new LinearLayout(c); l.setOrientation(LinearLayout.VERTICAL); return l; }
@@ -43,8 +44,33 @@ final class Ui {
     static Button button(Context c, String label, boolean filled) {
         MaterialButton b = new MaterialButton(c);
         b.setText(label); b.setAllCaps(false);
+        b.setMinHeight(dp(c, 48)); b.setMinimumHeight(dp(c, 48));      // 48 dp touch target
         if (!filled) { b.setBackgroundColor(Color.TRANSPARENT); b.setTextColor(c.getColor(R.color.bofo_primary)); }
         return b;
+    }
+
+    /** Filter chip: a button whose selected state is also spoken (colour alone is not enough). */
+    static Button chip(Context c, String label, boolean selected) {
+        Button b = button(c, label, selected);
+        androidx.core.view.ViewCompat.setStateDescription(b, selected ? "Selected" : "Not selected");
+        return b;
+    }
+
+    /** A tappable card or row built from a LinearLayout: TalkBack must say "button", not just read the text. */
+    static void asButton(View v) { androidx.core.view.ViewCompat.setAccessibilityDelegate(v, new ButtonRole()); }
+
+    private static final class ButtonRole extends androidx.core.view.AccessibilityDelegateCompat {
+        @Override public void onInitializeAccessibilityNodeInfo(View host, androidx.core.view.accessibility.AccessibilityNodeInfoCompat info) {
+            super.onInitializeAccessibilityNodeInfo(host, info);
+            info.setClassName(Button.class.getName());
+        }
+    }
+
+    /** A row of action buttons. With a large font (1.3x or more) the buttons stack so none is cut off. */
+    static LinearLayout actions(Context c) {
+        LinearLayout l = row(c);
+        if (c.getResources().getConfiguration().fontScale >= 1.3f) { l.setOrientation(LinearLayout.VERTICAL); l.setGravity(android.view.Gravity.END); }
+        return l;
     }
 
     /** Words AND colour (accessibility habit of the main app). */

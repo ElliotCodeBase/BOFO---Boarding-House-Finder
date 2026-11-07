@@ -28,7 +28,7 @@ final class MoreScreen extends FrameLayout {
     }
 
     private LinearLayout entry(MainActivity a, String label, Runnable r) {
-        LinearLayout c = Ui.card(a); c.addView(Ui.text(a, label, R.style.Text_Bofo_Section)); c.setOnClickListener(v -> r.run()); return c;
+        LinearLayout c = Ui.card(a); c.addView(Ui.text(a, label, R.style.Text_Bofo_Section)); Ui.asButton(c); c.setOnClickListener(v -> r.run()); return c;
     }
 
     private void sub(MainActivity a, View v) {

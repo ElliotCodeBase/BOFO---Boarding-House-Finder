@@ -99,7 +99,17 @@ public final class MainActivity extends AppCompatActivity {
         if (access != null && !locked && AutoLockRules.shouldLock(true, stoppedAt, System.currentTimeMillis())) lock();
     }
 
-    private void show(View v) { root.removeAllViews(); root.addView(v, new FrameLayout.LayoutParams(-1, -1)); }
+    private void show(View v) {
+        root.removeAllViews(); root.addView(v, new FrameLayout.LayoutParams(-1, -1));
+        TextView h = firstText(v);                                           // TalkBack: say the screen's first heading when the screen changes
+        if (h != null) androidx.core.view.ViewCompat.setAccessibilityPaneTitle(v, h.getText());
+    }
+
+    private static TextView firstText(View v) {
+        if (v instanceof TextView t && !(v instanceof android.widget.Button) && !(v instanceof EditText) && t.getText().length() > 0) return t;
+        if (v instanceof ViewGroup g) for (int i = 0; i < g.getChildCount(); i++) { TextView found = firstText(g.getChildAt(i)); if (found != null) return found; }
+        return null;
+    }
 
     private LinearLayout centered() {
         LinearLayout l = Ui.col(this); l.setGravity(Gravity.CENTER); int p = Ui.dp(this, 28); l.setPadding(p, p, p, p); return l;

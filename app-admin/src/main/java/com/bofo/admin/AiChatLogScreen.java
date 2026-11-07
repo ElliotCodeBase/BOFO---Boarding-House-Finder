@@ -53,7 +53,7 @@ final class AiChatLogScreen extends FrameLayout {
         String[] names = {"Last 24 h", "Last 7 days", "All"}; Range[] rs = {Range.TODAY, Range.WEEK, Range.ALL};
         for (int i = 0; i < 3; i++) {
             final Range r = rs[i];
-            Button b = Ui.button(act, names[i], r == range);
+            Button b = Ui.chip(act, names[i], r == range);
             b.setOnClickListener(v -> { range = r; drawChips(); reload(); });
             chips.addView(b);
         }
