@@ -79,5 +79,22 @@ Checked and fine in 044: claim/escalate/strike/appeal/break-glass all lock rows 
 - `045_drop_legacy_admin.sql` removes the "role=admin means full access" fallback. It refuses to run unless every `role='admin'` account is in the team list, an owner exists and `min_app_version` is set. If the owner's own row is missing it would lock everyone out of admin: that is why the stop checks exist.
 - Dead code check: no reference to a deleted class or removed method is left (grepped), but the project was not compiled.
 
-## 7. Still open (short list)
-1. S-01 history check and key rotation. 2. Apply 038-044 live and confirm. 3. S-03 MFA flag. 4. S-04 live dev accounts. 5. S-07 nonce in the main app. 6. N-1 fix. 7. N-3 fix. 8. S-12 SHA pinning. 9. S-14 re-auth for account deletion. 10. Dependabot / CVE scan. 11. S-18 CI config check.
+## 7. Still open (short list), updated in verification Stage 3 (2026-11-07)
+| # | Item | Status | Detail |
+|---|------|--------|--------|
+| 1 | S-01 history check, key rotation | OPEN (you) | Commands and per-hit actions: `docs/HISTORY_CHECK.md` |
+| 2 | Apply 038-044 live | OPEN (you) | Order: `supabase/RUN_ORDER.md`; proof: `VERIFY_AFTER.sql` |
+| 3 | S-03 MFA flag | OPEN (live setting) | Order below; check with `SECURITY_CHECKS.sql` M1, M2 |
+| 4 | S-04 live dev accounts | OPEN (live) | Order below; check D1, D2 |
+| 5 | S-07 nonce in main app | OPEN, Stage 4 | |
+| 6 | N-1 appeal vs current decision | CLOSED in code (044 body has the check; READ) | Prove live: `SECURITY_CHECKS.sql` N-1 |
+| 7 | N-3 helper grants | CLOSED in code by `046_stage3_helper_grants.sql` (not applied live) | `is_verified_owner` left as is on purpose (used for another user's id) |
+| 8 | S-12 SHA pinning, 10 CVE scan, 11 S-18 CI | OPEN, Stage 6 | |
+| 9 | S-14 re-auth for account deletion | OPEN, Stage 4 | |
+
+**Order for S-03 / S-04 (do not skip steps, or you lock yourself out):**
+1. Back up. Run `SECURITY_CHECKS.sql` D1, D2, M2 (read-only).
+2. Real owner: enrol the authenticator in the admin app, sign out and in with the code. Re-run M2: owner `has_mfa = true`.
+3. If a dev account is staff (D2 has rows) remove it from the team in the admin app first.
+4. S-04: delete the dev accounts in Supabase > Authentication > Users (their data goes with them), or run the line commented at the bottom of `015_security_hardening.sql`. Re-run D1: 0 rows.
+5. S-03: `select public.set_admin_mfa_required(true);` (it refuses unless someone has a verified authenticator). Test the admin app. Break-glass off: `select public.set_admin_mfa_required(false);`.

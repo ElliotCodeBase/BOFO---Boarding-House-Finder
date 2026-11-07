@@ -14,6 +14,7 @@ Every file 038..044 is safe to run twice (RAN: `tools/verify/check_sql.py` found
 | 7 | 043_refund_hardening | Refund only a PAID payment, reason required | 040 | Yes |
 | 8 | 044_admin_stage4_safety | Claiming, escalation, strikes, appeals, break-glass, sessions, unusual-activity push | 039, 040, 042, 043 | Yes |
 | 9 | 045_drop_legacy_admin | Removes the "users.role = admin has full access" fallback and 3 old functions | 039..044 | **Run last, separately, only after** old user apps (2.10.x and older) are blocked via `set_min_app_version` |
+| 10 | 046_stage3_helper_grants | N-3: helpers answer only for the caller; closes `recompute_bh` / `admin_session_ok` to anon | 039 | Yes. Run after 044; independent of 045 |
 
 After 1..4: run `VERIFY_AFTER.sql` part A (A1..A11), then `ROLE_TESTS.sql`. After 6..8 run part A again. After 9 run part B.
 Do NOT run `014_ai_chat_log_REMOVE.sql` (deletes every stored AI chat). Numbers 032 and 035 do not exist: harmless.
