@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <!-- v2.3.0: Android 13+ asks before the app may show notifications (chats, group chats, admin reports). -->
+    <!-- v2.3.0: Android 13+ asks before the app may show notifications (chats, group chats). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Deliberately NOT declared: CAMERA and storage / media permissions. Photos come from the system camera
          app (TakePicture) and the system photo picker (PickVisualMedia), which need no permission. Declaring

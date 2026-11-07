@@ -30,3 +30,15 @@ Not done: Undo for suspend / take down / dismiss (needs new server functions), a
 ## Status after the next-steps series (v2.9.0)
 Added: Undo + Recently decided (v2.5.0), admin push (v2.6.0), 8 reject reasons + second-opinion flag on IDs (v2.7.0), Last 7 days card, reports about a person, CSV export (v2.8.0), auto-lock (v2.9.0).
 Not done: moderator role split (needs migration 035 and the owner's OK), Approve clean (bulk approve), saved own reject templates, second-opinion flag on reports, AI screens on the shared list look.
+
+## Final status (v2.11.0, Stage 5)
+**Done:** the in-app admin was removed from BOFO Finder; its screens exist only in the Admin app (separate icon, own push channels, fingerprint / two-step on sensitive actions). The old screens and their problems listed above are gone with them.
+
+**Checked in the Admin app code (not on a device):** Undo exists for a ban (`ReportsScreen`, needs the `unban` permission). I did NOT re-verify Undo for suspend / take down / dismiss, "Recently decided", or a retry row after a failed load in the Admin app; treat them as unconfirmed until tested.
+
+**Still open (never run on a device):**
+- Small phone (320 dp) and 200% font were not tested: long names in Team / Appeals rows may be cut.
+- The Admin app screens are built in code (no layout XML) and almost none sets a content description (only `IdScreen` does): TalkBack will read unlabeled icon buttons badly. Real gap for accessibility.
+- Banned users search is still a plain contains-match.
+- Bulk approve and saved own reject templates were never built.
+- An admin account that opens BOFO Finder sees a plain student app with no hint to use the Admin app.

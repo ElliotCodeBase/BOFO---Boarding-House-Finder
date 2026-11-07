@@ -63,41 +63,4 @@ public final class VerificationService {
         double mean = sum / n; return (sumSq / n - mean * mean) > 40; // tune on real devices
     }
     private static double lum(int argb) { return 0.299 * ((argb >> 16) & 255) + 0.587 * ((argb >> 8) & 255) + 0.114 * (argb & 255); }
-
-    /* ---------- admin ---------- */
-    /** v2.4.13: Queue list for a chip (0 waiting = oldest first, 1 done, 2 all). */
-    public JSONArray list(int chip) throws Exception {
-        return api.select("owner_verifications", com.bofo.finder.util.AdminListRules.queueQuery(chip));
-    }
-    public JSONArray pending() throws Exception {
-        return api.select("owner_verifications", "status=eq.pending&order=submitted_at.asc&select=*");
-    }
-    /** v2.4.11: the decision on one request (status, reviewed_by, reviewed_at, rejection_reason); null when not found. No ID photos or numbers. */
-    public JSONObject decision(String verificationId) throws Exception {
-        JSONArray a = api.select("owner_verifications", "id=eq." + verificationId + "&select=status,reviewed_by,reviewed_at,rejection_reason");
-        return a.length() == 0 ? null : a.getJSONObject(0);
-    }
-    /** v2.4.11: the reviewer's display name, "" when it cannot be read. */
-    public String reviewerName(String userId) {
-        try {
-            JSONArray a = api.select("users", "id=eq." + userId + "&select=full_name");
-            return a.length() == 0 ? "" : a.getJSONObject(0).optString("full_name", "");
-        } catch (Exception e) { return ""; }
-    }
-    public String signed(String path) throws Exception { return api.signedUrl("id-verification", path, 120); }
-    /** Reject (reason required). Approving goes through {@link #approve}: the server refuses the old approve path since v2.1.9. */
-    public void decide(String verificationId, boolean approve, String reason) throws Exception {
-        api.rpc("review_verification", new JSONObject().put("vid", verificationId).put("approve", approve).put("reason", reason == null ? "" : reason));
-    }
-
-    /** v2.7.0: ask another admin to look at a waiting request (flag = true) or clear that flag. Needs migration 034. */
-    public void flagSecondOpinion(String verificationId, boolean flag) throws Exception {
-        api.rpc("admin_flag_second_opinion", new JSONObject().put("vid", verificationId).put("flag", flag));
-    }
-
-    /** v2.1.9: the admin retypes the number from the ID photo; the server hashes it and must match what the owner typed (and must not be banned). */
-    public void approve(String verificationId, String idNumber) throws Exception {
-        if (!BanRules.validNumber(idNumber)) throw new IllegalArgumentException("Type the ID number from the photo (4 to 30 letters or digits).");
-        api.rpc("admin_approve_verification", new JSONObject().put("vid", verificationId).put("id_number", BanRules.forServer(idNumber)));
-    }
 }

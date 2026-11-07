@@ -196,66 +196,9 @@
         android:label="Payments" />
 
     <fragment
-        android:id="@+id/verificationReviewFragment"
-        android:name="com.bofo.finder.ui.VerificationReviewFragment"
-        android:label="Review verification">
-        <argument
-            android:name="vid"
-            android:defaultValue=""
-            app:argType="string" />
-        <argument
-            android:name="ownerName"
-            android:defaultValue=""
-            app:argType="string" />
-        <argument
-            android:name="idType"
-            android:defaultValue=""
-            app:argType="string" />
-        <argument
-            android:name="submitted"
-            android:defaultValue=""
-            app:argType="string" />
-        <argument
-            android:name="front"
-            android:defaultValue=""
-            app:argType="string" />
-        <argument
-            android:name="back"
-            android:defaultValue=""
-            app:argType="string" />
-        <argument
-            android:name="selfie"
-            android:defaultValue=""
-            app:argType="string" />
-    </fragment>
-
-    <fragment
         android:id="@+id/settingsFragment"
         android:name="com.bofo.finder.ui.SettingsFragment"
         android:label="Settings" />
-
-    <!-- v2.0.91 AI Chats monitor (admin only). REMOVE with the feature (REMOVE_AI_CHATS.md). -->
-    <fragment
-        android:id="@+id/aiChatLogFragment"
-        android:name="com.bofo.finder.ui.AiChatLogFragment"
-        android:label="AI Chats" />
-
-    <!-- v2.1.3 "Needs attention" (admin only): what BOFO could not answer well. -->
-    <fragment
-        android:id="@+id/aiUnansweredFragment"
-        android:name="com.bofo.finder.ui.AiUnansweredFragment"
-        android:label="Needs attention" />
-
-    <!-- v2.1.9 Banned users (admin only): list, search, Unban. -->
-    <fragment
-        android:id="@+id/activityLogFragment"
-        android:name="com.bofo.finder.ui.ActivityLogFragment"
-        android:label="What I did" />
-
-    <fragment
-        android:id="@+id/bannedUsersFragment"
-        android:name="com.bofo.finder.ui.BannedUsersFragment"
-        android:label="Banned users" />
 
     <fragment
         android:id="@+id/debugFragment"

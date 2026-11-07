@@ -49,10 +49,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Shell for all three user types: tab container + the dock bar (same look and tabs as the JavaFX app).
+ * Shell for students and owners (v2.11.0: the admin tools live only in the BOFO Admin app): tab container + the dock bar (same look and tabs as the JavaFX app).
  * Student: Home, Explore, Boarding (centre), Chats, Profile. (Saved moved to Profile > Saved places in v2.2.0.)
  * Owner: Dashboard (v2.4.9: includes your listings), Messages, Create (raised button, opens the new-listing form), Groups (v2.4.8: the owner's Boarding groups; direct chats open from its header), Profile.
- * Admin: Home, Queue, Payments, Reports, Profile.
  */
 public class ShellFragment extends Fragment {
 
@@ -62,8 +61,7 @@ public class ShellFragment extends Fragment {
     private boolean chatFull;                 // v2.2.3: the student's group chat is open: no tab bar, no Ask BOFO button
     private int bottomInset;                  // system bar height, used while the tab bar is hidden
     private OnBackPressedCallback closeBofo;      // Back closes the Ask BOFO card first
-    private boolean owner, admin;
-    private int pendingFilter = -1;
+    private boolean owner;
     private LocationHelper loc;                   // reads the phone position for Ask BOFO
     private boolean askedLocation;
     /** v2.3.0: Android 13+ asks before notifications may show. The answer (yes or no) ends in a sync: it registers this phone only when allowed. */
@@ -102,11 +100,7 @@ public class ShellFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         owner = AuthRouter.role == com.bofo.finder.model.Role.OWNER;
-        admin = AuthRouter.role == com.bofo.finder.model.Role.ADMIN;
         binding.dock.setTabs(tabsFor());
-        if (admin) binding.bofoFab.setVisibility(View.GONE);           // the Ask BOFO assistant is for students looking for a place
-        if (admin && AdminLock.locked) lock();                          // v2.9.0: a rotation must not unlock
-        if (admin && AuthRouter.takeMfaPrompt()) view.post(() -> AdminMfaSheet.show(this, null));      // v2.0.119: ask for the 6-digit code once per sign-in
 
         // Floating tab bar: lift the bar and the mascot button above the system gesture area.
         final float dp = getResources().getDisplayMetrics().density;
@@ -152,7 +146,7 @@ public class ShellFragment extends Fragment {
             // Back from a pushed screen, or after rotation: the child fragment is still there, only the bar has to show its tab again.
             binding.dock.select(selectedTab, false);
         } else if (savedInstanceState == null) {
-            int first = admin ? R.id.tab_admin_home : owner ? R.id.tab_dashboard : R.id.tab_home;       // first open (same as the JavaFX app: the first tab)
+            int first = owner ? R.id.tab_dashboard : R.id.tab_home;       // first open (same as the JavaFX app: the first tab)
             binding.dock.select(first, false);
             showTab(first);
         }
@@ -175,27 +169,21 @@ public class ShellFragment extends Fragment {
 
     /**
      * v2.3.0: a notification was tapped. dm = that chat (Chats tab, then the chat on top), group = the boarding group chat (student: Boarding tab,
-     * owner: the owner's group chat screen), report = the Reports tab, idreview = the Queue, stale = Queue / Reports / Payments (admin only, Waiting filter). Anything that does not fit this account is ignored.
+     * owner: the owner's group chat screen). Anything that does not fit this account is ignored.
      */
     void openFromPush(String kind, String id, String title, String place) {
         if (binding == null || id == null || id.isEmpty()) return;
         if (chatFull) { chatFull = false; applyChatFull(); }
         NavController nav = NavHostFragment.findNavController(this);
-        if ("dm".equals(kind) && !admin) {
+        if ("dm".equals(kind)) {
             binding.dock.select(R.id.tab_chats, true);      // v2.4.9: owners have a Messages tab again (same Chats list)
             showTab(R.id.tab_chats);
             ChatFragment.open(this, id, title, place);
         } else if ("group".equals(kind) && owner) {
             nav.navigate(R.id.boardingChatFragment, BoardingChatFragment.args(id, title, 0, GroupMessage.OWNER, true, false));
-        } else if ("group".equals(kind) && !admin) {
+        } else if ("group".equals(kind)) {
             binding.dock.select(R.id.tab_boarding, true);
             showTab(R.id.tab_boarding);
-        } else if (com.bofo.finder.util.PushRules.adminOnly(kind) && admin && AuthRouter.realRole == com.bofo.finder.model.Role.ADMIN) {
-            // v2.6.0: report -> Reports; idreview -> Queue; stale -> the tab the server chose. Always with the Waiting filter.
-            int target = com.bofo.finder.util.PushRules.adminTab(kind, place);
-            if (target == com.bofo.finder.util.PushRules.TAB_REPORTS) openAdminTab(R.id.tab_reports, 0);
-            else if (target == com.bofo.finder.util.PushRules.TAB_PAYMENTS) openAdminTab(R.id.tab_admin_payments, com.bofo.finder.util.AdminListRules.WAITING);
-            else if (target == com.bofo.finder.util.PushRules.TAB_QUEUE) openAdminTab(R.id.tab_queue, com.bofo.finder.util.AdminListRules.WAITING);
         }
         refreshBadge();
     }
@@ -206,7 +194,7 @@ public class ShellFragment extends Fragment {
     private void applyChatFull() {
         if (binding == null) return;
         binding.dock.setVisibility(chatFull ? View.GONE : View.VISIBLE);
-        binding.bofoFab.setVisibility(chatFull || admin || !com.bofo.finder.util.AiFlag.on() ? View.GONE : View.VISIBLE);       // v2.3.2: admin AI switch
+        binding.bofoFab.setVisibility(chatFull || !com.bofo.finder.util.AiFlag.on() ? View.GONE : View.VISIBLE);       // v2.3.2: admin AI switch
         binding.tabContainer.setPadding(0, 0, 0, chatFull ? bottomInset : 0);       // the bar used to keep the content above the system buttons
     }
 
@@ -241,7 +229,7 @@ public class ShellFragment extends Fragment {
      * unacknowledged announcements, so there is no extra table. Errors are ignored (migration 024 may not be live yet).
      */
     private void showNotice() {
-        if (binding == null || admin || owner) return;
+        if (binding == null || owner) return;
         String me = AuthService.get().userId();
         if (me == null || me.isEmpty()) return;
         Async.run(() -> new BhGroupService().unackedAnnouncements(me), (List<GroupMessage> list) -> {
@@ -264,13 +252,7 @@ public class ShellFragment extends Fragment {
     /** Tabs per user type, in the same order and with the same icons as the JavaFX app. */
     private List<DockBarView.Tab> tabsFor() {
         List<DockBarView.Tab> t = new ArrayList<>();
-        if (admin) {
-            t.add(tab(R.id.tab_admin_home, R.drawable.ic_dock_home, getString(R.string.tab_admin_home), false, false));      // v2.4.10: Admin Home comes first
-            t.add(tab(R.id.tab_queue, R.drawable.ic_dock_queue, getString(R.string.tab_queue), false, true));              // badge = IDs waiting
-            t.add(tab(R.id.tab_admin_payments, R.drawable.ic_dock_payments, getString(R.string.tab_admin_payments), false, false));
-            t.add(tab(R.id.tab_reports, R.drawable.ic_dock_reports, getString(R.string.tab_reports), false, true));            // badge = open reports
-            t.add(tab(R.id.tab_profile, R.drawable.ic_dock_profile, getString(R.string.tab_profile), false, false));
-        } else if (owner) {
+        if (owner) {
             t.add(tab(R.id.tab_dashboard, R.drawable.ic_dock_dashboard, getString(R.string.dock_dashboard), false, false));
             t.add(tab(R.id.tab_chats, R.drawable.ic_dock_chats, getString(R.string.dock_messages), false, true));       // v2.4.9: Messages replaces Listings (listings live in the Dashboard)
             t.add(tab(R.id.tab_create, R.drawable.ic_dock_plus, getString(R.string.dock_create), true, false));
@@ -293,10 +275,6 @@ public class ShellFragment extends Fragment {
     /** Unread count on the Chats icon (students and owners). A failed check just leaves the badge as it was. */
     private void refreshBadge() {
         if (binding == null) return;
-        if (admin) {                                        // v2.4.10: Queue + Reports badges (two small selects; a failure leaves the badge as it was)
-            Async.run(() -> new com.bofo.finder.service.AdminCountsService().badges(), (int[] n) -> setAdminBadges(n[0], n[1]), e -> { });
-            return;
-        }
         if (owner) {                                        // v2.4.9: Messages tab = direct-chat unread, Groups tab = group unread
             Async.run(() -> new ChatService().totalUnread(), (Integer n) -> {
                 if (binding != null) binding.dock.setBadge(R.id.tab_chats, n == null ? 0 : n);
@@ -428,39 +406,12 @@ public class ShellFragment extends Fragment {
         openExplore();
     }
 
-    /** v2.4.10: Admin Home cards open a tab. The dock is moved too (select() never calls the listener). */
-    public void openAdminTab(int id) { openAdminTab(id, -1); }
-
-    /** v2.4.13: {@code filter} is handed to the list (Queue / Payments: chip 0-2; Reports: its filter index); -1 = the screen's own default. */
-    public void openAdminTab(int id, int filter) {
-        if (binding == null || !admin) return;
-        pendingFilter = filter;
-        binding.dock.select(id, true);
-        showTab(id);
-        pendingFilter = -1;
-    }
-
-    /** v2.4.10: Queue / Reports badges; a negative (unknown) count hides the badge. */
-    public void setAdminBadges(int ids, int reports) {
-        if (binding == null || !admin) return;
-        binding.dock.setBadge(R.id.tab_queue, com.bofo.finder.util.AdminHomeRules.badge(ids));
-        binding.dock.setBadge(R.id.tab_reports, com.bofo.finder.util.AdminHomeRules.badge(reports));
-    }
-
     private void showTab(int id) {
         if (id == selectedTab && getChildFragmentManager().findFragmentById(R.id.tab_container) != null) return;    // v2.0.97: tapping the open tab does not rebuild it
         selectedTab = id;
         Fragment f;
         if (id == R.id.tab_profile) {
             f = new ProfileFragment();
-        } else if (id == R.id.tab_admin_home) {
-            f = new AdminHomeFragment();
-        } else if (id == R.id.tab_queue) {
-            f = new QueueFragment();
-        } else if (id == R.id.tab_reports) {
-            f = new ReportsFragment();
-        } else if (id == R.id.tab_admin_payments) {
-            f = new AdminPaymentsFragment();
         } else if (id == R.id.tab_dashboard) {
             f = new DashboardFragment();
         } else if (id == R.id.tab_listings) {
@@ -474,43 +425,9 @@ public class ShellFragment extends Fragment {
         } else {
             f = new HomeFragment();
         }
-        if (pendingFilter >= 0 && (id == R.id.tab_queue || id == R.id.tab_reports || id == R.id.tab_admin_payments)) {
-            Bundle fa = new Bundle();
-            fa.putInt("filter", pendingFilter);
-            f.setArguments(fa);
-        }
         androidx.fragment.app.FragmentTransaction tx = getChildFragmentManager().beginTransaction().setReorderingAllowed(true);
         if (android.animation.ValueAnimator.areAnimatorsEnabled()) tx.setCustomAnimations(R.anim.tab_fade_in, R.anim.tab_fade_out);      // v2.0.97 soft cross-fade; v2.4.14: not when the system has animations off
         tx.replace(R.id.tab_container, f).commit();
-    }
-
-    /** v2.9.0 auto-lock: remember when the app went to the background; when it comes back after 5 minutes or more the admin tools are covered until the 6-digit code is typed. */
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (admin && !AdminLock.locked && getContext() != null && AppPrefs.adminStoppedAt(requireContext()) == 0L) AppPrefs.setAdminStoppedAt(requireContext(), System.currentTimeMillis());
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        if (!admin || binding == null || AdminLock.locked) return;
-        final android.content.Context c = requireContext();
-        long was = AppPrefs.adminStoppedAt(c);
-        if (com.bofo.finder.util.AutoLockRules.shouldLock(AppPrefs.adminAutoLock(c), was, System.currentTimeMillis())) lock();
-        else if (was != 0L) AppPrefs.setAdminStoppedAt(c, 0L);
-    }
-
-    private void lock() {
-        if (binding == null) return;
-        AdminLock.locked = true;
-        binding.getRoot().setVisibility(View.INVISIBLE);                 // the screens stay as they are (half-typed text is kept), they are only covered
-        if (getChildFragmentManager().findFragmentByTag("admin_lock") == null) AdminMfaSheet.showLock(this);
-    }
-
-    /** Called by the lock sheet after a correct code (or when this account has no two-step sign-in). */
-    void unlocked() {
-        if (binding != null) binding.getRoot().setVisibility(View.VISIBLE);
     }
 
     @Override

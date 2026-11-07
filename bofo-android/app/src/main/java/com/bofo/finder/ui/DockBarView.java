@@ -34,7 +34,7 @@ import java.util.List;
  * a lavender highlight behind the active tab that stretches over to the tab you press (the leading edge moves first,
  * the trailing edge follows) while the icon and label fade from pale to strong.
  * One tab can be an "action" tab (owners: Create): a raised dark square with a plus. It runs the action instead of switching content.
- * Student, owner and admin use the same view with different tab lists (see ShellFragment).
+ * Student and owner use the same view with different tab lists (see ShellFragment).
  */
 public class DockBarView extends ViewGroup {
 

@@ -106,8 +106,6 @@
     <string name="settings_path_fade">See-through path</string>
     <string name="settings_path_fade_desc">Make the route line on the map 80% transparent so you can check the path follows the road.</string>
     <string name="settings_use_location_desc">Centre the map and sort places by distance from where I am.</string>
-    <string name="settings_orange_theme">Orange theme</string>
-    <string name="settings_orange_theme_desc">Turn off to go back to the classic purple look</string>
     <string name="settings_switch_owner">Switch to an owner account</string>
     <string name="settings_switch_student">Switch to a student account</string>
     <string name="settings_switch_done">Account switched.</string>
@@ -422,50 +420,7 @@
     <string name="pay_st_refunded">Refunded</string>
     <string name="pay_detail_title">Payment</string>
     <string name="pay_detail">Place: %1$s\nPlan: %2$s\nAmount: %3$s\nStatus: %4$s\nDate: %5$s\nReference: %6$s</string>
-    <!-- 8h: admin shell -->
-    <string name="tab_queue">Queue</string>
-    <string name="tab_reports">Reports</string>
-    <string name="tab_admin_payments">Payments</string>
-    <string name="admin_reason_hint">Reason (required)</string>
-    <string name="admin_reason_hint_optional">Reason (optional)</string>
-    <string name="admin_reason_needed">Please type a reason.</string>
-    <string name="queue_empty">No owner verifications are waiting. Pull down to refresh.</string>
-    <string name="queue_error">Could not load the verification queue.</string>
-    <string name="review_title">Review verification</string>
-    <string name="review_info">Owner: %1$s\nID type: %2$s\nSent: %3$s</string>
-    <string name="review_front">ID - front</string>
-    <string name="review_back">ID - back</string>
-    <string name="review_selfie">Selfie</string>
-    <string name="review_img_missing">A photo is missing from this request.</string>
-    <string name="review_img_error">Could not load a photo.</string>
-    <string name="review_approve">Approve</string>
-    <string name="review_reject">Reject</string>
-    <string name="review_approve_title">Approve this owner?</string>
-    <string name="review_approve_msg">The owner becomes verified and can list places. Check that the name, the face and the ID match.</string>
-    <string name="review_reject_title">Reject this request</string>
-    <string name="review_done_approved">Owner approved.</string>
-    <string name="review_done_rejected">Request rejected.</string>
-    <string name="review_error">Could not save the decision. It may already have been decided.</string>
-    <string name="rep_kind_report">Report</string>
-    <string name="rep_kind_block">Block</string>
-    <string name="rep_empty">No reports here.</string>
-    <string name="rep_error">Could not load the reports.</string>
-    <string name="rep_detail">From: %1$s\nAbout: %2$s\nReason: %3$s\nDate: %4$s</string>
     <string name="rep_no_reason">(none given)</string>
-    <string name="rep_takedown">Take down a place</string>
-    <string name="rep_pick_place">Which place?</string>
-    <string name="rep_no_places">This user has no place that can be taken down.</string>
-    <string name="rep_takedown_title">Take down this place</string>
-    <string name="rep_takedown_do">Take down</string>
-    <string name="rep_takedown_error">Could not take the place down.</string>
-    <string name="rep_done">%1$s was taken down.</string>
-    <string name="adminpay_empty">No payments yet.</string>
-    <string name="adminpay_detail">Owner: %1$s\nPlace: %2$s\nPlan: %3$s\nAmount: %4$s\nStatus: %5$s\nDate: %6$s\nReference: %7$s</string>
-    <string name="adminpay_refund">Refund</string>
-    <string name="adminpay_refund_title">Refund this payment</string>
-    <string name="adminpay_refund_do">Refund</string>
-    <string name="adminpay_done">Marked as refunded and the boost ended. Return the money in the PayMongo dashboard.</string>
-    <string name="adminpay_error">Could not refund.</string>
     <!-- v2.0.44 Create wizard (JavaFX ListingFormView) -->
     <string name="form_step_count">STEP %1$d OF 4</string>
     <string name="form_step1">Place &amp; pin</string>
@@ -527,60 +482,6 @@
         <item>Something else</item>
     </string-array>
     <!-- v2.2.2: index order is used by ReportsFragment (3 = Banned users opens the banned list) -->
-    <string-array name="rep_filters">
-        <item>Waiting</item>
-        <item>Answered (all)</item>
-        <item>Answered: Suspended</item>
-        <item>Answered: Banned users</item>
-        <item>Answered: Dismissed</item>
-        <item>Answered: Taken down</item>
-        <item>All reports</item>
-    </string-array>
-    <string-array name="rep_outcomes">
-        <item>Suspended</item>
-        <item>Banned</item>
-        <item>Dismissed</item>
-        <item>Taken down</item>
-    </string-array>
-    <string-array name="rep_status_labels">
-        <item>Pending</item>
-        <item>Reviewed</item>
-        <item>Dismissed</item>
-        <item>Actioned</item>
-    </string-array>
-    <string-array name="rep_actions">
-        <item>Suspend</item>
-        <item>Ban</item>
-        <item>Dismiss</item>
-        <item>Take down a place</item>
-        <item>Close</item>
-    </string-array>
-    <string-array name="rep_durations">
-        <item>1 day</item>
-        <item>3 days</item>
-        <item>7 days</item>
-        <item>30 days</item>
-        <item>Custom number of days…</item>
-    </string-array>
-    <string name="rep_title">Reports · %1$s</string>
-    <string name="rep_filter_title">Show reports</string>
-    <string name="rep_detail2">From: %1$s\nAbout: %2$s\nPlace: %3$s\nReason: %4$s\nDetails: %5$s\nDate: %6$s\nStatus: %7$s</string>
-    <string name="rep_no_place">(none)</string>
-    <string name="rep_line_notes">\nAdmin notes: %1$s</string>
-    <string name="rep_line_suspended">\nSuspended until: %1$s</string>
-    <string name="rep_suspend">Suspend</string>
-    <string name="rep_suspend_for">Suspend for how long?</string>
-    <string name="rep_suspend_title">Suspend this account</string>
-    <string name="rep_suspend_next">Next</string>
-    <string name="rep_suspend_confirm">Suspend %1$s for %2$d day(s)?\n\nThey cannot use BOFO until %3$s.\nReason shown to them: %4$s</string>
-    <string name="rep_custom_title">Number of days</string>
-    <string name="rep_custom_hint">1 to %1$d days</string>
-    <string name="rep_custom_bad">Type a whole number from 1 to %1$d.</string>
-    <string name="rep_dismiss">Dismiss</string>
-    <string name="rep_dismiss_title">Dismiss this report</string>
-    <string name="rep_suspended_done">Account suspended.</string>
-    <string name="rep_dismissed_done">Report dismissed.</string>
-    <string name="rep_review_error">Could not save the decision.</string>
     <string name="susp_title">Account suspended</string>
     <string name="susp_body">An admin suspended this account after a report. You can use BOFO again when the suspension ends.</string>
     <string name="susp_until">Suspended until %1$s</string>

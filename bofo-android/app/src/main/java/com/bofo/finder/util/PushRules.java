@@ -2,41 +2,27 @@ package com.bofo.finder.util;
 
 /**
  * v2.3.0 phone notifications: the pure rules (no Android classes, so they run in plain JVM tests).
- * Kinds come from the send-push edge function: dm = student/owner chat, group = boarding group chat, report = a user report (admins only).
+ * Kinds come from the send-push edge function: dm = student/owner chat, group = boarding group chat, test = a test push.
+ * v2.11.0: the admin kinds (report, idreview, stale, approval ...) go only to the BOFO Admin app; this app does not know them and drops them.
  */
 public final class PushRules {
     private PushRules() {}
 
-    public static final String DM = "dm", GROUP = "group", REPORT = "report";
+    public static final String DM = "dm", GROUP = "group";
     /** v2.9.2: a plain test push for one account (server: push_notify('test', {"as":"me","user_id":...})). Any role may see it. */
     public static final String TEST = "test";
-    /** v2.6.0 (admins only): IDREVIEW = an owner sent an ID; STALE = the daily "items waiting more than 3 days" reminder. */
-    public static final String IDREVIEW = "idreview", STALE = "stale";
-    public static final String CH_CHATS = "bofo_chats", CH_BOARDING = "bofo_boarding", CH_ANNOUNCE = "bofo_announcements", CH_REPORTS = "bofo_reports", CH_ADMIN = "bofo_admin";
-    /** Which admin tab a push opens. */
-    public static final int TAB_NONE = -1, TAB_QUEUE = 0, TAB_REPORTS = 1, TAB_PAYMENTS = 2;
+    public static final String CH_CHATS = "bofo_chats", CH_BOARDING = "bofo_boarding", CH_ANNOUNCE = "bofo_announcements";
+    /** v2.11.0: channels of the old admin pushes. Removed from phones on the next push / sign-in (the admin app has its own). */
+    public static final String OLD_CH_REPORTS = "bofo_reports", OLD_CH_ADMIN = "bofo_admin";
     /** Every notification uses this id together with its tag (kind:id), so one chat = one notification that grows. */
     public static final int NOTIFICATION_ID = 1;
     /** Messages kept inside one chat notification. */
     public static final int MAX_LINES = 6;
 
-    public static boolean known(String kind) { return DM.equals(kind) || GROUP.equals(kind) || TEST.equals(kind) || adminOnly(kind); }
-
-    /** Pushes only an admin account may get or see (v2.6.0: report, idreview, stale). */
-    public static boolean adminOnly(String kind) { return REPORT.equals(kind) || IDREVIEW.equals(kind) || STALE.equals(kind); }
-
-    /** Admin tab a tap opens (always with the Waiting filter), or TAB_NONE. STALE carries the target the server chose in the "place" field. */
-    public static int adminTab(String kind, String target) {
-        if (REPORT.equals(kind)) return TAB_REPORTS;
-        if (IDREVIEW.equals(kind)) return TAB_QUEUE;
-        if (STALE.equals(kind)) return "reports".equals(target) ? TAB_REPORTS : "payments".equals(target) ? TAB_PAYMENTS : TAB_QUEUE;
-        return TAB_NONE;
-    }
+    public static boolean known(String kind) { return DM.equals(kind) || GROUP.equals(kind) || TEST.equals(kind); }
 
     /** Channel (= the on/off switch in Android's notification settings) of a push. */
     public static String channel(String kind, boolean announcement) {
-        if (REPORT.equals(kind)) return CH_REPORTS;
-        if (IDREVIEW.equals(kind) || STALE.equals(kind)) return CH_ADMIN;
         if (GROUP.equals(kind)) return announcement ? CH_ANNOUNCE : CH_BOARDING;
         return CH_CHATS;
     }
@@ -45,11 +31,10 @@ public final class PushRules {
 
     /**
      * Who may SEE a push on this phone. role = the role the server gave the account that is signed in here ("" = nobody).
-     * Reports, ID reviews and the stale reminder are admin-only (the server already sends them only to admin accounts; this is the second lock).
+     * Only the user kinds (dm, group, test) are known here, so an admin kind that reaches this phone is dropped whatever the role is.
      */
     public static boolean allowedFor(String kind, String role) {
         if (!known(kind) || role == null || role.isEmpty()) return false;
-        if (adminOnly(kind)) return "admin".equals(role);
         return true;
     }
 

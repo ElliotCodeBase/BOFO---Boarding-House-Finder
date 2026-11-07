@@ -1,6 +1,5 @@
 package com.bofo.finder.util;
 
-import com.bofo.finder.model.Role;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,9 +17,6 @@ public final class BanRules {
     public static final String BANNED_TEXT = "You are banned.";
     /** Longest ban / unban reason, same as the database CHECK. */
     public static final int REASON_MAX = 300;
-
-    /** True for a signed-in admin: only admins see the Banned users screen and the Ban button. */
-    public static boolean canSee(Role role) { return role == Role.ADMIN; }
 
     /** Upper case, spaces and dashes removed ("ab-12 34" -> "AB1234"). Same idea as the server; the server's result is the one that counts. */
     public static String normalize(String s) {

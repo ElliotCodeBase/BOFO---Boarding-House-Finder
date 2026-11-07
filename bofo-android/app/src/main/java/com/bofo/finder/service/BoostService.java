@@ -22,12 +22,4 @@ public final class BoostService {
     public JSONArray myPayments() throws Exception {
         return api.select("payments", "order=created_at.desc&limit=30&select=id,amount_php,status,plan_id,reference_number,created_at,boarding_house_id");
     }
-
-    /* ---------- admin ---------- */
-    public JSONArray allPayments() throws Exception {
-        return api.select("payments", "order=created_at.desc&limit=100&select=*");
-    }
-    public void refund(String paymentId, String reason) throws Exception {
-        api.rpc("admin_refund_boost", new JSONObject().put("pid", paymentId).put("reason", reason));
-    }
 }

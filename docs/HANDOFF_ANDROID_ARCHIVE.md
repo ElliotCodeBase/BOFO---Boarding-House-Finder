@@ -1,5 +1,10 @@
 # Archived Android handoff entries (older than the newest 3)
 
+# Handoff (Android) - v2.9.14: admin app two-step setup (Stage 4 part 7)
+- See `STATE_STAGE4g.md`. No migration. Migrations 042 (push) and 043 (refunds) may still be unapplied.
+- Nothing compiled or run: from `bofo-android`: `.\gradlew :shared:testDebugUnitTest :app-admin:assembleDebug`.
+- Next: strikes / escalate / saved replies (migrations), or Stage 5. Version 2.9.14 / 20914.
+
 # Handoff (Android) - v2.0.4 Stage 4: Home, Explore, Saved, place detail (2026-10-30)
 - **PR title:** `v2.0.4 - Android port: Home, Explore, Saved, place detail, campus picker, filters (Stage 4)`
 

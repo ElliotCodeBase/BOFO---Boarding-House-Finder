@@ -20,3 +20,10 @@ google-services.json
 
 # release signing (Stage 9)
 keystore.properties
+
+# more secrets (v2.11.0)
+secrets/
+.env
+.env.*
+*.pem
+*service-account*.json
