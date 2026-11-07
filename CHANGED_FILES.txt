@@ -1,9 +1,7 @@
-new	tools/verify/check_all.py
-new	tools/verify/check_binding.py
-new	tools/verify/check_calls.py
-new	tools/verify/javac_pass.sh
-new	tools/verify/javac_filter.py
-new	tools/verify/run_all.sh
-new	COMPILE_RISK_REPORT.md
-new	STATE_VERIFY_1.md
-new	VERIFY_PROMPT.md
+new	STATE_VERIFY_2.md
+new	supabase/RUN_ORDER.md
+new	supabase/VERIFY_AFTER.sql
+new	supabase/ROLE_TESTS.sql
+new	tools/verify/check_sql.py
+changed	tools/verify/run_all.sh
+changed	VERIFY_PROGRESS.md
