@@ -42,6 +42,7 @@ public class SuspendedFragment extends Fragment {
                 Toast.makeText(requireContext().getApplicationContext(), ErrorText.full(getString(R.string.susp_check_error), e), Toast.LENGTH_LONG).show();
             });
         });
+        AppealHelper.wire(this, b.appeal, b.appealStatus);
         b.signOut.setOnClickListener(v -> {
             final android.content.Context app = requireContext().getApplicationContext();
             final NavController nav = nav();

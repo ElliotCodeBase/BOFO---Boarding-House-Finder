@@ -17,6 +17,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.bofo.shared.Api;
 import com.bofo.shared.Async;
 import com.bofo.shared.PermissionRules;
+import com.bofo.shared.QueueRules;
 import com.bofo.shared.SavedReplyRules;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -41,6 +42,7 @@ final class IdScreen extends FrameLayout {
         load();
     }
 
+    @SuppressWarnings("unchecked")
     private void load() {
         Async.run(() -> {
             JSONArray rows = Api.get().select("owner_verifications", "status=eq.pending&order=submitted_at.asc&limit=100&select=id,owner_id,id_type,submitted_at,needs_second_opinion,id_front_url,id_back_url,selfie_url");
@@ -48,11 +50,11 @@ final class IdScreen extends FrameLayout {
             StringBuilder in = new StringBuilder();
             for (int i = 0; i < rows.length(); i++) in.append(i == 0 ? "" : ",").append(rows.getJSONObject(i).getString("owner_id"));
             if (in.length() > 0) { JSONArray u = Api.get().select("users", "id=in.(" + in + ")&select=id,full_name"); for (int i = 0; i < u.length(); i++) names.put(u.getJSONObject(i).getString("id"), u.getJSONObject(i).optString("full_name", "")); }
-            return new Object[]{rows, names};
-        }, r -> render((JSONArray) r[0], (Map<String, String>) r[1]), e -> { if (e instanceof Api.ApiException x && x.status == 401) act.sessionEnded(); else Ui.toast(getContext(), Ui.err(e)); });
+            return new Object[]{rows, names, Marks.list("id")};
+        }, r -> render((JSONArray) r[0], (Map<String, String>) r[1], (Map<String, JSONObject>) r[2]), e -> { if (e instanceof Api.ApiException x && x.status == 401) act.sessionEnded(); else Ui.toast(getContext(), Ui.err(e)); });
     }
 
-    private void render(JSONArray rows, Map<String, String> names) {
+    private void render(JSONArray rows, Map<String, String> names, Map<String, JSONObject> marks) {
         android.content.Context c = getContext();
         list.removeAllViews();
         list.addView(Ui.text(c, "ID requests", R.style.Text_Bofo_Title));
@@ -63,6 +65,9 @@ final class IdScreen extends FrameLayout {
             String nm = names.get(x.optString("owner_id")); 
             card.addView(Ui.text(c, nm == null || nm.isEmpty() ? "Unnamed owner" : nm, R.style.Text_Bofo_Section));
             card.addView(Ui.text(c, x.optString("id_type", "ID") + "  |  sent " + x.optString("submitted_at", "").replace('T', ' ').substring(0, Math.min(16, x.optString("submitted_at", "").length())), R.style.Text_Bofo_Caption));
+            card.addView(Ui.waitPill(c, x.optString("submitted_at")));                                // green < 1 day, amber 1 to 3 days, red later
+            JSONObject mk = marks.get(x.optString("id"));
+            if (Marks.claimedByOther(mk)) card.addView(Ui.text(c, QueueRules.claimLine(Marks.str(mk, "claimed_by_name")), R.style.Text_Bofo_Caption));
             if (x.optBoolean("needs_second_opinion", false)) card.addView(Ui.pill(c, "Second opinion asked", R.color.bofo_card_ink, R.color.bofo_warn_tint));
             card.setOnClickListener(v -> review(x, nm == null ? "" : nm));
             list.addView(card);
@@ -77,6 +82,13 @@ final class IdScreen extends FrameLayout {
         LinearLayout col = Ui.col(c); int p = Ui.dp(c, 16); col.setPadding(p, p, p, p);
         col.addView(Ui.text(c, name.isEmpty() ? "Unnamed owner" : name, R.style.Text_Bofo_Title));
         col.addView(Ui.text(c, x.optString("id_type", "ID"), R.style.Text_Bofo_Caption));
+        final String claimId = x.optString("id");
+        android.widget.TextView claimNote = Ui.text(c, "", R.style.Text_Bofo_Body); claimNote.setTextColor(c.getColor(R.color.bofo_error)); claimNote.setVisibility(android.view.View.GONE);
+        col.addView(claimNote);
+        Async.run(() -> Marks.claim("id", claimId), r -> {                                              // heads-up for 30 minutes; never blocks the review
+            if (!r.optBoolean("mine", false)) { claimNote.setText(QueueRules.claimLine(r.optString("by")) + ". They may be reviewing it right now."); claimNote.setVisibility(android.view.View.VISIBLE); }
+        }, e -> { });
+        d.setOnDismissListener(dd -> Async.run(() -> { Marks.release("id", claimId); return 1; }, ok -> load(), e -> { }));
         String[][] imgs = {{"ID front", "id_front_url"}, {"ID back", "id_back_url"}, {"Selfie", "selfie_url"}};
         for (String[] im : imgs) {
             col.addView(Ui.text(c, im[0], R.style.Text_Bofo_Section));

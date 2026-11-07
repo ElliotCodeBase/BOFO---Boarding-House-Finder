@@ -10,6 +10,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.bofo.shared.Api;
 import com.bofo.shared.Async;
 import com.bofo.shared.PermissionRules;
+import com.bofo.shared.QueueRules;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -17,6 +18,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,14 +29,15 @@ import java.util.Map;
  */
 final class ReportsScreen extends FrameLayout {
     private static final String COLS = "&select=id,reporter_id,reported_user_id,bh_id,reason,details,status,created_at,reviewed_at,action,reporter_name,reported_name,bh_name,reported_suspended_until";
-    private static final String[] CHIPS = {"Waiting", "Answered", "All"};
-    private static final String[] FILTER = {"status=eq.pending&", "status=neq.pending&", ""};
+    private static final String[] CHIPS = {"Waiting", "Answered", "All", "Escalated"};
+    private static final String[] FILTER = {"status=eq.pending&", "status=neq.pending&", "", "status=eq.pending&"};
     private final MainActivity act;
     private final Access access;
     private final LinearLayout list;
     private int chip = 0;
     private String person, personName;
     private boolean busy;
+    private Map<String, JSONObject> marks = new HashMap<>();          // report id -> claim / escalation (Stage 4i)
 
     ReportsScreen(MainActivity a, Access access) {
         super(a); act = a; this.access = access;
@@ -45,9 +48,11 @@ final class ReportsScreen extends FrameLayout {
         load();
     }
 
+    @SuppressWarnings("unchecked")
     private void load() {
         final String q = (person == null ? "" : "reported_user_id=eq." + person + "&") + FILTER[chip] + "order=created_at." + (chip == 0 ? "asc" : "desc") + "&limit=200" + COLS;
-        Async.run(() -> Api.get().select("reports_admin_v", q), r -> render(r),
+        Async.run(() -> { JSONArray rows = Api.get().select("reports_admin_v", q); return new Object[]{rows, Marks.list("report")}; },
+                r -> { marks = (Map<String, JSONObject>) r[1]; render((JSONArray) r[0]); },
                 e -> { if (e instanceof Api.ApiException x && x.status == 401) act.sessionEnded(); else Ui.toast(getContext(), Ui.err(e)); });
     }
 
@@ -64,12 +69,19 @@ final class ReportsScreen extends FrameLayout {
         }
         if (person != null) { android.widget.Button all = Ui.button(c, "Show everyone", false); all.setOnClickListener(v -> { person = null; load(); }); chips.addView(all); }
         list.addView(chips);
-        if (rows.length() == 0) { list.addView(Ui.text(c, chip == 0 ? "No reports are waiting." : "Nothing here.", R.style.Text_Bofo_Caption)); return; }
+        JSONArray shown = new JSONArray();
+        for (int i = 0; i < rows.length(); i++) {
+            JSONObject o = rows.optJSONObject(i); if (o == null) continue;
+            if (chip == 3 && !Marks.escalated(marks.get(o.optString("id")))) continue;           // "Escalated" chip: waiting reports with an open escalation
+            shown.put(o);
+        }
+        rows = shown;
+        if (rows.length() == 0) { list.addView(Ui.text(c, chip == 0 ? "No reports are waiting." : chip == 3 ? "Nothing is escalated." : "Nothing here.", R.style.Text_Bofo_Caption)); return; }
 
         Map<String, List<JSONObject>> byPerson = new LinkedHashMap<>();                 // grouped reports: one card per reported person
         for (int i = 0; i < rows.length(); i++) {
             JSONObject o = rows.optJSONObject(i); if (o == null) continue;
-            boolean group = chip == 0 && "pending".equals(o.optString("status"));
+            boolean group = (chip == 0 || chip == 3) && "pending".equals(o.optString("status"));
             String key = group ? o.optString("reported_user_id") : o.optString("id");
             byPerson.computeIfAbsent(key, k -> new ArrayList<>()).add(o);
         }
@@ -82,11 +94,24 @@ final class ReportsScreen extends FrameLayout {
         LinearLayout card = Ui.card(c);
         card.addView(Ui.text(c, name(x, "reported_name"), R.style.Text_Bofo_Section));
         card.addView(Ui.text(c, "Reason: " + x.optString("reason").replace('_', ' ') + (x.optString("bh_name", "").isEmpty() ? "" : "  |  " + x.optString("bh_name")), R.style.Text_Bofo_Caption));
-        if (waiting && g.size() > 1) card.addView(Ui.pill(c, g.size() + " waiting reports about this person", R.color.bofo_error, R.color.bofo_error_tint));
-        else card.addView(waiting ? Ui.pill(c, "Waiting", R.color.bofo_card_ink, R.color.bofo_warn_tint)
-                : Ui.pill(c, "Answered: " + (x.isNull("action") ? x.optString("status") : x.optString("action")), R.color.bofo_success, R.color.bofo_success_tint));
+        if (waiting) {
+            card.addView(Ui.waitPill(c, x.optString("created_at")));                      // oldest report of the group (the list is oldest first)
+            if (g.size() > 1) card.addView(Ui.pill(c, g.size() + " waiting reports about this person", R.color.bofo_error, R.color.bofo_error_tint));
+            if (markOf(g, true) != null) card.addView(Ui.pill(c, "Escalated", R.color.bofo_error, R.color.bofo_error_tint));
+            JSONObject other = markOf(g, false);
+            if (other != null) card.addView(Ui.text(c, QueueRules.claimLine(Marks.str(other, "claimed_by_name")), R.style.Text_Bofo_Caption));
+        } else card.addView(Ui.pill(c, "Answered: " + (x.isNull("action") ? x.optString("status") : x.optString("action")), R.color.bofo_success, R.color.bofo_success_tint));
         card.setOnClickListener(v -> detail(g));
         return card;
+    }
+
+    /** The first escalated mark (escalated = true) or the first mark of a colleague who has it open (escalated = false) among a group's reports. */
+    private JSONObject markOf(List<JSONObject> g, boolean escalated) {
+        for (JSONObject o : g) {
+            JSONObject m = marks.get(o.optString("id"));
+            if (escalated ? Marks.escalated(m) : Marks.claimedByOther(m)) return m;
+        }
+        return null;
     }
 
     private static String name(JSONObject x, String k) { String n = x.optString(k, ""); return n.isEmpty() ? "Unnamed user" : n; }
@@ -101,8 +126,27 @@ final class ReportsScreen extends FrameLayout {
         androidx.appcompat.app.AlertDialog.Builder b = new MaterialAlertDialogBuilder(act).setTitle(name(x, "reported_name")).setView(col).setNeutralButton("All reports about them", (d, w) -> {
             person = x.optString("reported_user_id"); personName = name(x, "reported_name"); chip = 2; load(); }).setNegativeButton("Close", null);
         androidx.appcompat.app.AlertDialog dlg = b.create();
-        if ("pending".equals(x.optString("status")) && access.can(PermissionRules.REPORTS_ACT)) {
+        final boolean waitingNow = "pending".equals(x.optString("status"));
+        if (waitingNow) {
+            final String firstId = x.optString("id");
+            JSONObject esc = markOf(g, true);
+            if (esc != null) col.addView(Ui.text(c, "Escalated: " + Marks.str(esc, "escalation_note"), R.style.Text_Bofo_Body));
+            android.widget.TextView claimNote = Ui.text(c, "", R.style.Text_Bofo_Caption); claimNote.setVisibility(android.view.View.GONE);
+            claimNote.setTextColor(c.getColor(R.color.bofo_error)); col.addView(claimNote);
+            Async.run(() -> Marks.claim("report", firstId), r -> {                       // taking it for 30 minutes; a colleague who has it sees that
+                if (!r.optBoolean("mine", false)) { claimNote.setText(QueueRules.claimLine(r.optString("by")) + ". They may be deciding it right now."); claimNote.setVisibility(android.view.View.VISIBLE); }
+            }, e -> { /* heads-up only: never block the review */ });
+            dlg.setOnDismissListener(d -> Async.run(() -> { Marks.release("report", firstId); return 1; }, ok -> load(), e -> { }));
+        }
+        if (waitingNow && access.can(PermissionRules.APPROVALS_DECIDE) && markOf(g, true) != null) {
+            LinearLayout clr = Ui.col(c);
+            clr.addView(action(c, "Clear the escalation", () -> { dlg.dismiss(); clearEscalation(g); }));
+            col.addView(clr);
+        }
+        if (waitingNow && access.can(PermissionRules.REPORTS_ACT)) {
             LinearLayout acts = Ui.col(c);
+            if (markOf(g, true) == null) acts.addView(action(c, "Escalate to a senior", () -> { dlg.dismiss(); escalate(g); }));
+            if (!x.isNull("reported_user_id") && !x.optString("reported_user_id").isEmpty()) acts.addView(action(c, "Strike: next step", () -> { dlg.dismiss(); strike(x, g); }));
             acts.addView(action(c, "Dismiss", () -> { dlg.dismiss(); askReason(x, g, "dismiss", null, false); }));
             acts.addView(action(c, "Suspend", () -> { dlg.dismiss(); askDays(x, g); }));
             acts.addView(action(c, "Ban", () -> { dlg.dismiss(); askReason(x, g, "ban", null, true); }));
@@ -144,6 +188,61 @@ final class ReportsScreen extends FrameLayout {
 
     private static String keyFor(String a, Integer hrs) {
         switch (a) { case "suspend": return PermissionRules.suspendKey(hrs == null ? 0 : hrs); case "ban": return PermissionRules.BAN_PERMANENT; case "takedown": return PermissionRules.LISTING_TAKEDOWN; default: return null; }
+    }
+
+    /* ---------- Stage 4i: escalate, clear, strike ---------- */
+    private void escalate(List<JSONObject> g) {
+        EditText note = new EditText(getContext()); note.setHint("Why does a senior need to look? (5+ characters)");
+        note.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(QueueRules.NOTE_MAX)});
+        LinearLayout box = Ui.col(getContext()); int pd = Ui.dp(getContext(), 20); box.setPadding(pd, 0, pd, 0); box.addView(note);
+        new MaterialAlertDialogBuilder(act).setTitle("Escalate to a senior").setMessage("Owners and Admins get a notification (no names in it).").setView(box)
+                .setNegativeButton("Cancel", null).setPositiveButton("Escalate", (d, w) -> {
+                    String n = note.getText().toString().trim();
+                    if (!QueueRules.noteOk(n)) { Ui.toast(getContext(), "Write a note of at least 5 characters."); return; }
+                    Async.run(() -> { for (JSONObject o : g) Api.get().rpc("admin_escalate_report", Ui.json("rid", o.optString("id"), "note", n)); return 1; },
+                            ok -> { Ui.toast(getContext(), "Escalated."); load(); }, e -> { Ui.toast(getContext(), Ui.err(e)); load(); });
+                }).show();
+    }
+
+    private void clearEscalation(List<JSONObject> g) {
+        Async.run(() -> { for (JSONObject o : g) Api.get().rpc("admin_clear_escalation", Ui.json("rid", o.optString("id"))); return 1; },
+                ok -> { Ui.toast(getContext(), "Escalation cleared."); load(); }, e -> Ui.toast(getContext(), Ui.err(e)));
+    }
+
+    /** The server counts earlier strikes and picks the step; the app only shows it and asks for the reason. */
+    private void strike(JSONObject x, List<JSONObject> g) {
+        Async.run(() -> new JSONObject(Api.get().rpc("admin_user_strikes", Ui.json("uid", x.optString("reported_user_id")))), s -> {
+            final int n = s.optInt("count", 0);
+            final String step = s.optString("next", QueueRules.strikeStep(n));
+            String msg = "Earlier strikes: " + n + ". The next step is " + QueueRules.strikeLabel(step) + "."
+                    + (g.size() > 1 ? "\nThe other waiting reports about this person are marked as reviewed." : "");
+            if (QueueRules.stepNeedsBanPermission(step) && !access.can(PermissionRules.BAN_PERMANENT)) {
+                new MaterialAlertDialogBuilder(act).setTitle("Strike " + (n + 1)).setMessage(msg + "\n\nYour role cannot ban directly. Close this and use Ban, then Request approval.")
+                        .setPositiveButton("OK", null).show();
+                return;
+            }
+            EditText why = new EditText(getContext()); why.setHint("Reason (5+ characters)");
+            why.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(QueueRules.NOTE_MAX)});
+            LinearLayout box = Ui.col(getContext()); int pd = Ui.dp(getContext(), 20); box.setPadding(pd, 0, pd, 0); box.addView(why);
+            new MaterialAlertDialogBuilder(act).setTitle("Strike " + (n + 1) + " for " + name(x, "reported_name")).setMessage(msg).setView(box)
+                    .setNegativeButton("Cancel", null).setPositiveButton("Apply", (d, w) -> {
+                        final String r = why.getText().toString().trim();
+                        if (!QueueRules.noteOk(r)) { Ui.toast(getContext(), "Write a reason of at least 5 characters."); return; }
+                        Reauth.ask(act, "Apply strike " + (n + 1), () -> applyStrike(g, r), null);
+                    }).show();
+        }, e -> Ui.toast(getContext(), Ui.err(e)));
+    }
+
+    private void applyStrike(List<JSONObject> g, String reason) {
+        if (busy) return; busy = true;
+        Async.run(() -> {
+            JSONObject r = Api.get().rpcObject("admin_issue_strike", Ui.json("rid", g.get(0).optString("id"), "reason", reason));
+            for (int i = 1; i < g.size(); i++) {                                                  // the person's other waiting reports are covered by this strike
+                try { Api.get().rpc("admin_review_report", Ui.json("rid", g.get(i).optString("id"), "act", "reviewed", "notes", "Covered by a strike")); } catch (Exception ignored) { }
+            }
+            return r;
+        }, r -> { busy = false; Ui.toast(getContext(), "Strike " + r.optInt("count") + " applied: " + QueueRules.strikeLabel(r.optString("step")) + "."); load(); },
+           e -> { busy = false; Ui.toast(getContext(), Ui.err(e)); load(); });
     }
 
     private void perform(JSONObject x, List<JSONObject> g, String a, Integer hrs, String reason, boolean requestOnly) {

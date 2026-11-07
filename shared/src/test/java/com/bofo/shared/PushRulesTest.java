@@ -55,4 +55,17 @@ public class PushRulesTest {
         assertEquals("bofo_admin", PushRules.channelFor("idreview"));
         assertEquals("bofo_admin", PushRules.channelFor("approval"));
     }
+
+    @Test public void stage4iKindsFollowPermissionsAndTabs() {
+        assertTrue(PushRules.allowed("escalated", p(PermissionRules.APPROVALS_DECIDE)));
+        assertFalse(PushRules.allowed("escalated", p(PermissionRules.APPROVALS_REQUEST)));
+        assertTrue(PushRules.allowed("decided", p(PermissionRules.APPROVALS_REQUEST)));
+        assertFalse(PushRules.allowed("decided", p(PermissionRules.REPORTS_VIEW)));
+        assertTrue(PushRules.allowed("unusual", p(PermissionRules.AUDIT_VIEW_ALL)));
+        assertFalse(PushRules.allowed("unusual", p(PermissionRules.APPROVALS_DECIDE)));
+        assertEquals(PushRules.TAB_REPORTS, PushRules.tabFor("escalated", ""));
+        assertEquals(PushRules.TAB_APPROVALS, PushRules.tabFor("decided", ""));
+        assertEquals(PushRules.TAB_MORE, PushRules.tabFor("unusual", ""));
+        assertEquals(PushRules.CHANNEL_ADMIN, PushRules.channelFor("unusual"));
+    }
 }

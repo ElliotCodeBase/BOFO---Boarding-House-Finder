@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.12.0: Appeal this decision (banned and suspended screens). Needs migration 044 on the server. -->
+<resources>
+    <string name="appeal_button">Appeal this decision</string>
+    <string name="appeal_title">Appeal this decision</string>
+    <string name="appeal_body">Tell BOFO staff why you think this was a mistake. You can appeal each decision once. A different team member reads it.</string>
+    <string name="appeal_hint">Your message (at least 10 characters)</string>
+    <string name="appeal_send">Send appeal</string>
+    <string name="appeal_cancel">Cancel</string>
+    <string name="appeal_too_short">Please write at least 10 characters.</string>
+    <string name="appeal_sent">Appeal sent. We will review it.</string>
+    <string name="appeal_pending">Your appeal was sent and is waiting for review.</string>
+    <string name="appeal_rejected">Your appeal was reviewed and the decision stays.</string>
+    <string name="appeal_note">Note from staff: %1$s</string>
+    <string name="appeal_error">Could not send your appeal</string>
+</resources>

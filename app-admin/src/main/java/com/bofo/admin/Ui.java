@@ -56,6 +56,17 @@ final class Ui {
         return t;
     }
 
+    /** Waiting-time pill: green under a day, amber 1 to 3 days, red after 3 days. Words as well as colour. */
+    static TextView waitPill(Context c, String createdIso) {
+        long age = com.bofo.shared.QueueRules.ageMillis(createdIso, System.currentTimeMillis());
+        if (age < 0) return pill(c, "Waiting", R.color.bofo_card_ink, R.color.bofo_warn_tint);
+        int tier = com.bofo.shared.QueueRules.tier(age);
+        String label = com.bofo.shared.QueueRules.waitLabel(age);
+        if (tier == com.bofo.shared.QueueRules.TIER_LATE) return pill(c, label + " (late)", R.color.bofo_error, R.color.bofo_error_tint);
+        if (tier == com.bofo.shared.QueueRules.TIER_WAITING) return pill(c, label, R.color.bofo_card_ink, R.color.bofo_warn_tint);
+        return pill(c, label, R.color.bofo_success, R.color.bofo_success_tint);
+    }
+
     /** Plain words for an error. Never shows raw JSON or ids. */
     static String err(Throwable e) {
         if (e instanceof java.io.IOException) return "No connection. Check the internet and try again.";

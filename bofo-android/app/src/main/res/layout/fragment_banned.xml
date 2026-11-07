@@ -28,6 +28,24 @@
             android:textColor="@color/bofo_text" />
 
         <Button
+            android:id="@+id/appeal"
+            style="@style/Widget.Bofo.Button.Cta"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="32dp"
+            android:text="@string/appeal_button"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/appeal_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:textColor="@color/bofo_text"
+            android:visibility="gone" />
+
+        <Button
             android:id="@+id/sign_out"
             style="@style/Widget.Bofo.Button.Cta"
             android:layout_width="match_parent"

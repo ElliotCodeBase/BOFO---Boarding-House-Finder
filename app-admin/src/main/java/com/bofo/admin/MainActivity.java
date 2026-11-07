@@ -252,7 +252,7 @@ public final class MainActivity extends AppCompatActivity {
 
         int id = 0; int first = -1;
         String[] titles = {"Home", "IDs", "Reports", "Approvals", "More"};
-        boolean more = access.can(PermissionRules.AUDIT_VIEW_OWN) || access.can(PermissionRules.MEMBERS_MANAGE) || access.can(PermissionRules.BANNED_VIEW) || access.can(PermissionRules.PAYMENTS_VIEW);
+        boolean more = access.can(PermissionRules.AUDIT_VIEW_OWN) || access.can(PermissionRules.MEMBERS_MANAGE) || access.can(PermissionRules.BANNED_VIEW) || access.can(PermissionRules.PAYMENTS_VIEW) || access.can(PermissionRules.APPROVALS_DECIDE) || access.can(PermissionRules.AUDIT_VIEW_ALL);
         boolean[] show = {access.can(PermissionRules.DASHBOARD_VIEW), access.can(PermissionRules.ID_REVIEW), access.can(PermissionRules.REPORTS_VIEW),
                 access.can(PermissionRules.APPROVALS_DECIDE) || access.can(PermissionRules.APPROVALS_REQUEST), more};
         int[] icons = {android.R.drawable.ic_menu_agenda, android.R.drawable.ic_menu_gallery, android.R.drawable.ic_menu_report_image, android.R.drawable.ic_menu_send, android.R.drawable.ic_menu_more};

@@ -10,7 +10,7 @@ import java.util.Set;
 public final class PushRules {
     private PushRules() {}
 
-    public static final String REPORT = "report", IDREVIEW = "idreview", STALE = "stale", APPROVAL = "approval", TEST = "test";
+    public static final String REPORT = "report", IDREVIEW = "idreview", STALE = "stale", APPROVAL = "approval", ESCALATED = "escalated", DECIDED = "decided", UNUSUAL = "unusual", TEST = "test";
     public static final String CHANNEL_ADMIN = "bofo_admin", CHANNEL_REPORTS = "bofo_reports";
     public static final String ACTION_OPEN = "com.bofo.admin.OPEN_PUSH";
 
@@ -25,6 +25,9 @@ public final class PushRules {
             case IDREVIEW: return perms.contains(PermissionRules.ID_REVIEW);
             case APPROVAL: return perms.contains(PermissionRules.APPROVALS_DECIDE);
             case STALE: return perms.contains(PermissionRules.ID_REVIEW) || perms.contains(PermissionRules.REPORTS_ACT) || perms.contains(PermissionRules.PAYMENTS_VIEW);
+            case ESCALATED: return perms.contains(PermissionRules.APPROVALS_DECIDE);
+            case DECIDED: return perms.contains(PermissionRules.APPROVALS_REQUEST);
+            case UNUSUAL: return perms.contains(PermissionRules.AUDIT_VIEW_ALL);
             case TEST: return true;
             default: return false;
         }
@@ -37,6 +40,9 @@ public final class PushRules {
             case REPORT: return TAB_REPORTS;
             case IDREVIEW: return TAB_IDS;
             case APPROVAL: return TAB_APPROVALS;
+            case DECIDED: return TAB_APPROVALS;
+            case ESCALATED: return TAB_REPORTS;
+            case UNUSUAL: return TAB_MORE;
             case TEST: return TAB_HOME;
             case STALE:
                 if ("queue".equals(place)) return TAB_IDS;

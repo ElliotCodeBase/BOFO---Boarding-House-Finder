@@ -80,8 +80,8 @@ async function accessToken(): Promise<string> {
 // v2.9.2: HYBRID message = data + a ready-made notification. The phone's system draws the notification by itself, so it still appears when
 // the app is closed or our own code never gets to run (battery savers, a dropped role check, a crash). While the app is open Firebase hands the
 // message to BofoMessagingService instead, which draws the richer in-app version (chat stack, "already looking at this chat" check).
-const CHANNELS: Record<string, string> = { dm: "bofo_chats", group: "bofo_boarding", report: "bofo_reports", idreview: "bofo_admin", stale: "bofo_admin", approval: "bofo_admin", test: "bofo_chats" };
-const ADMIN_KINDS = new Set(["report", "idreview", "stale", "approval"]);
+const CHANNELS: Record<string, string> = { dm: "bofo_chats", group: "bofo_boarding", report: "bofo_reports", idreview: "bofo_admin", stale: "bofo_admin", approval: "bofo_admin", escalated: "bofo_admin", decided: "bofo_admin", unusual: "bofo_admin", test: "bofo_chats" };
+const ADMIN_KINDS = new Set(["report", "idreview", "stale", "approval", "escalated", "decided", "unusual"]);
 
 function shown(d: Record<string, string>) {
   const kind = d.kind ?? "";
@@ -237,6 +237,29 @@ async function planApproval(rec: any, skipCheck = false): Promise<Push | null> {
   return { userIds: uniq(rows), rows, data: { kind: "approval", id: String(rec.id), title: "Approval needed", body: `${label} is waiting for your decision`, msg: String(rec.id) } };
 }
 
+// v2.12.0 (migration 044): a report was escalated. Staff with approvals_decide, ADMIN APP phones only, the person who escalated is left out. Type only, no names.
+async function planEscalated(rec: any): Promise<Push | null> {
+  const rows = (await staffTokens(["approvals_decide"], rec?.by ?? null)).filter((r) => r.app === "admin");
+  if (!rows.length) return null;
+  return { userIds: uniq(rows), rows, data: { kind: "escalated", id: String(rec.id), title: "Report escalated", body: "A report needs a senior look", msg: String(rec.id) } };
+}
+
+// v2.12.0: an approval request was decided -> only the person who asked, ADMIN APP phone only. Status word only.
+async function planDecided(rec: any): Promise<Push | null> {
+  const { data: a } = await admin.from("admin_approvals").select("status, requested_by").eq("id", rec.id).maybeSingle();
+  if (!a || !a.requested_by || (a.status !== "approved" && a.status !== "denied")) return null;     // read from the table, not from what the caller sent
+  const rows = await tokensFor([a.requested_by], ["admin"]);
+  if (!rows.length) return null;
+  return { userIds: [a.requested_by], rows, data: { kind: "decided", id: String(rec.id), title: "Request " + a.status, body: "Your approval request was " + a.status, msg: String(rec.id) } };
+}
+
+// v2.12.0: a non-owner reached 10 risky actions in an hour (trigger in 044). Staff with audit_view_all (owners), ADMIN APP phones only. No names.
+async function planUnusual(_rec: any): Promise<Push | null> {
+  const rows = (await staffTokens(["audit_view_all"], null)).filter((r) => r.app === "admin");
+  if (!rows.length) return null;
+  return { userIds: uniq(rows), rows, data: { kind: "unusual", id: "unusual-" + Math.floor(Date.now() / 3600000), title: "Unusual activity", body: "A team member did many sensitive actions in one hour", msg: "unusual" } };
+}
+
 async function planTest(rec: any): Promise<Push | Push[] | null> {
   const as = String(rec?.as ?? "idreview");
   const stamp = String(Date.now());
@@ -260,6 +283,7 @@ Deno.serve(async (req) => {
     const { kind, record } = await req.json();
     const planned = kind === "dm" ? await planDm(record) : kind === "group" ? await planGroup(record) : kind === "report" ? await planReport(record)
       : kind === "idreview" ? await planIdReview(record) : kind === "stale" ? await planStale(record) : kind === "approval" ? await planApproval(record)
+      : kind === "escalated" ? await planEscalated(record) : kind === "decided" ? await planDecided(record) : kind === "unusual" ? await planUnusual(record)
       : kind === "test" ? await planTest(record) : null;
     const plans: Push[] = planned ? (Array.isArray(planned) ? planned : [planned]) : [];
     if (!plans.length) return Response.json({ sent: 0, reason: "nobody_to_notify" });       // e.g. blocked sender, unknown conversation, empty group

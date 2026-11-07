@@ -43,7 +43,7 @@ Two-step sign-in is kept (Settings). After 5 minutes in the background the admin
 - [ ] Faster reviews: 8 reject reasons, second-opinion flag (needs migration 034), Last 7 days card, "All reports about them", Export CSV on Reports and Payments (opens in Excel, no names).
 
 ## New in v2.10.0 (migration 044)
-- **Queue claiming:** opening an ID request or a waiting report takes it for 30 minutes; colleagues see "Being handled by <name>" and a warning when they open it. "Release" lets go sooner. It is a heads-up, not a lock: the server still lets either person decide.
+- **Queue claiming:** opening an ID request or a waiting report takes it for 30 minutes; colleagues see "Being handled by <name>" and a warning when they open it. Closing the item lets go sooner. It is a heads-up, not a lock: the server still lets either person decide.
 - **Waiting colours:** green under a day, amber 1 to 3 days, red after 3 days (words and colour).
 - **Escalate:** on a waiting report, "Escalate to a senior" (note required). Owner and Admins get a notification (no names in it); the report shows "Escalated" and the Escalated chip lists them. "Clear the escalation" needs approvals_decide.
 - **Strikes ladder:** "Strike: next step" applies warning, then 3-day suspension, then 7-day suspension, then a permanent ban. The server picks the step and runs it through the normal report rules. A warning is a record for staff only (the user is not messaged). A moderator at the ban step is told to use Ban (request approval). Strikes never expire.

@@ -29,6 +29,7 @@ public class BannedFragment extends Fragment {
         b = FragmentBannedBinding.inflate(inflater, container, false);
         String why = AuthRouter.bannedReason == null ? "" : AuthRouter.bannedReason.trim();
         b.reason.setText(getString(R.string.ban_reason, why.isEmpty() ? getString(R.string.rep_no_reason) : why));
+        AppealHelper.wire(this, b.appeal, b.appealStatus);
         b.signOut.setOnClickListener(v -> {
             final android.content.Context app = requireContext().getApplicationContext();
             final NavController nav = NavHostFragment.findNavController(this);

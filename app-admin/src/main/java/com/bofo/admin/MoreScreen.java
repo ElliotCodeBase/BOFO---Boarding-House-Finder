@@ -17,6 +17,8 @@ final class MoreScreen extends FrameLayout {
         if (access.can(PermissionRules.AUDIT_VIEW_ALL)) l.addView(entry(a, "All admin activity", () -> sub(a, new ActivityScreen(a, true))));
         if (access.can(PermissionRules.BANNED_VIEW)) l.addView(entry(a, "Banned and suspended", () -> sub(a, new BannedScreen(a, access))));
         if (access.can(PermissionRules.PAYMENTS_VIEW)) l.addView(entry(a, "Payments", () -> sub(a, new PaymentsScreen(a, access))));
+        if (access.can(PermissionRules.APPROVALS_DECIDE)) l.addView(entry(a, "Appeals", () -> sub(a, new AppealsScreen(a, access))));
+        if (access.can(PermissionRules.AUDIT_VIEW_ALL)) l.addView(entry(a, "Unusual activity", () -> sub(a, new UnusualScreen(a))));
         if (access.can(PermissionRules.AI_ANSWER)) l.addView(entry(a, "Needs attention (AI)", () -> sub(a, new AiUnansweredScreen(a))));
         if (access.can(PermissionRules.AI_LOG_VIEW)) l.addView(entry(a, "AI chats", () -> sub(a, new AiChatLogScreen(a))));
         if (access.can(PermissionRules.AI_SETTINGS)) l.addView(entry(a, "AI settings", () -> sub(a, new AiSettingsScreen(a))));

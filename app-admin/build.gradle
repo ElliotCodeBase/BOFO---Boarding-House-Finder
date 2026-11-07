@@ -23,8 +23,8 @@ android {
         applicationId 'com.bofo.admin'
         minSdk 26
         targetSdk 36
-        versionCode 21101
-        versionName '2.11.1'
+        versionCode 21200
+        versionName '2.12.0'
         buildConfigField 'String', 'SUPABASE_URL', "\"${cfg('supabase.url')}\""
         buildConfigField 'String', 'SUPABASE_ANON_KEY', "\"${cfg('supabase.anonKey')}\""
         buildConfigField 'String', 'GOOGLE_WEB_CLIENT_ID', "\"${cfg('google.webClientId')}\""

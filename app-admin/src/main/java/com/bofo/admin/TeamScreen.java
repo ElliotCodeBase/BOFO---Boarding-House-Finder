@@ -10,6 +10,7 @@ import android.widget.LinearLayout;
 import com.bofo.shared.Api;
 import com.bofo.shared.Async;
 import com.bofo.shared.PermissionRules;
+import com.bofo.shared.QueueRules;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.json.JSONArray;
@@ -37,6 +38,7 @@ final class TeamScreen extends FrameLayout {
         list.removeAllViews();
         list.addView(Ui.text(c, "Team", R.style.Text_Bofo_Title));
         android.widget.Button inv = Ui.button(c, "Invite someone", true); inv.setOnClickListener(v -> invite()); list.addView(inv);
+        android.widget.Button lent = Ui.button(c, "Lent right now", false); lent.setOnClickListener(v -> lentNow()); list.addView(lent);
         for (int i = 0; i < rows.length(); i++) {
             JSONObject o = rows.optJSONObject(i); if (o == null) continue;
             LinearLayout card = Ui.card(c);
@@ -80,14 +82,68 @@ final class TeamScreen extends FrameLayout {
 
     private void manage(JSONObject o) {
         final String uid = o.optString("user_id"); boolean active = "active".equals(o.optString("status"));
-        String[] items = {"Change role", "Permission toggles", active ? "Suspend" : "Reactivate", "Log out all devices", "Remove from team"};
+        String[] items = {"Change role", "Permission toggles", active ? "Suspend" : "Reactivate", "Recent sign-ins", "Lend a permission for 1 hour", "Log out all devices", "Remove from team"};
         new MaterialAlertDialogBuilder(act).setTitle(o.optString("email")).setItems(items, (d, i) -> {
             if (i == 0) pickRole(uid, o.optString("role"));
             else if (i == 1) toggles(o);
             else if (i == 2) confirm(active ? "Suspend this person?" : "Reactivate this person?", () -> call("admin_member_suspend", Ui.json("uid", uid, "on_", active)));
-            else if (i == 3) confirm("Log this person out of every device?", () -> call("admin_member_logout_all", Ui.json("uid", uid)));
+            else if (i == 3) sessions(uid, o.optString("email"));
+            else if (i == 4) lend(uid, o.optString("email"));
+            else if (i == 5) confirm("Log this person out of every device?", () -> call("admin_member_logout_all", Ui.json("uid", uid)));
             else confirm("Remove from the team? They lose all admin access.", () -> call("admin_member_remove", Ui.json("uid", uid)));
         }).setNegativeButton("Close", null).show();
+    }
+
+    /* ---------- Stage 4i: recent sign-ins and break-glass ---------- */
+    /** Phone model and time of each app start (written by admin_touch_session). A stolen phone shows up here; \"Log out all devices\" ends every session. */
+    private void sessions(String uid, String email) {
+        Async.run(() -> new JSONArray(Api.get().rpc("admin_member_sessions", Ui.json("uid", uid))), rows -> {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < rows.length(); i++) {
+                JSONObject r = rows.optJSONObject(i); if (r == null) continue;
+                String dev = Marks.str(r, "device"); String at = Marks.str(r, "started_at");
+                sb.append(dev.isEmpty() ? "Unknown phone" : dev).append("  |  ").append(at.length() >= 16 ? at.substring(0, 16).replace('T', ' ') + " UTC" : at).append('\n');
+            }
+            new MaterialAlertDialogBuilder(act).setTitle("Recent sign-ins: " + email).setMessage(sb.length() == 0 ? "No sign-ins recorded yet." : sb.toString())
+                    .setNeutralButton("Log out all devices", (d, w) -> confirm("Log this person out of every device?", () -> call("admin_member_logout_all", Ui.json("uid", uid))))
+                    .setNegativeButton("Close", null).show();
+        }, e -> Ui.toast(getContext(), Ui.err(e)));
+    }
+
+    /** The owner lends ONE permission for 1 hour (ban, lift a ban, take down, long suspension, payments, CSV). Reason required, audit-logged, ends by itself. */
+    private void lend(String uid, String email) {
+        final int[] pick = {-1};
+        new MaterialAlertDialogBuilder(act).setTitle("Lend to " + email + " for 1 hour").setSingleChoiceItems(QueueRules.LEND_LABELS, -1, (d, i) -> pick[0] = i)
+                .setNegativeButton("Cancel", null).setPositiveButton("Next", (d, w) -> {
+                    if (pick[0] < 0) { Ui.toast(getContext(), "Pick one permission."); return; }
+                    final String key = QueueRules.LEND_KEYS[pick[0]];
+                    EditText why = new EditText(getContext()); why.setHint("Why? (5+ characters, kept in the log)");
+                    why.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(QueueRules.NOTE_MAX)});
+                    LinearLayout box = Ui.col(getContext()); int pd = Ui.dp(getContext(), 20); box.setPadding(pd, 0, pd, 0); box.addView(why);
+                    new MaterialAlertDialogBuilder(act).setTitle(QueueRules.lendLabel(key)).setMessage("It ends after " + QueueRules.BREAK_GLASS_MINUTES + " minutes, or earlier under Lent right now.").setView(box)
+                            .setNegativeButton("Cancel", null).setPositiveButton("Lend", (dd, ww) -> {
+                                String r = why.getText().toString().trim();
+                                if (!QueueRules.noteOk(r)) { Ui.toast(getContext(), "Write a reason of at least 5 characters."); return; }
+                                Reauth.ask(act, "Lend " + QueueRules.lendLabel(key), () -> Async.run(
+                                        () -> Api.get().rpc("admin_break_glass_grant", Ui.json("uid", uid, "perm", key, "reason_", r)),
+                                        ok -> Ui.toast(getContext(), "Lent for " + QueueRules.BREAK_GLASS_MINUTES + " minutes."), e -> Ui.toast(getContext(), Ui.err(e))), null);
+                            }).show();
+                }).show();
+    }
+
+    private void lentNow() {
+        Async.run(() -> new JSONArray(Api.get().rpc("admin_break_glass_list", new JSONObject())), rows -> {
+            if (rows.length() == 0) { Ui.toast(getContext(), "Nothing is lent right now."); return; }
+            final String[] labels = new String[rows.length()]; final String[] ids = new String[rows.length()];
+            long now = System.currentTimeMillis();
+            for (int i = 0; i < rows.length(); i++) {
+                JSONObject r = rows.optJSONObject(i); if (r == null) { labels[i] = ""; ids[i] = ""; continue; }
+                ids[i] = r.optString("id");
+                labels[i] = Marks.str(r, "email") + ": " + QueueRules.lendLabel(r.optString("permission")) + " (" + QueueRules.minutesLeft(r.optString("expires_at"), now) + " min left)";
+            }
+            new MaterialAlertDialogBuilder(act).setTitle("Lent right now (tap to end it)").setItems(labels, (d, i) ->
+                    confirm("End this now?", () -> call("admin_break_glass_end", Ui.json("gid", ids[i])))).setNegativeButton("Close", null).show();
+        }, e -> Ui.toast(getContext(), Ui.err(e)));
     }
 
     private void pickRole(String uid, String current) {
