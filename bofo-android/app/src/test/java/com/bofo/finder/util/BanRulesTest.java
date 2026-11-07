@@ -2,7 +2,6 @@ package com.bofo.finder.util;
 
 import static org.junit.Assert.*;
 
-import com.bofo.finder.model.Role;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,13 +37,6 @@ public class BanRulesTest {
         assertEquals(300, BanRules.reason("x".repeat(500)).length());
         assertEquals("scam", BanRules.reason("  scam\u0000 "));
         assertEquals("", BanRules.reason(null));
-    }
-
-    @Test public void onlyAdminsSee() {
-        assertTrue(BanRules.canSee(Role.ADMIN));
-        assertFalse(BanRules.canSee(Role.OWNER));
-        assertFalse(BanRules.canSee(Role.STUDENT));
-        assertFalse(BanRules.canSee(null));
     }
 
     @Test public void searchFilter() {

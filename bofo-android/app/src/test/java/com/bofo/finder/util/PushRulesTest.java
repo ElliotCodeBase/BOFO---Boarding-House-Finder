@@ -7,62 +7,32 @@ import org.junit.Test;
 /** v2.3.0 phone notifications: the pure rules (who may see a push, which channel, when to register). No Android classes. */
 public class PushRulesTest {
 
-    @Test public void onlyTheThreeKindsAreKnown() {
-        assertTrue(PushRules.known("dm")); assertTrue(PushRules.known("group")); assertTrue(PushRules.known("report"));
-        assertFalse(PushRules.known("x")); assertFalse(PushRules.known(null)); assertFalse(PushRules.known(""));
+    @Test public void onlyTheUserKindsAreKnown() {                       // v2.11.0: admin kinds belong to the BOFO Admin app
+        assertTrue(PushRules.known("dm")); assertTrue(PushRules.known("group")); assertTrue(PushRules.known("test"));
+        for (String k : new String[]{"report", "idreview", "stale", "approval", "approval_decided", "escalated", "unusual", "x", "", null})
+            assertFalse(String.valueOf(k), PushRules.known(k));
     }
 
-    @Test public void reportsAreForAdminAccountsOnly() {
-        assertTrue(PushRules.allowedFor("report", "admin"));
-        assertFalse(PushRules.allowedFor("report", "student"));
-        assertFalse(PushRules.allowedFor("report", "owner"));
-        assertFalse(PushRules.allowedFor("report", ""));       // nobody signed in / signed out
-        assertFalse(PushRules.allowedFor("report", null));
+    @Test public void adminKindsAreNeverShownWhateverTheRole() {
+        for (String k : new String[]{"report", "idreview", "stale", "approval", "escalated", "unusual"})
+            for (String r : new String[]{"student", "owner", "admin", "", null}) assertFalse(k + "/" + r, PushRules.allowedFor(k, r));
     }
 
-    @Test public void chatsNeedASignedInAccountButAnyRole() {
-        for (String r : new String[]{"student", "owner", "admin"}) {
-            assertTrue(PushRules.allowedFor("dm", r));
-            assertTrue(PushRules.allowedFor("group", r));
-        }
-        assertFalse(PushRules.allowedFor("dm", ""));
-        assertFalse(PushRules.allowedFor("group", null));
-        assertFalse(PushRules.allowedFor("nonsense", "admin"));
-    }
-
-    @Test public void channelsSplitChatsGroupsAnnouncementsAndReports() {
+    @Test public void channelsSplitChatsGroupsAndAnnouncements() {
         assertEquals(PushRules.CH_CHATS, PushRules.channel("dm", false));
         assertEquals(PushRules.CH_BOARDING, PushRules.channel("group", false));
         assertEquals(PushRules.CH_ANNOUNCE, PushRules.channel("group", true));
-        assertEquals(PushRules.CH_REPORTS, PushRules.channel("report", false));
     }
 
-    @Test public void idReviewAndStaleAreKnownAndAdminOnly() {            // v2.6.0
-        for (String k : new String[]{"idreview", "stale"}) {
-            assertTrue(PushRules.known(k));
-            assertTrue(PushRules.adminOnly(k));
-            assertTrue(PushRules.allowedFor(k, "admin"));
-            assertFalse(PushRules.allowedFor(k, "student"));
-            assertFalse(PushRules.allowedFor(k, "owner"));
-            assertFalse(PushRules.allowedFor(k, ""));
-            assertFalse(PushRules.allowedFor(k, null));
-            assertEquals(PushRules.CH_ADMIN, PushRules.channel(k, false));
+    @Test public void userKindsNeedSomeoneSignedIn() {
+        for (String r : new String[]{"student", "owner", "admin"}) {
+            assertTrue(PushRules.allowedFor("dm", r));
+            assertTrue(PushRules.allowedFor("group", r));
+            assertTrue(PushRules.allowedFor("test", r));
         }
-        assertTrue(PushRules.adminOnly("report"));
-        assertFalse(PushRules.adminOnly("dm"));
-        assertFalse(PushRules.adminOnly("group"));
-        assertFalse(PushRules.adminOnly(null));
-    }
-
-    @Test public void tapsOpenTheRightAdminTab() {                        // v2.6.0
-        assertEquals(PushRules.TAB_REPORTS, PushRules.adminTab("report", ""));
-        assertEquals(PushRules.TAB_QUEUE, PushRules.adminTab("idreview", ""));
-        assertEquals(PushRules.TAB_QUEUE, PushRules.adminTab("stale", "queue"));
-        assertEquals(PushRules.TAB_REPORTS, PushRules.adminTab("stale", "reports"));
-        assertEquals(PushRules.TAB_PAYMENTS, PushRules.adminTab("stale", "payments"));
-        assertEquals(PushRules.TAB_QUEUE, PushRules.adminTab("stale", null));      // unknown target: the Queue, never a crash
-        assertEquals(PushRules.TAB_NONE, PushRules.adminTab("dm", "reports"));
-        assertEquals(PushRules.TAB_NONE, PushRules.adminTab(null, null));
+        assertFalse(PushRules.allowedFor("dm", ""));
+        assertFalse(PushRules.allowedFor("group", null));
+        assertFalse(PushRules.allowedFor("test", ""));
     }
 
     @Test public void chatKindsAreUnchanged() {                           // v2.6.0: dm / group must keep working
@@ -76,7 +46,7 @@ public class PushRulesTest {
         assertTrue(PushRules.isOpenNow("dm", "c1", "c1", null));
         assertTrue(PushRules.isOpenNow("group", "b1", null, "b1"));
         assertFalse(PushRules.isOpenNow("dm", "c1", "c2", "c1"));       // a group id never silences a direct chat
-        assertFalse(PushRules.isOpenNow("report", "r1", "r1", "r1"));
+        assertFalse(PushRules.isOpenNow("test", "r1", "r1", "r1"));
         assertFalse(PushRules.isOpenNow("dm", "", "", ""));
         assertFalse(PushRules.isOpenNow("dm", null, null, null));
     }
@@ -103,13 +73,5 @@ public class PushRulesTest {
         assertTrue(PushRules.needsRegister("u1", "t1", now - 7L * 60 * 60 * 1000, "u1", "t1", now));   // older than 6 h
         assertFalse(PushRules.needsRegister("u1", "t1", 0, "", "t1", now));                      // signed out: nothing to register
         assertFalse(PushRules.needsRegister("u1", "t1", 0, "u1", null, now));
-    }
-
-    @Test public void testKindIsKnownAndAnyRoleMaySeeIt() {            // v2.9.2
-        assertTrue(PushRules.known("test"));
-        assertFalse(PushRules.adminOnly("test"));
-        for (String r : new String[]{"student", "owner", "admin"}) assertTrue(PushRules.allowedFor("test", r));
-        assertFalse(PushRules.allowedFor("test", ""));
-        assertEquals(PushRules.CH_CHATS, PushRules.channel("test", false));
     }
 }

@@ -11,19 +11,6 @@
         android:clipChildren="false"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/admin_banner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/bofo_amber_wash"
-            android:gravity="center"
-            android:minHeight="32dp"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="6dp"
-            android:textColor="@color/bofo_text"
-            android:textSize="13sp"
-            android:visibility="gone" />
-
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/tab_container"
             android:layout_width="match_parent"

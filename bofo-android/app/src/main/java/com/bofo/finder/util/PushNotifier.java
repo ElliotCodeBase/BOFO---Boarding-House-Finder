@@ -24,7 +24,6 @@ import java.util.Map;
 /**
  * v2.3.0: draws the phone notification for a push (called by BofoMessagingService, also while the app is closed).
  * One notification per chat that grows with the newest messages (MessagingStyle); tap = open that chat (see ui/PushRouter).
- * Report pushes are lock-screen safe (private; the public version only says "New report").
  */
 public final class PushNotifier {
     private PushNotifier() {}
@@ -32,23 +31,16 @@ public final class PushNotifier {
     public static final String ACTION_OPEN = "com.bofo.finder.OPEN_PUSH";
     public static final String EX_KIND = "push_kind", EX_ID = "push_id", EX_TITLE = "push_title", EX_PLACE = "push_place";
 
-    /** The channels every account may get. The admin Reports channel is only created when a report push really arrives. */
+    /** The channels every account may get. Also removes the two old admin channels (v2.11.0: admin pushes live in the BOFO Admin app). */
     public static void createCommonChannels(Context ctx) {
         try {
             NotificationManagerCompat nm = NotificationManagerCompat.from(ctx);
             nm.createNotificationChannel(channel(ctx, PushRules.CH_CHATS, R.string.push_channel_chats, R.string.push_channel_chats_desc));
             nm.createNotificationChannel(channel(ctx, PushRules.CH_BOARDING, R.string.push_channel_boarding, R.string.push_channel_boarding_desc));
             nm.createNotificationChannel(channel(ctx, PushRules.CH_ANNOUNCE, R.string.push_channel_announce, R.string.push_channel_announce_desc));
+            nm.deleteNotificationChannel(PushRules.OLD_CH_REPORTS);
+            nm.deleteNotificationChannel(PushRules.OLD_CH_ADMIN);
         } catch (Throwable ignored) { /* channels are re-created on the next push */ }
-    }
-
-    /** v2.6.0: the admin channels (Reports, ID reviews + reminders). Called when an admin signs in (PushService.syncAsync) and again before an admin push is drawn. */
-    public static void createAdminChannels(Context ctx) {
-        try {
-            NotificationManagerCompat nm = NotificationManagerCompat.from(ctx);
-            nm.createNotificationChannel(channel(ctx, PushRules.CH_REPORTS, R.string.push_channel_reports, R.string.push_channel_reports_desc));
-            nm.createNotificationChannel(channel(ctx, PushRules.CH_ADMIN, R.string.push_channel_admin, R.string.push_channel_admin_desc));
-        } catch (Throwable ignored) { /* re-created on the next admin push */ }
     }
 
     private static NotificationChannelCompat channel(Context ctx, String id, int name, int desc) {
@@ -65,7 +57,7 @@ public final class PushNotifier {
         final String kind = d.get("kind"), id = d.get("id");
         if (id == null || id.isEmpty()) { dropped("no id"); return; }
         // v2.9.2: the saved role is only written after the first successful sync. A signed-in phone whose role is not saved yet used to drop EVERY push
-        // silently. Now such a phone still shows chats (admin pushes still need the saved "admin" role).
+        // silently. Now such a phone still shows chats.
         String role = PushService.role(app);
         if (role.isEmpty() && AuthService.get().hasSession()) role = "signed-in";
         if (!PushRules.allowedFor(kind, role)) { dropped("kind=" + kind + " not allowed for role '" + role + "' (empty = nobody signed in)"); return; }
@@ -74,9 +66,8 @@ public final class PushNotifier {
         if (!nm.areNotificationsEnabled()) { dropped("notifications are off for BOFO in the phone settings"); return; }
 
         final boolean ann = "1".equals(d.get("ann"));
-        final boolean report = PushRules.adminOnly(kind);          // v2.6.0: report, idreview and stale all use the lock-screen-safe layout
         final String chan = PushRules.channel(kind, ann);
-        if (report) createAdminChannels(app); else createCommonChannels(app);
+        createCommonChannels(app);
 
         final String tag = PushRules.tag(kind, id);
         final String title = nz(d.get("title")), body = PushRules.preview(d.get("body"), 140), place = nz(d.get("place")), sender = nz(d.get("sender"));
@@ -93,17 +84,8 @@ public final class PushNotifier {
                 .setContentIntent(pi).setAutoCancel(true).setWhen(now).setShowWhen(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
-        if (report) {
-            // Admin pushes (report / idreview / stale): only the type or a count shows on a locked screen; the server never sends names or ID data.
-            Notification pub = new NotificationCompat.Builder(app, chan).setSmallIcon(R.drawable.ic_stat_bofo)
-                    .setContentTitle(app.getString(R.string.app_name)).setContentText(title).build();
-            b.setContentTitle(title).setContentText(body).setStyle(new NotificationCompat.BigTextStyle().bigText(body))
-                    .setCategory(NotificationCompat.CATEGORY_STATUS)
-                    .setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPublicVersion(pub);
-        } else {
-            b.setCategory(NotificationCompat.CATEGORY_MESSAGE).setStyle(messageStyle(app, tag, PushRules.GROUP.equals(kind), title, sender.isEmpty() ? title : sender, ann ? "\uD83D\uDCCC " + body : body, now));
-            if (PushRules.DM.equals(kind) && !place.isEmpty()) b.setSubText(place);
-        }
+        b.setCategory(NotificationCompat.CATEGORY_MESSAGE).setStyle(messageStyle(app, tag, PushRules.GROUP.equals(kind), title, sender.isEmpty() ? title : sender, ann ? "\uD83D\uDCCC " + body : body, now));
+        if (PushRules.DM.equals(kind) && !place.isEmpty()) b.setSubText(place);
         try { nm.notify(tag, PushRules.NOTIFICATION_ID, b.build()); } catch (SecurityException noPermission) { /* Android 13+: permission was taken away */ }
     }
 

@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- v2.9.8: rounded tile behind a card icon. Needs-action cards tint it to the accent colour in code. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/bofo_tile" />
-    <corners android:radius="12dp" />
-</shape>

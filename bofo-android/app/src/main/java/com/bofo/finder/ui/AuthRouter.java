@@ -25,7 +25,7 @@ public final class AuthRouter {
     /** Role of the signed-in user, set by {@link #route} (the shell picks its tabs from it). */
     public static volatile com.bofo.finder.model.Role role = com.bofo.finder.model.Role.STUDENT;
 
-    /** v2.0.120: the role the server gave this account. {@link #role} is what the screens show; an admin can view the app as student or owner (Settings), this never changes. */
+    /** v2.0.120: the role the server gave this account. {@link #role} is what the screens show. v2.11.0: an admin account opens this app as a plain student (the admin tools live only in the BOFO Admin app); this never changes. */
     public static volatile com.bofo.finder.model.Role realRole = com.bofo.finder.model.Role.STUDENT;
 
     /** v2.1.8: set by {@link #route} when the account is suspended (shown on the suspended screen). */
@@ -39,16 +39,11 @@ public final class AuthRouter {
     public static void reset() {
         role = com.bofo.finder.model.Role.STUDENT;
         realRole = com.bofo.finder.model.Role.STUDENT;
-        mfaPrompt = false;
         PushRouter.clear();                       // v2.3.0: a notification tap waiting for the previous account
         suspendedUntil = "";
         suspendedReason = "";
         bannedReason = "";
     }
-
-    /** v2.0.119: true when the shell should open the admin two-step code sheet once. */
-    private static volatile boolean mfaPrompt;
-    static boolean takeMfaPrompt() { boolean p = mfaPrompt; mfaPrompt = false; return p; }
 
     /** A bofo://auth-callback link that arrived before the screens were ready (cold start). The splash picks it up. */
     private static volatile String pendingLink;
@@ -62,11 +57,11 @@ public final class AuthRouter {
             try {
                 Profile p = new ProfileService().fetchMe();
                 if (p == null) return R.id.action_global_role;
-                role = p.role();
-                realRole = role;
+                realRole = p.role();
+                role = realRole == com.bofo.finder.model.Role.ADMIN ? com.bofo.finder.model.Role.STUDENT : realRole;      // v2.11.0: no admin screens in this app
                 // v2.1.8: a suspended account sees only the suspended screen until the end time passes. Fails open: if the check itself
                 // fails (offline, migration 022 not applied) the user is routed as before; the database still blocks writes.
-                if (role != com.bofo.finder.model.Role.ADMIN) {
+                if (realRole != com.bofo.finder.model.Role.ADMIN) {
                     try {
                         org.json.JSONObject sus = SupabaseClient.get().rpc("my_suspension", new org.json.JSONObject());
                         // v2.1.9: a banned account sees only the banned screen (sign out is the one thing it can do)
@@ -82,10 +77,6 @@ public final class AuthRouter {
                     } catch (Exception ex) {
                         if (ex instanceof SupabaseClient.ApiException api && api.status == 401) throw api;
                     }
-                }
-                // v2.0.119: an admin with an authenticator who has not typed the code in this sign-in gets the code sheet when the shell opens
-                if (role == com.bofo.finder.model.Role.ADMIN) {
-                    try { mfaPrompt = !a.mfaVerifiedFactor().isEmpty() && !"aal2".equals(a.aal()); } catch (Exception ignored) { mfaPrompt = false; }
                 }
                 if (!ProfileService.isComplete(p)) return R.id.action_global_setup;
                 return R.id.action_global_shell;

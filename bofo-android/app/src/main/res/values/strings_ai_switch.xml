@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- v2.3.2: admin switch for the BOFO AI -->
-    <string name="ai_switch_title">BOFO AI for users</string>
-    <string name="ai_switch_now_on">BOFO AI is ON for students and owners</string>
-    <string name="ai_switch_now_off">BOFO AI is OFF and hidden for students and owners</string>
-</resources>

@@ -18,8 +18,6 @@ public final class AppPrefs {
     private static final String K_ANN_TONE = "announce_tone";
     private static final String K_ANN_LENGTH = "announce_length";
     private static final String K_ANN_EMOJI = "announce_emoji";
-    private static final String K_ADMIN_LOCK = "admin_auto_lock";
-    private static final String K_ADMIN_STOPPED = "admin_stopped_at";
     private static final int VIEWED_MAX = 200;
 
     private static SharedPreferences sp(Context c) { return c.getApplicationContext().getSharedPreferences(FILE, Context.MODE_PRIVATE); }
@@ -33,14 +31,7 @@ public final class AppPrefs {
     /** v2.0.117: Settings > "Orange theme". true = orange look (AppCompatDelegate MODE_NIGHT_YES is only the switch), false = classic purple. Default on. See {@link ThemeMode}. */
     public static boolean orangeTheme(Context c) { return sp(c).getBoolean(K_ORANGE, true); }
     public static void setOrangeTheme(Context c, boolean on) { sp(c).edit().putBoolean(K_ORANGE, on).apply(); }
-    /** v2.3.0: Settings > "Notifications". Phone notifications for chats, group chats and (admins) reports. Default on; off removes this phone from the server. */
-    /** v2.9.0: admin only: lock the admin tools after 5 minutes in the background (default on). */
-    public static boolean adminAutoLock(Context c) { return sp(c).getBoolean(K_ADMIN_LOCK, true); }
-    public static void setAdminAutoLock(Context c, boolean on) { sp(c).edit().putBoolean(K_ADMIN_LOCK, on).apply(); }
-    /** When the app last went to the background (ms), 0 = none. Cleared on sign-out (AppPrefs.clear) and after a successful unlock. */
-    public static long adminStoppedAt(Context c) { return sp(c).getLong(K_ADMIN_STOPPED, 0L); }
-    public static void setAdminStoppedAt(Context c, long ms) { sp(c).edit().putLong(K_ADMIN_STOPPED, ms).apply(); }
-
+    /** v2.3.0: Settings > "Notifications". Phone notifications for chats and group chats. Default on; off removes this phone from the server. */
     public static boolean pushEnabled(Context c) { return sp(c).getBoolean(K_PUSH, true); }
     public static void setPushEnabled(Context c, boolean on) { sp(c).edit().putBoolean(K_PUSH, on).apply(); }
     /**

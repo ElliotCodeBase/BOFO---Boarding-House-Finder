@@ -142,57 +142,6 @@
                     android:text="@string/profile_settings"
                     android:textColor="@color/bofo_text"
                     android:textSize="15sp" />
-                <!-- v2.0.91 AI Chats monitor: hidden; ProfileFragment shows it for an admin while the switch is on. REMOVE with the feature (REMOVE_AI_CHATS.md). -->
-                <TextView
-                    android:id="@+id/ai_chats_open"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
-                    android:drawablePadding="14dp"
-                    android:drawableStart="@drawable/ic_set_chat"
-                    android:drawableEnd="@drawable/ic_chevron_right"
-                    android:gravity="center_vertical"
-                    android:minHeight="60dp"
-                    android:paddingStart="2dp"
-                    android:paddingEnd="2dp"
-                    android:text="@string/ai_chats_open"
-                    android:textColor="@color/bofo_text"
-                    android:textSize="15sp"
-                    android:visibility="gone" />
-                <!-- v2.1.3 "Needs attention": hidden; ProfileFragment shows it for an admin. -->
-                <TextView
-                    android:id="@+id/ai_unanswered_open"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
-                    android:drawablePadding="14dp"
-                    android:drawableStart="@drawable/ic_set_eye"
-                    android:drawableEnd="@drawable/ic_chevron_right"
-                    android:gravity="center_vertical"
-                    android:minHeight="60dp"
-                    android:paddingStart="2dp"
-                    android:paddingEnd="2dp"
-                    android:text="@string/ai_un_open"
-                    android:textColor="@color/bofo_text"
-                    android:textSize="15sp"
-                    android:visibility="gone" />
-                <!-- v2.1.9 "Banned users": hidden; ProfileFragment shows it for an admin. -->
-                <TextView
-                    android:id="@+id/banned_users_open"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
-                    android:drawablePadding="14dp"
-                    android:drawableStart="@drawable/ic_set_shield"
-                    android:drawableEnd="@drawable/ic_chevron_right"
-                    android:gravity="center_vertical"
-                    android:minHeight="60dp"
-                    android:paddingStart="2dp"
-                    android:paddingEnd="2dp"
-                    android:text="@string/ban_list_open"
-                    android:textColor="@color/bofo_text"
-                    android:textSize="15sp"
-                    android:visibility="gone" />
         </LinearLayout>
 
         <View

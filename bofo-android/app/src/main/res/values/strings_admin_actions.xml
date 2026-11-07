@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="act_undo">Undo</string>
-    <string name="act_open">Open</string>
-    <string name="act_reject_quick">Reject...</string>
-    <string name="act_ban_undone">Ban undone. The account can sign in again. Places that were taken down stay down.</string>
-    <string name="act_takedown_confirm">\"%1$s\" will disappear from BOFO for students.\n\nThis cannot be undone from the app.\nReason: %2$s</string>
-    <string name="act_refund_confirm">Mark %1$s from %2$s as refunded?\n\nTheir boost ends now. The money itself must still be returned in PayMongo.\nReason: %3$s</string>
 </resources>

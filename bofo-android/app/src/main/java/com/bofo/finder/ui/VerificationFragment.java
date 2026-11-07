@@ -254,6 +254,19 @@ public class VerificationFragment extends Fragment {
         b.errors.setVisibility(View.VISIBLE);
     }
 
+    /** v2.11.0 (S-08): the ID and selfie screen cannot be screenshotted, screen-recorded or shown in the recents thumbnail. */
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getActivity() != null) getActivity().getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+    }
+
+    @Override
+    public void onPause() {
+        if (getActivity() != null) getActivity().getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+        super.onPause();
+    }
+
     @Override
     public void onDestroyView() {
         token++;
