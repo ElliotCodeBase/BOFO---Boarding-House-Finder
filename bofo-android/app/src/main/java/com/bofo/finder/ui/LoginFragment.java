@@ -162,7 +162,8 @@ public class LoginFragment extends Fragment {
         if (!AppConfig.googleNative()) { message(getString(R.string.login_google_missing)); return; }
         setBusy(true); message(null);
         CredentialManager cm = CredentialManager.create(requireContext());
-        GetSignInWithGoogleOption opt = new GetSignInWithGoogleOption.Builder(AppConfig.googleWebClientId()).build();
+        final String rawNonce = com.bofo.finder.util.Nonce.newRaw();      // v2.12.1 (S-07): Google gets the SHA-256, Supabase the raw value
+        GetSignInWithGoogleOption opt = new GetSignInWithGoogleOption.Builder(AppConfig.googleWebClientId()).setNonce(com.bofo.finder.util.Nonce.sha256Hex(rawNonce)).build();
         GetCredentialRequest req = new GetCredentialRequest.Builder().addCredentialOption(opt).build();
         cm.getCredentialAsync(requireActivity(), req, new CancellationSignal(), ContextCompat.getMainExecutor(requireContext()),
                 new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
@@ -172,7 +173,7 @@ public class LoginFragment extends Fragment {
                         if (c instanceof CustomCredential && GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(c.getType())) {
                             try {
                                 final String idToken = GoogleIdTokenCredential.createFrom(c.getData()).getIdToken();
-                                Async.run(() -> { AuthService.get().signInGoogleIdToken(idToken); return Boolean.TRUE; },
+                                Async.run(() -> { AuthService.get().signInGoogleIdToken(idToken, rawNonce); return Boolean.TRUE; },
                                         ok -> signedIn(), e -> fail("Google sign-in failed", e));
                             } catch (Exception e) { fail("Google sign-in failed", e); }
                         } else {

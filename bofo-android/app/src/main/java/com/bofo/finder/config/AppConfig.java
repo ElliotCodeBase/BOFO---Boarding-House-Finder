@@ -37,6 +37,7 @@ public final class AppConfig {
     /** DEBUG builds only: test account for a role ("student" | "owner" | "admin") from dev.<role>.email / .password in the desktop
      *  config.local.properties (same accounts as the JavaFX buttons). Release builds have these empty. */
     public static String devEmail(String role) {
+        if (!BuildConfig.DEBUG) return "";          // v2.12.1 (S-04): release builds never use test logins, whatever the build config holds
         switch (role) {
             case "student": return BuildConfig.DEV_STUDENT_EMAIL.trim();
             case "owner":   return BuildConfig.DEV_OWNER_EMAIL.trim();
@@ -45,6 +46,7 @@ public final class AppConfig {
         }
     }
     public static String devPassword(String role) {
+        if (!BuildConfig.DEBUG) return "";
         switch (role) {
             case "student": return BuildConfig.DEV_STUDENT_PASSWORD.trim();
             case "owner":   return BuildConfig.DEV_OWNER_PASSWORD.trim();

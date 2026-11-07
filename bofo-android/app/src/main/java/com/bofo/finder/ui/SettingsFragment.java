@@ -11,7 +11,20 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
+import android.os.CancellationSignal;
+import androidx.core.content.ContextCompat;
+import androidx.credentials.Credential;
+import androidx.credentials.CredentialManager;
+import androidx.credentials.CredentialManagerCallback;
+import androidx.credentials.CustomCredential;
+import androidx.credentials.GetCredentialRequest;
+import androidx.credentials.GetCredentialResponse;
+import androidx.credentials.exceptions.GetCredentialException;
 import com.bofo.finder.BuildConfig;
+import com.bofo.finder.config.AppConfig;
+import com.bofo.finder.util.Nonce;
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 import com.bofo.finder.R;
 import com.bofo.finder.databinding.FragmentSettingsBinding;
 import com.bofo.finder.model.Profile;
@@ -61,7 +74,7 @@ public class SettingsFragment extends Fragment {
                 .setTitle(R.string.settings_delete)
                 .setMessage(R.string.settings_delete_ask)
                 .setNegativeButton(R.string.common_cancel, null)
-                .setPositiveButton(R.string.settings_delete_confirm, (d, w) -> deleteAccount())
+                .setPositiveButton(R.string.settings_delete_confirm, (d, w) -> reauthThenDelete())
                 .show());
         applyRole();
         Async.run(() -> new ProfileService().fetchMe(), (Profile p) -> {
@@ -173,6 +186,48 @@ public class SettingsFragment extends Fragment {
             AuthRouter.reset();                       // v2.0.126: the next account must not inherit this role
             AuthRouter.go(nav, R.id.action_global_login);
         }, e -> message(ErrorText.full("Could not sign out", e)));
+    }
+
+    /** v2.12.1 (S-14): a stolen or borrowed unlocked phone must not be able to delete the account. Google accounts sign in with Google again; others get an e-mail code. */
+    private void reauthThenDelete() {
+        if ("google".equals(AuthService.get().provider()) && AppConfig.googleNative()) reauthWithGoogle(); else reauthWithEmailCode();
+    }
+
+    private void reauthWithGoogle() {
+        final String raw = Nonce.newRaw();
+        GetSignInWithGoogleOption opt = new GetSignInWithGoogleOption.Builder(AppConfig.googleWebClientId()).setNonce(Nonce.sha256Hex(raw)).build();
+        GetCredentialRequest req = new GetCredentialRequest.Builder().addCredentialOption(opt).build();
+        CredentialManager.create(requireContext()).getCredentialAsync(requireActivity(), req, new CancellationSignal(), ContextCompat.getMainExecutor(requireContext()),
+                new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
+                    @Override public void onResult(GetCredentialResponse r) {
+                        if (b == null) return;
+                        Credential c = r.getCredential();
+                        if (!(c instanceof CustomCredential) || !GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(c.getType())) { message("Google did not confirm. Nothing was deleted."); return; }
+                        try {
+                            final String idToken = GoogleIdTokenCredential.createFrom(c.getData()).getIdToken();
+                            Async.run(() -> { AuthService.get().reauthGoogle(idToken, raw); return Boolean.TRUE; }, ok -> deleteAccount(), e -> message(ErrorText.full("Could not confirm it is you", e)));
+                        } catch (Exception e) { message(ErrorText.full("Could not confirm it is you", e)); }
+                    }
+                    @Override public void onError(@NonNull GetCredentialException e) { if (b != null) message("Not confirmed. Nothing was deleted."); }
+                });
+    }
+
+    private void reauthWithEmailCode() {
+        Async.run(() -> { AuthService.get().sendReauthCode(); return Boolean.TRUE; }, ok -> {
+            if (b == null) return;
+            final android.widget.EditText in = new android.widget.EditText(requireContext());
+            in.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+            in.setHint(R.string.settings_delete_code_hint);
+            new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.settings_delete_code_title)
+                    .setMessage(R.string.settings_delete_code_msg)
+                    .setView(in)
+                    .setNegativeButton(R.string.common_cancel, null)
+                    .setPositiveButton(R.string.settings_delete_confirm, (d, w) -> {
+                        final String code = in.getText().toString();
+                        Async.run(() -> { AuthService.get().reauthEmailCode(code); return Boolean.TRUE; }, ok2 -> deleteAccount(), e -> message(ErrorText.full("Could not confirm it is you", e)));
+                    }).show();
+        }, e -> message(ErrorText.full("Could not send the code", e)));
     }
 
     private void deleteAccount() {

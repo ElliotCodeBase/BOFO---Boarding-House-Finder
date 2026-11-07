@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.bofo.finder.config.AppConfig;
+import com.bofo.finder.util.ReauthRules;
 import com.bofo.finder.util.AuthLinks;
 import com.bofo.finder.util.Cache;
 import com.bofo.finder.util.Connectivity;
@@ -122,6 +123,7 @@ public final class AuthService {
     /** DEBUG builds only (the "force login" buttons): real password sign-in with the test account of a role. It is a genuine session
      *  (real JWT), so RLS, favorites, chat, listings and storage all work, exactly like the JavaFX dev buttons. */
     public void devSignIn(com.bofo.finder.model.Role role) throws Exception {
+        if (!com.bofo.finder.BuildConfig.DEBUG) throw new IllegalStateException("Test logins exist only in debug builds.");   // v2.12.1 (S-04): hard gate
         String r = role.db(), mail = AppConfig.devEmail(r), pw = AppConfig.devPassword(r);
         if (mail.isEmpty() || pw.isEmpty())
             throw new IllegalStateException("No dev." + r + ".email / dev." + r + ".password in src/main/resources/com/bofo/finder/config.local.properties (then Sync Gradle and run a DEBUG build).");
@@ -137,10 +139,38 @@ public final class AuthService {
     }
 
     /** Google ID token from the Credential Manager (native sheet). */
-    public void signInGoogleIdToken(String idToken) throws Exception {
-        JSONObject r = SupabaseClient.get().authPost("token?grant_type=id_token", new JSONObject().put("provider", "google").put("id_token", idToken));
+    public void signInGoogleIdToken(String idToken, String rawNonce) throws Exception {
+        JSONObject r = SupabaseClient.get().authPost("token?grant_type=id_token", new JSONObject().put("provider", "google").put("id_token", idToken).put("nonce", rawNonce));
         provider = "google";
         apply(r, true);
+    }
+
+    /* ---------- v2.12.1 (S-14): prove it is you again before the account is deleted ---------- */
+    /** Fresh Google sign-in (with a nonce). Only accepted when it is the SAME account; otherwise the current session is left alone. */
+    public void reauthGoogle(String idToken, String rawNonce) throws Exception {
+        JSONObject r = SupabaseClient.get().authPost("token?grant_type=id_token", new JSONObject().put("provider", "google").put("id_token", idToken).put("nonce", rawNonce));
+        requireSameAccount(r);
+        apply(r, true);
+    }
+
+    /** Sends a one-time code to the signed-in account's own e-mail address (never creates an account). */
+    public void sendReauthCode() throws Exception {
+        if (email().isEmpty()) throw new IllegalStateException("This account has no e-mail address to send a code to.");
+        SupabaseClient.get().authPost("otp", new JSONObject().put("email", email()).put("create_user", false));
+    }
+
+    public void reauthEmailCode(String code) throws Exception {
+        String c = ReauthRules.cleanCode(code);
+        if (c == null) throw new IllegalArgumentException("Type the 6 to 8 digit code from the e-mail.");
+        JSONObject r = SupabaseClient.get().authPost("verify", new JSONObject().put("type", "email").put("email", email()).put("token", c));
+        requireSameAccount(r);
+        apply(r, true);
+    }
+
+    private void requireSameAccount(JSONObject r) {
+        JSONObject u = r.optJSONObject("user");
+        String id = u == null ? "" : u.optString("id", "");
+        if (!ReauthRules.sameAccount(userId, id)) throw new IllegalStateException("That sign-in belongs to a different account. Nothing was deleted.");
     }
 
     /** Google in the browser: returns the URL to open and remembers the PKCE verifier (it survives the app being killed meanwhile). */

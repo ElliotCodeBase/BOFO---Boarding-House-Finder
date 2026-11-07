@@ -117,6 +117,9 @@
     <string name="settings_delete">Delete my account</string>
     <string name="settings_delete_ask">This permanently deletes your account, profile, chats and listings. It cannot be undone.</string>
     <string name="settings_delete_confirm">Delete forever</string>
+    <string name="settings_delete_code_title">Confirm it is you</string>
+    <string name="settings_delete_code_msg">We sent a code to your e-mail. Type it to delete the account.</string>
+    <string name="settings_delete_code_hint">Code from the e-mail</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_close">Close</string>
 
