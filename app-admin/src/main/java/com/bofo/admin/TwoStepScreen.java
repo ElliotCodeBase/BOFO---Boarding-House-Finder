@@ -26,7 +26,7 @@ final class TwoStepScreen extends FrameLayout {
         status();
     }
 
-    @Override protected void onVisibilityAggregated(boolean isVisible) { super.onVisibilityAggregated(isVisible); act.keyVisible(isVisible); }
+    @Override public void onVisibilityAggregated(boolean isVisible) { super.onVisibilityAggregated(isVisible); act.keyVisible(isVisible); }
 
     private void status() {
         col.removeAllViews();
