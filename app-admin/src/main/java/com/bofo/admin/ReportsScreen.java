@@ -63,12 +63,13 @@ final class ReportsScreen extends FrameLayout {
         LinearLayout chips = Ui.row(c);
         for (int i = 0; i < CHIPS.length; i++) {
             final int k = i;
-            android.widget.Button b = Ui.button(c, CHIPS[i], chip == i);
+            android.widget.Button b = Ui.chip(c, CHIPS[i], chip == i);
             b.setOnClickListener(v -> { chip = k; load(); });
             chips.addView(b);
         }
         if (person != null) { android.widget.Button all = Ui.button(c, "Show everyone", false); all.setOnClickListener(v -> { person = null; load(); }); chips.addView(all); }
-        list.addView(chips);
+        android.widget.HorizontalScrollView chipScroll = new android.widget.HorizontalScrollView(c); chipScroll.setHorizontalScrollBarEnabled(false); chipScroll.addView(chips);
+        list.addView(chipScroll);
         JSONArray shown = new JSONArray();
         for (int i = 0; i < rows.length(); i++) {
             JSONObject o = rows.optJSONObject(i); if (o == null) continue;
@@ -101,7 +102,7 @@ final class ReportsScreen extends FrameLayout {
             JSONObject other = markOf(g, false);
             if (other != null) card.addView(Ui.text(c, QueueRules.claimLine(Marks.str(other, "claimed_by_name")), R.style.Text_Bofo_Caption));
         } else card.addView(Ui.pill(c, "Answered: " + (x.isNull("action") ? x.optString("status") : x.optString("action")), R.color.bofo_success, R.color.bofo_success_tint));
-        card.setOnClickListener(v -> detail(g));
+        Ui.asButton(card); card.setOnClickListener(v -> detail(g));
         return card;
     }
 

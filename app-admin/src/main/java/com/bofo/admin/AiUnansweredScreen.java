@@ -63,7 +63,7 @@ final class AiUnansweredScreen extends FrameLayout {
         android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(c); hs.setHorizontalScrollBarEnabled(false); hs.addView(chips);
         for (Reason r : Reason.values()) {
             String n = r == Reason.ALL || filter != Reason.ALL ? "" : " (" + counts.get(r) + ")";
-            android.widget.Button b = Ui.button(c, label(r) + n, r == filter);
+            android.widget.Button b = Ui.chip(c, label(r) + n, r == filter);
             b.setOnClickListener(v -> { filter = r; load(); });
             chips.addView(b);
         }

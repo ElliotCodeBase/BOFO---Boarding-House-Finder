@@ -1,3 +1,6 @@
+# v2.12.5 - Database fix: Approvals tab error "UPDATE is not allowed in a non-volatile function"
+- `admin_approvals_list()` is no longer marked STABLE (migration 047, applied live; 039 corrected). Scanned all live functions: no other stable function writes. Both apps 2.12.5 / 21205.
+
 # v2.12.4 - BOFO Admin: tabs no longer blank out and reload on every tap
 - Each tab keeps its screen alive (show / hide); a tab is rebuilt after 3 minutes, when More is reopened, or when a push opens it. Home loads its 9 numbers at the same time instead of one after another. Both apps 2.12.4 / 21204. Not compiled or run on a phone.
 

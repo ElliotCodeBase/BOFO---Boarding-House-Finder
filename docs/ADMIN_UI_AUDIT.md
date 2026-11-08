@@ -42,3 +42,21 @@ Not done: moderator role split (needs migration 035 and the owner's OK), Approve
 - Banned users search is still a plain contains-match.
 - Bulk approve and saved own reject templates were never built.
 - An admin account that opens BOFO Finder sees a plain student app with no hint to use the Admin app.
+
+## Stage 5 result (v2.12.2) - fixed in code, NOT run with TalkBack on a device
+| Item | Status | Where |
+|------|--------|-------|
+| Icon buttons without label | Nothing to fix: the admin app has no icon-only buttons. Bottom tabs use text titles; the only image (`IdScreen`) has a description | READ |
+| Headings for TalkBack navigation | Fixed: Title and Section texts are headings | `Ui.text` |
+| Tappable cards read as plain text | Fixed: announced as buttons | `Ui.asButton` (Appeals, IDs, More, Payments, Reports, Team, Export) |
+| Filter chips: selected state only by colour | Fixed: "Selected / Not selected" spoken | `Ui.chip` (Reports, Appeals, AI chats, AI needs attention) |
+| Touch targets under 48 dp | Fixed: every button is at least 48 dp tall. Cards are larger | `Ui.button` |
+| Long-press only action (delete saved reply) | Fixed: also a TalkBack custom action | `IdScreen.fillChips` |
+| Screen change not announced (login, no access, locked, two-step) | Fixed: pane title from the first heading | `MainActivity.show` |
+| State changes (approved, rejected, banned, locked) | Already spoken: every one shows a Toast or Snackbar, which TalkBack reads. Not heard on a device | READ |
+| Text contrast | Fixed: success on tint 3.60 to 5.63, error on tint 3.97 to 5.67, error on bg 4.27 to 6.11 (admin `colors.xml`); all 12 used pairs now 4.5+ | `tools/verify/check_a11y.py` RAN |
+| Large font clips button rows | Fixed: ID review and Approvals buttons stack at font scale 1.3+; Reports chips scroll sideways. Other rows already wrap or scroll | `Ui.actions` |
+| Focus order | Not changed: views are added top to bottom, so reading order = visual order. Not heard on a device | READ |
+| Sub-screens in More: focus stays on the card after opening one | NOT fixed (backlog): needs a focus move to the new screen's first heading | `MoreScreen.sub` |
+| 320 dp wide phone, long names in Team / Appeals | NOT checked (needs a device) | sheet row A6 |
+| Banned users search is a plain contains-match; bulk approve; saved reject templates | NOT done (features, not accessibility) | |

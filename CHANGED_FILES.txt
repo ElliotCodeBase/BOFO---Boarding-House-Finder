@@ -1,6 +1,6 @@
 changed	app-admin/build.gradle
 changed	bofo-android/app/build.gradle
-changed	app-admin/src/main/java/com/bofo/admin/MainActivity.java
-changed	app-admin/src/main/java/com/bofo/admin/HomeScreen.java
+changed	supabase/migrations/039_admin_roles.sql
+new	supabase/migrations/047_fix_approvals_list_volatile.sql
 changed	CHANGES_ANDROID.md
 changed	HANDOFF_ANDROID.md

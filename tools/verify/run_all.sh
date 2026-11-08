@@ -6,3 +6,4 @@ python3 tools/verify/check_calls.py
 sh tools/verify/javac_pass.sh
 python3 tools/verify/check_sql.py   # Stage 2 (needs: pip install pglast)
 python3 tools/verify/check_release_dev.py   # Stage 4 (S-04)
+python3 tools/verify/check_a11y.py   # Stage 5 (admin accessibility + contrast)

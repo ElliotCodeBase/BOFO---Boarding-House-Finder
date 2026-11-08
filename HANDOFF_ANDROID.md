@@ -1,3 +1,5 @@
+# Handoff (Android) - v2.12.5: migration 047 (applied live) fixes the Approvals list
+
 # Handoff (Android) - v2.12.4: Admin tab switching
 - `MainActivity.open` caches one view per tab (`tabs`, `tabBuilt`, 3 min); `HomeScreen.load` runs its counts in parallel on `Async.fanout()`. Database 033-044 + 046 are applied live (045 and 014 are NOT); owner = jorenemencianomendez@gmail.com.
 
