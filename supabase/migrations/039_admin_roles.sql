@@ -581,7 +581,7 @@ begin
 end $$;
 
 create or replace function public.admin_approvals_list() returns setof public.admin_approvals
-language plpgsql stable security definer set search_path = public as $$
+language plpgsql security definer set search_path = public as $$
 begin
   if not (public.has_permission('approvals_decide') or public.has_permission('approvals_request')) then raise exception 'admins only' using errcode = '42501'; end if;
   update public.admin_approvals set status = 'expired' where status = 'pending' and expires_at <= now();
