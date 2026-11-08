@@ -1,3 +1,6 @@
+# Handoff (Android) - v2.12.4: Admin tab switching
+- `MainActivity.open` caches one view per tab (`tabs`, `tabBuilt`, 3 min); `HomeScreen.load` runs its counts in parallel on `Async.fanout()`. Database 033-044 + 046 are applied live (045 and 014 are NOT); owner = jorenemencianomendez@gmail.com.
+
 # Handoff (Android) - v2.12.3: Admin Google sign-in error shows the reason
 - If the Admin sign-in fails, the toast now names the exception and the installed package (`com.bofo.admin` or `.debug`). Fix is in Google Cloud: an Android OAuth client per package with the signing key SHA-1 (`gradlew :app-admin:signingReport`). Then continue with Stage 6.
 

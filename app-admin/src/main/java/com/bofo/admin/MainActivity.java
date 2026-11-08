@@ -47,7 +47,12 @@ public final class MainActivity extends AppCompatActivity {
     private boolean locked;
     private String loginNote = "";
     private FrameLayout body0; private BottomNavigationView nav0;
-    void showMore() { if (body0 != null) open(body0, 4); }
+    /** One live screen per tab: switching tabs only shows / hides it, so nothing is thrown away and reloaded. A tab older than 3 minutes is rebuilt when opened again. */
+    private final android.util.SparseArray<View> tabs = new android.util.SparseArray<>();
+    private final android.util.SparseArray<Long> tabBuilt = new android.util.SparseArray<>();
+    private static final long TAB_MAX_AGE_MS = 3 * 60 * 1000L;
+    void showMore() { if (body0 != null) { dropTab(4); open(body0, 4); } }
+    private void dropTab(int tab) { View old = tabs.get(tab); if (old != null && body0 != null) body0.removeView(old); tabs.remove(tab); tabBuilt.remove(tab); }
     private int pendingTab = PushRules.TAB_NONE;      // a notification tap waiting for the shell to be on screen
     private boolean askedNotifications;
 
@@ -81,7 +86,10 @@ public final class MainActivity extends AppCompatActivity {
     private void applyPendingTab() {
         int t = pendingTab; pendingTab = PushRules.TAB_NONE;
         if (t == PushRules.TAB_NONE || nav0 == null) return;
-        if (nav0.getMenu().findItem(t) != null) nav0.setSelectedItemId(t);      // a tab this role does not have is simply not there
+        if (nav0.getMenu().findItem(t) != null) {                                // a tab this role does not have is simply not there
+            dropTab(t);                                                         // a push means something new is waiting: load that tab fresh
+            if (nav0.getSelectedItemId() == t) open(body0, t); else nav0.setSelectedItemId(t);
+        }
     }
 
     /** Android 13+: without this the phone never shows our notifications. Asked once per run, only after a staff account is confirmed. */
@@ -271,7 +279,7 @@ public final class MainActivity extends AppCompatActivity {
             nav.getMenu().add(0, i, i, titles[i]).setIcon(icons[i]);
             if (first < 0) first = i;
         }
-        body0 = body; nav0 = nav;
+        body0 = body; nav0 = nav; tabs.clear(); tabBuilt.clear();
         if (first < 0) { body.addView(Ui.text(this, "Your role has no screens in this version yet.", R.style.Text_Bofo_Body)); show(page); return; }
         nav.setOnItemSelectedListener(it -> { open(body, it.getItemId()); return true; });
         show(page);
@@ -280,10 +288,16 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void open(FrameLayout body, int tab) {
-        body.removeAllViews();
-        View v = tab == 0 ? new HomeScreen(this, access) : tab == 1 ? new IdScreen(this, access) : tab == 2 ? new ReportsScreen(this, access)
-                : tab == 3 ? new ApprovalsScreen(this, access) : new MoreScreen(this, access);
-        body.addView(v, new FrameLayout.LayoutParams(-1, -1));
+        Long built = tabBuilt.get(tab);
+        if (built != null && System.currentTimeMillis() - built > TAB_MAX_AGE_MS && tab != 4) { body.removeView(tabs.get(tab)); tabs.remove(tab); tabBuilt.remove(tab); }
+        View v = tabs.get(tab);
+        if (v == null) {
+            v = tab == 0 ? new HomeScreen(this, access) : tab == 1 ? new IdScreen(this, access) : tab == 2 ? new ReportsScreen(this, access)
+                    : tab == 3 ? new ApprovalsScreen(this, access) : new MoreScreen(this, access);
+            tabs.put(tab, v); tabBuilt.put(tab, System.currentTimeMillis());
+            body.addView(v, new FrameLayout.LayoutParams(-1, -1));
+        }
+        for (int i = 0; i < body.getChildCount(); i++) { View c = body.getChildAt(i); c.setVisibility(c == v ? View.VISIBLE : View.GONE); }
     }
 
     /** Called by screens when the server says the session is dead. */

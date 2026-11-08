@@ -1,3 +1,6 @@
+# v2.12.4 - BOFO Admin: tabs no longer blank out and reload on every tap
+- Each tab keeps its screen alive (show / hide); a tab is rebuilt after 3 minutes, when More is reopened, or when a push opens it. Home loads its 9 numbers at the same time instead of one after another. Both apps 2.12.4 / 21204. Not compiled or run on a phone.
+
 # v2.12.3 - BOFO Admin: Google sign-in failure now shows the real reason and the package name (to find a missing Android OAuth client / SHA-1). Both apps 2.12.3 / 21203. Not compiled.
 
 # v2.12.2 - Verification Stage 5: BOFO Admin accessibility (TalkBack, touch size, contrast, large font)

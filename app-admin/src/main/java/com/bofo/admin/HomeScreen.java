@@ -39,15 +39,20 @@ final class HomeScreen extends FrameLayout {
     private void load() {
         Async.run(() -> {
             int[] v = {-2, -2, -2, -2, -2, -2, -2, -2, -2};
-            if (access.can(PermissionRules.ID_REVIEW)) v[0] = count("owner_verifications", "status=eq.pending");
-            if (access.can(PermissionRules.REPORTS_VIEW)) v[1] = count("reports", "status=eq.pending");
-            if (access.can(PermissionRules.REPORTS_VIEW)) v[2] = count("users", "suspended_until=gt." + Instant.now());
-            if (access.can(PermissionRules.BANNED_VIEW)) v[3] = count("users", "banned_at=not.is.null");
-            if (access.can(PermissionRules.REPORTS_VIEW)) v[4] = count("bh_cards", "status=eq.taken_down");
             Instant now = Instant.now(), w1 = now.minus(7, ChronoUnit.DAYS), w0 = now.minus(14, ChronoUnit.DAYS);
-            v[5] = count("users", "created_at=gte." + w1);  v[6] = count("users", "created_at=gte." + w0 + "&created_at=lt." + w1);
-            v[7] = count("bh_cards", "created_at=gte." + w1);
-            if (access.can(PermissionRules.REPORTS_VIEW)) v[8] = count("reports_admin_v", "reviewed_at=gte." + w1 + "&status=neq.pending");
+            String[][] q = new String[9][];                                  // {table, query} per number; null = this role cannot read it
+            if (access.can(PermissionRules.ID_REVIEW)) q[0] = new String[]{"owner_verifications", "status=eq.pending"};
+            if (access.can(PermissionRules.REPORTS_VIEW)) q[1] = new String[]{"reports", "status=eq.pending"};
+            if (access.can(PermissionRules.REPORTS_VIEW)) q[2] = new String[]{"users", "suspended_until=gt." + now};
+            if (access.can(PermissionRules.BANNED_VIEW)) q[3] = new String[]{"users", "banned_at=not.is.null"};
+            if (access.can(PermissionRules.REPORTS_VIEW)) q[4] = new String[]{"bh_cards", "status=eq.taken_down"};
+            q[5] = new String[]{"users", "created_at=gte." + w1};
+            q[6] = new String[]{"users", "created_at=gte." + w0 + "&created_at=lt." + w1};
+            q[7] = new String[]{"bh_cards", "created_at=gte." + w1};
+            if (access.can(PermissionRules.REPORTS_VIEW)) q[8] = new String[]{"reports_admin_v", "reviewed_at=gte." + w1 + "&status=neq.pending"};
+            java.util.List<java.util.concurrent.Future<Integer>> fs = new java.util.ArrayList<>();
+            for (String[] x : q) fs.add(x == null ? null : Async.fanout().submit(() -> count(x[0], x[1])));   // all at the same time
+            for (int i = 0; i < 9; i++) if (fs.get(i) != null) v[i] = fs.get(i).get();
             return v;
         }, v -> render(v), e -> Ui.toast(getContext(), Ui.err(e)));
     }
