@@ -1,3 +1,6 @@
+# v2.12.6 - BOFO Admin: screenshots allowed except on sign-in, invite code, two-step code / key and the lock screen
+- Was: whole app FLAG_SECURE. Now `MainActivity.protect()` turns it on for those screens only. The ID review window (IdScreen) is its own window and stays protected: it shows ID photos and selfies. Both apps 2.12.6 / 21206. Not compiled or run on a phone.
+
 # v2.12.5 - Database fix: Approvals tab error "UPDATE is not allowed in a non-volatile function"
 - `admin_approvals_list()` is no longer marked STABLE (migration 047, applied live; 039 corrected). Scanned all live functions: no other stable function writes. Both apps 2.12.5 / 21205.
 

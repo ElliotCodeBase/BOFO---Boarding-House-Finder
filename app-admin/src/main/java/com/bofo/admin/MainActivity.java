@@ -38,7 +38,7 @@ import java.util.concurrent.Executors;
 
 /**
  * One activity, no fragments: Login -> (two-step code) -> role check -> shell with tabs the role may use.
- * FLAG_SECURE is on for the WHOLE app (screenshots, recents thumbnail and screen recording are blocked): every screen shows people.
+ * FLAG_SECURE (v2.12.6) is on only for sign-in, invite code, two-step code / key and the lock screen; the working screens allow screenshots.
  */
 public final class MainActivity extends AppCompatActivity {
     private FrameLayout root;
@@ -53,12 +53,20 @@ public final class MainActivity extends AppCompatActivity {
     private static final long TAB_MAX_AGE_MS = 3 * 60 * 1000L;
     void showMore() { if (body0 != null) { dropTab(4); open(body0, 4); } }
     private void dropTab(int tab) { View old = tabs.get(tab); if (old != null && body0 != null) body0.removeView(old); tabs.remove(tab); tabBuilt.remove(tab); }
+    /** v2.12.6: screenshots are blocked ONLY on sign-in, the invite code, the two-step code, the two-step key and the lock screen. */
+    private boolean screenSecure = true, keyVisible;
+    private void protect(boolean on) { screenSecure = on; applySecure(); }
+    void keyVisible(boolean on) { keyVisible = on; applySecure(); }       // TwoStepScreen shows its secret key while it is visible
+    private void applySecure() {
+        if (screenSecure || keyVisible) getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+    }
     private int pendingTab = PushRules.TAB_NONE;      // a notification tap waiting for the shell to be on screen
     private boolean askedNotifications;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
+        protect(true);                                                  // v2.12.6: starts protected; only the working screens (shell) allow screenshots
         root = new FrameLayout(this);
         root.setBackgroundColor(getColor(R.color.bofo_bg));
         setContentView(root);
@@ -125,6 +133,7 @@ public final class MainActivity extends AppCompatActivity {
 
     /* ---------------- login (Google only) ---------------- */
     private void login() {
+        protect(true);
         access = null; AdminApp.setAccess(null);
         LinearLayout l = centered();
         l.addView(Ui.text(this, "BOFO Admin", R.style.Text_Bofo_Title));
@@ -163,6 +172,7 @@ public final class MainActivity extends AppCompatActivity {
 
     /* ---------------- gate: two-step code, then ask the server for the role ---------------- */
     private void gate() {
+        protect(true);
         LinearLayout l = centered(); l.addView(Ui.text(this, "Checking your access...", R.style.Text_Bofo_Section)); show(l);
         Async.run(() -> {
             AdminAuth a = AdminAuth.get();
@@ -187,6 +197,7 @@ public final class MainActivity extends AppCompatActivity {
 
     /** No active role: say so, let a newly invited person enter the invite code, or sign out. */
     private void noAccess() {
+        protect(true);
         LinearLayout l = centered();
         l.addView(Ui.text(this, "No access", R.style.Text_Bofo_Title));
         l.addView(Ui.text(this, AdminAuth.get().email() + " has no active BOFO Admin role. If the owner sent you an invite code, enter it here.", R.style.Text_Bofo_Caption));
@@ -212,6 +223,7 @@ public final class MainActivity extends AppCompatActivity {
 
     /** From "No access": set up two-step sign-in, then run the role check again (a server that requires two-step answers "no access" until it exists). */
     private void twoStepFromBlocked() {
+        protect(true);
         LinearLayout l = Ui.col(this);
         android.widget.Button back = Ui.button(this, "< Back", false); back.setOnClickListener(v -> noAccess());
         l.addView(back);
@@ -220,6 +232,7 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void mfa(String factorId) {
+        protect(true);
         LinearLayout l = centered();
         l.addView(Ui.text(this, "Two-step code", R.style.Text_Bofo_Title));
         l.addView(Ui.text(this, "Enter the 6-digit code from your authenticator app.", R.style.Text_Bofo_Caption));
@@ -239,7 +252,7 @@ public final class MainActivity extends AppCompatActivity {
 
     /* ---------------- auto-lock ---------------- */
     private void lock() {
-        locked = true; Reauth.forget();
+        locked = true; Reauth.forget(); protect(true);
         LinearLayout l = centered();
         l.addView(Ui.text(this, "BOFO Admin is locked", R.style.Text_Bofo_Title));
         android.widget.Button u = Ui.button(this, "Unlock", true);
@@ -253,6 +266,7 @@ public final class MainActivity extends AppCompatActivity {
 
     /* ---------------- shell: only the tabs this role can use ---------------- */
     private void shell() {
+        protect(false);                                                 // working screens: screenshots allowed (the ID photo window stays protected)
         LinearLayout page = Ui.col(this);
         LinearLayout top = Ui.row(this); top.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 8), Ui.dp(this, 4));
         TextView who = Ui.text(this, access.label + "  |  " + AdminAuth.get().email(), R.style.Text_Bofo_Caption);
