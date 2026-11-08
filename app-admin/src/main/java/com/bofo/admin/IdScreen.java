@@ -39,6 +39,7 @@ final class IdScreen extends FrameLayout {
         SwipeRefreshLayout sr = new SwipeRefreshLayout(a); sr.addView(MainActivity.scroll(a, list));
         sr.setOnRefreshListener(() -> { load(); sr.setRefreshing(false); });
         addView(sr, new LayoutParams(-1, -1));
+        list.addView(Ui.loading(a));
         load();
     }
 
@@ -51,14 +52,14 @@ final class IdScreen extends FrameLayout {
             for (int i = 0; i < rows.length(); i++) in.append(i == 0 ? "" : ",").append(rows.getJSONObject(i).getString("owner_id"));
             if (in.length() > 0) { JSONArray u = Api.get().select("users", "id=in.(" + in + ")&select=id,full_name"); for (int i = 0; i < u.length(); i++) names.put(u.getJSONObject(i).getString("id"), u.getJSONObject(i).optString("full_name", "")); }
             return new Object[]{rows, names, Marks.list("id")};
-        }, r -> render((JSONArray) r[0], (Map<String, String>) r[1], (Map<String, JSONObject>) r[2]), e -> { if (e instanceof Api.ApiException x && x.status == 401) act.sessionEnded(); else Ui.toast(getContext(), Ui.err(e)); });
+        }, r -> render((JSONArray) r[0], (Map<String, String>) r[1], (Map<String, JSONObject>) r[2]), e -> { if (e instanceof Api.ApiException x && x.status == 401) act.sessionEnded(); else Ui.fail(list, getContext(), e, this::load); });
     }
 
     private void render(JSONArray rows, Map<String, String> names, Map<String, JSONObject> marks) {
         android.content.Context c = getContext();
         list.removeAllViews();
         list.addView(Ui.text(c, "ID requests", R.style.Text_Bofo_Title));
-        if (rows.length() == 0) { list.addView(Ui.text(c, "Nothing is waiting. Well done.", R.style.Text_Bofo_Caption)); return; }
+        if (rows.length() == 0) { list.addView(Ui.empty(c, "Nothing is waiting. Well done.")); return; }
         for (int i = 0; i < rows.length(); i++) {
             JSONObject x = rows.optJSONObject(i); if (x == null) continue;
             LinearLayout card = Ui.card(c);

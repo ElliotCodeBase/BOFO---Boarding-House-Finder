@@ -51,6 +51,8 @@ public final class MainActivity extends AppCompatActivity {
     private final android.util.SparseArray<View> tabs = new android.util.SparseArray<>();
     private final android.util.SparseArray<Long> tabBuilt = new android.util.SparseArray<>();
     private static final long TAB_MAX_AGE_MS = 3 * 60 * 1000L;
+    /** A shortcut from Home: open a tab if this role has it (a tab it does not have is simply not there). */
+    void goTab(int tab) { if (nav0 != null && nav0.getMenu().findItem(tab) != null) nav0.setSelectedItemId(tab); }
     void showMore() { if (body0 != null) { dropTab(4); open(body0, 4); } }
     private void dropTab(int tab) { View old = tabs.get(tab); if (old != null && body0 != null) body0.removeView(old); tabs.remove(tab); tabBuilt.remove(tab); }
     /** v2.12.6: screenshots are blocked ONLY on sign-in, the invite code, the two-step code, the two-step key and the lock screen. */
@@ -74,6 +76,12 @@ public final class MainActivity extends AppCompatActivity {
             androidx.core.graphics.Insets i = in.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime());
             v.setPadding(i.left, i.top, i.right, i.bottom);
             return in;
+        });
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {   // back inside "More" goes up one level instead of leaving the app
+            @Override public void handleOnBackPressed() {
+                if (nav0 != null && nav0.getSelectedItemId() == 4 && tabs.get(4) instanceof MoreScreen m && m.up()) return;
+                setEnabled(false); getOnBackPressedDispatcher().onBackPressed();
+            }
         });
         pushIntent(getIntent());
         if (AdminAuth.get().hasSession()) gate(); else login();
@@ -268,8 +276,12 @@ public final class MainActivity extends AppCompatActivity {
     private void shell() {
         protect(false);                                                 // working screens: screenshots allowed (the ID photo window stays protected)
         LinearLayout page = Ui.col(this);
-        LinearLayout top = Ui.row(this); top.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 8), Ui.dp(this, 4));
-        TextView who = Ui.text(this, access.label + "  |  " + AdminAuth.get().email(), R.style.Text_Bofo_Caption);
+        LinearLayout top = Ui.row(this); top.setPadding(Ui.dp(this, 16), Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 8));
+        LinearLayout who = Ui.col(this);                                              // role pill on top, e-mail below (one line, cut with ...)
+        who.addView(Ui.pill(this, access.label, R.color.bofo_primary, R.color.bofo_primary_tint), new LinearLayout.LayoutParams(-2, -2));
+        TextView mail = Ui.text(this, AdminAuth.get().email(), R.style.Text_Bofo_Caption);
+        mail.setSingleLine(); mail.setEllipsize(android.text.TextUtils.TruncateAt.END); mail.setPadding(0, Ui.dp(this, 4), 0, 0);
+        who.addView(mail, new LinearLayout.LayoutParams(-1, -2));
         top.addView(who, new LinearLayout.LayoutParams(0, -2, 1f));
         android.widget.Button out = Ui.button(this, "Sign out", false);
         out.setOnClickListener(v -> new MaterialAlertDialogBuilder(this).setTitle("Sign out?").setNegativeButton("Cancel", null)
@@ -280,6 +292,13 @@ public final class MainActivity extends AppCompatActivity {
         page.addView(body, new LinearLayout.LayoutParams(-1, 0, 1f));
         BottomNavigationView nav = new BottomNavigationView(this);
         nav.setBackgroundColor(getColor(R.color.bofo_white));
+        nav.setLabelVisibilityMode(com.google.android.material.navigation.NavigationBarView.LABEL_VISIBILITY_LABELED);     // names always visible
+        android.content.res.ColorStateList navTint = new android.content.res.ColorStateList(new int[][]{{android.R.attr.state_checked}, {}},
+                new int[]{getColor(R.color.bofo_primary), getColor(R.color.bofo_text_2)});
+        nav.setItemIconTintList(navTint); nav.setItemTextColor(navTint);
+        nav.setItemActiveIndicatorColor(android.content.res.ColorStateList.valueOf(getColor(R.color.bofo_primary_tint)));
+        View hairline = new View(this); hairline.setBackgroundColor(getColor(R.color.bofo_border));
+        page.addView(hairline, new LinearLayout.LayoutParams(-1, Ui.dp(this, 1)));
         page.addView(nav, new LinearLayout.LayoutParams(-1, -2));
 
         int id = 0; int first = -1;
@@ -287,7 +306,7 @@ public final class MainActivity extends AppCompatActivity {
         boolean more = access.can(PermissionRules.AUDIT_VIEW_OWN) || access.can(PermissionRules.MEMBERS_MANAGE) || access.can(PermissionRules.BANNED_VIEW) || access.can(PermissionRules.PAYMENTS_VIEW) || access.can(PermissionRules.APPROVALS_DECIDE) || access.can(PermissionRules.AUDIT_VIEW_ALL);
         boolean[] show = {access.can(PermissionRules.DASHBOARD_VIEW), access.can(PermissionRules.ID_REVIEW), access.can(PermissionRules.REPORTS_VIEW),
                 access.can(PermissionRules.APPROVALS_DECIDE) || access.can(PermissionRules.APPROVALS_REQUEST), more};
-        int[] icons = {android.R.drawable.ic_menu_agenda, android.R.drawable.ic_menu_gallery, android.R.drawable.ic_menu_report_image, android.R.drawable.ic_menu_send, android.R.drawable.ic_menu_more};
+        int[] icons = {R.drawable.ic_nav_home, R.drawable.ic_nav_ids, R.drawable.ic_nav_reports, R.drawable.ic_nav_approvals, R.drawable.ic_nav_more};
         for (int i = 0; i < 5; i++) {
             if (!show[i]) continue;                                 // hidden, and the server rejects it anyway
             nav.getMenu().add(0, i, i, titles[i]).setIcon(icons[i]);

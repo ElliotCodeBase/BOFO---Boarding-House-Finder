@@ -17,7 +17,7 @@ final class ActivityScreen extends FrameLayout {
         addView(MainActivity.scroll(a, list), new LayoutParams(-1, -1));
         list.addView(Ui.text(a, all ? "All admin activity" : "What I did", R.style.Text_Bofo_Title));
         Async.run(() -> new JSONArray(Api.get().rpc(all ? "admin_activity_all" : "admin_my_activity", new JSONObject().put(all ? "lim" : "lim", 100))), rows -> {
-            if (rows.length() == 0) { list.addView(Ui.text(a, "Nothing yet.", R.style.Text_Bofo_Caption)); return; }
+            if (rows.length() == 0) { list.addView(Ui.empty(a, "Nothing yet.")); return; }
             for (int i = 0; i < rows.length(); i++) {
                 JSONObject o = rows.optJSONObject(i); if (o == null) continue;
                 LinearLayout c = Ui.card(a);
