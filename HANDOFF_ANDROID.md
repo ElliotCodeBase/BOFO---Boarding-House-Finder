@@ -1,3 +1,6 @@
+# Handoff (Android) - v2.12.6: screenshot rule
+- `protect(true)` in login/gate/noAccess/twoStepFromBlocked/mfa/lock; `protect(false)` in shell(); `TwoStepScreen` reports visibility via `keyVisible`. ID review dialog keeps FLAG_SECURE.
+
 # Handoff (Android) - v2.12.5: migration 047 (applied live) fixes the Approvals list
 
 # Handoff (Android) - v2.12.4: Admin tab switching
