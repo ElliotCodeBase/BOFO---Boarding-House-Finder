@@ -69,7 +69,7 @@ final class IdScreen extends FrameLayout {
             JSONObject mk = marks.get(x.optString("id"));
             if (Marks.claimedByOther(mk)) card.addView(Ui.text(c, QueueRules.claimLine(Marks.str(mk, "claimed_by_name")), R.style.Text_Bofo_Caption));
             if (x.optBoolean("needs_second_opinion", false)) card.addView(Ui.pill(c, "Second opinion asked", R.color.bofo_card_ink, R.color.bofo_warn_tint));
-            card.setOnClickListener(v -> review(x, nm == null ? "" : nm));
+            Ui.asButton(card); card.setOnClickListener(v -> review(x, nm == null ? "" : nm));
             list.addView(card);
         }
     }
@@ -97,7 +97,7 @@ final class IdScreen extends FrameLayout {
             loadImage(x.optString(im[1]), iv);
         }
         final String vid = x.optString("id");
-        LinearLayout acts = Ui.row(c); acts.setGravity(Gravity.END);
+        LinearLayout acts = Ui.actions(c); acts.setGravity(Gravity.END);
         android.widget.Button close = Ui.button(c, "Close", false); close.setOnClickListener(v -> d.dismiss()); acts.addView(close);
         if (access.can(PermissionRules.ID_REVIEW)) {
             android.widget.Button second = Ui.button(c, x.optBoolean("needs_second_opinion") ? "Clear 2nd opinion" : "Ask 2nd opinion", false);
@@ -183,11 +183,10 @@ final class IdScreen extends FrameLayout {
             final int idx = i; final String text = own.get(i);
             android.widget.Button b = Ui.button(c, "Mine: " + (text.length() > 18 ? text.substring(0, 18) + "..." : text), false);
             b.setOnClickListener(v -> { note.setText(text); note.setSelection(note.length()); });
-            b.setOnLongClickListener(v -> {
-                new MaterialAlertDialogBuilder(act).setTitle("Delete this saved reply?").setMessage(text).setNegativeButton("Keep", null)
-                        .setPositiveButton("Delete", (dd, w) -> { RepliesStore.save(c, SavedReplyRules.remove(RepliesStore.load(c), idx)); fillChips(chips, note); }).show();
-                return true;
-            });
+            final Runnable askDelete = () -> new MaterialAlertDialogBuilder(act).setTitle("Delete this saved reply?").setMessage(text).setNegativeButton("Keep", null)
+                    .setPositiveButton("Delete", (dd, w) -> { RepliesStore.save(c, SavedReplyRules.remove(RepliesStore.load(c), idx)); fillChips(chips, note); }).show();
+            b.setOnLongClickListener(v -> { askDelete.run(); return true; });
+            androidx.core.view.ViewCompat.addAccessibilityAction(b, "Delete this saved reply", (v, args) -> { askDelete.run(); return true; });      // TalkBack users have no long-press shortcut
             chips.addView(b);
         }
     }

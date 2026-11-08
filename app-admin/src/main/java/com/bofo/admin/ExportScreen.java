@@ -36,6 +36,7 @@ final class ExportScreen extends FrameLayout {
 
     private LinearLayout entry(String label, String kind) {
         LinearLayout c = Ui.card(act); c.addView(Ui.text(act, label, R.style.Text_Bofo_Section));
+        Ui.asButton(c);
         c.setOnClickListener(v -> { if (!busy) Reauth.ask(act, "Export " + label.toLowerCase(Locale.ROOT), () -> run(kind), null); });
         return c;
     }

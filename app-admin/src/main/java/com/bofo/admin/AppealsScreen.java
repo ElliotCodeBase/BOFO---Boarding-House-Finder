@@ -46,8 +46,8 @@ final class AppealsScreen extends FrameLayout {
         list.removeAllViews();
         list.addView(Ui.text(c, "Appeals", R.style.Text_Bofo_Title));
         LinearLayout chips = Ui.row(c);
-        android.widget.Button w = Ui.button(c, "Waiting", !decided); w.setOnClickListener(v -> { decided = false; load(); });
-        android.widget.Button d = Ui.button(c, "Decided", decided); d.setOnClickListener(v -> { decided = true; load(); });
+        android.widget.Button w = Ui.chip(c, "Waiting", !decided); w.setOnClickListener(v -> { decided = false; load(); });
+        android.widget.Button d = Ui.chip(c, "Decided", decided); d.setOnClickListener(v -> { decided = true; load(); });
         chips.addView(w); chips.addView(d); list.addView(chips);
         int shown = 0;
         for (int i = 0; i < rows.length(); i++) {
@@ -65,7 +65,7 @@ final class AppealsScreen extends FrameLayout {
             if (pending && o.optBoolean("mine")) card.addView(Ui.pill(c, "You made the original decision", R.color.bofo_error, R.color.bofo_error_tint));
             if (!pending) card.addView(Ui.pill(c, "accepted".equals(o.optString("status")) ? "Accepted" : "Rejected",
                     "accepted".equals(o.optString("status")) ? R.color.bofo_success : R.color.bofo_card_ink, "accepted".equals(o.optString("status")) ? R.color.bofo_success_tint : R.color.bofo_warn_tint));
-            card.setOnClickListener(v -> detail(o));
+            Ui.asButton(card); card.setOnClickListener(v -> detail(o));
             list.addView(card);
         }
         if (shown == 0) list.addView(Ui.text(c, decided ? "No decided appeals yet." : "No appeals are waiting.", R.style.Text_Bofo_Caption));

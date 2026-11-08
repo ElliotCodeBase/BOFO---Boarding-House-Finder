@@ -49,7 +49,7 @@ final class TeamScreen extends FrameLayout {
             card.addView(Ui.text(c, "Role: " + o.optString("role") + "  |  last active " + la + "  |  " + o.optInt("actions") + " actions", R.style.Text_Bofo_Caption));
             boolean active = "active".equals(o.optString("status"));
             card.addView(Ui.pill(c, o.optString("status"), active ? R.color.bofo_success : R.color.bofo_error, active ? R.color.bofo_success_tint : R.color.bofo_error_tint));
-            if (!"owner".equals(o.optString("role"))) card.setOnClickListener(v -> manage(o));           // owners cannot be changed (server rule)
+            if (!"owner".equals(o.optString("role"))) { Ui.asButton(card); card.setOnClickListener(v -> manage(o)); }           // owners cannot be changed (server rule)
             list.addView(card);
         }
     }
