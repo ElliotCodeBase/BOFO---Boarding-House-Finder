@@ -1,3 +1,5 @@
+# Handoff (Android) - v2.12.7: build fix for v2.12.6. Lesson: this repo is only checked with `javac_pass.sh` (no Android SDK here), so a signature mismatch against Android classes is only found by Gradle on your PC.
+
 # Handoff (Android) - v2.12.6: screenshot rule
 - `protect(true)` in login/gate/noAccess/twoStepFromBlocked/mfa/lock; `protect(false)` in shell(); `TwoStepScreen` reports visibility via `keyVisible`. ID review dialog keeps FLAG_SECURE.
 
