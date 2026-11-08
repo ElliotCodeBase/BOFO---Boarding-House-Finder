@@ -68,7 +68,7 @@ final class AiUnansweredScreen extends FrameLayout {
             chips.addView(b);
         }
         list.addView(hs);
-        if (rows.isEmpty()) { list.addView(Ui.text(c, "Nothing here. Good news.", R.style.Text_Bofo_Caption)); return; }
+        if (rows.isEmpty()) { list.addView(Ui.empty(c, "Nothing here. Good news.")); return; }
         for (Row r : rows) {
             LinearLayout card = Ui.card(c);
             card.addView(Ui.text(c, r.hasText() ? r.message() : "(text not stored)", r.hasText() ? R.style.Text_Bofo_Body : R.style.Text_Bofo_Caption));

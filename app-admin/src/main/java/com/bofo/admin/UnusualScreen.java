@@ -40,7 +40,7 @@ final class UnusualScreen extends FrameLayout {
         list.removeAllViews();
         list.addView(Ui.text(c, "Unusual activity", R.style.Text_Bofo_Title));
         list.addView(Ui.text(c, "Team members (not owners) with sensitive actions in the last 24 hours. Flagged at " + QueueRules.UNUSUAL_PER_HOUR + " or more in one hour.", R.style.Text_Bofo_Caption));
-        if (rows.length() == 0) { list.addView(Ui.text(c, "Nothing to show. Quiet day.", R.style.Text_Bofo_Body)); return; }
+        if (rows.length() == 0) { list.addView(Ui.empty(c, "Nothing to show. Quiet day.")); return; }
         for (int i = 0; i < rows.length(); i++) {
             JSONObject o = rows.optJSONObject(i); if (o == null) continue;
             LinearLayout card = Ui.card(c);

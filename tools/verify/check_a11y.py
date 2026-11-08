@@ -36,7 +36,8 @@ def cr(a, b):
     x, y = sorted((lum(a), lum(b)), reverse=True); return (x + 0.05) / (y + 0.05)
 pairs = [("bofo_text", "bofo_bg"), ("bofo_text_2", "bofo_bg"), ("bofo_text_2", "bofo_white"), ("bofo_success", "bofo_success_tint"), ("bofo_success", "bofo_white"),
          ("bofo_error", "bofo_error_tint"), ("bofo_error", "bofo_bg"), ("bofo_error", "bofo_white"), ("bofo_card_ink", "bofo_warn_tint"), ("bofo_text_2", "bofo_icon_bg"),
-         ("bofo_primary", "bofo_bg"), ("bofo_white", "bofo_primary")]
+         ("bofo_primary", "bofo_bg"), ("bofo_white", "bofo_primary"),
+         ("bofo_primary", "bofo_primary_tint"), ("bofo_text_2", "bofo_primary_tint")]
 for a, b in pairs:
     r = cr(colors[a], colors[b])
     if r < 4.5: fails.append(f"contrast {a} on {b}: {r:.2f} (< 4.5)")

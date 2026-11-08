@@ -51,13 +51,76 @@ final class Ui {
 
     /** Filter chip: a button whose selected state is also spoken (colour alone is not enough). */
     static Button chip(Context c, String label, boolean selected) {
-        Button b = button(c, label, selected);
+        MaterialButton b = new MaterialButton(c);
+        b.setText(label); b.setAllCaps(false); b.setTextSize(14);
+        b.setMinHeight(dp(c, 48)); b.setMinimumHeight(dp(c, 48));                 // 48 dp touch target...
+        b.setInsetTop(dp(c, 4)); b.setInsetBottom(dp(c, 4));                      // ...drawn 40 dp tall
+        b.setCornerRadius(dp(c, 20)); b.setStrokeWidth(dp(c, 1)); b.setPadding(dp(c, 16), 0, dp(c, 16), 0);
+        int ink = selected ? R.color.bofo_primary : R.color.bofo_text_2;
+        b.setTextColor(c.getColor(ink));
+        b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(c.getColor(selected ? R.color.bofo_primary_tint : R.color.bofo_white)));
+        b.setStrokeColor(android.content.res.ColorStateList.valueOf(c.getColor(selected ? R.color.bofo_primary : R.color.bofo_stroke_neutral)));
+        if (selected) b.setTypeface(null, android.graphics.Typeface.BOLD);
         androidx.core.view.ViewCompat.setStateDescription(b, selected ? "Selected" : "Not selected");
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, 0, dp(c, 8), 0); b.setLayoutParams(lp);
         return b;
     }
 
+    /** Empty list: a round tick, one calm sentence, centred. Decorative icon (TalkBack reads the sentence only). */
+    static View empty(Context c, String message) {
+        LinearLayout l = col(c); l.setGravity(android.view.Gravity.CENTER_HORIZONTAL); l.setPadding(dp(c, 24), dp(c, 56), dp(c, 24), dp(c, 24));
+        android.widget.ImageView iv = new android.widget.ImageView(c);
+        iv.setImageResource(R.drawable.ic_nav_approvals); iv.setColorFilter(c.getColor(R.color.bofo_primary));
+        iv.setContentDescription(null); iv.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        GradientDrawable g = new GradientDrawable(); g.setShape(GradientDrawable.OVAL); g.setColor(c.getColor(R.color.bofo_primary_tint));
+        iv.setBackground(g); iv.setPadding(dp(c, 18), dp(c, 18), dp(c, 18), dp(c, 18));
+        l.addView(iv, new LinearLayout.LayoutParams(dp(c, 72), dp(c, 72)));
+        TextView t = text(c, message, R.style.Text_Bofo_Body); t.setTextColor(c.getColor(R.color.bofo_text_2)); t.setGravity(android.view.Gravity.CENTER); t.setPadding(0, dp(c, 16), 0, 0);
+        l.addView(t, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return l;
+    }
+
     /** A tappable card or row built from a LinearLayout: TalkBack must say "button", not just read the text. */
-    static void asButton(View v) { androidx.core.view.ViewCompat.setAccessibilityDelegate(v, new ButtonRole()); }
+    static void asButton(View v) { androidx.core.view.ViewCompat.setAccessibilityDelegate(v, new ButtonRole()); ripple(v, 16); }
+
+    /** Touch feedback: a soft purple ripple clipped to the card corners (tappable cards used to give no sign they were pressed). */
+    static void ripple(View v, int radiusDp) {
+        Context c = v.getContext();
+        GradientDrawable mask = new GradientDrawable(); mask.setColor(Color.BLACK); mask.setCornerRadius(dp(c, radiusDp));
+        v.setForeground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(c.getColor(R.color.bofo_ripple)), null, mask));
+    }
+
+    /** Decorative icon (TalkBack skips it; the words next to it say everything). */
+    static android.widget.ImageView icon(Context c, int drawable, int colorRes) {
+        android.widget.ImageView iv = new android.widget.ImageView(c);
+        iv.setImageResource(drawable); iv.setColorFilter(c.getColor(colorRes));
+        iv.setContentDescription(null); iv.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        return iv;
+    }
+
+    /** First-load spinner (tagged so Ui.fail knows the screen never got its content). */
+    static View loading(Context c) {
+        LinearLayout l = col(c); l.setGravity(android.view.Gravity.CENTER); l.setPadding(0, dp(c, 72), 0, 0); l.setTag("loading");
+        l.addView(new android.widget.ProgressBar(c));
+        TextView t = text(c, "Loading...", R.style.Text_Bofo_Caption); t.setPadding(0, dp(c, 12), 0, 0); l.addView(t);
+        return l;
+    }
+
+    /** A failed first load: say why in plain words and offer Try again (before, the screen stayed blank). A failed refresh keeps the old content and only shows the toast. */
+    static void fail(LinearLayout list, Context c, Throwable e, Runnable retry) {
+        toast(c, err(e));
+        View first = list.getChildAt(0);
+        if (first == null || !"loading".equals(first.getTag())) return;
+        list.removeAllViews();
+        LinearLayout l = col(c); l.setGravity(android.view.Gravity.CENTER_HORIZONTAL); l.setPadding(dp(c, 24), dp(c, 56), dp(c, 24), 0);
+        TextView t = text(c, err(e), R.style.Text_Bofo_Body); t.setGravity(android.view.Gravity.CENTER); l.addView(t);
+        Button b = button(c, "Try again", true);
+        b.setOnClickListener(v -> { list.removeAllViews(); list.addView(loading(c)); retry.run(); });
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT); lp.topMargin = dp(c, 16);
+        l.addView(b, lp);
+        list.addView(l);
+    }
 
     private static final class ButtonRole extends androidx.core.view.AccessibilityDelegateCompat {
         @Override public void onInitializeAccessibilityNodeInfo(View host, androidx.core.view.accessibility.AccessibilityNodeInfoCompat info) {

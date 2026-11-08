@@ -45,6 +45,7 @@ final class ReportsScreen extends FrameLayout {
         SwipeRefreshLayout sr = new SwipeRefreshLayout(a); sr.addView(MainActivity.scroll(a, list));
         sr.setOnRefreshListener(() -> { load(); sr.setRefreshing(false); });
         addView(sr, new LayoutParams(-1, -1));
+        list.addView(Ui.loading(a));
         load();
     }
 
@@ -53,7 +54,7 @@ final class ReportsScreen extends FrameLayout {
         final String q = (person == null ? "" : "reported_user_id=eq." + person + "&") + FILTER[chip] + "order=created_at." + (chip == 0 ? "asc" : "desc") + "&limit=200" + COLS;
         Async.run(() -> { JSONArray rows = Api.get().select("reports_admin_v", q); return new Object[]{rows, Marks.list("report")}; },
                 r -> { marks = (Map<String, JSONObject>) r[1]; render((JSONArray) r[0]); },
-                e -> { if (e instanceof Api.ApiException x && x.status == 401) act.sessionEnded(); else Ui.toast(getContext(), Ui.err(e)); });
+                e -> { if (e instanceof Api.ApiException x && x.status == 401) act.sessionEnded(); else Ui.fail(list, getContext(), e, this::load); });
     }
 
     private void render(JSONArray rows) {
@@ -77,7 +78,7 @@ final class ReportsScreen extends FrameLayout {
             shown.put(o);
         }
         rows = shown;
-        if (rows.length() == 0) { list.addView(Ui.text(c, chip == 0 ? "No reports are waiting." : chip == 3 ? "Nothing is escalated." : "Nothing here.", R.style.Text_Bofo_Caption)); return; }
+        if (rows.length() == 0) { list.addView(Ui.empty(c, chip == 0 ? "No reports are waiting." : chip == 3 ? "Nothing is escalated." : "Nothing here.")); return; }
 
         Map<String, List<JSONObject>> byPerson = new LinkedHashMap<>();                 // grouped reports: one card per reported person
         for (int i = 0; i < rows.length(); i++) {

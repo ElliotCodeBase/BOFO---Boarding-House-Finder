@@ -17,19 +17,22 @@ final class ApprovalsScreen extends FrameLayout {
     ApprovalsScreen(MainActivity a, Access access) {
         super(a); act = a; this.access = access;
         list = Ui.col(a); int p = Ui.dp(a, 16); list.setPadding(p, p, p, p);
-        addView(MainActivity.scroll(a, list), new LayoutParams(-1, -1));
+        androidx.swiperefreshlayout.widget.SwipeRefreshLayout sr = new androidx.swiperefreshlayout.widget.SwipeRefreshLayout(a); sr.addView(MainActivity.scroll(a, list));
+        sr.setOnRefreshListener(() -> { load(); sr.setRefreshing(false); });
+        addView(sr, new LayoutParams(-1, -1));
+        list.addView(Ui.loading(a));
         load();
     }
 
     private void load() {
-        Async.run(() -> new JSONArray(Api.get().rpc("admin_approvals_list", new JSONObject())), this::render, e -> Ui.toast(getContext(), Ui.err(e)));
+        Async.run(() -> new JSONArray(Api.get().rpc("admin_approvals_list", new JSONObject())), this::render, e -> Ui.fail(list, getContext(), e, this::load));
     }
 
     private void render(JSONArray rows) {
         android.content.Context c = getContext();
         list.removeAllViews();
         list.addView(Ui.text(c, "Approvals", R.style.Text_Bofo_Title));
-        if (rows.length() == 0) { list.addView(Ui.text(c, "No requests.", R.style.Text_Bofo_Caption)); return; }
+        if (rows.length() == 0) { list.addView(Ui.empty(c, "No requests.")); return; }
         String me = AdminAuth.get().userId();
         for (int i = 0; i < rows.length(); i++) {
             JSONObject o = rows.optJSONObject(i); if (o == null) continue;

@@ -1,5 +1,23 @@
 changed	app-admin/build.gradle
 changed	bofo-android/app/build.gradle
-changed	app-admin/src/main/java/com/bofo/admin/TwoStepScreen.java
+changed	app-admin/src/main/java/com/bofo/admin/Ui.java
+changed	app-admin/src/main/java/com/bofo/admin/MainActivity.java
+changed	app-admin/src/main/java/com/bofo/admin/MoreScreen.java
+changed	app-admin/src/main/java/com/bofo/admin/HomeScreen.java
+changed	app-admin/src/main/java/com/bofo/admin/ApprovalsScreen.java
+changed	app-admin/src/main/java/com/bofo/admin/ReportsScreen.java
+changed	app-admin/src/main/java/com/bofo/admin/IdScreen.java
+changed	app-admin/src/main/java/com/bofo/admin/AiUnansweredScreen.java
+changed	app-admin/src/main/java/com/bofo/admin/UnusualScreen.java
+changed	app-admin/src/main/java/com/bofo/admin/ActivityScreen.java
+new	app-admin/src/main/res/drawable/ic_nav_*.xml (5 files)
+new	app-admin/src/main/res/drawable/ic_arrow_back.xml, ic_chevron_right.xml, ic_more_*.xml (10 files)
+changed	tools/verify/check_a11y.py
 changed	CHANGES_ANDROID.md
 changed	HANDOFF_ANDROID.md
+DELETE	bofo-android/app-admin/ (stray copy, folder)
+DELETE	bofo-android/bofo-android/ (stray copy, folder)
+DELETE	bofo-android/tools/ (stray copy, folder)
+DELETE	bofo-android/CHANGED_FILES.txt
+DELETE	bofo-android/CHANGES_ANDROID.md
+DELETE	bofo-android/HANDOFF_ANDROID.md
